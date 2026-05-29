@@ -94,3 +94,10 @@ th {
     margin: 5px 0;
   }
   .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .student-row {
+    flex-direction: column;
+    text-align: center;
+  }
+}
