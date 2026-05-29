@@ -19,22 +19,48 @@
   let currentSchoolId = null;
 
   async function init() {
-    const impersonatedId = sessionStorage.getItem('impersonatedSchoolId');
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    // جلب المستخدم الحالي
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    console.log("المستخدم:", user);
+    
+    if (userError || !user) {
+      console.error("مفيش مستخدم:", userError);
       window.location.href = 'login.html';
       return;
     }
-    const { data: userData, error: userError } = await supabase
+
+    // جلب دور المستخدم من جدول users
+    const { data: userData, error: roleError } = await supabase
       .from('users')
       .select('role, school_id')
       .eq('id', user.id)
       .single();
-    if (userError || !userData) {
-      await supabase.auth.signOut();
-      window.location.href = 'login.html';
-      return;
+    
+    console.log("بيانات المستخدم من جدول users:", userData);
+    
+    if (roleError || !userData) {
+      console.error("مفيش دور للمستخدم:", roleError);
+      // لو مفيش دور، نضيفه كـ schoolAdmin مؤقتاً
+      const impersonatedId = sessionStorage.getItem('impersonatedSchoolId');
+      if (impersonatedId) {
+        // لو فيه تقمص من السوبر أدمن
+        currentSchoolId = parseInt(impersonatedId);
+        document.body.insertAdjacentHTML('afterbegin', '<div style="background:#ff9800;padding:8px;text-align:center">وضع التقمص - <button id="exitImp">خروج</button></div>');
+        document.getElementById('exitImp').onclick = () => {
+          sessionStorage.removeItem('impersonatedSchoolId');
+          window.location.href = 'admin.html';
+        };
+        loadSchoolData();
+        return;
+      } else {
+        window.location.href = 'login.html';
+        return;
+      }
     }
+
+    // حالة التقمص من السوبر أدمن
+    const impersonatedId = sessionStorage.getItem('impersonatedSchoolId');
     if (userData.role === 'superAdmin' && impersonatedId) {
       currentSchoolId = parseInt(impersonatedId);
       document.body.insertAdjacentHTML('afterbegin', '<div style="background:#ff9800;padding:8px;text-align:center">وضع التقمص - <button id="exitImp">خروج</button></div>');
@@ -42,33 +68,92 @@
         sessionStorage.removeItem('impersonatedSchoolId');
         window.location.href = 'admin.html';
       };
-    } else if (userData.role === 'schoolAdmin') {
+    } 
+    else if (userData.role === 'schoolAdmin') {
       currentSchoolId = userData.school_id;
-    } else {
+    } 
+    else {
+      console.error("دور غير معروف:", userData.role);
       window.location.href = 'login.html';
       return;
     }
+    
+    console.log("currentSchoolId النهائي:", currentSchoolId);
     loadSchoolData();
   }
 
   async function loadSchoolData() {
-    const { data: school, error } = await supabase.from('schools').select('*').eq('id', currentSchoolId).single();
-    if (error) return;
-    document.getElementById('schoolName').innerHTML = `<h2>${school.name}</h2>`;
-    const { data: students, error: studentsError } = await supabase.from('students').select('*').eq('school_id', currentSchoolId);
-    if (!studentsError) {
-      let html = `<h3>الطلاب</h3>${students.map(s => `<div class="card"><b>${s.name}</b> - نتائجه: ${JSON.stringify(s.results)}</div>`).join('')}`;
-      html += `<hr><h3>رفع CSV</h3><input type="file" id="csvUpload" accept=".csv"><button id="importCsv">استيراد</button>`;
-      document.getElementById('content').innerHTML = html;
-      document.getElementById('importCsv').onclick = () => importCSV(currentSchoolId);
+    if (!currentSchoolId) {
+      document.getElementById('content').innerHTML = "<p style='color:red'>خطأ: لا توجد مدرسة محددة</p>";
+      return;
     }
+    
+    // جلب بيانات المدرسة
+    const { data: school, error: schoolError } = await supabase
+      .from('schools')
+      .select('*')
+      .eq('id', currentSchoolId)
+      .single();
+    
+    if (schoolError) {
+      console.error("خطأ في جلب المدرسة:", schoolError);
+      document.getElementById('content').innerHTML = "<p style='color:red'>خطأ في جلب بيانات المدرسة</p>";
+      return;
+    }
+    
+    document.getElementById('schoolName').innerHTML = `<h2>🏫 ${school.name}</h2>`;
+    
+    // جلب الطلاب
+    const { data: students, error: studentsError } = await supabase
+      .from('students')
+      .select('*')
+      .eq('school_id', currentSchoolId);
+    
+    if (studentsError) {
+      console.error("خطأ في جلب الطلاب:", studentsError);
+    }
+    
+    let studentsHtml = '<h3>📚 قائمة الطلاب</h3>';
+    if (students && students.length > 0) {
+      students.forEach(s => {
+        studentsHtml += `<div class="card"><b>${s.name}</b><br>`;
+        studentsHtml += `رقم الجلوس: ${s.seat_number || '-'}<br>`;
+        studentsHtml += `النتائج: ${JSON.stringify(s.results)}</div>`;
+      });
+    } else {
+      studentsHtml += '<p>لا يوجد طلاب حتى الآن</p>';
+    }
+    
+    // نموذج رفع CSV
+    const uploadHtml = `
+      <hr>
+      <h3>📤 رفع ملف CSV</h3>
+      <p>تنسيق الملف: الاسم,رقم الجلوس,المادة,الدرجة,الصف</p>
+      <input type="file" id="csvUpload" accept=".csv">
+      <button id="importCsv">استيراد</button>
+      <div id="uploadResult"></div>
+    `;
+    
+    document.getElementById('content').innerHTML = studentsHtml + uploadHtml;
+    
+    document.getElementById('importCsv').onclick = () => importCSV(currentSchoolId);
   }
 
   async function importCSV(schoolId) {
     const file = document.getElementById('csvUpload').files[0];
-    if (!file) return;
+    if (!file) {
+      alert("اختر ملف أولاً");
+      return;
+    }
+    
     const text = await file.text();
     const rows = text.split('\n').filter(r => r.trim());
+    
+    if (rows.length < 2) {
+      alert("الملف فارغ");
+      return;
+    }
+    
     const students = [];
     for (let i = 1; i < rows.length; i++) {
       const cols = rows[i].split(',');
@@ -76,23 +161,37 @@
       const [name, seat, subject, score, gradeId] = cols.map(c => c.trim());
       students.push({
         school_id: schoolId,
-        name,
+        name: name,
         seat_number: seat,
         grade_id: gradeId,
         results: { [subject]: parseInt(score) }
       });
     }
+    
+    if (students.length === 0) {
+      alert("لا توجد بيانات صالحة في الملف");
+      return;
+    }
+    
     const { error } = await supabase.from('students').upsert(students);
-    if (error) return alert("فشل الاستيراد: " + error.message);
-    alert("تم الاستيراد بنجاح");
-    loadSchoolData();
+    
+    if (error) {
+      alert("فشل الاستيراد: " + error.message);
+      document.getElementById('uploadResult').innerHTML = `<p style='color:red'>خطأ: ${error.message}</p>`;
+    } else {
+      alert(`تم استيراد ${students.length} طالب بنجاح`);
+      document.getElementById('uploadResult').innerHTML = `<p style='color:green'>✅ تم استيراد ${students.length} طالب</p>`;
+      loadSchoolData(); // تحديث القائمة
+    }
   }
 
-  document.getElementById('logoutBtn').onclick = () => supabase.auth.signOut().then(() => {
+  document.getElementById('logoutBtn').onclick = async () => {
+    await supabase.auth.signOut();
     sessionStorage.removeItem('impersonatedSchoolId');
     window.location.href = 'login.html';
-  });
+  };
 
+  // بدء التطبيق
   init();
 </script>
 </body>
