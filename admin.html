@@ -127,61 +127,76 @@
   };
   
   // إضافة مدرسة جديدة
-  document.getElementById('addSchoolBtn').onclick = async () => {
-    const name = document.getElementById('newSchoolName').value.trim();
-    const username = document.getElementById('schoolUsername').value.trim();
-    if (!name || !username) {
-      alert("املأ جميع الحقول");
-      return;
-    }
-    
-    const tempPass = Math.random().toString(36).slice(-8);
-    
-    // إضافة المدرسة
-    const { data: newSchool, error: schoolError } = await supabase
-      .from('schools')
-      .insert([{ name, custom_grades: [], student_identifier_field: 'seat_number', student_identifier_label: 'رقم الجلوس' }])
-      .select()
-      .single();
-    
-    if (schoolError) {
-      alert("خطأ في إضافة المدرسة: " + schoolError.message);
-      return;
-    }
-    
-    // إنشاء حساب Auth
-    const { data: authUser, error: authError } = await supabase.auth.signUp({
-      email: `${username}@school.local`,
-      password: tempPass
-    });
-    
-    if (authError) {
-      await supabase.from('schools').delete().eq('id', newSchool.id);
-      alert("فشل إنشاء حساب: " + authError.message);
-      return;
-    }
-    
-    // إضافة المستخدم في جدول users
-    const { error: userError } = await supabase.from('users').insert([{
+document.getElementById('addSchoolBtn').onclick = async () => {
+  const name = document.getElementById('newSchoolName').value.trim();
+  const username = document.getElementById('schoolUsername').value.trim();
+  
+  if (!name || !username) {
+    alert("❌ املأ جميع الحقول");
+    return;
+  }
+
+  const tempPass = Math.random().toString(36).slice(-8);
+  const fakeEmail = `${username}@school.local`;
+
+  // 1. إضافة المدرسة
+  const { data: newSchool, error: schoolError } = await supabase
+    .from('schools')
+    .insert([{ 
+      name, 
+      custom_grades: [], 
+      student_identifier_field: 'seat_number', 
+      student_identifier_label: 'رقم الجلوس' 
+    }])
+    .select()
+    .single();
+
+  if (schoolError) {
+    alert("❌ خطأ في إضافة المدرسة: " + schoolError.message);
+    return;
+  }
+
+  // 2. إنشاء حساب Auth
+  const { data: authUser, error: authError } = await supabase.auth.signUp({
+    email: fakeEmail,
+    password: tempPass
+  });
+
+  if (authError) {
+    await supabase.from('schools').delete().eq('id', newSchool.id);
+    alert("❌ فشل إنشاء حساب: " + authError.message);
+    return;
+  }
+
+  // 3. إضافة المستخدم في جدول users
+  const { error: userError } = await supabase
+    .from('users')
+    .insert([{
       id: authUser.user.id,
-      email: `${username}@school.local`,
+      email: fakeEmail,
       username: username,
       role: 'schoolAdmin',
       school_id: newSchool.id
     }]);
-    
-    if (userError) {
-      alert("فشل إضافة المستخدم: " + userError.message);
-      return;
-    }
-    
-    await addLog('إضافة مدرسة', `تم إضافة مدرسة "${name}" مع مدير "${username}"`);
-    alert(`✅ تمت الإضافة بنجاح!\n\nاسم المستخدم: ${username}\nكلمة المرور المؤقتة: ${tempPass}\n\nيرجى حفظ كلمة المرور وإبلاغ مدير المدرسة بها.`);
-    
-    document.getElementById('newSchoolName').value = '';
-    document.getElementById('schoolUsername').value = '';
-    renderSchools();
-  };
+
+  if (userError) {
+    alert("❌ فشل إضافة المستخدم: " + userError.message);
+    return;
+  }
+
+  // 4. تسجيل في الـ logs
+  await supabase.from('logs').insert([{
+    user_id: authUser.user.id,
+    action: 'إضافة مدرسة',
+    details: `تم إضافة مدرسة "${name}" مع مدير "${username}"`
+  }]);
+
+  alert(`✅ تمت الإضافة بنجاح!\n\n👤 اسم المستخدم: ${username}\n🔑 كلمة المرور المؤقتة: ${tempPass}\n\n⚠️ يرجى حفظ كلمة المرور وإبلاغ مدير المدرسة بها.`);
+  
+  document.getElementById('newSchoolName').value = '';
+  document.getElementById('schoolUsername').value = '';
+  renderSchools();
+};
   
   // رفع CSV
   document.getElementById('uploadCsvBtn').onclick = async () => {
