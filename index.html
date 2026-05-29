@@ -3,92 +3,185 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>نتائج الطلاب</title>
+  <title>نتائج الطلاب - نظام إدارة النتائج المدرسية</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* تحسينات إضافية للوضع المظلم */
+    .dark-mode {
+      background: #1a1a2e;
+      color: white;
+    }
+    .dark-mode .container {
+      background: #16213e;
+      color: white;
+    }
+    .dark-mode .card {
+      background: #0f3460;
+    }
+    .dark-mode button {
+      background: #e94560;
+    }
+    .theme-toggle {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background: #1e3c72;
+      border-radius: 30px;
+      padding: 8px 15px;
+      cursor: pointer;
+      z-index: 1000;
+    }
+  </style>
 </head>
 <body>
+<button class="theme-toggle" onclick="toggleDarkMode()">🌙 وضع مظلم</button>
 <div class="container">
   <h1>🏫 نظام النتائج المدرسية</h1>
   <label>اختر المدرسة:</label>
-  <select id="schoolSelect"></select>
-  <label id="identifierLabel">رقم الجلوس:</label>
-  <input type="text" id="studentId" placeholder="أدخل رقم الطالب">
+  <select id="schoolSelect">
+    <option value="">-- جاري تحميل المدارس --</option>
+  </select>
+  <div id="loginFieldContainer">
+    <label id="identifierLabel">رقم الجلوس:</label>
+    <input type="text" id="studentId" placeholder="أدخل رقم الجلوس">
+  </div>
   <button id="searchBtn">🔍 عرض النتيجة</button>
   <div id="resultCard"></div>
+  <div id="loading" style="display:none; text-align:center">⏳ جاري البحث...</div>
 </div>
 <script type="module">
   import { supabase } from './supabase-config.js';
 
-  const schoolSelect = document.getElementById('schoolSelect');
-  const identifierLabel = document.getElementById('identifierLabel');
-  const studentIdInput = document.getElementById('studentId');
-  const searchBtn = document.getElementById('searchBtn');
-  const resultDiv = document.getElementById('resultCard');
-
+  let currentSchoolId = null;
+  
+  // إظهار وإخفاء التحميل
+  function showLoading() { document.getElementById('loading').style.display = 'block'; }
+  function hideLoading() { document.getElementById('loading').style.display = 'none'; }
+  
+  // تحميل المدارس
   async function loadSchools() {
-    const { data: schools, error } = await supabase.from('schools').select('id, name, student_identifier_label, student_identifier_field, custom_grades');
-    if (error) return console.error(error);
-    schoolSelect.innerHTML = '<option value="">-- اختر مدرسة --</option>';
+    showLoading();
+    const { data: schools, error } = await supabase.from('schools').select('id, name, student_identifier_field, student_identifier_label');
+    hideLoading();
+    if (error) {
+      console.error(error);
+      document.getElementById('schoolSelect').innerHTML = '<option value="">خطأ في تحميل المدارس</option>';
+      return;
+    }
+    const select = document.getElementById('schoolSelect');
+    select.innerHTML = '<option value="">-- اختر مدرسة --</option>';
     schools.forEach(school => {
       const option = document.createElement('option');
       option.value = school.id;
       option.textContent = school.name;
-      schoolSelect.appendChild(option);
+      option.dataset.loginField = school.student_identifier_field || 'seat_number';
+      option.dataset.loginLabel = school.student_identifier_label || 'رقم الجلوس';
+      select.appendChild(option);
     });
   }
-
-  schoolSelect.addEventListener('change', async () => {
-    const schoolId = schoolSelect.value;
-    if (!schoolId) return;
-    const { data: school, error } = await supabase.from('schools').select('student_identifier_label, student_identifier_field').eq('id', schoolId).single();
-    if (error) return;
-    identifierLabel.textContent = (school.student_identifier_label || "رقم الجلوس") + ":";
-    studentIdInput.placeholder = `أدخل ${school.student_identifier_label || "رقم الجلوس"}`;
+  
+  // تغيير طريقة الدخول حسب المدرسة المختارة
+  document.getElementById('schoolSelect').addEventListener('change', (e) => {
+    const option = e.target.options[e.target.selectedIndex];
+    if (!option.value) return;
+    currentSchoolId = option.value;
+    const loginField = option.dataset.loginField;
+    const loginLabel = option.dataset.loginLabel;
+    const labels = {
+      'seat_number': 'رقم الجلوس',
+      'code': 'الكود',
+      'national_id': 'الرقم القومي'
+    };
+    document.getElementById('identifierLabel').textContent = (loginLabel || labels[loginField] || 'رقم الجلوس') + ':';
+    document.getElementById('studentId').placeholder = `أدخل ${loginLabel || labels[loginField] || 'رقم الجلوس'}`;
   });
-
-  searchBtn.addEventListener('click', async () => {
-    const schoolId = schoolSelect.value;
-    const idValue = studentIdInput.value.trim();
-    if (!schoolId || !idValue) {
-      alert("يرجى اختيار المدرسة وإدخال رقم الطالب");
+  
+  // البحث عن الطالب
+  document.getElementById('searchBtn').addEventListener('click', async () => {
+    const idValue = document.getElementById('studentId').value.trim();
+    if (!currentSchoolId || !idValue) {
+      alert("يرجى اختيار المدرسة وإدخال بيانات الطالب");
       return;
     }
-
-    const { data: school, error: schoolError } = await supabase.from('schools').select('student_identifier_field, student_identifier_label, custom_grades').eq('id', schoolId).single();
-    if (schoolError) return;
-
-    const idField = school.student_identifier_field || "seat_number";
-    const { data: students, error: studentsError } = await supabase
+    showLoading();
+    
+    // جلب إعدادات المدرسة
+    const { data: school, error: schoolError } = await supabase
+      .from('schools')
+      .select('student_identifier_field, custom_grades')
+      .eq('id', currentSchoolId)
+      .single();
+    
+    if (schoolError) {
+      hideLoading();
+      alert("خطأ في جلب بيانات المدرسة");
+      return;
+    }
+    
+    const loginField = school.student_identifier_field || 'seat_number';
+    
+    // البحث عن الطالب
+    const { data: students, error: studentError } = await supabase
       .from('students')
       .select('*')
-      .eq('school_id', schoolId)
-      .eq(idField, idValue)
+      .eq('school_id', currentSchoolId)
+      .eq(loginField, idValue)
       .limit(1);
-
-    if (studentsError || !students || students.length === 0) {
-      resultDiv.innerHTML = "<p style='color:red;text-align:center'>⚠️ لا يوجد طالب بهذا الرقم</p>";
+    
+    hideLoading();
+    
+    if (studentError || !students || students.length === 0) {
+      document.getElementById('resultCard').innerHTML = "<p style='color:red;text-align:center'>⚠️ لا يوجد طالب بهذه البيانات</p>";
       return;
     }
-
+    
     const student = students[0];
-    const gradeId = student.grade_id;
-    let subjects = [];
-    if (school.custom_grades && Array.isArray(school.custom_grades)) {
-      const grade = school.custom_grades.find(g => g.gradeId === gradeId);
-      if (grade) subjects = grade.subjects;
+    const results = student.results || {};
+    
+    // بناء كارت النتيجة
+    let html = `
+      <div class="card">
+        <h2>${student.name}</h2>
+        <p><strong>${school.student_identifier_label || 'رقم الجلوس'}:</strong> ${student[loginField] || '-'}</p>
+        <table border="1">
+          <thead><tr><th>المادة</th><th>الدرجة</th><th>التقدير</th></tr></thead>
+          <tbody>
+    `;
+    
+    // حساب التقدير
+    const getGrade = (score) => {
+      if (score >= 90) return 'ممتاز';
+      if (score >= 80) return 'جيد جداً';
+      if (score >= 70) return 'جيد';
+      if (score >= 60) return 'مقبول';
+      return 'راسب';
+    };
+    
+    for (const [subject, score] of Object.entries(results)) {
+      html += `<tr><td>${subject}</td><td>${score}</td><td>${getGrade(score)}</td></tr>`;
     }
-
-    let html = `<div class="card"><h2>${student.name}</h2>
-      <p><strong>${school.student_identifier_label || "رقم الجلوس"}:</strong> ${student[idField]}</p>
-      <table border="1"><tr><th>المادة</th><th>الدرجة</th></tr>`;
-    subjects.forEach(sub => {
-      let score = student.results?.[sub.subId] || "—";
-      html += `<tr><td>${sub.name}</td><td>${score}</td><tr>`;
-    });
-    html += `</table></div>`;
-    resultDiv.innerHTML = html;
+    
+    html += `
+          </tbody>
+        </table>
+        <button onclick="window.print()" style="margin-top:15px">🖨️ طباعة الكارت</button>
+      </div>
+    `;
+    
+    document.getElementById('resultCard').innerHTML = html;
   });
-
+  
+  // الوضع المظلم
+  window.toggleDarkMode = () => {
+    document.body.classList.toggle('dark-mode');
+    localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+  };
+  
+  // استعادة الوضع المظلم من التخزين المحلي
+  if (localStorage.getItem('darkMode') === 'true') {
+    document.body.classList.add('dark-mode');
+  }
+  
   loadSchools();
 </script>
 </body>
