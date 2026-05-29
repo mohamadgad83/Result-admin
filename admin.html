@@ -36,9 +36,9 @@
   }
 
   window.openSchoolImpersonate = (schoolId) => {
-    sessionStorage.setItem('impersonatedSchoolId', schoolId);
-    window.location.href = 'school-admin.html';
-  };
+  sessionStorage.setItem('impersonatedSchoolId', schoolId);
+  window.location.href = 'school-admin.html';
+};
 
   window.deleteSchool = async (id) => {
     if (confirm("حذف المدرسة سيحذف كل طلابها!")) {
