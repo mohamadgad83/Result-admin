@@ -2,80 +2,73 @@
 <html dir="rtl" lang="ar">
 <head>
   <meta charset="UTF-8">
-  <title>تسجيل الدخول</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تسجيل الدخول - نظام إدارة النتائج</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="container" style="max-width:400px">
   <h1>🔐 تسجيل الدخول</h1>
-  <input type="email" id="email" placeholder="البريد الإلكتروني">
+  <input type="text" id="username" placeholder="اسم المستخدم" autocomplete="off">
   <input type="password" id="password" placeholder="كلمة المرور">
   <button id="loginBtn">دخول</button>
   <div id="errorMsg" style="color:red; margin-top:10px"></div>
+  <div id="loading" style="display:none; text-align:center; margin-top:10px">⏳ جاري التحقق...</div>
 </div>
 <script type="module">
   import { supabase } from './supabase-config.js';
 
-document.getElementById('loginBtn').onclick = async () => {
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  
-  console.log("بيحاول يسجل دخول:", email);
-  
-  // حاول تسجيل الدخول أولاً
-  let { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  
-  // لو فشل، سجل مستخدم جديد
-  if (error) {
-    console.log("مفيش مستخدم، هنسجل واحد جديد");
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email: email,
-      password: password,
-    });
-    if (signUpError) {
-      console.error("خطأ في التسجيل:", signUpError);
-      document.getElementById('errorMsg').innerText = "فشل التسجيل: " + signUpError.message;
+  document.getElementById('loginBtn').onclick = async () => {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    
+    if (!username || !password) {
+      document.getElementById('errorMsg').innerText = "املأ جميع الحقول";
       return;
     }
-    document.getElementById('errorMsg').innerText = "تم إنشاء المستخدم الجديد! حاول تسجيل الدخول مرة أخرى.";
-    console.log("تم إنشاء مستخدم جديد:", signUpData);
-    return;
-  }
-  
-  console.log("تم تسجيل الدخول بنجاح:", data.user.id);
-  
-  // جلب دور المستخدم من جدول users
-  const { data: userData, error: userError } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', data.user.id)
-    .single();
-  
-  if (userError || !userData) {
-    console.log("مفيش دور للمستخدم، هضيفه كـ schoolAdmin مؤقتاً");
-    // لو مفيش دور، ضيفه كـ schoolAdmin (أو superAdmin لو أول مستخدم)
-    await supabase.from('users').insert([{
-      id: data.user.id,
-      email: email,
-      role: 'superAdmin'
-    }]);
-  }
-  
-  // جلب الدور تاني بعد ما ضفناه
-  const { data: userData2 } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', data.user.id)
-    .single();
-  
-  console.log("الدور:", userData2?.role);
-  
-  if (userData2?.role === 'superAdmin') {
-    window.location.href = 'admin.html';
-  } else {
-    window.location.href = 'school-admin.html';
-  }
-};
+    
+    document.getElementById('loading').style.display = 'block';
+    
+    // البحث عن المستخدم بالـ username
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('email, role, school_id, username')
+      .eq('username', username)
+      .maybeSingle();
+    
+    if (userError || !userData) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('errorMsg').innerText = "اسم المستخدم غير صحيح";
+      return;
+    }
+    
+    // محاولة تسجيل الدخول
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: userData.email,
+      password: password
+    });
+    
+    document.getElementById('loading').style.display = 'none';
+    
+    if (error) {
+      document.getElementById('errorMsg').innerText = "كلمة المرور غير صحيحة";
+      return;
+    }
+    
+    // حفظ معلومات المستخدم مؤقتاً
+    sessionStorage.setItem('userRole', userData.role);
+    sessionStorage.setItem('userSchoolId', userData.school_id || '');
+    
+    // التوجيه حسب الصلاحية
+    if (userData.role === 'superAdmin') {
+      window.location.href = 'admin.html';
+    } else if (userData.role === 'schoolAdmin') {
+      window.location.href = 'school-admin.html';
+    } else {
+      document.getElementById('errorMsg').innerText = "صلاحية غير معروفة";
+      await supabase.auth.signOut();
+    }
+  };
 </script>
 </body>
 </html>
