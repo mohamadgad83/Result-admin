@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>تسجيل الدخول</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container" style="max-width:400px">
+  <h1>🔐 تسجيل الدخول</h1>
+  <input type="email" id="email" placeholder="البريد الإلكتروني">
+  <input type="password" id="password" placeholder="كلمة المرور">
+  <button id="loginBtn">دخول</button>
+  <div id="errorMsg" style="color:red; margin-top:10px"></div>
+</div>
+<script type="module">
+  import { auth, db } from './firebase-config.js';
+  import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  document.getElementById('loginBtn').onclick = async () => {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    try {
+      const userCred = await signInWithEmailAndPassword(auth, email, password);
+      const uid = userCred.user.uid;
+      const userDoc = await getDoc(doc(db, "users", uid));
+      if (!userDoc.exists()) {
+        document.getElementById('errorMsg').innerText = "ليس لديك صلاحية";
+        await auth.signOut();
+        return;
+      }
+      const role = userDoc.data().role;
+      if (role === 'superAdmin') {
+        window.location.href = 'admin.html';
+      } else if (role === 'schoolAdmin') {
+        window.location.href = 'school-admin.html';
+      } else {
+        document.getElementById('errorMsg').innerText = "دور غير معروف";
+        await auth.signOut();
+      }
+    } catch (err) {
+      document.getElementById('errorMsg').innerText = "خطأ في البريد أو كلمة المرور";
+    }
+  };
+</script>
+</body>
+</html>

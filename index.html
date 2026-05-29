@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نتائج الطلاب</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <h1>🏫 نظام النتائج المدرسية</h1>
+  <label>اختر المدرسة:</label>
+  <select id="schoolSelect"></select>
+  <label id="identifierLabel">رقم الجلوس:</label>
+  <input type="text" id="studentId" placeholder="أدخل رقم الطالب">
+  <button id="searchBtn">🔍 عرض النتيجة</button>
+  <div id="resultCard"></div>
+</div>
+<script type="module">
+  import { db } from './firebase-config.js';
+  import { collection, getDocs, doc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+  const schoolSelect = document.getElementById('schoolSelect');
+  const identifierLabel = document.getElementById('identifierLabel');
+  const studentIdInput = document.getElementById('studentId');
+  const searchBtn = document.getElementById('searchBtn');
+  const resultDiv = document.getElementById('resultCard');
+
+  async function loadSchools() {
+    const snap = await getDocs(collection(db, "schools"));
+    schoolSelect.innerHTML = '<option value="">-- اختر مدرسة --</option>';
+    snap.forEach(docSnap => {
+      const school = docSnap.data();
+      const option = document.createElement('option');
+      option.value = docSnap.id;
+      option.textContent = school.name;
+      schoolSelect.appendChild(option);
+    });
+  }
+
+  schoolSelect.addEventListener('change', async () => {
+    const schoolId = schoolSelect.value;
+    if (!schoolId) return;
+    const schoolDoc = await getDoc(doc(db, "schools", schoolId));
+    const school = schoolDoc.data();
+    identifierLabel.textContent = (school.studentIdentifierLabel || "رقم الجلوس") + ":";
+    studentIdInput.placeholder = `أدخل ${school.studentIdentifierLabel || "رقم الجلوس"}`;
+  });
+
+  searchBtn.addEventListener('click', async () => {
+    const schoolId = schoolSelect.value;
+    const idValue = studentIdInput.value.trim();
+    if (!schoolId || !idValue) {
+      alert("يرجى اختيار المدرسة وإدخال رقم الطالب");
+      return;
+    }
+    const schoolDoc = await getDoc(doc(db, "schools", schoolId));
+    const school = schoolDoc.data();
+    const idField = school.studentIdentifierField || "seatNumber";
+    const studentsRef = collection(db, "schools", schoolId, "students");
+    const q = query(studentsRef, where(idField, "==", idValue));
+    const querySnap = await getDocs(q);
+    if (querySnap.empty) {
+      resultDiv.innerHTML = "<p style='color:red;text-align:center'>⚠️ لا يوجد طالب بهذا الرقم</p>";
+      return;
+    }
+    const student = querySnap.docs[0].data();
+    const gradeId = student.gradeId;
+    let subjects = [];
+    if (school.customGrades) {
+      const grade = school.customGrades.find(g => g.gradeId === gradeId);
+      if (grade) subjects = grade.subjects;
+    }
+    let html = `<div class="card"><h2>${student.name}</h2>
+      <p><strong>${school.studentIdentifierLabel || "رقم الجلوس"}:</strong> ${student[idField]}</p>
+      <table border="1"><tr><th>المادة</th><th>الدرجة</th></tr>`;
+    subjects.forEach(sub => {
+      let score = student.results?.[sub.subId] || "—";
+      html += `<tr><td>${sub.name}</td><td>${score}</td></tr>`;
+    });
+    html += `</table></div>`;
+    resultDiv.innerHTML = html;
+  });
+
+  loadSchools();
+</script>
+</body>
+</html>
