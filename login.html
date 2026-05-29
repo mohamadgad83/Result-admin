@@ -14,33 +14,34 @@
   <div id="errorMsg" style="color:red; margin-top:10px"></div>
 </div>
 <script type="module">
-  import { auth, db } from './firebase-config.js';
-  import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { supabase } from './supabase-config.js';
 
   document.getElementById('loginBtn').onclick = async () => {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    try {
-      const userCred = await signInWithEmailAndPassword(auth, email, password);
-      const uid = userCred.user.uid;
-      const userDoc = await getDoc(doc(db, "users", uid));
-      if (!userDoc.exists()) {
-        document.getElementById('errorMsg').innerText = "ليس لديك صلاحية";
-        await auth.signOut();
-        return;
-      }
-      const role = userDoc.data().role;
-      if (role === 'superAdmin') {
-        window.location.href = 'admin.html';
-      } else if (role === 'schoolAdmin') {
-        window.location.href = 'school-admin.html';
-      } else {
-        document.getElementById('errorMsg').innerText = "دور غير معروف";
-        await auth.signOut();
-      }
-    } catch (err) {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
       document.getElementById('errorMsg').innerText = "خطأ في البريد أو كلمة المرور";
+      return;
+    }
+    const userId = data.user.id;
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', userId)
+      .single();
+    if (userError || !userData) {
+      document.getElementById('errorMsg').innerText = "ليس لديك صلاحية";
+      await supabase.auth.signOut();
+      return;
+    }
+    if (userData.role === 'superAdmin') {
+      window.location.href = 'admin.html';
+    } else if (userData.role === 'schoolAdmin') {
+      window.location.href = 'school-admin.html';
+    } else {
+      document.getElementById('errorMsg').innerText = "دور غير معروف";
+      await supabase.auth.signOut();
     }
   };
 </script>
