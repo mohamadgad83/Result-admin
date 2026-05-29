@@ -2,108 +2,232 @@
 <html dir="rtl" lang="ar">
 <head>
   <meta charset="UTF-8">
-  <title>لوحة السوبر أدمن</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة التحكم العامة - Super Admin</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .school-card {
+      background: #f9f9ff;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logs-panel {
+      max-height: 300px;
+      overflow-y: auto;
+      background: #f5f5f5;
+      padding: 10px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+    .log-entry {
+      border-bottom: 1px solid #ddd;
+      padding: 5px;
+      font-family: monospace;
+    }
+  </style>
 </head>
 <body>
 <div class="container">
   <h1>👑 لوحة التحكم العامة</h1>
   <button id="logoutBtn">تسجيل خروج</button>
+  <button id="darkModeBtn" style="background:#666">🌙</button>
   <hr>
-  <h2>إضافة مدرسة جديدة</h2>
-  <input type="text" id="newSchoolName" placeholder="اسم المدرسة">
-  <input type="email" id="schoolAdminEmail" placeholder="بريد مدير المدرسة">
-  <button id="addSchoolBtn">إضافة مدرسة</button>
+  
+  <h2>➕ إضافة مدرسة جديدة</h2>
+  <div style="background:#eef2fa; padding:15px; border-radius:12px">
+    <input type="text" id="newSchoolName" placeholder="اسم المدرسة" style="width:100%; margin-bottom:10px">
+    <input type="text" id="schoolUsername" placeholder="اسم مستخدم مدير المدرسة" style="width:100%; margin-bottom:10px">
+    <button id="addSchoolBtn">➕ إضافة مدرسة</button>
+  </div>
+  
+  <h2>🏫 المدارس</h2>
   <div id="schoolsList"></div>
-
-  <h2>رفع CSV لمدرسة معينة</h2>
-  <select id="csvSchoolSelect"></select>
-  <input type="file" id="csvFile" accept=".csv">
+  
+  <h2>📤 رفع CSV لمدرسة معينة</h2>
+  <select id="csvSchoolSelect" style="width:100%; margin-bottom:10px">
+    <option value="">-- اختر مدرسة --</option>
+  </select>
+  <input type="file" id="csvFile" accept=".csv, .xlsx">
   <button id="uploadCsvBtn">رفع CSV</button>
+  
+  <h2>📊 سجل العمليات (Logs)</h2>
+  <div id="logsPanel" class="logs-panel">جاري التحميل...</div>
 </div>
 <script type="module">
   import { supabase } from './supabase-config.js';
 
-  async function renderSchools() {
-    const { data: schools, error } = await supabase.from('schools').select('id, name');
-    if (error) return;
-    const div = document.getElementById('schoolsList');
-    div.innerHTML = schools.map(s => `<div>${s.name} 
-      <button onclick="openSchoolImpersonate('${s.id}')">فتح لوحة المدرسة</button>
-      <button onclick="deleteSchool('${s.id}')">حذف</button></div>`).join('');
-    const csvSelect = document.getElementById('csvSchoolSelect');
-    csvSelect.innerHTML = '<option value="">اختر مدرسة</option>' + schools.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+  // التحقق من تسجيل الدخول والصلاحية
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) window.location.href = 'login.html';
+  
+  const { data: userData } = await supabase.from('users').select('role').eq('id', user.id).single();
+  if (!userData || userData.role !== 'superAdmin') window.location.href = 'login.html';
+  
+  // تسجيل الخروج
+  document.getElementById('logoutBtn').onclick = () => supabase.auth.signOut().then(() => window.location.href='login.html');
+  
+  // سجل العمليات
+  async function addLog(action, details) {
+    await supabase.from('logs').insert([{
+      user_id: user.id,
+      action: action,
+      details: details,
+      created_at: new Date()
+    }]);
+    loadLogs();
   }
-
-  window.openSchoolImpersonate = (schoolId) => {
-  sessionStorage.setItem('impersonatedSchoolId', schoolId);
-  window.location.href = 'school-admin.html';
-};
-
-  window.deleteSchool = async (id) => {
-    if (confirm("حذف المدرسة سيحذف كل طلابها!")) {
-      await supabase.from('schools').delete().eq('id', id);
-      renderSchools();
+  
+  async function loadLogs() {
+    const { data: logs } = await supabase.from('logs').select('*').order('created_at', { ascending: false }).limit(50);
+    const panel = document.getElementById('logsPanel');
+    if (!logs || logs.length === 0) {
+      panel.innerHTML = 'لا توجد سجلات';
+      return;
     }
+    panel.innerHTML = logs.map(log => `
+      <div class="log-entry">
+        <strong>${new Date(log.created_at).toLocaleString()}</strong> - 
+        ${log.action}: ${log.details}
+      </div>
+    `).join('');
+  }
+  
+  // عرض المدارس
+  async function renderSchools() {
+    const { data: schools } = await supabase.from('schools').select('id, name');
+    const div = document.getElementById('schoolsList');
+    div.innerHTML = schools ? schools.map(s => `
+      <div class="school-card">
+        <span>${s.name}</span>
+        <div>
+          <button onclick="openSchoolImpersonate('${s.id}')" style="background:#e94560">فتح لوحة المدرسة</button>
+          <button onclick="deleteSchool('${s.id}')" style="background:#dc3545">حذف</button>
+        </div>
+      </div>
+    `).join('') : 'لا توجد مدارس';
+    
+    const csvSelect = document.getElementById('csvSchoolSelect');
+    csvSelect.innerHTML = '<option value="">-- اختر مدرسة --</option>' + (schools ? schools.map(s => `<option value="${s.id}">${s.name}</option>`).join('') : '');
+  }
+  
+  window.openSchoolImpersonate = (schoolId) => {
+    sessionStorage.setItem('impersonatedSchoolId', schoolId);
+    window.location.href = 'school-admin.html';
   };
-
+  
+  window.deleteSchool = async (id) => {
+    if (!confirm("حذف المدرسة سيحذف كل بياناتها! هل أنت متأكد؟")) return;
+    await supabase.from('schools').delete().eq('id', id);
+    await addLog('حذف مدرسة', `تم حذف المدرسة رقم ${id}`);
+    renderSchools();
+  };
+  
+  // إضافة مدرسة جديدة
   document.getElementById('addSchoolBtn').onclick = async () => {
     const name = document.getElementById('newSchoolName').value.trim();
-    const adminEmail = document.getElementById('schoolAdminEmail').value.trim();
-    if (!name || !adminEmail) return alert("املأ جميع الحقول");
-    
-    const { data: newSchool, error: schoolError } = await supabase
-      .from('schools')
-      .insert([{ name, custom_grades: [], student_identifier_field: "seat_number", student_identifier_label: "رقم الجلوس" }])
-      .select()
-      .single();
-    if (schoolError) return alert("خطأ في إضافة المدرسة");
+    const username = document.getElementById('schoolUsername').value.trim();
+    if (!name || !username) {
+      alert("املأ جميع الحقول");
+      return;
+    }
     
     const tempPass = Math.random().toString(36).slice(-8);
-    const { data: authUser, error: signupError } = await supabase.auth.signUp({
-      email: adminEmail,
-      password: tempPass,
-    });
-    if (signupError) return alert("فشل إنشاء حساب مدير المدرسة");
     
-    await supabase.from('users').insert([{
+    // إضافة المدرسة
+    const { data: newSchool, error: schoolError } = await supabase
+      .from('schools')
+      .insert([{ name, custom_grades: [], student_identifier_field: 'seat_number', student_identifier_label: 'رقم الجلوس' }])
+      .select()
+      .single();
+    
+    if (schoolError) {
+      alert("خطأ في إضافة المدرسة: " + schoolError.message);
+      return;
+    }
+    
+    // إنشاء حساب Auth
+    const { data: authUser, error: authError } = await supabase.auth.signUp({
+      email: `${username}@school.local`,
+      password: tempPass
+    });
+    
+    if (authError) {
+      await supabase.from('schools').delete().eq('id', newSchool.id);
+      alert("فشل إنشاء حساب: " + authError.message);
+      return;
+    }
+    
+    // إضافة المستخدم في جدول users
+    const { error: userError } = await supabase.from('users').insert([{
       id: authUser.user.id,
-      email: adminEmail,
+      email: `${username}@school.local`,
+      username: username,
       role: 'schoolAdmin',
       school_id: newSchool.id
     }]);
-    alert(`تم إنشاء مدير المدرسة بنجاح، كلمة المرور المؤقتة: ${tempPass}`);
+    
+    if (userError) {
+      alert("فشل إضافة المستخدم: " + userError.message);
+      return;
+    }
+    
+    await addLog('إضافة مدرسة', `تم إضافة مدرسة "${name}" مع مدير "${username}"`);
+    alert(`✅ تمت الإضافة بنجاح!\n\nاسم المستخدم: ${username}\nكلمة المرور المؤقتة: ${tempPass}\n\nيرجى حفظ كلمة المرور وإبلاغ مدير المدرسة بها.`);
+    
+    document.getElementById('newSchoolName').value = '';
+    document.getElementById('schoolUsername').value = '';
     renderSchools();
   };
-
+  
+  // رفع CSV
   document.getElementById('uploadCsvBtn').onclick = async () => {
     const schoolId = document.getElementById('csvSchoolSelect').value;
     const file = document.getElementById('csvFile').files[0];
-    if (!schoolId || !file) return alert("اختر مدرسة وملف CSV");
+    if (!schoolId || !file) {
+      alert("اختر مدرسة وملف CSV");
+      return;
+    }
+    
     const text = await file.text();
     const rows = text.split('\n').filter(r => r.trim());
-    if (rows.length < 2) return alert("الملف فارغ");
+    if (rows.length < 2) {
+      alert("الملف فارغ");
+      return;
+    }
+    
     const students = [];
     for (let i = 1; i < rows.length; i++) {
       const cols = rows[i].split(',');
-      if (cols.length < 5) continue;
-      const [name, seat, subject, score, gradeId] = cols.map(c => c.trim());
-      students.push({
-        school_id: parseInt(schoolId),
-        name,
-        seat_number: seat,
-        grade_id: gradeId,
-        results: { [subject]: parseInt(score) }
-      });
+      if (cols.length < 4) continue;
+      const [name, seat, subject, score] = cols.map(c => c.trim());
+      if (name && seat && subject && score) {
+        students.push({
+          school_id: parseInt(schoolId),
+          name: name,
+          seat_number: seat,
+          results: { [subject]: parseInt(score) }
+        });
+      }
     }
+    
     const { error } = await supabase.from('students').upsert(students);
-    if (error) return alert("خطأ في رفع البيانات: " + error.message);
-    alert("تم رفع CSV بنجاح");
+    if (error) {
+      alert("خطأ في رفع CSV: " + error.message);
+    } else {
+      await addLog('رفع CSV', `تم رفع ${students.length} طالب للمدرسة ${schoolId}`);
+      alert(`تم رفع ${students.length} طالب بنجاح`);
+    }
   };
-
-  document.getElementById('logoutBtn').onclick = () => supabase.auth.signOut().then(() => window.location.href='login.html');
-
+  
+  // الوضع المظلم
+  document.getElementById('darkModeBtn').onclick = () => document.body.classList.toggle('dark-mode');
+  
   renderSchools();
+  loadLogs();
 </script>
 </body>
 </html>
