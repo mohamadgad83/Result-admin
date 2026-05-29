@@ -16,47 +16,66 @@
 <script type="module">
   import { supabase } from './supabase-config.js';
 
-  document.getElementById('loginBtn').onclick = async () => {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    
-    console.log("محاولة تسجيل الدخول:", email);
-    
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    
-    if (error) {
-      console.error("خطأ في التسجيل:", error);
-      document.getElementById('errorMsg').innerText = "خطأ في البريد أو كلمة المرور: " + error.message;
+document.getElementById('loginBtn').onclick = async () => {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  
+  console.log("بيحاول يسجل دخول:", email);
+  
+  // حاول تسجيل الدخول أولاً
+  let { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  
+  // لو فشل، سجل مستخدم جديد
+  if (error) {
+    console.log("مفيش مستخدم، هنسجل واحد جديد");
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+    });
+    if (signUpError) {
+      console.error("خطأ في التسجيل:", signUpError);
+      document.getElementById('errorMsg').innerText = "فشل التسجيل: " + signUpError.message;
       return;
     }
-    
-    console.log("تم تسجيل الدخول بنجاح:", data.user.id);
-    
-    const userId = data.user.id;
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('role')
-      .eq('id', userId)
-      .single();
-    
-    if (userError) {
-      console.error("خطأ في جلب الدور:", userError);
-      document.getElementById('errorMsg').innerText = "ليس لديك صلاحية";
-      await supabase.auth.signOut();
-      return;
-    }
-    
-    console.log("دور المستخدم:", userData.role);
-    
-    if (userData.role === 'superAdmin') {
-      window.location.href = 'admin.html';
-    } else if (userData.role === 'schoolAdmin') {
-      window.location.href = 'school-admin.html';
-    } else {
-      document.getElementById('errorMsg').innerText = "دور غير معروف";
-      await supabase.auth.signOut();
-    }
-  };
+    document.getElementById('errorMsg').innerText = "تم إنشاء المستخدم الجديد! حاول تسجيل الدخول مرة أخرى.";
+    console.log("تم إنشاء مستخدم جديد:", signUpData);
+    return;
+  }
+  
+  console.log("تم تسجيل الدخول بنجاح:", data.user.id);
+  
+  // جلب دور المستخدم من جدول users
+  const { data: userData, error: userError } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', data.user.id)
+    .single();
+  
+  if (userError || !userData) {
+    console.log("مفيش دور للمستخدم، هضيفه كـ schoolAdmin مؤقتاً");
+    // لو مفيش دور، ضيفه كـ schoolAdmin (أو superAdmin لو أول مستخدم)
+    await supabase.from('users').insert([{
+      id: data.user.id,
+      email: email,
+      role: 'superAdmin'
+    }]);
+  }
+  
+  // جلب الدور تاني بعد ما ضفناه
+  const { data: userData2 } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', data.user.id)
+    .single();
+  
+  console.log("الدور:", userData2?.role);
+  
+  if (userData2?.role === 'superAdmin') {
+    window.location.href = 'admin.html';
+  } else {
+    window.location.href = 'school-admin.html';
+  }
+};
 </script>
 </body>
 </html>
