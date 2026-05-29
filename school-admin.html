@@ -11,163 +11,89 @@
   <button id="logoutBtn">تسجيل خروج</button>
   <div id="schoolName"></div>
   <hr>
-  <h2>إدارة الصفوف والمواد</h2>
-  <div id="gradesSubjectsEditor"></div>
-  <hr>
-  <h2>رفع CSV (الاسم، رقم الجلوس، المادة، الدرجة، gradeId)</h2>
-  <input type="file" id="csvFile" accept=".csv">
-  <button id="uploadCsvBtn">رفع واستيراد</button>
-  <hr>
-  <h2>قائمة الطلاب</h2>
-  <div id="studentsList"></div>
+  <div id="content"></div>
 </div>
 <script type="module">
-  import { auth, db } from './firebase-config.js';
-  import { signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { doc, getDoc, updateDoc, collection, getDocs, writeBatch, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { supabase } from './supabase-config.js';
 
   let currentSchoolId = null;
 
-  auth.onAuthStateChanged(async (user) => {
-    if (!user) return window.location.href = 'login.html';
-    const userDoc = await getDoc(doc(db, "users", user.uid));
-    if (!userDoc.exists()) return window.location.href = 'login.html';
-    const role = userDoc.data().role;
-    let schoolId = userDoc.data().schoolId;
-    // تقمص من sessionStorage إذا كان سوبر أدمن
-    const impersonated = sessionStorage.getItem('impersonatedSchoolId');
-    if (role === 'superAdmin' && impersonated) {
-      schoolId = impersonated;
-      const bar = document.createElement('div');
-      bar.style.background = '#ff9800';
-      bar.style.padding = '8px';
-      bar.style.textAlign = 'center';
-      bar.innerHTML = `⚠️ أنت تعمل كـ Super Admin على هذه المدرسة. <button id="exitImpersonate">خروج</button>`;
-      document.body.prepend(bar);
-      document.getElementById('exitImpersonate').onclick = () => {
+  async function init() {
+    const impersonatedId = sessionStorage.getItem('impersonatedSchoolId');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      window.location.href = 'login.html';
+      return;
+    }
+    const { data: userData, error: userError } = await supabase
+      .from('users')
+      .select('role, school_id')
+      .eq('id', user.id)
+      .single();
+    if (userError || !userData) {
+      await supabase.auth.signOut();
+      window.location.href = 'login.html';
+      return;
+    }
+    if (userData.role === 'superAdmin' && impersonatedId) {
+      currentSchoolId = parseInt(impersonatedId);
+      document.body.insertAdjacentHTML('afterbegin', '<div style="background:#ff9800;padding:8px;text-align:center">وضع التقمص - <button id="exitImp">خروج</button></div>');
+      document.getElementById('exitImp').onclick = () => {
         sessionStorage.removeItem('impersonatedSchoolId');
         window.location.href = 'admin.html';
       };
-    } else if (role !== 'schoolAdmin') {
-      alert("غير مصرح لك بالدخول");
-      return window.location.href = 'login.html';
-    }
-    currentSchoolId = schoolId;
-    await loadSchoolData();
-  });
-
-  async function loadSchoolData() {
-    const schoolRef = doc(db, "schools", currentSchoolId);
-    const schoolSnap = await getDoc(schoolRef);
-    if (!schoolSnap.exists()) return;
-    const school = schoolSnap.data();
-    document.getElementById('schoolName').innerHTML = `<h2>${school.name}</h2>`;
-    renderGradesEditor(school.customGrades || []);
-    await loadStudents();
-  }
-
-  function renderGradesEditor(grades) {
-    const container = document.getElementById('gradesSubjectsEditor');
-    if (!grades.length) {
-      container.innerHTML = '<p>لم يتم إعداد الصفوف بعد. أضف صفاً باستخدام الزر أدناه.</p>';
-    }
-    let html = '';
-    grades.forEach((grade, idx) => {
-      html += `<div style="border:1px solid #ccc; margin:10px; padding:10px; border-radius:12px;">
-        <h3>${grade.name} <button onclick="removeGrade('${grade.gradeId}')">حذف الصف</button></h3>
-        <div>المواد: ${grade.subjects.map(s => `${s.name} (${s.subId})`).join(', ')}</div>
-        <input type="text" id="newSubName_${grade.gradeId}" placeholder="اسم المادة الجديدة">
-        <input type="text" id="newSubId_${grade.gradeId}" placeholder="معرف المادة (مثل math)">
-        <button onclick="addSubject('${grade.gradeId}')">إضافة مادة</button>
-        </div>`;
-    });
-    html += `<div><input type="text" id="newGradeName" placeholder="اسم الصف الجديد (مثل الصف الأول)">
-      <input type="text" id="newGradeId" placeholder="معرف الصف (مثل g1)">
-      <button id="addGradeBtn">إضافة صف جديد</button></div>`;
-    container.innerHTML = html;
-    document.getElementById('addGradeBtn').onclick = addNewGrade;
-  }
-
-  window.addNewGrade = async () => {
-    const name = document.getElementById('newGradeName').value.trim();
-    const gid = document.getElementById('newGradeId').value.trim();
-    if (!name || !gid) return alert("أدخل اسم ومعرف الصف");
-    const schoolRef = doc(db, "schools", currentSchoolId);
-    const schoolSnap = await getDoc(schoolRef);
-    const grades = schoolSnap.data().customGrades || [];
-    grades.push({ gradeId: gid, name, order: grades.length+1, subjects: [] });
-    await updateDoc(schoolRef, { customGrades: grades });
-    loadSchoolData();
-  };
-
-  window.removeGrade = async (gradeId) => {
-    if (!confirm("حذف الصف سيحذف كل طلابه؟")) return;
-    const schoolRef = doc(db, "schools", currentSchoolId);
-    const schoolSnap = await getDoc(schoolRef);
-    let grades = schoolSnap.data().customGrades || [];
-    grades = grades.filter(g => g.gradeId !== gradeId);
-    await updateDoc(schoolRef, { customGrades: grades });
-    loadSchoolData();
-  };
-
-  window.addSubject = async (gradeId) => {
-    const subName = document.getElementById(`newSubName_${gradeId}`).value.trim();
-    const subId = document.getElementById(`newSubId_${gradeId}`).value.trim();
-    if (!subName || !subId) return alert("أدخل اسم ومعرف المادة");
-    const schoolRef = doc(db, "schools", currentSchoolId);
-    const schoolSnap = await getDoc(schoolRef);
-    const grades = schoolSnap.data().customGrades || [];
-    const gradeIndex = grades.findIndex(g => g.gradeId === gradeId);
-    if (gradeIndex === -1) return;
-    if (!grades[gradeIndex].subjects) grades[gradeIndex].subjects = [];
-    grades[gradeIndex].subjects.push({ subId, name: subName, order: grades[gradeIndex].subjects.length+1 });
-    await updateDoc(schoolRef, { customGrades: grades });
-    loadSchoolData();
-  };
-
-  document.getElementById('uploadCsvBtn').onclick = async () => {
-    const file = document.getElementById('csvFile').files[0];
-    if (!file) return alert("اختر ملف CSV");
-    const text = await file.text();
-    const rows = text.split('\n').filter(r => r.trim());
-    if (rows.length < 2) return alert("الملف فارغ");
-    const batch = writeBatch(db);
-    for (let i = 1; i < rows.length; i++) {
-      const cols = rows[i].split(',').map(c => c.trim());
-      if (cols.length < 5) continue;
-      const [name, seat, subject, score, gradeId] = cols;
-      const studentRef = doc(db, "schools", currentSchoolId, "students", seat);
-      batch.set(studentRef, {
-        name,
-        seatNumber: seat,
-        gradeId,
-        results: { [subject]: parseInt(score) }
-      }, { merge: true });
-    }
-    await batch.commit();
-    alert("تم استيراد CSV بنجاح");
-    loadStudents();
-  };
-
-  async function loadStudents() {
-    const snap = await getDocs(collection(db, "schools", currentSchoolId, "students"));
-    const students = [];
-    snap.forEach(d => students.push({ id: d.id, ...d.data() }));
-    const container = document.getElementById('studentsList');
-    if (students.length === 0) {
-      container.innerHTML = '<p>لا يوجد طلاب بعد.</p>';
+    } else if (userData.role === 'schoolAdmin') {
+      currentSchoolId = userData.school_id;
+    } else {
+      window.location.href = 'login.html';
       return;
     }
-    let html = '<table border="1"><tr><th>الاسم</th><th>رقم الجلوس</th><th>الصف</th><th>النتائج</th></tr>';
-    students.forEach(s => {
-      const resultsStr = Object.entries(s.results || {}).map(([k,v]) => `${k}:${v}`).join(', ');
-      html += `<tr><td>${s.name}</td><td>${s.seatNumber}</td><td>${s.gradeId}</td><td>${resultsStr}</td></tr>`;
-    });
-    html += '</table>';
-    container.innerHTML = html;
+    loadSchoolData();
   }
 
-  document.getElementById('logoutBtn').onclick = () => signOut(auth).then(() => window.location.href='login.html');
+  async function loadSchoolData() {
+    const { data: school, error } = await supabase.from('schools').select('*').eq('id', currentSchoolId).single();
+    if (error) return;
+    document.getElementById('schoolName').innerHTML = `<h2>${school.name}</h2>`;
+    const { data: students, error: studentsError } = await supabase.from('students').select('*').eq('school_id', currentSchoolId);
+    if (!studentsError) {
+      let html = `<h3>الطلاب</h3>${students.map(s => `<div class="card"><b>${s.name}</b> - نتائجه: ${JSON.stringify(s.results)}</div>`).join('')}`;
+      html += `<hr><h3>رفع CSV</h3><input type="file" id="csvUpload" accept=".csv"><button id="importCsv">استيراد</button>`;
+      document.getElementById('content').innerHTML = html;
+      document.getElementById('importCsv').onclick = () => importCSV(currentSchoolId);
+    }
+  }
+
+  async function importCSV(schoolId) {
+    const file = document.getElementById('csvUpload').files[0];
+    if (!file) return;
+    const text = await file.text();
+    const rows = text.split('\n').filter(r => r.trim());
+    const students = [];
+    for (let i = 1; i < rows.length; i++) {
+      const cols = rows[i].split(',');
+      if (cols.length < 5) continue;
+      const [name, seat, subject, score, gradeId] = cols.map(c => c.trim());
+      students.push({
+        school_id: schoolId,
+        name,
+        seat_number: seat,
+        grade_id: gradeId,
+        results: { [subject]: parseInt(score) }
+      });
+    }
+    const { error } = await supabase.from('students').upsert(students);
+    if (error) return alert("فشل الاستيراد: " + error.message);
+    alert("تم الاستيراد بنجاح");
+    loadSchoolData();
+  }
+
+  document.getElementById('logoutBtn').onclick = () => supabase.auth.signOut().then(() => {
+    sessionStorage.removeItem('impersonatedSchoolId');
+    window.location.href = 'login.html';
+  });
+
+  init();
 </script>
 </body>
 </html>
