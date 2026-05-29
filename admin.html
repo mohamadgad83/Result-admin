@@ -10,13 +10,7 @@
   <h1>👑 لوحة التحكم العامة</h1>
   <button id="logoutBtn">تسجيل خروج</button>
   <hr>
-  <h2>إدارة أنواع المدارس</h2>
-  <input type="text" id="newTypeName" placeholder="مثلاً: ابتدائي">
-  <button id="addTypeBtn">إضافة نوع</button>
-  <div id="typesList"></div>
-
-  <h2>إدارة المدارس</h2>
-  <select id="typeSelect"></select>
+  <h2>إضافة مدرسة جديدة</h2>
   <input type="text" id="newSchoolName" placeholder="اسم المدرسة">
   <input type="email" id="schoolAdminEmail" placeholder="بريد مدير المدرسة">
   <button id="addSchoolBtn">إضافة مدرسة</button>
@@ -28,41 +22,13 @@
   <button id="uploadCsvBtn">رفع CSV</button>
 </div>
 <script type="module">
-  import { auth, db } from './firebase-config.js';
-  import { signOut, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { collection, getDocs, addDoc, doc, setDoc, getDoc, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-  if (!auth.currentUser) window.location.href = 'login.html';
-
-  async function loadTypes() {
-    const snap = await getDocs(collection(db, "schoolTypes"));
-    const types = [];
-    snap.forEach(d => types.push({ id: d.id, ...d.data() }));
-    return types;
-  }
-
-  async function renderTypes() {
-    const types = await loadTypes();
-    const div = document.getElementById('typesList');
-    div.innerHTML = types.map(t => `<div>${t.name} <button onclick="deleteType('${t.id}')">حذف</button></div>`).join('');
-    const select = document.getElementById('typeSelect');
-    select.innerHTML = '<option value="">اختر نوع</option>' + types.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
-  }
-
-  window.deleteType = async (id) => {
-    if (confirm("حذف النوع سيؤثر على المدارس المرتبطة!")) {
-      await deleteDoc(doc(db, "schoolTypes", id));
-      renderTypes();
-      renderSchools();
-    }
-  };
+  import { supabase } from './supabase-config.js';
 
   async function renderSchools() {
-    const snap = await getDocs(collection(db, "schools"));
-    const schools = [];
-    snap.forEach(d => schools.push({ id: d.id, ...d.data() }));
+    const { data: schools, error } = await supabase.from('schools').select('id, name');
+    if (error) return;
     const div = document.getElementById('schoolsList');
-    div.innerHTML = schools.map(s => `<div>${s.name} (نوع: ${s.typeId}) - مدير: ${s.adminEmail || 'غير محدد'} 
+    div.innerHTML = schools.map(s => `<div>${s.name} 
       <button onclick="openSchoolImpersonate('${s.id}')">فتح لوحة المدرسة</button>
       <button onclick="deleteSchool('${s.id}')">حذف</button></div>`).join('');
     const csvSelect = document.getElementById('csvSchoolSelect');
@@ -76,39 +42,36 @@
 
   window.deleteSchool = async (id) => {
     if (confirm("حذف المدرسة سيحذف كل طلابها!")) {
-      await deleteDoc(doc(db, "schools", id));
+      await supabase.from('schools').delete().eq('id', id);
       renderSchools();
     }
   };
 
-  document.getElementById('addTypeBtn').onclick = async () => {
-    const name = document.getElementById('newTypeName').value.trim();
-    if (!name) return;
-    await addDoc(collection(db, "schoolTypes"), { name, grades: [] });
-    renderTypes();
-  };
-
   document.getElementById('addSchoolBtn').onclick = async () => {
-    const typeId = document.getElementById('typeSelect').value;
     const name = document.getElementById('newSchoolName').value.trim();
     const adminEmail = document.getElementById('schoolAdminEmail').value.trim();
-    if (!typeId || !name || !adminEmail) return alert("املأ جميع الحقول");
-    const typeDoc = await getDoc(doc(db, "schoolTypes", typeId));
-    const defaultGrades = typeDoc.data().grades || [];
-    const schoolRef = await addDoc(collection(db, "schools"), {
-      name,
-      typeId,
-      customGrades: defaultGrades,
-      studentIdentifierField: "seatNumber",
-      studentIdentifierLabel: "رقم الجلوس"
-    });
+    if (!name || !adminEmail) return alert("املأ جميع الحقول");
+    
+    const { data: newSchool, error: schoolError } = await supabase
+      .from('schools')
+      .insert([{ name, custom_grades: [], student_identifier_field: "seat_number", student_identifier_label: "رقم الجلوس" }])
+      .select()
+      .single();
+    if (schoolError) return alert("خطأ في إضافة المدرسة");
+    
     const tempPass = Math.random().toString(36).slice(-8);
-    const userCred = await createUserWithEmailAndPassword(auth, adminEmail, tempPass);
-    await setDoc(doc(db, "users", userCred.user.uid), {
+    const { data: authUser, error: signupError } = await supabase.auth.signUp({
       email: adminEmail,
-      role: "schoolAdmin",
-      schoolId: schoolRef.id
+      password: tempPass,
     });
+    if (signupError) return alert("فشل إنشاء حساب مدير المدرسة");
+    
+    await supabase.from('users').insert([{
+      id: authUser.user.id,
+      email: adminEmail,
+      role: 'schoolAdmin',
+      school_id: newSchool.id
+    }]);
     alert(`تم إنشاء مدير المدرسة بنجاح، كلمة المرور المؤقتة: ${tempPass}`);
     renderSchools();
   };
@@ -120,26 +83,26 @@
     const text = await file.text();
     const rows = text.split('\n').filter(r => r.trim());
     if (rows.length < 2) return alert("الملف فارغ");
-    const batch = writeBatch(db);
+    const students = [];
     for (let i = 1; i < rows.length; i++) {
       const cols = rows[i].split(',');
       if (cols.length < 5) continue;
       const [name, seat, subject, score, gradeId] = cols.map(c => c.trim());
-      const studentRef = doc(db, "schools", schoolId, "students", seat);
-      batch.set(studentRef, {
+      students.push({
+        school_id: parseInt(schoolId),
         name,
-        seatNumber: seat,
-        gradeId,
+        seat_number: seat,
+        grade_id: gradeId,
         results: { [subject]: parseInt(score) }
-      }, { merge: true });
+      });
     }
-    await batch.commit();
+    const { error } = await supabase.from('students').upsert(students);
+    if (error) return alert("خطأ في رفع البيانات: " + error.message);
     alert("تم رفع CSV بنجاح");
   };
 
-  document.getElementById('logoutBtn').onclick = () => signOut(auth).then(() => window.location.href='login.html');
+  document.getElementById('logoutBtn').onclick = () => supabase.auth.signOut().then(() => window.location.href='login.html');
 
-  renderTypes();
   renderSchools();
 </script>
 </body>
