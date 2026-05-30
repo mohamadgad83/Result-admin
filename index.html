@@ -3,123 +3,48 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>نتائج الطلاب</title>
+  <title>نظام النتائج المدرسية</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f7ff; padding: 20px; }
-    .container { max-width: 600px; margin: auto; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
-    h1 { color: #1e3c72; text-align: center; margin-bottom: 20px; }
-    label { display: block; margin-top: 10px; font-weight: bold; }
-    select, input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ccc; font-size: 16px; }
-    button { background: #1e3c72; color: white; border: none; cursor: pointer; }
-    button:hover { background: #0f2b4f; }
-    .card { background: #eef2fa; padding: 20px; border-radius: 15px; margin-top: 20px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    th, td { border: 1px solid #b0c4de; padding: 10px; text-align: center; }
-    th { background: #cfe3ff; }
-    @media (max-width: 600px) { .container { padding: 15px; } }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+    .container { max-width: 500px; margin: auto; padding: 20px; }
+    .card { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); text-align: center; }
+    h1 { color: #1e3c72; margin-bottom: 10px; }
+    .subtitle { color: #666; margin-bottom: 30px; }
+    .btn { display: block; width: 100%; padding: 15px; margin: 15px 0; border: none; border-radius: 12px; font-size: 18px; cursor: pointer; transition: 0.2s; text-decoration: none; text-align: center; }
+    .btn-primary { background: #1e3c72; color: white; }
+    .btn-primary:hover { background: #0f2b4f; transform: scale(1.02); }
+    .btn-secondary { background: #28a745; color: white; }
+    .btn-secondary:hover { background: #1e6b2f; transform: scale(1.02); }
+    .btn-outline { background: white; color: #1e3c72; border: 2px solid #1e3c72; }
+    .btn-outline:hover { background: #1e3c72; color: white; }
+    .footer { margin-top: 30px; color: rgba(255,255,255,0.7); text-align: center; }
   </style>
 </head>
 <body>
 <div class="container">
-  <h1>🏫 نظام النتائج المدرسية</h1>
-  <label>اختر المدرسة:</label>
-  <select id="schoolSelect"></select>
-  <div id="searchContainer">
-    <label id="searchLabel">رقم الجلوس:</label>
-    <input type="text" id="searchValue" placeholder="أدخل رقم الجلوس">
+  <div class="card">
+    <h1>🏫 نظام النتائج المدرسية</h1>
+    <p class="subtitle">نظام متكامل لإدارة النتائج لجميع المراحل الدراسية</p>
+    
+    <a href="login.html" class="btn btn-primary">🔐 تسجيل الدخول (للمدراء)</a>
+    <a href="student-search.html" class="btn btn-secondary">🔍 عرض النتيجة (للطلاب)</a>
+    
+    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee">
+      <p style="color: #666; font-size: 14px;">نسخة تجريبية - جميع الحقوق محفوظة</p>
+    </div>
   </div>
-  <button id="searchBtn">🔍 عرض النتيجة</button>
-  <div id="resultCard"></div>
+  <div class="footer">
+    <p>© 2024 نظام إدارة النتائج المدرسية</p>
+  </div>
 </div>
-<script type="module">
-  import { supabase } from './supabase-config.js';
-  
-  const schoolSelect = document.getElementById('schoolSelect');
-  const searchValue = document.getElementById('searchValue');
-  const searchLabel = document.getElementById('searchLabel');
-  const searchBtn = document.getElementById('searchBtn');
-  const resultDiv = document.getElementById('resultCard');
-  
-  let currentSchoolId = null;
-  let currentSearchField = 'seat_number';
-  let studentCustomFields = [];
-  
-  async function loadSchools() {
-    const { data: schools } = await supabase.from('schools').select('id, name, search_field, search_field_label');
-    schoolSelect.innerHTML = '<option value="">-- اختر مدرسة --</option>';
-    schools.forEach(school => {
-      const option = document.createElement('option');
-      option.value = school.id;
-      option.dataset.searchField = school.search_field || 'seat_number';
-      option.dataset.searchLabel = school.search_field_label || 'رقم الجلوس';
-      option.textContent = school.name;
-      schoolSelect.appendChild(option);
-    });
+<script>
+  // التحقق من وجود جلسة نشطة للمدير
+  if (sessionStorage.getItem('userRole') === 'superAdmin') {
+    window.location.href = 'admin.html';
+  } else if (sessionStorage.getItem('userRole') === 'schoolAdmin') {
+    window.location.href = 'school-admin.html';
   }
-  
-  schoolSelect.addEventListener('change', async (e) => {
-    const option = e.target.options[e.target.selectedIndex];
-    currentSchoolId = option.value;
-    if (!currentSchoolId) return;
-    
-    currentSearchField = option.dataset.searchField;
-    const label = option.dataset.searchLabel;
-    
-    searchLabel.textContent = label + ':';
-    searchValue.placeholder = `أدخل ${label}`;
-    
-    // جلب الحقول المخصصة للطالب في هذه المدرسة
-    const { data: school } = await supabase.from('schools').select('student_custom_fields').eq('id', currentSchoolId).single();
-    studentCustomFields = school?.student_custom_fields || [];
-  });
-  
-  searchBtn.addEventListener('click', async () => {
-    const searchId = searchValue.value.trim();
-    if (!currentSchoolId || !searchId) {
-      alert("يرجى اختيار المدرسة وإدخال بيانات البحث");
-      return;
-    }
-    
-    // البحث باستخدام الحقل المحدد من إعدادات المدرسة
-    const { data: student } = await supabase
-      .from('students')
-      .select('*')
-      .eq('school_id', currentSchoolId)
-      .eq(currentSearchField, searchId)
-      .single();
-    
-    if (!student) {
-      resultDiv.innerHTML = "<p style='color:red;text-align:center'>⚠️ لا يوجد طالب بهذه البيانات</p>";
-      return;
-    }
-    
-    let html = `<div class="card"><h2>${student.name}</h2>`;
-    
-    // عرض حقل البحث المستخدم
-    const fieldLabel = schoolSelect.options[schoolSelect.selectedIndex]?.dataset.searchLabel || 'رقم الجلوس';
-    html += `<p><strong>${fieldLabel}:</strong> ${student[currentSearchField] || '-'}</p>`;
-    html += `<p><strong>الصف:</strong> ${student.grade || '-'}</p>`;
-    
-    // عرض الحقول المخصصة للطالب
-    if (studentCustomFields.length > 0) {
-      html += `<h4>📋 بيانات إضافية</h4>`;
-      studentCustomFields.forEach(field => {
-        html += `<p><strong>${field.name}:</strong> ${student.custom_data?.[field.name] || '-'}</p>`;
-      });
-    }
-    
-    // عرض النتائج
-    html += `<h4>📊 النتائج</h4><table border="1"><tr><th>المادة</th><th>الدرجة</th></tr>`;
-    for (const [subject, score] of Object.entries(student.results || {})) {
-      html += `<tr><td>${subject}</td><td>${score}</td></tr>`;
-    }
-    html += `</table><button onclick="window.print()" style="margin-top:15px">🖨️ طباعة</button></div>`;
-    
-    resultDiv.innerHTML = html;
-  });
-  
-  loadSchools();
 </script>
 </body>
 </html>
