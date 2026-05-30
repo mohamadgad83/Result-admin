@@ -7,24 +7,37 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f7ff; padding: 20px; }
-    .container { max-width: 1200px; margin: auto; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+    .container { max-width: 1400px; margin: auto; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
     h1, h2, h3 { color: #1e3c72; margin-bottom: 15px; }
     button, input, select { padding: 10px; margin: 5px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; }
-    button { background: #1e3c72; color: white; border: none; cursor: pointer; }
-    button:hover { background: #0f2b4f; }
-    .stage-card, .school-card { background: #eef2fa; padding: 15px; margin: 15px 0; border-radius: 12px; }
-    .stage-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-    .grade-item { background: white; padding: 10px; margin: 10px 0; border-radius: 8px; }
-    .subjects-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-    .subject-tag { background: #1e3c72; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; }
+    button { background: #1e3c72; color: white; border: none; cursor: pointer; transition: 0.2s; }
+    button:hover { background: #0f2b4f; transform: scale(1.02); }
+    .stage-card { background: #eef2fa; padding: 15px; margin: 20px 0; border-radius: 12px; border-right: 5px solid #1e3c72; }
+    .stage-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #cfe3ff; }
+    .grade-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 15px; margin-top: 15px; }
+    .grade-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: 0.2s; }
+    .grade-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); transform: translateY(-2px); }
+    .grade-title { font-size: 18px; font-weight: bold; color: #1e3c72; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #1e3c72; display: flex; justify-content: space-between; align-items: center; }
+    .subjects-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    .subject-tag { background: #1e3c72; color: white; padding: 5px 12px; border-radius: 20px; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; }
+    .subject-tag button { background: #dc3545; padding: 2px 8px; margin: 0; font-size: 11px; border-radius: 20px; }
+    .add-subject { display: flex; gap: 8px; margin-top: 10px; }
+    .add-subject input { flex: 1; margin: 0; }
+    .add-subject button { margin: 0; padding: 8px 12px; background: #28a745; }
+    .grade-actions { margin-top: 12px; display: flex; gap: 8px; justify-content: flex-end; }
+    .school-card { background: #eef2fa; padding: 15px; margin: 10px 0; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
-    .modal-content { background: white; padding: 20px; border-radius: 20px; max-width: 500px; width: 90%; }
-    @media (max-width: 600px) { button, input, select { width: 100%; margin: 5px 0; } .stage-header { flex-direction: column; text-align: center; } }
+    .modal-content { background: white; padding: 25px; border-radius: 20px; max-width: 500px; width: 90%; max-height: 80%; overflow-y: auto; }
+    .btn-small { padding: 5px 10px; font-size: 12px; }
+    .btn-danger { background: #dc3545; }
+    .btn-warning { background: #ffc107; color: #333; }
+    .btn-success { background: #28a745; }
+    @media (max-width: 768px) { .grade-grid { grid-template-columns: 1fr; } .stage-header { flex-direction: column; gap: 10px; } }
   </style>
 </head>
 <body>
 <div class="container">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px">
     <h1 style="margin:0">👑 لوحة التحكم العامة</h1>
     <div>
       <button onclick="window.location.href='index.html'" style="background:#28a745">🏠 الرئيسية</button>
@@ -32,19 +45,19 @@
     </div>
   </div>
   
-  <div style="background:#eef2fa; padding:15px; border-radius:12px; margin-bottom:20px">
-    <h3>👤 المستخدم الحالي: <span id="currentUsername"></span></h3>
+  <div style="background:#eef2fa; padding:15px; border-radius:12px; margin-bottom:20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap">
+    <h3 style="margin:0">👤 المستخدم الحالي: <span id="currentUsername"></span></h3>
     <button onclick="showEditUserModal()" style="background:#ffc107; color:#333">✏️ تعديل بياناتي</button>
   </div>
-  <hr>
+  <hr style="margin: 15px 0">
 
-  <h2>📚 إدارة المراحل الدراسية والصفوف والمواد</h2>
-  <div style="background:#f0f7ff; padding:15px; border-radius:12px; margin-bottom:20px">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px">
+    <h2 style="margin:0">📚 إدارة المراحل الدراسية</h2>
     <button onclick="showAddStageModal()" style="background:#28a745">➕ إضافة مرحلة جديدة</button>
-    <div id="stagesList"></div>
   </div>
+  <div id="stagesList"></div>
 
-  <h2>🏫 المدارس</h2>
+  <h2 style="margin-top: 30px">🏫 المدارس</h2>
   <button onclick="showAddSchoolModal()" style="background:#28a745; margin-bottom:10px">➕ إضافة مدرسة جديدة</button>
   <div id="schoolsList">جاري التحميل...</div>
 </div>
@@ -54,22 +67,26 @@
   <div class="modal-content">
     <h3>➕ إضافة مرحلة جديدة</h3>
     <input type="text" id="stageName" placeholder="اسم المرحلة (مثال: ابتدائي)" style="width:100%; margin:10px 0">
-    <div id="stageGradesContainer"></div>
-    <button onclick="addGradeToStage()" style="background:#28a745; margin:5px 0">+ إضافة صف</button>
     <button onclick="saveStage()" style="background:#1e3c72">💾 حفظ المرحلة</button>
     <button onclick="closeModal('addStageModal')" style="background:#dc3545">إلغاء</button>
   </div>
 </div>
 
-<!-- نافذة تعديل مرحلة -->
-<div id="editStageModal" class="modal">
+<!-- نافذة تعديل صف -->
+<div id="editGradeModal" class="modal">
   <div class="modal-content">
-    <h3>✏️ تعديل المرحلة</h3>
-    <input type="text" id="editStageName" placeholder="اسم المرحلة" style="width:100%; margin:10px 0">
-    <div id="editStageGradesContainer"></div>
-    <button onclick="addGradeToEditStage()" style="background:#28a745; margin:5px 0">+ إضافة صف</button>
-    <button onclick="updateStage()" style="background:#1e3c72">💾 حفظ التغييرات</button>
-    <button onclick="closeModal('editStageModal')" style="background:#dc3545">إلغاء</button>
+    <h3 id="editGradeTitle">✏️ تعديل الصف</h3>
+    <input type="text" id="editGradeName" placeholder="اسم الصف" style="width:100%; margin:10px 0">
+    <h4>📚 المواد</h4>
+    <div id="editSubjectsList" style="margin:10px 0"></div>
+    <div style="display: flex; gap: 8px; margin-top: 10px">
+      <input type="text" id="newSubjectName" placeholder="مادة جديدة" style="flex:1">
+      <button onclick="addSubjectToEdit()" style="background:#28a745">+ إضافة</button>
+    </div>
+    <div style="display: flex; gap: 10px; margin-top: 20px">
+      <button onclick="saveGradeEdit()" style="background:#1e3c72; flex:1">💾 حفظ التغييرات</button>
+      <button onclick="closeModal('editGradeModal')" style="background:#dc3545; flex:1">إلغاء</button>
+    </div>
   </div>
 </div>
 
@@ -104,8 +121,8 @@
   
   let currentUser = null;
   let currentStageId = null;
-  let tempGrades = [];
-  let tempEditGrades = [];
+  let currentGradeIndex = null;
+  let currentSubjects = [];
   
   const role = sessionStorage.getItem('userRole');
   const userId = sessionStorage.getItem('userId');
@@ -119,7 +136,8 @@
   async function loadStages() {
     const { data: stages } = await supabase.from('stages').select('*');
     const container = document.getElementById('stagesList');
-    if (!stages || stages.length === 0) { container.innerHTML = '<p>لا توجد مراحل</p>'; return; }
+    if (!stages || stages.length === 0) { container.innerHTML = '<p>لا توجد مراحل. أضف مرحلة جديدة</p>'; return; }
+    
     container.innerHTML = stages.map(stage => {
       const grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
       return `
@@ -127,18 +145,35 @@
           <div class="stage-header">
             <h3>📖 ${stage.name}</h3>
             <div>
-              <button onclick="editStage(${stage.id}, '${stage.name}', '${encodeURIComponent(JSON.stringify(grades))}')" style="background:#ffc107; color:#333">✏️ تعديل</button>
-              <button onclick="deleteStage(${stage.id})" style="background:#dc3545">🗑️ حذف</button>
+              <button onclick="deleteStage(${stage.id})" class="btn-danger">🗑️ حذف المرحلة</button>
             </div>
           </div>
-          ${grades.map(g => `
-            <div class="grade-item">
-              <strong>🎓 ${g.grade}</strong>
-              <div class="subjects-list">
-                ${g.subjects.map(s => `<span class="subject-tag">${s}</span>`).join('')}
+          <div class="grade-grid" id="grades-${stage.id}">
+            ${grades.map((g, idx) => `
+              <div class="grade-card">
+                <div class="grade-title">
+                  <span>🎓 ${g.grade}</span>
+                  <div>
+                    <button onclick="editGrade(${stage.id}, ${idx}, '${g.grade}', '${encodeURIComponent(JSON.stringify(g.subjects))}')" class="btn-warning btn-small">✏️ تعديل</button>
+                    <button onclick="deleteGrade(${stage.id}, ${idx})" class="btn-danger btn-small">🗑️</button>
+                  </div>
+                </div>
+                <div class="subjects-list">
+                  ${g.subjects.map(sub => `<span class="subject-tag">${sub}</span>`).join('')}
+                </div>
+                <div class="add-subject">
+                  <input type="text" id="newSub-${stage.id}-${idx}" placeholder="مادة جديدة">
+                  <button onclick="addSubject(${stage.id}, ${idx})" class="btn-success">+</button>
+                </div>
+                <div class="grade-actions">
+                  <button onclick="duplicateGrade(${stage.id}, ${idx})" class="btn-small" style="background:#17a2b8">📋 نسخ الصف</button>
+                </div>
               </div>
-            </div>
-          `).join('')}
+            `).join('')}
+          </div>
+          <div style="margin-top: 15px; display: flex; gap: 10px">
+            <button onclick="addNewGrade(${stage.id})" style="background:#28a745">➕ إضافة صف جديد</button>
+          </div>
         </div>
       `;
     }).join('');
@@ -147,6 +182,139 @@
     const schoolStageSelect = document.getElementById('schoolStageSelect');
     schoolStageSelect.innerHTML = '<option value="">-- اختر المرحلة --</option>' + stages.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
   }
+  
+  // إضافة مادة جديدة لصف
+  window.addSubject = async (stageId, gradeIdx) => {
+    const input = document.getElementById(`newSub-${stageId}-${gradeIdx}`);
+    const newSubject = input.value.trim();
+    if (!newSubject) return;
+    
+    const { data: stage } = await supabase.from('stages').select('grades').eq('id', stageId).single();
+    let grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
+    if (!grades[gradeIdx].subjects) grades[gradeIdx].subjects = [];
+    grades[gradeIdx].subjects.push(newSubject);
+    
+    const { error } = await supabase.from('stages').update({ grades: JSON.stringify(grades) }).eq('id', stageId);
+    if (error) alert("خطأ: " + error.message);
+    else { input.value = ''; loadStages(); }
+  };
+  
+  // حذف صف
+  window.deleteGrade = async (stageId, gradeIdx) => {
+    if (!confirm("هل أنت متأكد من حذف هذا الصف؟")) return;
+    const { data: stage } = await supabase.from('stages').select('grades').eq('id', stageId).single();
+    let grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
+    grades.splice(gradeIdx, 1);
+    const { error } = await supabase.from('stages').update({ grades: JSON.stringify(grades) }).eq('id', stageId);
+    if (error) alert("خطأ: " + error.message);
+    else loadStages();
+  };
+  
+  // نسخ صف
+  window.duplicateGrade = async (stageId, gradeIdx) => {
+    const { data: stage } = await supabase.from('stages').select('grades').eq('id', stageId).single();
+    let grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
+    const newGrade = JSON.parse(JSON.stringify(grades[gradeIdx]));
+    newGrade.grade = newGrade.grade + " (نسخة)";
+    grades.push(newGrade);
+    const { error } = await supabase.from('stages').update({ grades: JSON.stringify(grades) }).eq('id', stageId);
+    if (error) alert("خطأ: " + error.message);
+    else loadStages();
+  };
+  
+  // إضافة صف جديد
+  window.addNewGrade = async (stageId) => {
+    const gradeName = prompt("أدخل اسم الصف (مثال: الصف الأول)");
+    if (!gradeName) return;
+    const subjectsStr = prompt("أدخل المواد مفصولة بفواصل (مثال: عربي, رياضيات, علوم)");
+    if (!subjectsStr) return;
+    const subjects = subjectsStr.split(',').map(s => s.trim());
+    
+    const { data: stage } = await supabase.from('stages').select('grades').eq('id', stageId).single();
+    let grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
+    grades.push({ grade: gradeName, subjects: subjects });
+    const { error } = await supabase.from('stages').update({ grades: JSON.stringify(grades) }).eq('id', stageId);
+    if (error) alert("خطأ: " + error.message);
+    else loadStages();
+  };
+  
+  // تعديل صف
+  window.editGrade = (stageId, gradeIdx, gradeName, subjectsJson) => {
+    currentStageId = stageId;
+    currentGradeIndex = gradeIdx;
+    document.getElementById('editGradeTitle').innerHTML = `✏️ تعديل الصف: ${gradeName}`;
+    document.getElementById('editGradeName').value = gradeName;
+    currentSubjects = JSON.parse(decodeURIComponent(subjectsJson));
+    renderEditSubjects();
+    document.getElementById('editGradeModal').style.display = 'flex';
+  };
+  
+  function renderEditSubjects() {
+    const container = document.getElementById('editSubjectsList');
+    container.innerHTML = currentSubjects.map((sub, idx) => `
+      <div style="display: flex; gap: 8px; margin: 5px 0; align-items: center">
+        <input type="text" value="${sub}" id="editSub-${idx}" style="flex:1">
+        <button onclick="removeSubjectFromEdit(${idx})" style="background:#dc3545; padding:5px 10px">✖</button>
+      </div>
+    `).join('');
+  }
+  
+  window.addSubjectToEdit = () => {
+    const newSub = document.getElementById('newSubjectName').value.trim();
+    if (newSub) {
+      currentSubjects.push(newSub);
+      renderEditSubjects();
+      document.getElementById('newSubjectName').value = '';
+    }
+  };
+  
+  window.removeSubjectFromEdit = (idx) => {
+    currentSubjects.splice(idx, 1);
+    renderEditSubjects();
+  };
+  
+  window.saveGradeEdit = async () => {
+    const newGradeName = document.getElementById('editGradeName').value.trim();
+    if (!newGradeName) { alert("اسم الصف مطلوب"); return; }
+    
+    // جمع المواد المعدلة
+    const updatedSubjects = [];
+    for (let i = 0; i < currentSubjects.length; i++) {
+      const sub = document.getElementById(`editSub-${i}`)?.value.trim();
+      if (sub) updatedSubjects.push(sub);
+    }
+    
+    const { data: stage } = await supabase.from('stages').select('grades').eq('id', currentStageId).single();
+    let grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
+    grades[currentGradeIndex] = { grade: newGradeName, subjects: updatedSubjects };
+    
+    const { error } = await supabase.from('stages').update({ grades: JSON.stringify(grades) }).eq('id', currentStageId);
+    if (error) alert("خطأ: " + error.message);
+    else {
+      alert("✅ تم التحديث");
+      closeModal('editGradeModal');
+      loadStages();
+    }
+  };
+  
+  window.showAddStageModal = () => {
+    document.getElementById('stageName').value = '';
+    document.getElementById('addStageModal').style.display = 'flex';
+  };
+  
+  window.saveStage = async () => {
+    const name = document.getElementById('stageName').value.trim();
+    if (!name) { alert("اسم المرحلة مطلوب"); return; }
+    const { error } = await supabase.from('stages').insert([{ name, grades: '[]' }]);
+    if (error) alert("خطأ: " + error.message);
+    else { alert("✅ تمت إضافة المرحلة"); closeModal('addStageModal'); loadStages(); }
+  };
+  
+  window.deleteStage = async (id) => {
+    if (!confirm("حذف المرحلة سيؤثر على المدارس المرتبطة! استمر؟")) return;
+    await supabase.from('stages').delete().eq('id', id);
+    loadStages();
+  };
   
   async function loadSchools() {
     const { data: schools } = await supabase.from('schools').select('*, stages(name)');
@@ -165,124 +333,6 @@
       </div>
     `).join('');
   }
-  
-  window.showAddStageModal = () => {
-    tempGrades = [];
-    document.getElementById('stageName').value = '';
-    document.getElementById('stageGradesContainer').innerHTML = '';
-    document.getElementById('addStageModal').style.display = 'flex';
-  };
-  
-  window.addGradeToStage = () => {
-    const container = document.getElementById('stageGradesContainer');
-    const idx = tempGrades.length;
-    container.innerHTML += `
-      <div style="background:white; padding:10px; margin:10px 0; border-radius:8px" id="grade-${idx}">
-        <input type="text" placeholder="اسم الصف (مثال: الصف الأول)" id="grade-name-${idx}" style="width:100%; margin-bottom:5px">
-        <input type="text" placeholder="المواد (مفصولة بفواصل)" id="grade-subjects-${idx}" style="width:100%; margin-bottom:5px">
-        <button onclick="removeGrade(${idx})" style="background:#dc3545">حذف الصف</button>
-      </div>
-    `;
-    tempGrades.push({ grade: '', subjects: [] });
-  };
-  
-  window.removeGrade = (idx) => {
-    tempGrades.splice(idx, 1);
-    document.getElementById('stageGradesContainer').innerHTML = '';
-    tempGrades.forEach((_, i) => {
-      const grade = tempGrades[i];
-      document.getElementById('stageGradesContainer').innerHTML += `
-        <div style="background:white; padding:10px; margin:10px 0; border-radius:8px" id="grade-${i}">
-          <input type="text" placeholder="اسم الصف" id="grade-name-${i}" value="${grade.grade}" style="width:100%; margin-bottom:5px">
-          <input type="text" placeholder="المواد (مفصولة بفواصل)" id="grade-subjects-${i}" value="${grade.subjects.join(', ')}" style="width:100%; margin-bottom:5px">
-          <button onclick="removeGrade(${i})" style="background:#dc3545">حذف الصف</button>
-        </div>
-      `;
-    });
-  };
-  
-  window.saveStage = async () => {
-    const name = document.getElementById('stageName').value.trim();
-    if (!name) { alert("اسم المرحلة مطلوب"); return; }
-    
-    const grades = [];
-    for (let i = 0; i < tempGrades.length; i++) {
-      const gradeName = document.getElementById(`grade-name-${i}`)?.value.trim();
-      const subjectsStr = document.getElementById(`grade-subjects-${i}`)?.value.trim();
-      if (gradeName && subjectsStr) {
-        grades.push({
-          grade: gradeName,
-          subjects: subjectsStr.split(',').map(s => s.trim())
-        });
-      }
-    }
-    
-    if (grades.length === 0) { alert("أضف صف واحد على الأقل"); return; }
-    
-    const { error } = await supabase.from('stages').insert([{ name, grades: JSON.stringify(grades) }]);
-    if (error) alert("خطأ: " + error.message);
-    else { alert("✅ تمت إضافة المرحلة"); closeModal('addStageModal'); loadStages(); }
-  };
-  
-  window.editStage = (id, name, gradesJson) => {
-    currentStageId = id;
-    document.getElementById('editStageName').value = name;
-    const grades = JSON.parse(decodeURIComponent(gradesJson));
-    tempEditGrades = grades;
-    renderEditGrades();
-    document.getElementById('editStageModal').style.display = 'flex';
-  };
-  
-  function renderEditGrades() {
-    const container = document.getElementById('editStageGradesContainer');
-    container.innerHTML = '';
-    tempEditGrades.forEach((grade, idx) => {
-      container.innerHTML += `
-        <div style="background:white; padding:10px; margin:10px 0; border-radius:8px">
-          <input type="text" placeholder="اسم الصف" id="edit-grade-name-${idx}" value="${grade.grade}" style="width:100%; margin-bottom:5px">
-          <input type="text" placeholder="المواد (مفصولة بفواصل)" id="edit-grade-subjects-${idx}" value="${grade.subjects.join(', ')}" style="width:100%; margin-bottom:5px">
-          <button onclick="removeEditGrade(${idx})" style="background:#dc3545">حذف الصف</button>
-        </div>
-      `;
-    });
-  }
-  
-  window.addGradeToEditStage = () => {
-    tempEditGrades.push({ grade: '', subjects: [] });
-    renderEditGrades();
-  };
-  
-  window.removeEditGrade = (idx) => {
-    tempEditGrades.splice(idx, 1);
-    renderEditGrades();
-  };
-  
-  window.updateStage = async () => {
-    const name = document.getElementById('editStageName').value.trim();
-    if (!name) { alert("اسم المرحلة مطلوب"); return; }
-    
-    const grades = [];
-    for (let i = 0; i < tempEditGrades.length; i++) {
-      const gradeName = document.getElementById(`edit-grade-name-${i}`)?.value.trim();
-      const subjectsStr = document.getElementById(`edit-grade-subjects-${i}`)?.value.trim();
-      if (gradeName && subjectsStr) {
-        grades.push({
-          grade: gradeName,
-          subjects: subjectsStr.split(',').map(s => s.trim())
-        });
-      }
-    }
-    
-    const { error } = await supabase.from('stages').update({ name, grades: JSON.stringify(grades) }).eq('id', currentStageId);
-    if (error) alert("خطأ: " + error.message);
-    else { alert("✅ تم التحديث"); closeModal('editStageModal'); loadStages(); }
-  };
-  
-  window.deleteStage = async (id) => {
-    if (!confirm("حذف المرحلة سيؤثر على المدارس المرتبطة! استمر؟")) return;
-    await supabase.from('stages').delete().eq('id', id);
-    loadStages();
-  };
   
   window.showAddSchoolModal = () => {
     document.getElementById('newSchoolName').value = '';
