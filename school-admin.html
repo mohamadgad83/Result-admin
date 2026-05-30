@@ -4,129 +4,227 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>لوحة مدير المدرسة</title>
-  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f7ff; padding: 20px; }
+    .container { max-width: 900px; margin: auto; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+    h1, h2, h3 { color: #1e3c72; margin-bottom: 15px; }
+    button, input, select { padding: 10px; margin: 5px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; }
+    button { background: #1e3c72; color: white; border: none; cursor: pointer; }
+    button:hover { background: #0f2b4f; }
+    .student-card { background: #eef2fa; padding: 15px; margin: 10px 0; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+    @media (max-width: 600px) { .student-card { flex-direction: column; text-align: center; } button, input, select { width: 100%; margin: 5px 0; } }
+  </style>
 </head>
 <body>
 <div class="container">
-  <h1>🏫 لوحة إدارة المدرسة</h1>
-  <button onclick="sessionStorage.clear(); window.location.href='login.html'" style="background:#dc3545">تسجيل خروج</button>
-  <div id="schoolName"></div>
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px">
+    <h1 style="margin:0">🏫 لوحة إدارة المدرسة</h1>
+    <div>
+      <button onclick="window.location.href='index.html'" style="background:#28a745">🏠 الرئيسية</button>
+      <button onclick="logout()" style="background:#dc3545">تسجيل خروج</button>
+    </div>
+  </div>
+  
+  <div id="schoolInfo"></div>
+  <div id="subjectsContainer" style="background:#eef2fa; padding:15px; border-radius:12px; margin:10px 0"></div>
   <hr>
-  <div id="content"></div>
+  
+  <h2>📤 رفع نتائج من Excel</h2>
+  <div style="background:#f0f7ff; padding:15px; border-radius:12px; margin:10px 0">
+    <p><strong>تنسيق الملف المطلوب:</strong> الاسم - رقم الجلوس - الصف - المادة - الدرجة</p>
+    <input type="file" id="excelFile" accept=".xlsx, .xls, .csv" style="width:100%">
+    <button onclick="uploadExcel()" style="background:#28a745; margin-top:10px">📊 رفع الملف</button>
+    <div id="uploadResult"></div>
+  </div>
+  
+  <h2>➕ إضافة طالب جديد</h2>
+  <div style="background:#f0f7ff; padding:15px; border-radius:12px; margin:10px 0">
+    <input type="text" id="studentName" placeholder="اسم الطالب" style="width:100%; margin-bottom:10px">
+    <input type="text" id="studentSeat" placeholder="رقم الجلوس" style="width:100%; margin-bottom:10px">
+    <select id="studentGrade" style="width:100%; margin-bottom:10px"></select>
+    <div id="studentCustomFieldsContainer"></div>
+    <button onclick="addStudent()">➕ إضافة طالب</button>
+  </div>
+  
+  <h2>📝 إضافة نتيجة لطالب</h2>
+  <div style="background:#f0f7ff; padding:15px; border-radius:12px; margin:10px 0">
+    <input type="text" id="resultSeat" placeholder="رقم الجلوس" style="width:100%; margin-bottom:10px">
+    <select id="resultSubject" style="width:100%; margin-bottom:10px"></select>
+    <input type="number" id="resultScore" placeholder="الدرجة" style="width:100%; margin-bottom:10px">
+    <div id="resultCustomFieldsContainer"></div>
+    <button onclick="addResult()">📝 إضافة نتيجة</button>
+  </div>
+  
+  <h2>📚 قائمة الطلاب</h2>
+  <div id="studentsList">جاري التحميل...</div>
 </div>
+
 <script type="module">
   import { supabase } from './supabase-config.js';
-
-  // جلب المدرسة من الجلسة
+  
   let schoolId = sessionStorage.getItem('userSchoolId');
   const impersonatedId = sessionStorage.getItem('impersonatedSchoolId');
+  if (impersonatedId) schoolId = impersonatedId;
+  if (!schoolId) window.location.href = 'login.html';
   
-  if (impersonatedId) {
-    schoolId = impersonatedId;
-  }
+  let schoolSubjects = [];
+  let schoolGrades = [];
+  let studentCustomFields = [];
+  let resultCustomFields = [];
   
-  if (!schoolId) {
-    window.location.href = 'login.html';
-  }
-
-  async function loadData() {
-    // جلب اسم المدرسة
-    const { data: school } = await supabase.from('schools').select('name').eq('id', schoolId).single();
-    document.getElementById('schoolName').innerHTML = `<h2>🏫 ${school?.name}</h2>`;
+  async function loadSchool() {
+    const { data: school } = await supabase.from('schools').select('*, stages(name)').eq('id', schoolId).single();
+    document.getElementById('schoolInfo').innerHTML = `<h2>🏫 ${school?.name}</h2><p>المرحلة: ${school?.stages?.name}</p>`;
     
-    // جلب الطلاب
-    const { data: students } = await supabase.from('students').select('*').eq('school_id', schoolId);
+    studentCustomFields = school.student_custom_fields || [];
+    resultCustomFields = school.result_custom_fields || [];
     
-    let html = '<h3>📚 قائمة الطلاب</h3>';
-    if (students && students.length > 0) {
-      students.forEach(s => {
-        html += `<div class="card"><b>${s.name}</b><br>`;
-        html += `رقم الجلوس: ${s.seat_number || '-'}<br>`;
-        html += `النتائج: ${Object.entries(s.results || {}).map(([k,v]) => `${k}: ${v}`).join(' | ') || 'لا توجد نتائج'}</div>`;
+    if (school.custom_subjects && school.custom_subjects.length > 0) {
+      schoolSubjects = school.custom_subjects;
+      schoolGrades = [...new Set(schoolSubjects.map(s => s.grade))];
+      
+      let subjectsHtml = '<h3>📚 المواد المتاحة حسب الصف</h3>';
+      schoolGrades.forEach(grade => {
+        const subjects = schoolSubjects.filter(s => s.grade === grade).map(s => s.subject);
+        subjectsHtml += `<div><strong>${grade}:</strong> ${subjects.join(' - ')}</div>`;
       });
-    } else {
-      html += '<p>لا يوجد طلاب حتى الآن</p>';
+      document.getElementById('subjectsContainer').innerHTML = subjectsHtml;
+      
+      const gradeSelect = document.getElementById('studentGrade');
+      gradeSelect.innerHTML = schoolGrades.map(g => `<option value="${g}">${g}</option>`).join('');
+      
+      const allSubjects = [...new Set(schoolSubjects.map(s => s.subject))];
+      const subjectSelect = document.getElementById('resultSubject');
+      subjectSelect.innerHTML = allSubjects.map(s => `<option value="${s}">${s}</option>`).join('');
     }
     
-    // نموذج إضافة طالب سريع
-    html += `
-      <hr>
-      <h3>➕ إضافة طالب جديد</h3>
-      <input type="text" id="studentName" placeholder="اسم الطالب" style="width:100%; margin-bottom:8px">
-      <input type="text" id="studentSeat" placeholder="رقم الجلوس" style="width:100%; margin-bottom:8px">
-      <button id="addStudentBtn" style="background:#28a745">➕ إضافة طالب</button>
-      
-      <hr>
-      <h3>📝 إضافة نتيجة</h3>
-      <input type="text" id="resultSeat" placeholder="رقم الجلوس" style="width:100%; margin-bottom:8px">
-      <input type="text" id="subjectName" placeholder="اسم المادة" style="width:100%; margin-bottom:8px">
-      <input type="number" id="subjectScore" placeholder="الدرجة" style="width:100%; margin-bottom:8px">
-      <button id="addResultBtn" style="background:#28a745">📝 إضافة نتيجة</button>
-    `;
+    const studentFieldsDiv = document.getElementById('studentCustomFieldsContainer');
+    if (studentCustomFields.length > 0) {
+      studentFieldsDiv.innerHTML = '<h4>📋 بيانات إضافية</h4>';
+      studentCustomFields.forEach(field => {
+        studentFieldsDiv.innerHTML += `<input type="${field.type}" id="custom_${field.name}" placeholder="${field.name}" style="width:100%; margin-bottom:10px">`;
+      });
+    }
     
-    document.getElementById('content').innerHTML = html;
-    
-    // إضافة طالب
-    document.getElementById('addStudentBtn')?.addEventListener('click', async () => {
-      const name = document.getElementById('studentName').value.trim();
-      const seat = document.getElementById('studentSeat').value.trim();
-      if (!name || !seat) return alert("❌ املأ جميع الحقول");
-      
-      const { error } = await supabase.from('students').insert([{
-        school_id: parseInt(schoolId),
-        name: name,
-        seat_number: seat,
-        results: {}
-      }]);
-      
-      if (error) alert("خطأ: " + error.message);
-      else {
-        alert("✅ تمت الإضافة");
-        document.getElementById('studentName').value = '';
-        document.getElementById('studentSeat').value = '';
-        loadData();
-      }
-    });
-    
-    // إضافة نتيجة
-    document.getElementById('addResultBtn')?.addEventListener('click', async () => {
-      const seat = document.getElementById('resultSeat').value.trim();
-      const subject = document.getElementById('subjectName').value.trim();
-      const score = parseInt(document.getElementById('subjectScore').value);
-      
-      if (!seat || !subject || isNaN(score)) return alert("❌ املأ جميع الحقول");
-      
-      // البحث عن الطالب
-      const { data: student, error: findError } = await supabase
-        .from('students')
-        .select('id, results')
-        .eq('school_id', schoolId)
-        .eq('seat_number', seat)
-        .maybeSingle();
-      
-      if (findError || !student) {
-        alert("❌ لا يوجد طالب بهذا الرقم");
-        return;
-      }
-      
-      const newResults = { ...(student.results || {}), [subject]: score };
-      const { error } = await supabase
-        .from('students')
-        .update({ results: newResults })
-        .eq('id', student.id);
-      
-      if (error) alert("خطأ: " + error.message);
-      else {
-        alert("✅ تمت إضافة النتيجة");
-        document.getElementById('resultSeat').value = '';
-        document.getElementById('subjectName').value = '';
-        document.getElementById('subjectScore').value = '';
-        loadData();
-      }
-    });
+    const resultFieldsDiv = document.getElementById('resultCustomFieldsContainer');
+    if (resultCustomFields.length > 0) {
+      resultFieldsDiv.innerHTML = '<h4>📊 بيانات إضافية للنتيجة</h4>';
+      resultCustomFields.forEach(field => {
+        resultFieldsDiv.innerHTML += `<input type="${field.type}" id="result_${field.name}" placeholder="${field.name}" style="width:100%; margin-bottom:10px">`;
+      });
+    }
   }
   
-  loadData();
-</script>
-</body>
-</html>
+  async function loadStudents() {
+    const { data: students } = await supabase.from('students').select('*').eq('school_id', schoolId);
+    const div = document.getElementById('studentsList');
+    if (!students || students.length === 0) {
+      div.innerHTML = '<p>لا يوجد طلاب</p>';
+      return;
+    }
+    div.innerHTML = students.map(s => `
+      <div class="student-card">
+        <div>
+          <strong>${s.name}</strong><br>
+          <small>رقم الجلوس: ${s.seat_number} | الصف: ${s.grade || '-'}</small><br>
+          ${studentCustomFields.map(f => `<small>${f.name}: ${s.custom_data?.[f.name] || '-'}</small><br>`).join('')}
+          <small>النتائج: ${Object.entries(s.results || {}).map(([k,v]) => `${k}: ${v}`).join(' | ') || 'لا توجد نتائج'}</small>
+        </div>
+        <button onclick="deleteStudent(${s.id})" style="background:#dc3545">🗑️ حذف</button>
+      </div>
+    `).join('');
+  }
+  
+  window.addStudent = async () => {
+    const name = document.getElementById('studentName').value.trim();
+    const seat = document.getElementById('studentSeat').value.trim();
+    const grade = document.getElementById('studentGrade').value;
+    if (!name || !seat || !grade) return alert("املأ الحقول الأساسية");
+    
+    const customData = {};
+    studentCustomFields.forEach(field => {
+      const value = document.getElementById(`custom_${field.name}`)?.value.trim();
+      if (value) customData[field.name] = value;
+    });
+    
+    const { error } = await supabase.from('students').insert([{
+      school_id: schoolId,
+      name: name,
+      seat_number: seat,
+      grade: grade,
+      results: {},
+      custom_data: customData
+    }]);
+    
+    if (error) alert("خطأ: " + error.message);
+    else {
+      alert("✅ تمت الإضافة");
+      document.getElementById('studentName').value = '';
+      document.getElementById('studentSeat').value = '';
+      studentCustomFields.forEach(field => {
+        const input = document.getElementById(`custom_${field.name}`);
+        if (input) input.value = '';
+      });
+      loadStudents();
+    }
+  };
+  
+  window.addResult = async () => {
+    const seat = document.getElementById('resultSeat').value.trim();
+    const subject = document.getElementById('resultSubject').value;
+    const score = parseInt(document.getElementById('resultScore').value);
+    if (!seat || !subject || isNaN(score)) return alert("املأ الحقول الأساسية");
+    
+    const resultCustomData = {};
+    resultCustomFields.forEach(field => {
+      const value = document.getElementById(`result_${field.name}`)?.value.trim();
+      if (value) resultCustomData[field.name] = value;
+    });
+    
+    const { data: student } = await supabase
+      .from('students')
+      .select('id, results, result_custom_data')
+      .eq('school_id', schoolId)
+      .eq('seat_number', seat)
+      .single();
+    
+    if (!student) return alert("لا يوجد طالب بهذا الرقم");
+    
+    const newResults = { ...(student.results || {}), [subject]: score };
+    const newResultCustomData = { ...(student.result_custom_data || {}), [subject]: resultCustomData };
+    
+    const { error } = await supabase
+      .from('students')
+      .update({ results: newResults, result_custom_data: newResultCustomData })
+      .eq('id', student.id);
+    
+    if (error) alert("خطأ: " + error.message);
+    else {
+      alert("✅ تمت إضافة النتيجة");
+      document.getElementById('resultSeat').value = '';
+      document.getElementById('resultScore').value = '';
+      resultCustomFields.forEach(field => {
+        const input = document.getElementById(`result_${field.name}`);
+        if (input) input.value = '';
+      });
+      loadStudents();
+    }
+  };
+  
+  window.uploadExcel = async () => {
+    const file = document.getElementById('excelFile').files[0];
+    if (!file) return alert("اختر ملف أولاً");
+    
+    const data = await file.arrayBuffer();
+    const workbook = XLSX.read(data);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    if (rows.length < 2) return alert("الملف فارغ");
+    
+    let successCount = 0, errorCount = 0;
+    
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      const name = row
