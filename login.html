@@ -16,12 +16,8 @@
 <script type="module">
   import { supabase } from './supabase-config.js';
 
-  // عرض كل المستخدمين في console للمساعدة
-  const { data: allUsers } = await supabase.from('users').select('*');
-  console.log("جميع المستخدمين في قاعدة البيانات:", allUsers);
-
   document.getElementById('loginBtn').onclick = async () => {
-    const username = document.getElementById('username').value.trim().toLowerCase();
+    const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
 
     if (!username || !password) {
@@ -29,32 +25,44 @@
       return;
     }
 
-    console.log("البحث عن:", username);
-
-    // استخدام ilike بدل eq (يتجاهل الحروف الكبيرة والمسافات)
-    const { data: user, error } = await supabase
+    // استعلام مباشر بدون maybeSingle
+    const { data, error } = await supabase
       .from('users')
       .select('*')
-      .ilike('username', username)
-      .maybeSingle();
+      .eq('username', username);
 
-    console.log("النتيجة:", user);
+    console.log("البيانات:", data);
+    console.log("الخطأ:", error);
 
-    if (error || !user) {
+    if (error) {
+      document.getElementById('errorMsg').innerText = "❌ خطأ في قاعدة البيانات: " + error.message;
+      return;
+    }
+
+    if (!data || data.length === 0) {
       document.getElementById('errorMsg').innerText = "❌ اسم المستخدم غير صحيح";
       return;
     }
+
+    const user = data[0];
 
     if (user.password !== password) {
       document.getElementById('errorMsg').innerText = "❌ كلمة المرور غير صحيحة";
       return;
     }
 
-    alert("✅ دخول ناجح!");
+    // حفظ الجلسة
     sessionStorage.setItem('userRole', user.role);
     sessionStorage.setItem('userSchoolId', user.school_id || '');
     sessionStorage.setItem('username', user.username);
-    window.location.href = 'admin.html';
+    
+    alert("✅ دخول ناجح!");
+    
+    if (user.role === 'superAdmin') {
+      window.location.href = 'admin.html';
+    } else {
+      window.location.href = 'school-admin.html';
+    }
   };
 </script>
 </body>
