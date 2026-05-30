@@ -1,28 +1,28 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>نتيجة الطالب</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f7ff; padding: 20px; }
-    .container { max-width: 800px; margin: auto; }
-    .card { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
-    .header { text-align: center; border-bottom: 2px solid #1e3c72; padding-bottom: 15px; margin-bottom: 20px; }
-    .school-name { font-size: 24px; font-weight: bold; color: #1e3c72; }
-    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-    th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
-    th { background: #1e3c72; color: white; }
-    .total { background: #eef2fa; font-weight: bold; }
-    .grade-A { color: #28a745; font-weight: bold; }
-    .grade-B { color: #17a2b8; }
-    .grade-C { color: #ffc107; }
-    .grade-D { color: #fd7e14; }
-    .grade-F { color: #dc3545; }
-    button { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; margin-top: 20px; width: 100%; }
-    @media print { .no-print { display: none; } }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نتيجة الطالب</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f7ff; padding: 20px; }
+        .container { max-width: 800px; margin: auto; }
+        .card { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+        .header { text-align: center; border-bottom: 2px solid #1e3c72; padding-bottom: 15px; margin-bottom: 20px; }
+        .school-name { font-size: 24px; font-weight: bold; color: #1e3c72; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background: #1e3c72; color: white; }
+        .total { background: #eef2fa; font-weight: bold; }
+        .grade-A { color: #28a745; font-weight: bold; }
+        .grade-B { color: #17a2b8; }
+        .grade-C { color: #ffc107; }
+        .grade-D { color: #fd7e14; }
+        .grade-F { color: #dc3545; }
+        button { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; margin-top: 20px; width: 100%; }
+        @media print { .no-print { display: none; } }
+    </style>
 </head>
 <body>
 <div class="container"><div id="result"></div><button class="no-print" onclick="window.print()">🖨️ طباعة</button><button class="no-print" onclick="history.back()">🔙 رجوع</button></div>
