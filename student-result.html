@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نتيجة الطالب - نظام النتائج المدرسية</title>
+    <title>نتيجة الطالب</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -13,137 +13,34 @@
             padding: 20px;
         }
         .container { max-width: 900px; margin: auto; }
-        
-        .result-card {
-            background: white;
-            border-radius: 25px;
-            overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-            transition: transform 0.3s;
-        }
-        .result-card:hover { transform: translateY(-5px); }
-        
-        .card-header {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: white;
-            padding: 25px;
-            text-align: center;
-        }
-        .school-name { font-size: 22px; font-weight: bold; margin-bottom: 10px; }
+        .result-card { background: white; border-radius: 25px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        .card-header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 25px; text-align: center; }
+        .school-name { font-size: 22px; font-weight: bold; }
         .student-name { font-size: 26px; margin: 10px 0; }
-        .student-info { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 10px; font-size: 14px; opacity: 0.9; }
-        
+        .student-info { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; font-size: 14px; opacity: 0.9; }
         .card-body { padding: 25px; }
-        
-        .results-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        .results-table th {
-            background: #1e3c72;
-            color: white;
-            padding: 12px;
-            font-weight: bold;
-        }
-        .results-table td {
-            padding: 12px;
-            text-align: center;
-            border-bottom: 1px solid #eef2fa;
-            vertical-align: top;
-        }
-        .results-table tr:hover { background: #f8f9fa; }
-        
-        .details-cell {
-            text-align: right;
-            line-height: 1.6;
-        }
-        .score-item {
-            display: inline-block;
-            background: #eef2fa;
-            padding: 4px 10px;
-            border-radius: 15px;
-            margin: 2px 4px;
-            font-size: 12px;
-        }
-        
+        .results-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .results-table th { background: #1e3c72; color: white; padding: 12px; }
+        .results-table td { padding: 12px; text-align: center; border-bottom: 1px solid #eef2fa; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin: 20px 0; }
+        .stat-item { background: #f0f7ff; padding: 12px; border-radius: 12px; text-align: center; }
+        .stat-value { font-size: 24px; font-weight: bold; color: #1e3c72; }
         .grade-A { background: #d4edda; color: #155724; font-weight: bold; }
         .grade-B { background: #d1ecf1; color: #0c5460; font-weight: bold; }
         .grade-C { background: #fff3cd; color: #856404; font-weight: bold; }
         .grade-D { background: #ffe2d6; color: #cc6b2c; font-weight: bold; }
         .grade-F { background: #f8d7da; color: #721c24; font-weight: bold; }
-        
-        .total-row { background: #eef2fa; font-weight: bold; border-top: 2px solid #1e3c72; }
-        .total-row td { padding: 12px; font-size: 16px; }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-        .stat-item {
-            background: #f0f7ff;
-            padding: 12px;
-            border-radius: 12px;
-            text-align: center;
-        }
-        .stat-value { font-size: 24px; font-weight: bold; color: #1e3c72; }
-        .stat-label { font-size: 12px; color: #666; margin-top: 5px; }
-        
-        .card-footer {
-            background: #f8f9fa;
-            padding: 15px 25px;
-            text-align: center;
-            border-top: 1px solid #eef2fa;
-            font-size: 12px;
-            color: #666;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-        .btn {
-            padding: 12px 25px;
-            border: none;
-            border-radius: 12px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: 0.2s;
-            font-weight: bold;
-        }
-        .btn-primary { background: #1e3c72; color: white; }
-        .btn-primary:hover { background: #0f2b4f; transform: scale(1.02); }
-        .btn-success { background: #28a745; color: white; }
-        .btn-success:hover { background: #1e6b2f; transform: scale(1.02); }
-        
-        @media print {
-            body { background: white; padding: 0; }
-            .no-print { display: none; }
-            .result-card { box-shadow: none; margin: 0; }
-            .card-header { background: #1e3c72; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        }
-        
-        @media (max-width: 600px) {
-            .results-table th, .results-table td { padding: 8px; font-size: 12px; }
-            .student-name { font-size: 20px; }
-            .details-cell { font-size: 11px; }
-        }
+        .total-row { background: #eef2fa; font-weight: bold; }
+        button { background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; margin-top: 20px; width: 100%; }
+        @media print { .no-print { display: none; } }
     </style>
 </head>
 <body>
 <div class="container">
     <div id="resultContainer"></div>
-    <div class="action-buttons no-print">
-        <button class="btn btn-primary" onclick="window.print()">🖨️ طباعة النتيجة</button>
-        <button class="btn btn-success" onclick="shareResult()">📤 مشاركة النتيجة</button>
-        <button class="btn btn-primary" onclick="history.back()">🔙 رجوع للبحث</button>
+    <div class="no-print" style="display: flex; gap: 10px; margin-top: 15px;">
+        <button onclick="window.print()">🖨️ طباعة</button>
+        <button onclick="history.back()">🔙 رجوع</button>
     </div>
 </div>
 
@@ -162,152 +59,82 @@
   }
   
   async function loadResult() {
-      const { data: student, error } = await supabase
-          .from('students')
-          .select('*, schools(id, name, search_field_label, grading_system)')
+      let { data: student, error } = await supabase
+          .from('student_results')
+          .select('*, schools(id, name, search_field_label)')
           .eq('id', studentId)
           .single();
       
       if (error || !student) {
-          document.getElementById('resultContainer').innerHTML = `
-              <div class="result-card">
-                  <div class="card-header"><div class="school-name">⚠️ خطأ</div></div>
-                  <div class="card-body" style="text-align:center; padding:40px">
-                      <p style="color:#dc3545">لا توجد بيانات لهذا الطالب</p>
-                      <button class="btn btn-primary" onclick="history.back()">🔙 رجوع</button>
-                  </div>
-              </div>
-          `;
+          document.getElementById('resultContainer').innerHTML = '<div class="result-card"><div class="card-header">خطأ</div><div class="card-body"><p style="color:red">لا توجد بيانات</p></div></div>';
           return;
       }
       
-      const school = student.schools;
-      const multiScores = student.multi_scores || {};
-      const gradingSystem = school?.grading_system || { min_pass: 50 };
-      
+      let school = student.schools;
+      let scores = student.scores || {};
       let totalScore = 0, totalMax = 0;
       let subjectsHtml = '';
-      let subjectCount = 0;
+      let subjectCount = Object.keys(scores).length;
       
-      for (const [subject, data] of Object.entries(multiScores)) {
-          const percentage = parseFloat(data.percentage);
-          const gradeInfo = getGradeInfo(percentage);
-          
-          // بناء تفاصيل الدرجات
+      for (let [subject, subjectScores] of Object.entries(scores)) {
+          let total = 0, maxTotal = 0;
           let detailsHtml = '';
-          for (const [type, score] of Object.entries(data.scores || {})) {
-              detailsHtml += `<span class="score-item">${type}: ${score}</span>`;
+          for (let [field, value] of Object.entries(subjectScores)) {
+              detailsHtml += `<span style="display:inline-block; background:#eef2fa; padding:2px 8px; border-radius:15px; margin:2px; font-size:12px">${field}: ${value}</span>`;
+              total += value;
+              maxTotal += 100;
           }
+          let percentage = maxTotal > 0 ? (total / maxTotal) * 100 : 0;
+          let gradeInfo = getGradeInfo(percentage);
           
           subjectsHtml += `
               <tr>
                   <td style="font-weight:bold">${subject}</td>
-                  <td class="details-cell">${detailsHtml || '-'}</td>
-                  <td>${data.total}/${data.max}</td>
-                  <td class="${gradeInfo.class}">${percentage}%</td>
+                  <td>${detailsHtml || '-'}</td>
+                  <td>${total}/${maxTotal}</td>
+                  <td class="${gradeInfo.class}">${percentage.toFixed(1)}%</td>
                   <td class="${gradeInfo.class}">${gradeInfo.icon} ${gradeInfo.text}</td>
-              </tr>
+              </td>
           `;
-          totalScore += data.total;
-          totalMax += data.max;
-          subjectCount++;
+          totalScore += total;
+          totalMax += maxTotal;
       }
       
-      if (Object.keys(multiScores).length === 0) {
-          subjectsHtml = `
-              <tr>
-                  <td colspan="5" style="text-align:center; padding:40px; color:#dc3545">
-                      ⚠️ لا توجد نتائج مسجلة لهذا الطالب
-                  </td>
-              </tr>
-          `;
-      }
+      let totalPercentage = totalMax > 0 ? (totalScore / totalMax) * 100 : 0;
+      let totalGradeInfo = getGradeInfo(totalPercentage);
       
-      const totalPercentage = totalMax > 0 ? ((totalScore / totalMax) * 100).toFixed(1) : 0;
-      const totalGradeInfo = getGradeInfo(totalPercentage);
-      
-      const html = `
+      let html = `
           <div class="result-card">
               <div class="card-header">
                   <div class="school-name">🏫 ${school?.name || 'المدرسة'}</div>
-                  <div class="student-name">👨‍🎓 ${student.name}</div>
+                  <div class="student-name">👨‍🎓 ${student.student_name}</div>
                   <div class="student-info">
                       <span>📌 رقم الجلوس: ${student.seat_number || '-'}</span>
                       <span>🔑 الكود: ${student.code || '-'}</span>
                       <span>🆔 الرقم القومي: ${student.national_id || '-'}</span>
-                      <span>📚 الصف: ${student.grade || '-'}</span>
                   </div>
               </div>
-              
               <div class="card-body">
                   <div class="stats-grid">
-                      <div class="stat-item">
-                          <div class="stat-value">${subjectCount}</div>
-                          <div class="stat-label">المواد</div>
-                      </div>
-                      <div class="stat-item">
-                          <div class="stat-value">${totalScore}/${totalMax}</div>
-                          <div class="stat-label">المجموع الكلي</div>
-                      </div>
-                      <div class="stat-item">
-                          <div class="stat-value ${totalGradeInfo.class}" style="font-size:28px">${totalPercentage}%</div>
-                          <div class="stat-label">النسبة المئوية</div>
-                      </div>
-                      <div class="stat-item">
-                          <div class="stat-value ${totalGradeInfo.class}">${totalGradeInfo.icon} ${totalGradeInfo.text}</div>
-                          <div class="stat-label">التقدير العام</div>
-                      </div>
+                      <div class="stat-item"><div class="stat-value">${subjectCount}</div><div class="stat-label">المواد</div></div>
+                      <div class="stat-item"><div class="stat-value">${totalScore}/${totalMax}</div><div class="stat-label">المجموع الكلي</div></div>
+                      <div class="stat-item"><div class="stat-value ${totalGradeInfo.class}" style="font-size:28px">${totalPercentage.toFixed(1)}%</div><div class="stat-label">النسبة المئوية</div></div>
+                      <div class="stat-item"><div class="stat-value ${totalGradeInfo.class}">${totalGradeInfo.icon} ${totalGradeInfo.text}</div><div class="stat-label">التقدير العام</div></div>
                   </div>
-                  
                   <table class="results-table">
-                      <thead>
-                          <tr>
-                              <th>المادة</th>
-                              <th>تفاصيل الدرجات</th>
-                              <th>المجموع</th>
-                              <th>النسبة</th>
-                              <th>التقدير</th>
-                          </tr>
-                      </thead>
-                      <tbody>
-                          ${subjectsHtml}
-                          ${Object.keys(multiScores).length > 0 ? `
-                          <tr class="total-row">
-                              <td colspan="2"><strong>📊 الإجمالي العام</strong></td>
-                              <td><strong>${totalScore}/${totalMax}</strong></td>
-                              <td class="${totalGradeInfo.class}"><strong>${totalPercentage}%</strong></td>
-                              <td class="${totalGradeInfo.class}"><strong>${totalGradeInfo.icon} ${totalGradeInfo.text}</strong></td>
-                          </tr>
-                          ` : ''}
-                      </tbody>
+                      <thead><tr><th>المادة</th><th>تفاصيل الدرجات</th><th>المجموع</th><th>النسبة</th><th>التقدير</th></tr></thead>
+                      <tbody>${subjectsHtml}</tbody>
                   </table>
               </div>
-              
-              <div class="card-footer">
+              <div class="card-footer" style="background:#f8f9fa; padding:15px; text-align:center; font-size:12px; color:#666">
                   <div>📅 تاريخ الإصدار: ${new Date().toLocaleDateString('ar-EG')}</div>
-                  <div>✅ الحد الأدنى للنجاح: ${gradingSystem.min_pass}%</div>
-                  <div style="margin-top:5px;">© نظام إدارة النتائج المدرسية</div>
+                  <div>© نظام إدارة النتائج المدرسية</div>
               </div>
           </div>
       `;
       
       document.getElementById('resultContainer').innerHTML = html;
   }
-  
-  window.shareResult = async () => {
-      if (navigator.share) {
-          try {
-              await navigator.share({
-                  title: 'نتيجة الطالب',
-                  text: 'عرض نتيجة الطالب من نظام النتائج المدرسية',
-                  url: window.location.href
-              });
-          } catch(e) { console.log('تم الإلغاء'); }
-      } else {
-          navigator.clipboard.writeText(window.location.href);
-          alert('✅ تم نسخ رابط النتيجة للحافظة');
-      }
-  };
   
   loadResult();
 </script>
