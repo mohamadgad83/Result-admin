@@ -16,19 +16,38 @@
 <script type="module">
   import { supabase } from './supabase-config.js';
 
+  // أولاً: جلب كل المستخدمين عشان نشوف
+  const { data: allUsers, error: listError } = await supabase.from('users').select('*');
+  console.log("جميع المستخدمين:", allUsers);
+  
+  if (listError) {
+    alert("خطأ في جلب المستخدمين: " + listError.message);
+  } else if (!allUsers || allUsers.length === 0) {
+    alert("⚠️ لا يوجد مستخدمين في قاعدة البيانات!");
+    // إضافة مستخدم تلقائياً
+    const { error: insertError } = await supabase.from('users').insert([{
+      username: 'admin',
+      password: 'admin123',
+      role: 'superAdmin'
+    }]);
+    if (insertError) {
+      alert("فشل إضافة مستخدم: " + insertError.message);
+    } else {
+      alert("✅ تم إضافة مستخدم admin تلقائياً! حاول تسجيل الدخول مرة أخرى.");
+    }
+  } else {
+    alert(`✅ يوجد ${allUsers.length} مستخدم في قاعدة البيانات`);
+  }
+
   document.getElementById('loginBtn').onclick = async () => {
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
-
-    console.log("بحث عن:", username);
 
     const { data: user, error } = await supabase
       .from('users')
       .select('*')
       .eq('username', username)
       .maybeSingle();
-
-    console.log("النتيجة:", user, error);
 
     if (error || !user) {
       document.getElementById('errorMsg').innerText = "❌ اسم المستخدم غير صحيح";
@@ -40,7 +59,6 @@
       return;
     }
 
-    alert("✅ دخول ناجح!");
     sessionStorage.setItem('userRole', user.role);
     sessionStorage.setItem('userSchoolId', user.school_id || '');
     window.location.href = 'admin.html';
