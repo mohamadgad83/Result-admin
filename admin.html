@@ -7,17 +7,17 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f7ff; padding: 20px; }
-    .container { max-width: 900px; margin: auto; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+    .container { max-width: 1000px; margin: auto; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
     h1, h2, h3 { color: #1e3c72; margin-bottom: 15px; }
     button, input, select { padding: 10px; margin: 5px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; }
     button { background: #1e3c72; color: white; border: none; cursor: pointer; }
     button:hover { background: #0f2b4f; }
-    .school-card { background: #eef2fa; padding: 15px; margin: 10px 0; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; }
-    .custom-field-row { display: flex; gap: 10px; margin: 5px 0; align-items: center; }
-    .custom-field-row input { flex: 2; }
-    .custom-field-row select { flex: 1; }
-    .custom-field-row button { width: auto; padding: 8px 15px; }
-    @media (max-width: 600px) { .school-card { flex-direction: column; text-align: center; } .custom-field-row { flex-wrap: wrap; } }
+    .school-card { background: #eef2fa; padding: 15px; margin: 10px 0; border-radius: 12px; }
+    .school-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+    .school-details { margin-top: 10px; padding-top: 10px; border-top: 1px solid #ccc; display: none; }
+    .school-details.show { display: block; }
+    .custom-field-row { display: flex; gap: 10px; margin: 5px 0; align-items: center; flex-wrap: wrap; }
+    @media (max-width: 600px) { .school-header { flex-direction: column; text-align: center; } button, input, select { width: 100%; margin: 5px 0; } }
   </style>
 </head>
 <body>
@@ -45,6 +45,16 @@
     </select>
     
     <div id="gradesContainer" style="margin-bottom:10px"></div>
+    
+    <h4>🔍 إعدادات البحث</h4>
+    <div style="background:white; padding:10px; border-radius:8px; margin-bottom:15px">
+      <select id="searchField" style="width:100%; margin-bottom:10px">
+        <option value="seat_number">رقم الجلوس</option>
+        <option value="code">الكود</option>
+        <option value="national_id">الرقم القومي</option>
+      </select>
+      <input type="text" id="searchFieldLabel" placeholder="التسمية الظاهرة (مثال: رقم الجلوس)" style="width:100%">
+    </div>
     
     <h4>📋 حقول إضافية لبيانات الطلاب</h4>
     <div id="studentCustomFieldsContainer"></div>
@@ -107,13 +117,13 @@
     const div = document.createElement('div');
     div.className = 'custom-field-row';
     div.innerHTML = `
-      <input type="text" placeholder="اسم الحقل (مثال: ولي الأمر)" class="student-field-name">
-      <select class="student-field-type">
+      <input type="text" placeholder="اسم الحقل (مثال: ولي الأمر)" class="student-field-name" style="flex:2">
+      <select class="student-field-type" style="flex:1">
         <option value="text">نص</option>
         <option value="number">رقم</option>
         <option value="date">تاريخ</option>
       </select>
-      <button onclick="this.parentElement.remove()" style="background:#dc3545">✖</button>
+      <button onclick="this.parentElement.remove()" style="background:#dc3545; width:auto">✖</button>
     `;
     container.appendChild(div);
   };
@@ -123,13 +133,13 @@
     const div = document.createElement('div');
     div.className = 'custom-field-row';
     div.innerHTML = `
-      <input type="text" placeholder="اسم الحقل (مثال: تقدير)" class="result-field-name">
-      <select class="result-field-type">
+      <input type="text" placeholder="اسم الحقل (مثال: تقدير)" class="result-field-name" style="flex:2">
+      <select class="result-field-type" style="flex:1">
         <option value="text">نص</option>
         <option value="number">رقم</option>
         <option value="date">تاريخ</option>
       </select>
-      <button onclick="this.parentElement.remove()" style="background:#dc3545">✖</button>
+      <button onclick="this.parentElement.remove()" style="background:#dc3545; width:auto">✖</button>
     `;
     container.appendChild(div);
   };
@@ -167,17 +177,52 @@
     }
     div.innerHTML = schools.map(s => `
       <div class="school-card">
-        <div>
-          <strong>${s.name}</strong><br>
-          <small>المرحلة: ${s.stages?.name || 'غير محدد'}</small>
+        <div class="school-header">
+          <div>
+            <strong>${s.name}</strong><br>
+            <small>المرحلة: ${s.stages?.name || 'غير محدد'}</small><br>
+            <small>بحث بـ: ${s.search_field_label || s.search_field || 'رقم الجلوس'}</small>
+          </div>
+          <div>
+            <button onclick="toggleSchoolDetails(${s.id})">⚙️ إعدادات</button>
+            <button onclick="openSchool(${s.id})">👁️ فتح المدرسة</button>
+            <button onclick="deleteSchool(${s.id})" style="background:#dc3545">🗑️ حذف</button>
+          </div>
         </div>
-        <div>
-          <button onclick="openSchool(${s.id})">👁️ فتح المدرسة</button>
-          <button onclick="deleteSchool(${s.id})" style="background:#dc3545">🗑️ حذف</button>
+        <div id="details-${s.id}" class="school-details">
+          <h4>🔍 إعدادات البحث</h4>
+          <select id="searchField-${s.id}" class="search-field-select" data-school="${s.id}">
+            <option value="seat_number" ${s.search_field === 'seat_number' ? 'selected' : ''}>رقم الجلوس</option>
+            <option value="code" ${s.search_field === 'code' ? 'selected' : ''}>الكود</option>
+            <option value="national_id" ${s.search_field === 'national_id' ? 'selected' : ''}>الرقم القومي</option>
+          </select>
+          <input type="text" id="searchLabel-${s.id}" placeholder="التسمية الظاهرة" value="${s.search_field_label || ''}" style="width:100%; margin-top:5px">
+          <button onclick="updateSearchSettings(${s.id})" style="background:#28a745; margin-top:5px">💾 حفظ إعدادات البحث</button>
         </div>
       </div>
     `).join('');
   }
+  
+  window.toggleSchoolDetails = (id) => {
+    const details = document.getElementById(`details-${id}`);
+    details.classList.toggle('show');
+  };
+  
+  window.updateSearchSettings = async (id) => {
+    const searchField = document.getElementById(`searchField-${id}`).value;
+    const searchLabel = document.getElementById(`searchLabel-${id}`).value;
+    
+    const { error } = await supabase
+      .from('schools')
+      .update({ search_field: searchField, search_field_label: searchLabel })
+      .eq('id', id);
+    
+    if (error) alert("خطأ في تحديث الإعدادات: " + error.message);
+    else {
+      alert("✅ تم تحديث إعدادات البحث");
+      renderSchools();
+    }
+  };
   
   window.openSchool = (schoolId) => {
     sessionStorage.setItem('impersonatedSchoolId', schoolId);
@@ -195,6 +240,9 @@
     const stageId = document.getElementById('schoolStage').value;
     const username = document.getElementById('schoolUsername').value.trim();
     const password = document.getElementById('schoolPassword').value.trim();
+    const searchField = document.getElementById('searchField').value;
+    const searchFieldLabel = document.getElementById('searchFieldLabel').value.trim() || 
+      (searchField === 'seat_number' ? 'رقم الجلوس' : searchField === 'code' ? 'الكود' : 'الرقم القومي');
     
     if (!name || !stageId || !username || !password) {
       alert("❌ املأ جميع الحقول");
@@ -240,7 +288,9 @@
         stage_id: stageId, 
         custom_subjects: selectedSubjects,
         student_custom_fields: studentCustomFields,
-        result_custom_fields: resultCustomFields
+        result_custom_fields: resultCustomFields,
+        search_field: searchField,
+        search_field_label: searchFieldLabel
       }])
       .select()
       .single();
