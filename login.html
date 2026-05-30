@@ -16,38 +16,29 @@
 <script type="module">
   import { supabase } from './supabase-config.js';
 
-  // أولاً: جلب كل المستخدمين عشان نشوف
-  const { data: allUsers, error: listError } = await supabase.from('users').select('*');
-  console.log("جميع المستخدمين:", allUsers);
-  
-  if (listError) {
-    alert("خطأ في جلب المستخدمين: " + listError.message);
-  } else if (!allUsers || allUsers.length === 0) {
-    alert("⚠️ لا يوجد مستخدمين في قاعدة البيانات!");
-    // إضافة مستخدم تلقائياً
-    const { error: insertError } = await supabase.from('users').insert([{
-      username: 'admin',
-      password: 'admin123',
-      role: 'superAdmin'
-    }]);
-    if (insertError) {
-      alert("فشل إضافة مستخدم: " + insertError.message);
-    } else {
-      alert("✅ تم إضافة مستخدم admin تلقائياً! حاول تسجيل الدخول مرة أخرى.");
-    }
-  } else {
-    alert(`✅ يوجد ${allUsers.length} مستخدم في قاعدة البيانات`);
-  }
+  // عرض كل المستخدمين في console للمساعدة
+  const { data: allUsers } = await supabase.from('users').select('*');
+  console.log("جميع المستخدمين في قاعدة البيانات:", allUsers);
 
   document.getElementById('loginBtn').onclick = async () => {
-    const username = document.getElementById('username').value.trim();
+    const username = document.getElementById('username').value.trim().toLowerCase();
     const password = document.getElementById('password').value;
 
+    if (!username || !password) {
+      document.getElementById('errorMsg').innerText = "❌ املأ جميع الحقول";
+      return;
+    }
+
+    console.log("البحث عن:", username);
+
+    // استخدام ilike بدل eq (يتجاهل الحروف الكبيرة والمسافات)
     const { data: user, error } = await supabase
       .from('users')
       .select('*')
-      .eq('username', username)
+      .ilike('username', username)
       .maybeSingle();
+
+    console.log("النتيجة:", user);
 
     if (error || !user) {
       document.getElementById('errorMsg').innerText = "❌ اسم المستخدم غير صحيح";
@@ -59,8 +50,10 @@
       return;
     }
 
+    alert("✅ دخول ناجح!");
     sessionStorage.setItem('userRole', user.role);
     sessionStorage.setItem('userSchoolId', user.school_id || '');
+    sessionStorage.setItem('username', user.username);
     window.location.href = 'admin.html';
   };
 </script>
