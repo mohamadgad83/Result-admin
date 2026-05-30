@@ -3,250 +3,130 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>لوحة إدارة المدرسة</title>
+  <title>لوحة مدير المدرسة</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-  <style>
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-      margin: 20px 0;
-    }
-    .stat-card {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 15px;
-      border-radius: 12px;
-      text-align: center;
-    }
-    .student-row {
-      background: white;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .student-details {
-      flex: 1;
-    }
-    .edit-btn, .delete-btn {
-      padding: 5px 10px;
-      margin: 0 5px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    .edit-btn { background: #ffc107; color: #333; }
-    .delete-btn { background: #dc3545; color: white; }
-  </style>
 </head>
 <body>
 <div class="container">
   <h1>🏫 لوحة إدارة المدرسة</h1>
-  <button id="logoutBtn">تسجيل خروج</button>
+  <button onclick="sessionStorage.clear(); window.location.href='login.html'" style="background:#dc3545">تسجيل خروج</button>
   <div id="schoolName"></div>
   <hr>
-  
-  <div id="statsPanel" class="stats-grid"></div>
-  
-  <div id="settingsPanel" style="background:#eef2fa; padding:15px; border-radius:12px; margin:15px 0">
-    <h3>⚙️ إعدادات دخول الطلاب</h3>
-    <select id="studentLoginField">
-      <option value="seat_number">رقم الجلوس</option>
-      <option value="code">الكود</option>
-      <option value="national_id">الرقم القومي</option>
-    </select>
-    <input type="text" id="customLabel" placeholder="تسمية مخصصة (اختياري)">
-    <button id="saveSettingsBtn">💾 حفظ الإعدادات</button>
-  </div>
-  
-  <h3>📤 رفع ملف Excel/CSV</h3>
-  <div style="background:#f5f5f5; padding:15px; border-radius:12px; margin:10px 0">
-    <input type="file" id="excelUpload" accept=".xlsx, .xls, .csv">
-    <button id="importExcelBtn">استيراد البيانات</button>
-    <div id="excelPreview"></div>
-  </div>
-  
-  <h3>📚 الطلاب</h3>
-  <input type="text" id="searchStudent" placeholder="🔍 بحث بالاسم أو رقم الجلوس..." style="width:100%; margin-bottom:10px">
-  <div id="studentsList"></div>
+  <div id="content"></div>
 </div>
 <script type="module">
   import { supabase } from './supabase-config.js';
 
-  let currentSchoolId = null;
-  
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) window.location.href = 'login.html';
-  
+  // جلب المدرسة من الجلسة
+  let schoolId = sessionStorage.getItem('userSchoolId');
   const impersonatedId = sessionStorage.getItem('impersonatedSchoolId');
-  const { data: userData } = await supabase.from('users').select('role, school_id').eq('id', user.id).single();
   
-  if (userData?.role === 'superAdmin' && impersonatedId) {
-    currentSchoolId = parseInt(impersonatedId);
-    document.body.insertAdjacentHTML('afterbegin', '<div style="background:#ff9800;padding:8px;text-align:center">🔧 وضع التقمص (Super Admin) - <button id="exitImp">خروج</button></div>');
-    document.getElementById('exitImp')?.addEventListener('click', () => {
-      sessionStorage.removeItem('impersonatedSchoolId');
-      window.location.href = 'admin.html';
-    });
-  } else if (userData?.role === 'schoolAdmin') {
-    currentSchoolId = userData.school_id;
-  } else {
-    window.location.href = 'login.html';
+  if (impersonatedId) {
+    schoolId = impersonatedId;
   }
   
-  document.getElementById('logoutBtn').onclick = async () => {
-    await supabase.auth.signOut();
-    sessionStorage.removeItem('impersonatedSchoolId');
+  if (!schoolId) {
     window.location.href = 'login.html';
-  };
-  
-  async function loadSchoolData() {
-    const { data: school } = await supabase.from('schools').select('*').eq('id', currentSchoolId).single();
+  }
+
+  async function loadData() {
+    // جلب اسم المدرسة
+    const { data: school } = await supabase.from('schools').select('name').eq('id', schoolId).single();
     document.getElementById('schoolName').innerHTML = `<h2>🏫 ${school?.name}</h2>`;
     
-    // تحميل الإعدادات
-    document.getElementById('studentLoginField').value = school?.student_identifier_field || 'seat_number';
-    document.getElementById('customLabel').value = school?.student_identifier_label || '';
+    // جلب الطلاب
+    const { data: students } = await supabase.from('students').select('*').eq('school_id', schoolId);
     
-    // تحميل الطلاب
-    await loadStudents();
-    // تحميل الإحصائيات
-    await loadStats();
-  }
-  
-  async function loadStudents() {
-    const { data: students } = await supabase.from('students').select('*').eq('school_id', currentSchoolId);
-    const searchTerm = document.getElementById('searchStudent')?.value.toLowerCase() || '';
-    const filtered = students?.filter(s => 
-      s.name?.toLowerCase().includes(searchTerm) || 
-      s.seat_number?.toString().includes(searchTerm)
-    ) || [];
-    
-    const container = document.getElementById('studentsList');
-    container.innerHTML = filtered.map(s => `
-      <div class="student-row">
-        <div class="student-details">
-          <strong>${s.name}</strong><br>
-          <small>رقم الجلوس: ${s.seat_number || '-'} | الكود: ${s.code || '-'}</small><br>
-          <small>النتائج: ${Object.entries(s.results || {}).map(([k,v]) => `${k}: ${v}`).join(' | ')}</small>
-        </div>
-        <div>
-          <button class="edit-btn" onclick="editStudent('${s.id}')">✏️ تعديل</button>
-          <button class="delete-btn" onclick="deleteStudent('${s.id}')">🗑️ حذف</button>
-        </div>
-      </div>
-    `).join('');
-  }
-  
-  window.editStudent = (id) => {
-    const newName = prompt("أدخل الاسم الجديد:");
-    if (newName) {
-      supabase.from('students').update({ name: newName }).eq('id', id);
-      loadStudents();
+    let html = '<h3>📚 قائمة الطلاب</h3>';
+    if (students && students.length > 0) {
+      students.forEach(s => {
+        html += `<div class="card"><b>${s.name}</b><br>`;
+        html += `رقم الجلوس: ${s.seat_number || '-'}<br>`;
+        html += `النتائج: ${Object.entries(s.results || {}).map(([k,v]) => `${k}: ${v}`).join(' | ') || 'لا توجد نتائج'}</div>`;
+      });
+    } else {
+      html += '<p>لا يوجد طلاب حتى الآن</p>';
     }
-  };
-  
-  window.deleteStudent = async (id) => {
-    if (confirm("هل أنت متأكد من حذف هذا الطالب؟")) {
-      await supabase.from('students').delete().eq('id', id);
-      loadStudents();
-    }
-  };
-  
-  async function loadStats() {
-    const { data: students } = await supabase.from('students').select('results').eq('school_id', currentSchoolId);
-    const totalStudents = students?.length || 0;
-    let totalScore = 0;
-    let subjectCount = 0;
-    students?.forEach(s => {
-      const scores = Object.values(s.results || {});
-      totalScore += scores.reduce((a,b) => a+b, 0);
-      subjectCount += scores.length;
-    });
-    const avgScore = subjectCount > 0 ? (totalScore / subjectCount).toFixed(1) : 0;
     
-    document.getElementById('statsPanel').innerHTML = `
-      <div class="stat-card">👨‍🎓 عدد الطلاب<br><h2>${totalStudents}</h2></div>
-      <div class="stat-card">📊 متوسط الدرجات<br><h2>${avgScore}</h2></div>
+    // نموذج إضافة طالب سريع
+    html += `
+      <hr>
+      <h3>➕ إضافة طالب جديد</h3>
+      <input type="text" id="studentName" placeholder="اسم الطالب" style="width:100%; margin-bottom:8px">
+      <input type="text" id="studentSeat" placeholder="رقم الجلوس" style="width:100%; margin-bottom:8px">
+      <button id="addStudentBtn" style="background:#28a745">➕ إضافة طالب</button>
+      
+      <hr>
+      <h3>📝 إضافة نتيجة</h3>
+      <input type="text" id="resultSeat" placeholder="رقم الجلوس" style="width:100%; margin-bottom:8px">
+      <input type="text" id="subjectName" placeholder="اسم المادة" style="width:100%; margin-bottom:8px">
+      <input type="number" id="subjectScore" placeholder="الدرجة" style="width:100%; margin-bottom:8px">
+      <button id="addResultBtn" style="background:#28a745">📝 إضافة نتيجة</button>
     `;
+    
+    document.getElementById('content').innerHTML = html;
+    
+    // إضافة طالب
+    document.getElementById('addStudentBtn')?.addEventListener('click', async () => {
+      const name = document.getElementById('studentName').value.trim();
+      const seat = document.getElementById('studentSeat').value.trim();
+      if (!name || !seat) return alert("❌ املأ جميع الحقول");
+      
+      const { error } = await supabase.from('students').insert([{
+        school_id: parseInt(schoolId),
+        name: name,
+        seat_number: seat,
+        results: {}
+      }]);
+      
+      if (error) alert("خطأ: " + error.message);
+      else {
+        alert("✅ تمت الإضافة");
+        document.getElementById('studentName').value = '';
+        document.getElementById('studentSeat').value = '';
+        loadData();
+      }
+    });
+    
+    // إضافة نتيجة
+    document.getElementById('addResultBtn')?.addEventListener('click', async () => {
+      const seat = document.getElementById('resultSeat').value.trim();
+      const subject = document.getElementById('subjectName').value.trim();
+      const score = parseInt(document.getElementById('subjectScore').value);
+      
+      if (!seat || !subject || isNaN(score)) return alert("❌ املأ جميع الحقول");
+      
+      // البحث عن الطالب
+      const { data: student, error: findError } = await supabase
+        .from('students')
+        .select('id, results')
+        .eq('school_id', schoolId)
+        .eq('seat_number', seat)
+        .maybeSingle();
+      
+      if (findError || !student) {
+        alert("❌ لا يوجد طالب بهذا الرقم");
+        return;
+      }
+      
+      const newResults = { ...(student.results || {}), [subject]: score };
+      const { error } = await supabase
+        .from('students')
+        .update({ results: newResults })
+        .eq('id', student.id);
+      
+      if (error) alert("خطأ: " + error.message);
+      else {
+        alert("✅ تمت إضافة النتيجة");
+        document.getElementById('resultSeat').value = '';
+        document.getElementById('subjectName').value = '';
+        document.getElementById('subjectScore').value = '';
+        loadData();
+      }
+    });
   }
   
-  document.getElementById('saveSettingsBtn').onclick = async () => {
-    const loginField = document.getElementById('studentLoginField').value;
-    const customLabel = document.getElementById('customLabel').value;
-    const { error } = await supabase
-      .from('schools')
-      .update({ student_identifier_field: loginField, student_identifier_label: customLabel || null })
-      .eq('id', currentSchoolId);
-    if (error) alert("خطأ في الحفظ: " + error.message);
-    else alert("تم حفظ الإعدادات");
-  };
-  
-  document.getElementById('searchStudent').addEventListener('input', () => loadStudents());
-  
-  document.getElementById('importExcelBtn').onclick = async () => {
-    const file = document.getElementById('excelUpload').files[0];
-    if (!file) {
-      alert("اختر ملف أولاً");
-      return;
-    }
-    
-    const data = await file.arrayBuffer();
-    const workbook = XLSX.read(data);
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
-    
-    if (rows.length < 2) {
-      alert("الملف فارغ");
-      return;
-    }
-    
-    const fieldNames = rows[0];
-    let previewHtml = `<h4>معاينة البيانات</h4><p><strong>الحقول:</strong> ${fieldNames.join(' | ')}</p><table border="1">`;
-    for (let i = 1; i < Math.min(rows.length, 6); i++) {
-      previewHtml += '<tr>' + rows[i].map(c => `<td>${c || '-'}</td>`).join('') + '<tr>';
-    }
-    previewHtml += `</table><div><label>اختر حقل الاسم: <select id="mapName">${fieldNames.map((f,i) => `<option value="${i}">${f}</option>`).join('')}</select></label>
-    <label>اختر حقل المادة: <select id="mapSubject">${fieldNames.map((f,i) => `<option value="${i}">${f}</option>`).join('')}</select></label>
-    <label>اختر حقل الدرجة: <select id="mapScore">${fieldNames.map((f,i) => `<option value="${i}">${f}</option>`).join('')}</select></label>
-    <label>اختر حقل رقم الجلوس: <select id="mapSeat">${fieldNames.map((f,i) => `<option value="${i}">${f}</option>`).join('')}</select></label>
-    <button id="confirmImport">تأكيد الاستيراد</button></div>`;
-    
-    document.getElementById('excelPreview').innerHTML = previewHtml;
-    
-    document.getElementById('confirmImport').onclick = async () => {
-      const nameIdx = document.getElementById('mapName').value;
-      const subjectIdx = document.getElementById('mapSubject').value;
-      const scoreIdx = document.getElementById('mapScore').value;
-      const seatIdx = document.getElementById('mapSeat').value;
-      
-      const students = [];
-      for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        if (!row[nameIdx] || !row[subjectIdx]) continue;
-        students.push({
-          school_id: currentSchoolId,
-          name: row[nameIdx],
-          seat_number: seatIdx ? row[seatIdx] : null,
-          results: { [row[subjectIdx]]: parseFloat(row[scoreIdx]) || 0 }
-        });
-      }
-      
-      const { error } = await supabase.from('students').upsert(students);
-      if (error) alert("خطأ في الاستيراد: " + error.message);
-      else {
-        alert(`تم استيراد ${students.length} طالب بنجاح`);
-        loadStudents();
-        loadStats();
-      }
-      document.getElementById('excelPreview').innerHTML = '';
-    };
-  };
-  
-  loadSchoolData();
+  loadData();
 </script>
 </body>
 </html>
