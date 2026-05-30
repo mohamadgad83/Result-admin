@@ -2,61 +2,90 @@
 <html dir="rtl" lang="ar">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>تسجيل الدخول</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      max-width: 400px;
+      width: 100%;
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+    h1 { text-align: center; color: #1e3c72; margin-bottom: 20px; }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #1e3c72;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover { background: #0f2b4f; }
+    .error { color: red; text-align: center; margin-top: 10px; }
+  </style>
 </head>
 <body>
-<div class="container" style="max-width:400px">
-  <h1>🔐 تسجيل الدخول</h1>
+<div class="container">
+  <h1>🔐 نظام النتائج المدرسية</h1>
   <input type="text" id="username" placeholder="اسم المستخدم">
   <input type="password" id="password" placeholder="كلمة المرور">
-  <button id="loginBtn">دخول</button>
-  <div id="errorMsg" style="color:red"></div>
+  <button onclick="login()">دخول</button>
+  <div id="errorMsg" class="error"></div>
 </div>
 <script type="module">
   import { supabase } from './supabase-config.js';
 
-  document.getElementById('loginBtn').onclick = async () => {
+  window.login = async () => {
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
-
+    
     if (!username || !password) {
       document.getElementById('errorMsg').innerText = "❌ املأ جميع الحقول";
       return;
     }
-
-    // استعلام مباشر بدون maybeSingle
-    const { data, error } = await supabase
+    
+    const { data: user, error } = await supabase
       .from('users')
       .select('*')
-      .eq('username', username);
-
-    console.log("البيانات:", data);
-    console.log("الخطأ:", error);
-
-    if (error) {
-      document.getElementById('errorMsg').innerText = "❌ خطأ في قاعدة البيانات: " + error.message;
-      return;
-    }
-
-    if (!data || data.length === 0) {
+      .eq('username', username)
+      .maybeSingle();
+    
+    if (error || !user) {
       document.getElementById('errorMsg').innerText = "❌ اسم المستخدم غير صحيح";
       return;
     }
-
-    const user = data[0];
-
+    
     if (user.password !== password) {
       document.getElementById('errorMsg').innerText = "❌ كلمة المرور غير صحيحة";
       return;
     }
-
-    // حفظ الجلسة
+    
+    sessionStorage.setItem('userId', user.id);
     sessionStorage.setItem('userRole', user.role);
     sessionStorage.setItem('userSchoolId', user.school_id || '');
     sessionStorage.setItem('username', user.username);
-    
-    alert("✅ دخول ناجح!");
     
     if (user.role === 'superAdmin') {
       window.location.href = 'admin.html';
