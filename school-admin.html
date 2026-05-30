@@ -264,90 +264,188 @@
   };
   
   // استيراد البيانات من Excel
-  window.uploadExcel = async () => {
-      let file = document.getElementById('excelFile').files[0];
-      if (!file) { showToast("اختر ملف Excel أولاً", true); return; }
-      if (!currentGrade) { showToast("اختر الصف أولاً", true); return; }
-      
-      let subjects = schoolSubjects.filter(s => s.grade === currentGrade);
-      if (subjects.length === 0) { showToast("لا توجد مواد لهذا الصف", true); return; }
-      
-      document.getElementById('loadingIndicator').style.display = 'block';
-      
-      try {
-          let data = await file.arrayBuffer();
-          let workbook = XLSX.read(data);
-          let rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, defval: "" });
-          
-          let successCount = 0, errorCount = 0;
-          
-          for (let i = 2; i < rows.length; i++) {
-              let row = rows[i];
-              if (!row || !row[0] || !row[1]) continue;
-              
-              let name = row[0]?.toString().trim();
-              let seat = row[1]?.toString().trim();
-              let code = row[2]?.toString().trim() || null;
-              let nationalId = row[3]?.toString().trim() || null;
-              
-              if (!name || !seat) { errorCount++; continue; }
-              
-              let { data: student } = await supabase
-                  .from('students')
-                  .select('id, multi_scores')
-                  .eq('school_id', schoolId)
-                  .eq('seat_number', seat)
-                  .maybeSingle();
-              
-              if (!student) {
-                  let { data: newStudent } = await supabase
-                      .from('students')
-                      .insert([{ school_id: schoolId, name, seat_number: seat, code, national_id: nationalId, grade: currentGrade, multi_scores: {} }])
-                      .select()
-                      .single();
-                  student = newStudent;
-              } else {
-                  await supabase.from('students').update({ code, national_id: nationalId }).eq('id', student.id);
-              }
-              
-              let multiScores = student.multi_scores || {};
-              let colIndex = 4;
-              
-              for (let s = 0; s < subjects.length; s++) {
-                  let subject = subjects[s].subject;
-                  let fields = subjectFields[subject] || ['أعمال سنة', 'امتحان نهائي'];
-                  let scores = {};
-                  let total = 0, maxTotal = 0;
-                  
-                  for (let f = 0; f < fields.length; f++) {
-                      let value = parseFloat(row[colIndex + f]) || 0;
-                      scores[fields[f]] = value;
-                      total += value;
-                      maxTotal += 100;
-                  }
-                  
-                  multiScores[subject] = {
-                      scores: scores,
-                      total: total,
-                      max: maxTotal,
-                      percentage: maxTotal > 0 ? ((total / maxTotal) * 100).toFixed(1) : 0
-                  };
-                  colIndex += fields.length;
-              }
-              
-              await supabase.from('students').update({ multi_scores: multiScores }).eq('id', student.id);
-              successCount++;
-          }
-          
-          showToast(`✅ تم استيراد ${successCount} طالب\n⚠️ فشل ${errorCount}`);
-          document.getElementById('excelFile').value = '';
-          loadStudents();
-      } catch (err) {
-          showToast("❌ خطأ: " + err.message, true);
-      } finally {
-          document.getElementById('loadingIndicator').style.display = 'none';
-      }
-  };
+ window.uploadExcel = async () => {
+    let file = document.getElementById('excelFile').files[0];
+    if (!file) { showToast("اختر ملف Excel أولاً", true); return; }
+    if (!currentGrade) { showToast("اختر الصف أولاً", true); return; }
+    
+    let subjects = schoolSubjects.filter(s => s.grade === currentGrade);
+    if (subjects.length === 0) { showToast("لا توجد مواد لهذا الصف", true); return; }
+    
+    document.getElementById('loadingIndicator').style.display = 'block';
+    
+    try {
+        let data = await file.arrayBuffer();
+        let workbook = XLSX.read(data);
+        let rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, defval: "" });
+        
+        if (!rows || rows.length < 3) {
+            throw new Error("الملف فارغ أو لا يحتوي على بيانات كافية");
+        }
+        
+        // عرض معلومات debugging
+        console.log("عدد الصفوف:", rows.length);
+        console.log("رؤوس الأعمدة:", rows[0]);
+        console.log("المواد المتوقعة:", subjects.map(s => s.subject));
+        
+        let expectedColumns = 4; // الاسم, رقم الجلوس, الكود, الرقم القومي
+        subjects.forEach(subject => {
+            let fields = subjectFields[subject.subject] || ['أعمال سنة', 'امتحان نهائي'];
+            expectedColumns += fields.length;
+            console.log(`مادة ${subject.subject}: ${fields.length} خانة -> ${fields.join(', ')}`);
+        });
+        
+        let actualColumns = rows[0]?.length || 0;
+        console.log(`الأعمدة المتوقعة: ${expectedColumns}, الأعمدة الفعلية: ${actualColumns}`);
+        
+        if (actualColumns !== expectedColumns) {
+            showToast(`⚠️ عدد الأعمدة غير مطابق! المتوقع ${expectedColumns} عمود، ولكن الملف يحتوي على ${actualColumns} عمود. تأكد من استخدام القالب الصحيح.`, true);
+            document.getElementById('loadingIndicator').style.display = 'none';
+            return;
+        }
+        
+        let successCount = 0, errorCount = 0;
+        let errors = [];
+        
+        for (let i = 2; i < rows.length; i++) {
+            let row = rows[i];
+            if (!row || row.length < 4) continue;
+            
+            let name = row[0]?.toString().trim();
+            let seat = row[1]?.toString().trim();
+            let code = row[2]?.toString().trim() || null;
+            let nationalId = row[3]?.toString().trim() || null;
+            
+            if (!name || !seat) {
+                errors.push(`الصف ${i+1}: اسم الطالب أو رقم الجلوس مفقود`);
+                errorCount++;
+                continue;
+            }
+            
+            // البحث عن الطالب
+            let { data: existingStudent } = await supabase
+                .from('students')
+                .select('id')
+                .eq('school_id', schoolId)
+                .eq('seat_number', seat)
+                .eq('grade', currentGrade)
+                .maybeSingle();
+            
+            let studentId;
+            if (!existingStudent) {
+                let { data: newStudent, error: insertError } = await supabase
+                    .from('students')
+                    .insert([{ 
+                        school_id: schoolId, 
+                        name, 
+                        seat_number: seat, 
+                        code, 
+                        national_id: nationalId, 
+                        grade: currentGrade 
+                    }])
+                    .select()
+                    .single();
+                if (insertError) {
+                    errors.push(`الصف ${i+1}: فشل إضافة الطالب ${name} - ${insertError.message}`);
+                    errorCount++;
+                    continue;
+                }
+                studentId = newStudent.id;
+            } else {
+                studentId = existingStudent.id;
+                await supabase.from('students').update({ code, national_id: nationalId }).eq('id', studentId);
+            }
+            
+            // معالجة الدرجات لكل مادة
+            let colIndex = 4;
+            let subjectErrors = [];
+            
+            for (let s = 0; s < subjects.length; s++) {
+                let subject = subjects[s].subject;
+                let fields = subjectFields[subject] || ['أعمال سنة', 'امتحان نهائي'];
+                let scores = {};
+                let total = 0, maxTotal = 0;
+                let hasValue = false;
+                
+                for (let f = 0; f < fields.length; f++) {
+                    let value = parseFloat(row[colIndex + f]);
+                    if (!isNaN(value)) {
+                        scores[fields[f]] = value;
+                        total += value;
+                        maxTotal += 100;
+                        hasValue = true;
+                    } else {
+                        scores[fields[f]] = 0;
+                    }
+                }
+                
+                if (hasValue) {
+                    let percentage = maxTotal > 0 ? (total / maxTotal) * 100 : 0;
+                    
+                    let { data: existingScore } = await supabase
+                        .from('student_scores')
+                        .select('id')
+                        .eq('student_id', studentId)
+                        .eq('subject', subject)
+                        .eq('grade', currentGrade)
+                        .maybeSingle();
+                    
+                    if (existingScore) {
+                        let { error: updateError } = await supabase
+                            .from('student_scores')
+                            .update({ 
+                                scores, 
+                                total, 
+                                max_total: maxTotal, 
+                                percentage: percentage.toFixed(2),
+                                updated_at: new Date()
+                            })
+                            .eq('id', existingScore.id);
+                        if (updateError) subjectErrors.push(`${subject}: ${updateError.message}`);
+                    } else {
+                        let { error: insertError } = await supabase
+                            .from('student_scores')
+                            .insert([{ 
+                                student_id: studentId, 
+                                grade: currentGrade, 
+                                subject, 
+                                scores, 
+                                total, 
+                                max_total: maxTotal, 
+                                percentage: percentage.toFixed(2) 
+                            }]);
+                        if (insertError) subjectErrors.push(`${subject}: ${insertError.message}`);
+                    }
+                }
+                colIndex += fields.length;
+            }
+            
+            if (subjectErrors.length > 0) {
+                errors.push(`الصف ${i+1} (${name}): ${subjectErrors.join(', ')}`);
+                errorCount++;
+            } else {
+                successCount++;
+            }
+        }
+        
+        let message = `✅ تم استيراد ${successCount} طالب بنجاح`;
+        if (errorCount > 0) {
+            message += `\n⚠️ فشل ${errorCount} طالب`;
+            console.log("أخطاء الاستيراد:", errors);
+        }
+        showToast(message, errorCount > 0);
+        document.getElementById('uploadResult').innerHTML = `<span style="color:${errorCount > 0 ? '#dc3545' : '#28a745'}">✅ استوردت ${successCount} طالب${errorCount > 0 ? `, ❌ فشل ${errorCount}` : ''}</span>`;
+        document.getElementById('excelFile').value = '';
+        loadStudents();
+        
+    } catch (err) {
+        console.error("خطأ في الاستيراد:", err);
+        showToast("❌ خطأ في قراءة الملف: " + err.message, true);
+        document.getElementById('uploadResult').innerHTML = `<span style="color:#dc3545">❌ ${err.message}</span>`;
+    } finally {
+        document.getElementById('loadingIndicator').style.display = 'none';
+    }
+};
   
   async function loadStudents() {
       let { data: students } = await supabase.from('students').select('*').eq('school_id', schoolId);
