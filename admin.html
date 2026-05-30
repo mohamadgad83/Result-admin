@@ -167,9 +167,7 @@
     <div class="modal-content">
         <h3>➕ إضافة مدرسة جديدة</h3>
         <input type="text" id="newSchoolName" placeholder="اسم المدرسة" style="width:100%">
-        <select id="schoolStageSelect" style="width:100%; margin:10px 0">
-            <option value="1">ثانوي</option>
-        </select>
+        <select id="schoolStageSelect" style="width:100%; margin:10px 0"></select>
         <select id="searchFieldSelect" style="width:100%; margin:10px 0">
             <option value="seat_number">رقم الجلوس</option>
             <option value="code">الكود</option>
@@ -228,7 +226,6 @@
   let editingAdminId = null;
   let tempGrades = [];
   
-  // متغيرات لتعديل الخانات
   let editingStageId = null;
   let editingSubjectName = null;
   let editingFields = [];
@@ -296,21 +293,22 @@
               <button onclick="deleteStage(${stage.id})" class="btn-danger btn-sm">🗑️ حذف المرحلة</button>
           </div>
           ${grades.map((grade, gidx) => `
-              <div class="grade-card">
+              <div class="grade-card" id="grade-card-${stage.id}-${gidx}">
                   <div class="grade-header">
                       <span>🎓 ${grade.grade}</span>
                       <div>
                           <button onclick="editGradeName(${stage.id}, ${gidx}, '${grade.grade}')" class="btn-warning btn-sm">✏️ تعديل</button>
                           <button onclick="deleteGrade(${stage.id}, ${gidx})" class="btn-danger btn-sm">🗑️ حذف</button>
+                          <button onclick="saveGradeChanges(${stage.id}, ${gidx})" class="btn-success btn-sm">💾 حفظ التغييرات</button>
                       </div>
                   </div>
-                  <div class="subjects-list">
+                  <div class="subjects-list" id="subjects-${stage.id}-${gidx}">
                       ${grade.subjects.map((subject, sidx) => {
                           let subjectFields = fields[subject] || ['أعمال سنة', 'امتحان نهائي'];
                           return `
-                              <div class="subject-item">
+                              <div class="subject-item" data-subject="${subject}">
                                   <div class="subject-header">
-                                      <div class="subject-name">📖 ${subject}</div>
+                                      <div class="subject-name">📖 <span class="subject-name-text">${subject}</span></div>
                                       <div class="subject-actions">
                                           <button onclick="editSubjectName(${stage.id}, ${gidx}, ${sidx}, '${subject}')" class="btn-warning btn-sm">✏️ تعديل الاسم</button>
                                           <button onclick="editSubjectFields(${stage.id}, '${subject}', '${encodeURIComponent(JSON.stringify(subjectFields))}')" class="btn-info btn-sm">⚙️ الخانات</button>
@@ -348,6 +346,89 @@
       document.querySelectorAll('.stage-content').forEach((c, i) => c.classList.toggle('active', i === idx));
   };
   
+  // حفظ تغييرات الصف بأكمله (المزامنة مع المدارس)
+  window.saveGradeChanges = async (stageId, gradeIdx) => {
+      showToast("جاري حفظ التغييرات ومزامنتها مع المدارس...");
+      
+      let stage = stagesData.find(s => s.id == stageId);
+      let grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
+      let grade = grades[gradeIdx];
+      
+      // جمع المواد من الواجهة
+      let subjectsContainer = document.getElementById(`subjects-${stageId}-${gradeIdx}`);
+      let subjectItems = subjectsContainer.querySelectorAll('.subject-item');
+      let updatedSubjects = [];
+      
+      subjectItems.forEach(item => {
+          let subjectName = item.querySelector('.subject-name-text')?.innerText || item.querySelector('.subject-name')?.innerText;
+          if (subjectName) updatedSubjects.push(subjectName);
+      });
+      
+      // تحديث المواد في الصف
+      grade.subjects = updatedSubjects;
+      grades[gradeIdx] = grade;
+      
+      // حفظ في stages
+      let { error: stageError } = await supabase
+          .from('stages')
+          .update({ grades: JSON.stringify(grades) })
+          .eq('id', stageId);
+      
+      if (stageError) {
+          showToast("خطأ في حفظ المرحلة: " + stageError.message, true);
+          return;
+      }
+      
+      // مزامنة مع جميع المدارس من نفس المرحلة
+      let { data: schools } = await supabase
+          .from('schools')
+          .select('id')
+          .eq('stage_id', stageId);
+      
+      if (schools && schools.length > 0) {
+          for (let school of schools) {
+              let { data: schoolData } = await supabase
+                  .from('schools')
+                  .select('custom_subjects')
+                  .eq('id', school.id)
+                  .single();
+              
+              let currentSubjects = schoolData.custom_subjects || [];
+              let gradeExists = currentSubjects.find(s => s.grade === grade.grade);
+              
+              if (gradeExists) {
+                  // تحديث المواد الموجودة
+                  gradeExists.subjects = updatedSubjects;
+              } else {
+                  // إضافة الصف إذا لم يكن موجوداً
+                  currentSubjects.push({ grade: grade.grade, subjects: updatedSubjects });
+              }
+              
+              await supabase
+                  .from('schools')
+                  .update({ custom_subjects: currentSubjects })
+                  .eq('id', school.id);
+          }
+      }
+      
+      // تحديث جدول grades أيضاً
+      let gradeRecord = await supabase
+          .from('grades')
+          .select('id')
+          .eq('name', grade.grade)
+          .maybeSingle();
+      
+      if (gradeRecord.data) {
+          await supabase
+              .from('grades')
+              .update({ subjects: updatedSubjects.map(s => ({ name: s, fields: stage.subject_fields?.[s] || ['أعمال سنة', 'امتحان نهائي'] })) })
+              .eq('id', gradeRecord.data.id);
+      }
+      
+      showToast("✅ تم حفظ التغييرات ومزامنتها مع جميع المدارس");
+      loadStages(); // إعادة تحميل الصفحة
+  };
+  
   // ========== إدارة الصفوف ==========
   window.addNewGrade = async (stageId) => {
       let gradeName = prompt("أدخل اسم الصف (مثال: الصف الأول الثانوي)");
@@ -364,6 +445,7 @@
       if (!confirm("حذف هذا الصف وجميع مواده؟")) return;
       let stage = stagesData.find(s => s.id == stageId);
       let grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
+      let gradeName = grades[gradeIdx].grade;
       grades.splice(gradeIdx, 1);
       let { error } = await supabase.from('stages').update({ grades: JSON.stringify(grades) }).eq('id', stageId);
       if (error) showToast("خطأ: " + error.message, true);
@@ -394,7 +476,6 @@
       
       grades[gradeIdx].subjects.push(subjectName);
       
-      // إضافة الخانات الافتراضية للمادة الجديدة
       let fields = stage.subject_fields || {};
       fields[subjectName] = ['أعمال سنة', 'امتحان نهائي'];
       
@@ -433,7 +514,7 @@
   };
   
   window.deleteSubject = async (stageId, gradeIdx, subIdx, subjectName) => {
-      if (!confirm(`⚠️ حذف مادة "${subjectName}" نهائياً؟\nسيتم حذف جميع الخانات والنتائج المرتبطة بها.`)) return;
+      if (!confirm(`⚠️ حذف مادة "${subjectName}" نهائياً؟ سيتم حذف جميع الخانات والنتائج المرتبطة بها.`)) return;
       
       let stage = stagesData.find(s => s.id == stageId);
       let grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
