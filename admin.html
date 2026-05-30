@@ -596,23 +596,44 @@
   
   // ==================== إدارة المديرين ====================
   async function loadAdmins() {
-    const { data: admins } = await supabase.from('users').select('*, schools(name)').eq('role', 'schoolAdmin');
-    const div = document.getElementById('adminsList');
-    if (!admins || admins.length === 0) { div.innerHTML = '<p>لا يوجد مديرين مدارس</p>'; return; }
-    div.innerHTML = admins.map(a => `
-      <div class="user-card">
-        <div>
-          <strong>👤 ${a.username}</strong><br>
-          <small>🏫 ${a.schools?.name || 'غير مرتبط بمدرسة'}</small>
-        </div>
-        <div>
-          <button onclick="editAdmin(${a.id}, ${a.school_id}, '${a.username}')" class="btn-warning">✏️ تعديل</button>
-          <button onclick="resetAdminPassword(${a.id})" class="btn-info">🔑 تغيير كلمة المرور</button>
-          <button onclick="deleteAdmin(${a.id})" class="btn-danger">🗑️ حذف</button>
-        </div>
-      </div>
-    `).join('');
+  console.log("جاري تحميل المديرين...");
+  const { data: admins, error } = await supabase
+    .from('users')
+    .select(`
+      id,
+      username,
+      role,
+      school_id,
+      schools (id, name)
+    `)
+    .eq('role', 'schoolAdmin');
+  
+  console.log("البيانات المستلمة:", admins, error);
+  
+  const div = document.getElementById('adminsList');
+  if (error) {
+    div.innerHTML = `<p style="color:red">خطأ في التحميل: ${error.message}</p>`;
+    return;
   }
+  if (!admins || admins.length === 0) {
+    div.innerHTML = '<p>لا يوجد مديرين مدارس</p>';
+    return;
+  }
+  div.innerHTML = admins.map(a => `
+    <div class="user-card">
+      <div>
+        <strong>👤 ${a.username}</strong><br>
+        <small>🏫 ${a.schools?.name || 'غير مرتبط بمدرسة'}</small>
+        <small>🆔 ID: ${a.id}</small>
+      </div>
+      <div>
+        <button onclick="editAdmin(${a.id}, ${a.school_id || 0}, '${a.username}')" class="btn-warning">✏️ تعديل</button>
+        <button onclick="resetAdminPassword(${a.id})" class="btn-info">🔑 تغيير كلمة المرور</button>
+        <button onclick="deleteAdmin(${a.id})" class="btn-danger">🗑️ حذف</button>
+      </div>
+    </div>
+  `).join('');
+}
   
   window.showAddAdminModal = async () => {
     const { data: schools } = await supabase.from('schools').select('id, name');
