@@ -54,7 +54,7 @@
             display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
             margin-bottom: 8px;
         }
-        .subject-name { font-weight: bold; font-size: 16px; display: flex; align-items: center; gap: 10px; }
+        .subject-name { font-weight: bold; font-size: 16px; }
         .subject-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .fields-list {
             display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0 25px;
@@ -126,7 +126,7 @@
     </div>
 
     <div class="main-tabs">
-        <button class="main-tab active" onclick="showMainTab('stages')">📚 المراحل والمواد</button>
+        <button class="main-tab active" onclick="showMainTab('stages')">📚 المراحل والصفوف</button>
         <button class="main-tab" onclick="showMainTab('schools')">🏫 المدارس</button>
         <button class="main-tab" onclick="showMainTab('users')">👥 المديرون</button>
     </div>
@@ -167,7 +167,15 @@
     <div class="modal-content">
         <h3>➕ إضافة مدرسة جديدة</h3>
         <input type="text" id="newSchoolName" placeholder="اسم المدرسة" style="width:100%">
-        <select id="schoolStageSelect" style="width:100%; margin:10px 0"></select>
+        <select id="schoolStageSelect" style="width:100%; margin:10px 0">
+            <option value="1">ثانوي</option>
+        </select>
+        <select id="searchFieldSelect" style="width:100%; margin:10px 0">
+            <option value="seat_number">رقم الجلوس</option>
+            <option value="code">الكود</option>
+            <option value="national_id">الرقم القومي</option>
+        </select>
+        <input type="text" id="searchFieldLabel" placeholder="التسمية الظاهرة" style="width:100%">
         <input type="text" id="schoolUsername" placeholder="اسم مستخدم مدير المدرسة" style="width:100%">
         <input type="password" id="schoolPassword" placeholder="كلمة السر" style="width:100%">
         <div class="flex-between"><button onclick="addSchool()" class="btn-success">➕ إضافة</button><button onclick="closeModal('addSchoolModal')" class="btn-danger">إلغاء</button></div>
@@ -281,7 +289,6 @@
   function renderStageContent(stage) {
       let grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
       let fields = stage.subject_fields || {};
-      let includeInTotal = stage.subject_include_in_total || {};
       
       return `
           <div style="margin-bottom:20px">
@@ -289,28 +296,21 @@
               <button onclick="deleteStage(${stage.id})" class="btn-danger btn-sm">🗑️ حذف المرحلة</button>
           </div>
           ${grades.map((grade, gidx) => `
-              <div class="grade-card" id="grade-card-${stage.id}-${gidx}">
+              <div class="grade-card">
                   <div class="grade-header">
                       <span>🎓 ${grade.grade}</span>
                       <div>
                           <button onclick="editGradeName(${stage.id}, ${gidx}, '${grade.grade}')" class="btn-warning btn-sm">✏️ تعديل</button>
-                          <button onclick="deleteGrade(${stage.id}, ${gidx})" class="btn-danger btn-sm">🗑️ حذف الصف</button>
-                          <button onclick="saveGradeData(${stage.id}, ${gidx})" class="btn-success btn-sm">💾 حفظ التغييرات</button>
+                          <button onclick="deleteGrade(${stage.id}, ${gidx})" class="btn-danger btn-sm">🗑️ حذف</button>
                       </div>
                   </div>
-                  <div class="subjects-list" id="subjects-${stage.id}-${gidx}">
+                  <div class="subjects-list">
                       ${grade.subjects.map((subject, sidx) => {
                           let subjectFields = fields[subject] || ['أعمال سنة', 'امتحان نهائي'];
-                          let isIncluded = includeInTotal[subject] !== false;
                           return `
-                              <div class="subject-item" data-subject="${subject}" data-grade="${gidx}">
+                              <div class="subject-item">
                                   <div class="subject-header">
-                                      <div class="subject-name">
-                                          📖 ${subject}
-                                          <label style="font-size:12px; margin-right:15px; display:inline-flex; align-items:center; gap:4px">
-                                              <input type="checkbox" class="include-checkbox" data-stage="${stage.id}" data-subject="${subject}" ${isIncluded ? 'checked' : ''}> يُحتسب في المجموع
-                                          </label>
-                                      </div>
+                                      <div class="subject-name">📖 ${subject}</div>
                                       <div class="subject-actions">
                                           <button onclick="editSubjectName(${stage.id}, ${gidx}, ${sidx}, '${subject}')" class="btn-warning btn-sm">✏️ تعديل الاسم</button>
                                           <button onclick="editSubjectFields(${stage.id}, '${subject}', '${encodeURIComponent(JSON.stringify(subjectFields))}')" class="btn-info btn-sm">⚙️ الخانات</button>
@@ -342,46 +342,6 @@
           <button onclick="addNewGrade(${stage.id})" class="btn-success" style="margin-top:15px">➕ إضافة صف جديد</button>
       `;
   }
-  
-  // حفظ بيانات الصف بأكمله
-  window.saveGradeData = async (stageId, gradeIdx) => {
-      showToast("جاري حفظ البيانات...");
-      
-      let stage = stagesData.find(s => s.id == stageId);
-      let grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
-      let grade = grades[gradeIdx];
-      
-      // جمع المواد من الواجهة
-      let subjectsContainer = document.getElementById(`subjects-${stageId}-${gradeIdx}`);
-      let subjectItems = subjectsContainer.querySelectorAll('.subject-item');
-      let updatedSubjects = [];
-      let includeData = {};
-      
-      subjectItems.forEach(item => {
-          let subjectName = item.querySelector('.subject-name').innerText.replace('📖', '').trim();
-          let includeCheckbox = item.querySelector('.include-checkbox');
-          if (includeCheckbox) {
-              includeData[subjectName] = includeCheckbox.checked;
-          }
-          updatedSubjects.push(subjectName);
-      });
-      
-      // تحديث المواد في الصف
-      grade.subjects = updatedSubjects;
-      
-      // تحديث subject_include_in_total
-      let subjectInclude = stage.subject_include_in_total || {};
-      Object.assign(subjectInclude, includeData);
-      
-      // حفظ كل شيء
-      let { error } = await supabase.from('stages').update({ 
-          grades: JSON.stringify(grades),
-          subject_include_in_total: subjectInclude
-      }).eq('id', stageId);
-      
-      if (error) showToast("خطأ: " + error.message, true);
-      else showToast("✅ تم حفظ بيانات الصف بنجاح");
-  };
   
   window.showStageTab = (idx) => {
       document.querySelectorAll('.stage-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
@@ -463,16 +423,9 @@
           delete fields[oldName];
       }
       
-      let include = stage.subject_include_in_total || {};
-      if (include[oldName] !== undefined) {
-          include[newName] = include[oldName];
-          delete include[oldName];
-      }
-      
       let { error } = await supabase.from('stages').update({ 
           grades: JSON.stringify(grades),
-          subject_fields: fields,
-          subject_include_in_total: include
+          subject_fields: fields
       }).eq('id', stageId);
       
       if (error) showToast("خطأ: " + error.message, true);
@@ -490,13 +443,9 @@
       let fields = stage.subject_fields || {};
       delete fields[subjectName];
       
-      let include = stage.subject_include_in_total || {};
-      delete include[subjectName];
-      
       let { error } = await supabase.from('stages').update({ 
           grades: JSON.stringify(grades),
-          subject_fields: fields,
-          subject_include_in_total: include
+          subject_fields: fields
       }).eq('id', stageId);
       
       if (error) showToast("خطأ: " + error.message, true);
@@ -687,19 +636,19 @@
           if (subjects.length > 0) grades.push({ grade: gradeName, subjects: subjects });
       }
       if (grades.length === 0) { showToast("أضف صفاً واحداً على الأقل", true); return; }
-      let { error } = await supabase.from('stages').insert([{ name, grades: JSON.stringify(grades), subject_fields: {}, subject_order: {}, subject_include_in_total: {} }]);
+      let { error } = await supabase.from('stages').insert([{ name, grades: JSON.stringify(grades), subject_fields: {} }]);
       if (error) showToast("خطأ: " + error.message, true);
       else { showToast("✅ تمت إضافة المرحلة"); closeModal('addStageModal'); loadStages(); }
   };
   
   // ========== المدارس ==========
   async function loadSchools() {
-      let { data: schools } = await supabase.from('schools').select('*, stages(name)');
+      let { data: schools } = await supabase.from('schools').select('*');
       let div = document.getElementById('schoolsList');
       if (!schools || schools.length === 0) { div.innerHTML = '<p>لا توجد مدارس</p>'; return; }
       div.innerHTML = schools.map(s => `
           <div class="school-card">
-              <div><strong>${s.name}</strong><br><small>المرحلة: ${s.stages?.name || 'غير محدد'}</small></div>
+              <div><strong>${s.name}</strong><br><small>بحث بـ: ${s.search_field_label || s.search_field || 'رقم الجلوس'}</small></div>
               <div><button onclick="openSchool(${s.id})" class="btn-info">👁️ فتح</button><button onclick="deleteSchool(${s.id})" class="btn-danger">🗑️</button></div>
           </div>
       `).join('');
@@ -709,10 +658,9 @@
   window.deleteSchool = async (id) => { if (confirm("حذف المدرسة؟")) { await supabase.from('schools').delete().eq('id', id); loadSchools(); } };
   
   window.showAddSchoolModal = async () => {
-      let { data: stages } = await supabase.from('stages').select('*');
-      let select = document.getElementById('schoolStageSelect');
-      select.innerHTML = '<option value="">-- اختر المرحلة --</option>' + stages.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
       document.getElementById('newSchoolName').value = '';
+      document.getElementById('searchFieldSelect').value = 'seat_number';
+      document.getElementById('searchFieldLabel').value = '';
       document.getElementById('schoolUsername').value = '';
       document.getElementById('schoolPassword').value = '';
       document.getElementById('addSchoolModal').style.display = 'flex';
@@ -720,21 +668,24 @@
   
   window.addSchool = async () => {
       let name = document.getElementById('newSchoolName').value.trim();
-      let stageId = document.getElementById('schoolStageSelect').value;
+      let searchField = document.getElementById('searchFieldSelect').value;
+      let searchLabel = document.getElementById('searchFieldLabel').value.trim();
       let username = document.getElementById('schoolUsername').value.trim();
       let password = document.getElementById('schoolPassword').value.trim();
-      if (!name || !stageId || !username || !password) return showToast("املأ جميع الحقول", true);
-      let stage = stagesData.find(s => s.id == stageId);
-      let grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
-      let subjects = [];
-      grades.forEach(g => { g.subjects.forEach(s => { subjects.push({ grade: g.grade, subject: s }); }); });
-      let { data: ns } = await supabase.from('schools').insert([{ 
-          name, stage_id: stageId, custom_subjects: subjects, 
-          subject_fields: stage.subject_fields || {},
-          subject_order: stage.subject_order || {},
-          subject_include_in_total: stage.subject_include_in_total || {}
-      }]).select().single();
-      await supabase.from('users').insert([{ username, password, role: 'schoolAdmin', school_id: ns.id }]);
+      
+      if (!name || !username || !password) return showToast("املأ جميع الحقول", true);
+      if (!searchLabel) searchLabel = searchField === 'seat_number' ? 'رقم الجلوس' : searchField === 'code' ? 'الكود' : 'الرقم القومي';
+      
+      let { data: newSchool, error: schoolError } = await supabase
+          .from('schools')
+          .insert([{ name, stage_id: 1, search_field: searchField, search_field_label: searchLabel }])
+          .select()
+          .single();
+      if (schoolError) return showToast("خطأ: " + schoolError.message, true);
+      
+      let { error: userError } = await supabase.from('users').insert([{ username, password, role: 'schoolAdmin', school_id: newSchool.id }]);
+      if (userError) { await supabase.from('schools').delete().eq('id', newSchool.id); showToast("خطأ: " + userError.message, true); return; }
+      
       showToast(`✅ تمت الإضافة!\n👤 ${username}\n🔑 ${password}`);
       closeModal('addSchoolModal'); loadSchools();
   };
