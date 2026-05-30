@@ -3,103 +3,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>البحث عن نتيجة - نظام النتائج المدرسية</title>
+  <title>بحث النتيجة - نظام النتائج</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
     .container { max-width: 500px; margin: auto; }
-    .search-card { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+    .card { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
     h1 { color: #1e3c72; text-align: center; margin-bottom: 10px; }
-    .subtitle { text-align: center; color: #666; margin-bottom: 25px; }
-    label { display: block; margin-top: 15px; font-weight: bold; color: #333; }
-    select, input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ccc; font-size: 16px; }
-    button { background: #1e3c72; color: white; border: none; cursor: pointer; transition: 0.2s; }
-    button:hover { background: #0f2b4f; transform: scale(1.02); }
-    .error { color: #dc3545; text-align: center; margin-top: 15px; }
-    .loading { text-align: center; margin-top: 15px; color: #666; }
+    input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ccc; font-size: 16px; }
+    button { background: #1e3c72; color: white; border: none; cursor: pointer; }
+    button:hover { background: #0f2b4f; }
+    .error { color: red; text-align: center; margin-top: 15px; }
   </style>
 </head>
 <body>
 <div class="container">
-  <div class="search-card">
+  <div class="card">
     <h1>🏫 نظام النتائج المدرسية</h1>
-    <p class="subtitle">أدخل بياناتك لعرض النتيجة</p>
-    
-    <label>اختر المدرسة:</label>
-    <select id="schoolSelect">
-      <option value="">-- جاري تحميل المدارس --</option>
-    </select>
-    
+    <p style="text-align:center; margin-bottom:20px">أدخل بياناتك لعرض النتيجة</p>
+    <select id="schoolSelect"><option>-- تحميل المدارس --</option></select>
     <label id="searchLabel">رقم الجلوس:</label>
     <input type="text" id="searchValue" placeholder="أدخل رقم الجلوس">
-    
-    <button onclick="searchResult()">🔍 عرض النتيجة</button>
-    
+    <button onclick="search()">🔍 عرض النتيجة</button>
     <div id="errorMsg" class="error"></div>
-    <div id="loading" class="loading" style="display: none">⏳ جاري البحث...</div>
   </div>
 </div>
-
 <script type="module">
   import { supabase } from './supabase-config.js';
-  
-  let currentSchool = null;
-  
   async function loadSchools() {
     const { data: schools } = await supabase.from('schools').select('id, name, search_field, search_field_label');
     const select = document.getElementById('schoolSelect');
-    select.innerHTML = '<option value="">-- اختر مدرسة --</option>';
-    schools.forEach(school => {
-      const option = document.createElement('option');
-      option.value = school.id;
-      option.dataset.searchField = school.search_field || 'seat_number';
-      option.dataset.searchLabel = school.search_field_label || 'رقم الجلوس';
-      option.textContent = school.name;
-      select.appendChild(option);
-    });
+    select.innerHTML = '<option value="">-- اختر مدرسة --</option>' + schools.map(s => `<option value="${s.id}" data-field="${s.search_field||'seat_number'}" data-label="${s.search_field_label||'رقم الجلوس'}">${s.name}</option>`).join('');
+    select.onchange = () => {
+      const opt = select.options[select.selectedIndex];
+      if (opt.value) { document.getElementById('searchLabel').innerHTML = (opt.dataset.label || 'رقم الجلوس') + ':'; document.getElementById('searchValue').placeholder = `أدخل ${opt.dataset.label}`; }
+    };
   }
-  
-  document.getElementById('schoolSelect').addEventListener('change', (e) => {
-    const option = e.target.options[e.target.selectedIndex];
-    if (!option.value) return;
-    const label = option.dataset.searchLabel;
-    document.getElementById('searchLabel').innerHTML = label + ':';
-    document.getElementById('searchValue').placeholder = `أدخل ${label}`;
-  });
-  
-  window.searchResult = async () => {
-    const schoolId = document.getElementById('schoolSelect').value;
-    const searchValue = document.getElementById('searchValue').value.trim();
-    
-    if (!schoolId || !searchValue) {
-      document.getElementById('errorMsg').innerText = "يرجى اختيار المدرسة وإدخال البيانات";
-      return;
-    }
-    
-    document.getElementById('errorMsg').innerText = '';
-    document.getElementById('loading').style.display = 'block';
-    
-    const option = document.getElementById('schoolSelect').options[document.getElementById('schoolSelect').selectedIndex];
-    const searchField = option.dataset.searchField;
-    
-    const { data: student, error } = await supabase
-      .from('students')
-      .select('id')
-      .eq('school_id', schoolId)
-      .eq(searchField, searchValue)
-      .single();
-    
-    document.getElementById('loading').style.display = 'none';
-    
-    if (error || !student) {
-      document.getElementById('errorMsg').innerText = "⚠️ لا يوجد طالب بهذه البيانات";
-      return;
-    }
-    
+  window.search = async () => {
+    const select = document.getElementById('schoolSelect');
+    const schoolId = select.value;
+    const searchVal = document.getElementById('searchValue').value.trim();
+    if (!schoolId || !searchVal) { document.getElementById('errorMsg').innerText = "املأ البيانات"; return; }
+    const field = select.options[select.selectedIndex].dataset.field;
+    const { data: student } = await supabase.from('students').select('id').eq('school_id', schoolId).eq(field, searchVal).single();
+    if (!student) { document.getElementById('errorMsg').innerText = "⚠️ لا يوجد طالب"; return; }
     sessionStorage.setItem('viewStudentId', student.id);
     window.location.href = 'student-result.html';
   };
-  
   loadSchools();
 </script>
 </body>
