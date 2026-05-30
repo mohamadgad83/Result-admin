@@ -4,14 +4,19 @@
   <meta charset="UTF-8">
   <title>تسجيل الدخول</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .container { max-width: 400px; margin: 0; }
+  </style>
 </head>
 <body>
-<div class="container" style="max-width:400px">
-  <h1>🔐 تسجيل الدخول</h1>
-  <input type="text" id="username" placeholder="اسم المستخدم">
-  <input type="password" id="password" placeholder="كلمة المرور">
-  <button id="loginBtn">دخول</button>
-  <div id="errorMsg" style="color:red"></div>
+<div class="container">
+  <h1 style="text-align:center">🔐 نظام النتائج المدرسية</h1>
+  <hr>
+  <input type="text" id="username" placeholder="اسم المستخدم" style="width:100%; padding:12px; margin:8px 0">
+  <input type="password" id="password" placeholder="كلمة المرور" style="width:100%; padding:12px; margin:8px 0">
+  <button id="loginBtn" style="width:100%; padding:12px; background:#1e3c72; color:white; border:none; border-radius:12px; cursor:pointer">دخول</button>
+  <div id="errorMsg" style="color:red; text-align:center; margin-top:15px"></div>
 </div>
 <script type="module">
   import { supabase } from './supabase-config.js';
@@ -19,36 +24,44 @@
   document.getElementById('loginBtn').onclick = async () => {
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
-    
-    // بيانات الدخول الثابتة للتجربة
-    if (username === 'admin' && password === 'admin123') {
-      window.location.href = 'admin.html';
+
+    if (!username || !password) {
+      document.getElementById('errorMsg').innerText = "❌ املأ جميع الحقول";
       return;
     }
-    
-    // محاولة تسجيل الدخول العادية
-    const { data: userRecord } = await supabase
+
+    // البحث عن المستخدم في جدول users
+    const { data: user, error } = await supabase
       .from('users')
-      .select('email')
+      .select('id, username, password, role, school_id')
       .eq('username', username)
       .maybeSingle();
-    
-    if (!userRecord) {
-      document.getElementById('errorMsg').innerText = "اسم المستخدم غير صحيح";
+
+    if (error || !user) {
+      document.getElementById('errorMsg').innerText = "❌ اسم المستخدم غير صحيح";
       return;
     }
-    
-    const { error } = await supabase.auth.signInWithPassword({
-      email: userRecord.email,
-      password: password
-    });
-    
-    if (error) {
-      document.getElementById('errorMsg').innerText = "كلمة المرور غير صحيحة";
+
+    // التحقق من كلمة المرور
+    if (user.password !== password) {
+      document.getElementById('errorMsg').innerText = "❌ كلمة المرور غير صحيحة";
       return;
     }
-    
-    window.location.href = 'admin.html';
+
+    // حفظ بيانات الجلسة
+    sessionStorage.setItem('userId', user.id);
+    sessionStorage.setItem('userRole', user.role);
+    sessionStorage.setItem('userSchoolId', user.school_id || '');
+    sessionStorage.setItem('username', user.username);
+
+    // التوجيه حسب الصلاحية
+    if (user.role === 'superAdmin') {
+      window.location.href = 'admin.html';
+    } else if (user.role === 'schoolAdmin') {
+      window.location.href = 'school-admin.html';
+    } else {
+      document.getElementById('errorMsg').innerText = "❌ صلاحية غير معروفة";
+    }
   };
 </script>
 </body>
