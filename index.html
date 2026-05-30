@@ -6,45 +6,57 @@
   <title>نظام النتائج المدرسية</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
-    .container { max-width: 500px; margin: auto; padding: 20px; }
-    .card { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); text-align: center; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      max-width: 500px;
+      width: 100%;
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      text-align: center;
+    }
     h1 { color: #1e3c72; margin-bottom: 10px; }
     .subtitle { color: #666; margin-bottom: 30px; }
-    .btn { display: block; width: 100%; padding: 15px; margin: 15px 0; border: none; border-radius: 12px; font-size: 18px; cursor: pointer; transition: 0.2s; text-decoration: none; text-align: center; }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      margin: 15px 0;
+      border: none;
+      border-radius: 12px;
+      font-size: 18px;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+    }
     .btn-primary { background: #1e3c72; color: white; }
-    .btn-primary:hover { background: #0f2b4f; transform: scale(1.02); }
+    .btn-primary:hover { background: #0f2b4f; }
     .btn-secondary { background: #28a745; color: white; }
-    .btn-secondary:hover { background: #1e6b2f; transform: scale(1.02); }
-    .btn-outline { background: white; color: #1e3c72; border: 2px solid #1e3c72; }
-    .btn-outline:hover { background: #1e3c72; color: white; }
-    .footer { margin-top: 30px; color: rgba(255,255,255,0.7); text-align: center; }
+    .btn-secondary:hover { background: #1e6b2f; }
   </style>
 </head>
 <body>
 <div class="container">
-  <div class="card">
-    <h1>🏫 نظام النتائج المدرسية</h1>
-    <p class="subtitle">نظام متكامل لإدارة النتائج لجميع المراحل الدراسية</p>
-    
-    <a href="login.html" class="btn btn-primary">🔐 تسجيل الدخول (للمدراء)</a>
-    <a href="student-search.html" class="btn btn-secondary">🔍 عرض النتيجة (للطلاب)</a>
-    
-    <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee">
-      <p style="color: #666; font-size: 14px;">نسخة تجريبية - جميع الحقوق محفوظة</p>
-    </div>
-  </div>
-  <div class="footer">
-    <p>© 2024 نظام إدارة النتائج المدرسية</p>
+  <h1>🏫 نظام النتائج المدرسية</h1>
+  <p class="subtitle">نظام متكامل لإدارة النتائج لجميع المراحل الدراسية</p>
+  <a href="login.html" class="btn btn-primary">🔐 تسجيل الدخول (للمدراء)</a>
+  <a href="student-search.html" class="btn btn-secondary">🔍 عرض النتيجة (للطلاب)</a>
+  <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #999;">
+    © 2025 نظام إدارة النتائج المدرسية
   </div>
 </div>
 <script>
-  // التحقق من وجود جلسة نشطة للمدير
-  if (sessionStorage.getItem('userRole') === 'superAdmin') {
-    window.location.href = 'admin.html';
-  } else if (sessionStorage.getItem('userRole') === 'schoolAdmin') {
-    window.location.href = 'school-admin.html';
-  }
+  if (sessionStorage.getItem('userRole') === 'superAdmin') window.location.href = 'admin.html';
+  else if (sessionStorage.getItem('userRole') === 'schoolAdmin') window.location.href = 'school-admin.html';
 </script>
 </body>
 </html>
