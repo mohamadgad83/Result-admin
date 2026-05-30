@@ -2,101 +2,54 @@
 <html dir="rtl" lang="ar">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>تسجيل الدخول - نظام النتائج</title>
+  <title>تسجيل الدخول</title>
   <link rel="stylesheet" href="style.css">
-  <style>
-    body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-    .container { max-width: 400px; margin: 0; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-  </style>
 </head>
 <body>
-<div class="container">
-  <h1 style="text-align:center">🔐 نظام النتائج المدرسية</h1>
-  <hr>
-  <input type="text" id="username" placeholder="اسم المستخدم" autocomplete="off" style="width:100%; padding:12px; margin:8px 0">
-  <input type="password" id="password" placeholder="كلمة المرور" style="width:100%; padding:12px; margin:8px 0">
-  <button id="loginBtn" style="width:100%; padding:12px; background:#1e3c72; color:white; border:none; border-radius:12px; cursor:pointer">دخول</button>
-  <div id="errorMsg" style="color:red; text-align:center; margin-top:15px"></div>
-  <div id="loading" style="display:none; text-align:center; margin-top:15px">⏳ جاري التحقق...</div>
+<div class="container" style="max-width:400px">
+  <h1>🔐 تسجيل الدخول</h1>
+  <input type="text" id="username" placeholder="اسم المستخدم">
+  <input type="password" id="password" placeholder="كلمة المرور">
+  <button id="loginBtn">دخول</button>
+  <div id="errorMsg" style="color:red"></div>
 </div>
 <script type="module">
   import { supabase } from './supabase-config.js';
 
-  const loginBtn = document.getElementById('loginBtn');
-  const usernameInput = document.getElementById('username');
-  const passwordInput = document.getElementById('password');
-  const errorDiv = document.getElementById('errorMsg');
-  const loadingDiv = document.getElementById('loading');
-
-  loginBtn.onclick = async () => {
-    const username = usernameInput.value.trim();
-    const password = passwordInput.value;
-
-    if (!username || !password) {
-      errorDiv.innerText = "❌ الرجاء إدخال اسم المستخدم وكلمة المرور";
+  document.getElementById('loginBtn').onclick = async () => {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    
+    // بيانات الدخول الثابتة للتجربة
+    if (username === 'admin' && password === 'admin123') {
+      window.location.href = 'admin.html';
       return;
     }
-
-    errorDiv.innerText = "";
-    loadingDiv.style.display = "block";
-    loginBtn.disabled = true;
-
-    try {
-      // 1. البحث عن المستخدم في جدول users بواسطة username
-      const { data: userRecord, error: userError } = await supabase
-        .from('users')
-        .select('id, email, role, school_id, username')
-        .eq('username', username)
-        .maybeSingle();
-
-      if (userError || !userRecord) {
-        errorDiv.innerText = "❌ اسم المستخدم غير صحيح";
-        loadingDiv.style.display = "none";
-        loginBtn.disabled = false;
-        return;
-      }
-
-      // 2. محاولة تسجيل الدخول باستخدام البريد الإلكتروني المرتبط
-      const { data: authData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: userRecord.email,
-        password: password
-      });
-
-      if (signInError) {
-        errorDiv.innerText = "❌ كلمة المرور غير صحيحة";
-        loadingDiv.style.display = "none";
-        loginBtn.disabled = false;
-        return;
-      }
-
-      // 3. حفظ معلومات المستخدم في sessionStorage
-      sessionStorage.setItem('userRole', userRecord.role);
-      sessionStorage.setItem('userSchoolId', userRecord.school_id || '');
-      sessionStorage.setItem('username', userRecord.username);
-
-      // 4. التوجيه حسب الصلاحية
-      if (userRecord.role === 'superAdmin') {
-        window.location.href = 'admin.html';
-      } else if (userRecord.role === 'schoolAdmin') {
-        window.location.href = 'school-admin.html';
-      } else {
-        errorDiv.innerText = "❌ صلاحية غير معروفة";
-        await supabase.auth.signOut();
-      }
-
-    } catch (err) {
-      errorDiv.innerText = "❌ حدث خطأ غير متوقع";
-      console.error(err);
-    } finally {
-      loadingDiv.style.display = "none";
-      loginBtn.disabled = false;
+    
+    // محاولة تسجيل الدخول العادية
+    const { data: userRecord } = await supabase
+      .from('users')
+      .select('email')
+      .eq('username', username)
+      .maybeSingle();
+    
+    if (!userRecord) {
+      document.getElementById('errorMsg').innerText = "اسم المستخدم غير صحيح";
+      return;
     }
+    
+    const { error } = await supabase.auth.signInWithPassword({
+      email: userRecord.email,
+      password: password
+    });
+    
+    if (error) {
+      document.getElementById('errorMsg').innerText = "كلمة المرور غير صحيحة";
+      return;
+    }
+    
+    window.location.href = 'admin.html';
   };
-
-  // الضغط على Enter
-  usernameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') loginBtn.click(); });
-  passwordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') loginBtn.click(); });
 </script>
 </body>
 </html>
