@@ -76,18 +76,132 @@
     document.getElementById('resultSubject').innerHTML = allSubjects.map(s => `<option value="${s}">${s}</option>`).join('');
   }
   window.saveSettings = async () => { alert("تم الحفظ"); };
-  window.downloadTemplate = () => {
-    const grade = document.getElementById('templateGradeSelect').value;
-    if (!grade) return alert("اختر الصف");
-    const subjects = schoolSubjects.filter(s => s.grade === grade).map(s => s.subject);
-    const headers = ['اسم الطالب', 'رقم الجلوس'];
-    subjects.forEach(s => headers.push(`${s} (أعمال سنة)`, `${s} (امتحان نهائي)`));
-    if (studentCustomFields.length) studentCustomFields.forEach(f => headers.push(f.name));
-    const wsData = [headers, ['مثال', '123', ...subjects.flatMap(() => ['', '']), ...studentCustomFields.map(() => '')]];
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wsData), `قالب_${grade}`);
-    XLSX.writeFile(wb, `قالب_${grade}.xlsx`);
-  };
+  // ---------- نافذة تحميل قالب Excel (نسخة احترافية ومضبوطة) ----------
+window.downloadTemplate = () => {
+  const grade = document.getElementById('templateGradeSelect').value;
+  if (!grade) {
+    alert("❌ من فضلك اختر الصف أولاً.");
+    return;
+  }
+
+  // 1. جلب المواد الخاصة بالصف المختار
+  const subjects = schoolSubjects.filter(s => s.grade === grade).map(s => s.subject);
+  if (subjects.length === 0) {
+    alert("❌ لا توجد مواد مسجلة لهذا الصف. يرجى إضافة المواد أولاً من لوحة السوبر أدمن.");
+    return;
+  }
+
+  // 2. إنشاء رؤوس الأعمدة بشكل احترافي
+  const headers = [
+    "اسم الطالب",
+    "رقم الجلوس",
+    "المادة",
+    "أعمال السنة (من 100)",
+    "الامتحان النهائي (من 100)",
+    "المجموع (يحسب تلقائياً)",
+    "النسبة المئوية (تحسب تلقائياً)",
+    "التقدير (يظهر تلقائياً)"
+  ];
+
+  // --- إضافة الحقول المخصصة للطلاب (إذا وجدت) ---
+  if (studentCustomFields && studentCustomFields.length > 0) {
+    studentCustomFields.forEach(field => {
+      headers.push(`${field.name} (بيانات إضافية)`);
+    });
+  }
+
+  // 3. إنشاء صف بيانات نموذجي (Example) لتوضيح طريقة التعبئة
+  let exampleRow = [
+    "مثال: أحمد محمد",
+    "101",
+    "رياضيات",
+    "15",     // مثال لأعمال السنة
+    "40",     // مثال للامتحان النهائي
+    "55",     // المجموع (مثال)
+    "55%",    // النسبة (مثال)
+    "مقبول"   // التقدير (مثال)
+  ];
+
+  // --- إضافة قيم فارغة للحقول المخصصة في المثال ---
+  if (studentCustomFields && studentCustomFields.length > 0) {
+    studentCustomFields.forEach(() => {
+      exampleRow.push("مثال: ولي الأمر");
+    });
+  }
+
+  // 4. تحضير البيانات للورقة الأولى (القالب الأساسي)
+  const sheetData = [headers, exampleRow];
+
+  // --- إضافة 10 صفوف فارغة جاهزة لإدخال البيانات (للتسهيل على المستخدم) ---
+  for (let i = 0; i < 10; i++) {
+    let emptyRow = ["", "", "", "", "", "", "", ""];
+    if (studentCustomFields && studentCustomFields.length > 0) {
+      studentCustomFields.forEach(() => emptyRow.push(""));
+    }
+    sheetData.push(emptyRow);
+  }
+
+  // إنشاء ورقة العمل الرئيسية
+  const ws = XLSX.utils.aoa_to_sheet(sheetData);
+
+  // ضبط عرض الأعمدة (لجعلها مناسبة وجميلة)
+  ws['!cols'] = [
+    { wch: 25 }, // اسم الطالب
+    { wch: 15 }, // رقم الجلوس
+    { wch: 20 }, // المادة
+    { wch: 20 }, // أعمال السنة
+    { wch: 22 }, // الامتحان النهائي
+    { wch: 20 }, // المجموع
+    { wch: 20 }, // النسبة المئوية
+    { wch: 15 }  // التقدير
+  ];
+  // إضافة عرض مبدئي للحقول المخصصة (إذا وجدت)
+  if (studentCustomFields && studentCustomFields.length > 0) {
+    for (let i = 0; i < studentCustomFields.length; i++) {
+      ws['!cols'].push({ wch: 20 });
+    }
+  }
+
+  // تلوين رأس الجدول (اختياري - عبر CSS، لكنه يظهر بشكل أفضل في Excel)
+  // يمكن إضافة تعليق أو نص توضيحي للخلية الأولى
+  if (ws['A1']) ws['A1'].c = [{ a: "Center", t: "هذا العمود خاص باسم الطالب" }];
+
+  // 5. إنشاء ورقة منفصلة للتعليمات (بلغة عربية واضحة)
+  const instructionsData = [
+    ["📘 دليل استخدام قالب استيراد النتائج"],
+    [" "],
+    ["🔹 1. لا تقم بتعديل أو حذف الصف الأول (رؤوس الأعمدة) بأي حال من الأحوال."],
+    ["🔹 2. قم بإدخال بيانات الطلاب بدءاً من الصف الثالث (بعد الصف النموذجي)."],
+    ["🔹 3. طريقة ملء البيانات الصحيحة:"],
+    ["   - أدخل اسم الطالب ورقم جلوسه."],
+    ["   - أدخل اسم المادة كما هي مسجلة في النظام."],
+    ["   - أدخل درجة 'أعمال السنة' ودرجة 'الامتحان النهائي' (كل منهما من 100)."],
+    ["   - سيتم حساب المجموع والنسبة المئوية والتقدير تلقائياً بعد الرفع."],
+    ["🔹 4. إذا كان الطالب لديه عدة مواد، قم بإضافة سطر جديد لكل مادة بنفس رقم الجلوس."],
+    ["🔹 5. الحقول الإضافية (مثل ولي الأمر) اختيارية: يمكنك ملؤها أو تركها فارغة."],
+    ["🔹 6. بعد الانتهاء من التعبئة، قم برفع الملف مرة أخرى من خلال قسم 'رفع ملف Excel' في نفس الصفحة."],
+    [" "],
+    ["💡 مثال صحيح للتعبئة:"],
+    ["   الصف A (العمود الأول): أحمد محمد"],
+    ["   الصف B (العمود الثاني): 101"],
+    ["   الصف C (العمود الثالث): رياضيات"],
+    ["   الصف D (العمود الرابع): 18"],
+    ["   الصف E (العمود الخامس): 45"],
+    [" "],
+    ["© نظام إدارة النتائج المدرسية - جميع الحقوق محفوظة"]
+  ];
+
+  const wsInstructions = XLSX.utils.aoa_to_sheet(instructionsData);
+  wsInstructions['!cols'] = [{ wch: 70 }]; // عرض كبير لورقة التعليمات
+
+  // 6. إنشاء المصنف وإضافة الأوراق
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, `قالب_استيراد_${grade}`);
+  XLSX.utils.book_append_sheet(wb, wsInstructions, "تعليمات_الاستخدام");
+
+  // 7. تحميل الملف
+  XLSX.writeFile(wb, `قالب_استيراد_الطلاب_${grade}_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.xlsx`);
+};
   window.uploadExcel = async () => {
     const file = document.getElementById('excelFile').files[0];
     if (!file) return;
