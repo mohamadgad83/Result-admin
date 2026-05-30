@@ -3,85 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>البحث عن نتيجة</title>
+    <title>البحث عن نتيجة - نظام النتائج المدرسية</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
-        .container { max-width: 500px; margin: auto; }
-        .card { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-        h1 { color: #1e3c72; text-align: center; margin-bottom: 10px; }
-        .subtitle { text-align: center; color: #666; margin-bottom: 25px; }
-        label { display: block; margin-top: 15px; font-weight: bold; }
-        select, input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ccc; font-size: 16px; }
-        button { background: #1e3c72; color: white; border: none; cursor: pointer; }
-        button:hover { background: #0f2b4f; }
-        .error { color: red; text-align: center; margin-top: 15px; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container { max-width: 500px; width: 100%; margin: auto; }
+        .search-card {
+            background: white;
+            border-radius: 30px;
+            padding: 35px;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        h1 { color: #1e3c72; margin-bottom: 10px; font-size: 28px; }
+        .subtitle { color: #666; margin-bottom: 30px; font-size: 14px; }
+        .input-group { margin: 20px 0; text-align: right; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
+        select, input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #eef2fa;
+            border-radius: 15px;
+            font-size: 16px;
+            transition: 0.2s;
+        }
+        select:focus, input:focus { outline: none; border-color: #1e3c72; }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 20px;
+        }
+        button:hover { transform: scale(1.02); box-shadow: 0 5px 15px rgba(30,60,114,0.3); }
+        .error { color: #dc3545; margin-top: 15px; font-size: 14px; }
+        .loading { margin-top: 15px; color: #1e3c72; display: none; }
+        .quick-links { margin-top: 25px; padding-top: 20px; border-top: 1px solid #eef2fa; display: flex; gap: 15px; justify-content: center; }
+        .quick-link { color: #1e3c72; text-decoration: none; font-size: 12px; }
+        .quick-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 <div class="container">
-    <div class="card">
+    <div class="search-card">
         <h1>🏫 نظام النتائج المدرسية</h1>
         <p class="subtitle">أدخل بياناتك لعرض النتيجة</p>
-        <label>اختر المدرسة:</label>
-        <select id="schoolSelect"><option>-- تحميل المدارس --</option></select>
-        <label id="searchLabel">رقم الجلوس:</label>
-        <input type="text" id="searchValue" placeholder="أدخل رقم الجلوس">
+        
+        <div class="input-group">
+            <label>🏫 اختار المدرسة</label>
+            <select id="schoolSelect">
+                <option value="">-- جاري تحميل المدارس --</option>
+            </select>
+        </div>
+        
+        <div class="input-group">
+            <label id="searchLabel">🔍 رقم الجلوس</label>
+            <input type="text" id="searchValue" placeholder="أدخل رقم الجلوس">
+        </div>
+        
         <button onclick="searchResult()">🔍 عرض النتيجة</button>
+        
         <div id="errorMsg" class="error"></div>
+        <div id="loading" class="loading">⏳ جاري البحث...</div>
+        
+        <div class="quick-links">
+            <a href="index.html" class="quick-link">🏠 الرئيسية</a>
+            <a href="login.html" class="quick-link">🔐 دخول المدراء</a>
+        </div>
     </div>
 </div>
+
 <script type="module">
   import { supabase } from './supabase-config.js';
   
   async function loadSchools() {
-    const { data: schools } = await supabase.from('schools').select('id, name, search_field, search_field_label');
-    const select = document.getElementById('schoolSelect');
-    select.innerHTML = '<option value="">-- اختر مدرسة --</option>';
-    if (schools) {
-        schools.forEach(s => { 
-            const opt = document.createElement('option'); 
-            opt.value = s.id; 
-            opt.dataset.field = s.search_field || 'seat_number'; 
-            opt.dataset.label = s.search_field_label || 'رقم الجلوس'; 
-            opt.textContent = s.name; 
-            select.appendChild(opt); 
-        });
-    }
-    select.onchange = () => { 
-        const opt = select.options[select.selectedIndex]; 
-        if (opt.value) { 
-            document.getElementById('searchLabel').innerHTML = (opt.dataset.label || 'رقم الجلوس') + ':'; 
-            document.getElementById('searchValue').placeholder = `أدخل ${opt.dataset.label}`; 
-        } 
-    };
+      const { data: schools } = await supabase.from('schools').select('id, name, search_field, search_field_label');
+      const select = document.getElementById('schoolSelect');
+      select.innerHTML = '<option value="">-- اختر مدرسة --</option>';
+      if (schools) {
+          schools.forEach(school => {
+              const option = document.createElement('option');
+              option.value = school.id;
+              option.dataset.field = school.search_field || 'seat_number';
+              option.dataset.label = school.search_field_label || 'رقم الجلوس';
+              option.textContent = school.name;
+              select.appendChild(option);
+          });
+      }
+      select.onchange = () => {
+          const opt = select.options[select.selectedIndex];
+          if (opt.value) {
+              document.getElementById('searchLabel').innerHTML = `🔍 ${opt.dataset.label || 'رقم الجلوس'}`;
+              document.getElementById('searchValue').placeholder = `أدخل ${opt.dataset.label}`;
+          }
+      };
   }
   
   window.searchResult = async () => {
-    const select = document.getElementById('schoolSelect');
-    const schoolId = select.value;
-    const searchVal = document.getElementById('searchValue').value.trim();
-    
-    if (!schoolId || !searchVal) { 
-        document.getElementById('errorMsg').innerText = "املأ البيانات"; 
-        return; 
-    }
-    
-    const field = select.options[select.selectedIndex].dataset.field;
-    const { data: student } = await supabase
-        .from('students')
-        .select('id')
-        .eq('school_id', schoolId)
-        .eq(field, searchVal)
-        .single();
-    
-    if (!student) { 
-        document.getElementById('errorMsg').innerText = "⚠️ لا يوجد طالب بهذه البيانات"; 
-        return; 
-    }
-    
-    sessionStorage.setItem('viewStudentId', student.id);
-    window.location.href = 'student-result.html';
+      const select = document.getElementById('schoolSelect');
+      const schoolId = select.value;
+      const searchValue = document.getElementById('searchValue').value.trim();
+      
+      if (!schoolId || !searchValue) {
+          document.getElementById('errorMsg').innerText = "⚠️ يرجى اختيار المدرسة وإدخال البيانات";
+          return;
+      }
+      
+      document.getElementById('errorMsg').innerText = '';
+      document.getElementById('loading').style.display = 'block';
+      
+      const field = select.options[select.selectedIndex].dataset.field;
+      const { data: student, error } = await supabase
+          .from('students')
+          .select('id')
+          .eq('school_id', schoolId)
+          .eq(field, searchValue)
+          .single();
+      
+      document.getElementById('loading').style.display = 'none';
+      
+      if (error || !student) {
+          document.getElementById('errorMsg').innerHTML = "⚠️ لا يوجد طالب بهذه البيانات<br><small>تأكد من صحة البيانات أو تواصل مع إدارة المدرسة</small>";
+          return;
+      }
+      
+      sessionStorage.setItem('viewStudentId', student.id);
+      window.location.href = 'student-result.html';
   };
   
   loadSchools();
