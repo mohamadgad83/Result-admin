@@ -44,7 +44,7 @@
             <select id="selectedGrade" style="flex:3">
                 <option value="">-- اختر الصف --</option>
             </select>
-            <button id="syncBtn" class="btn-info">🔄 مزامنة المواد</button>
+            <button id="syncBtn" class="btn-info">🔄 مزامنة المواد من المرحلة</button>
         </div>
     </div>
     
@@ -88,6 +88,7 @@
   let schoolSubjects = [];
   let subjectFields = {};
   let currentGrade = '';
+  let currentGradeId = null;
   let availableGrades = [];
   
   function showToast(msg, isErr = false) {
@@ -104,7 +105,7 @@
       schoolData = school;
       document.getElementById('schoolInfo').innerHTML = `<h2>🏫 ${school.name}</h2>`;
       
-      // تحميل الصفوف من جدول grades (المرحلة الثانوية)
+      // تحميل الصفوف من جدول grades
       let { data: grades } = await supabase.from('grades').select('*').eq('stage_id', 1);
       if (grades) {
           availableGrades = grades;
@@ -113,15 +114,15 @@
       }
       
       document.getElementById('selectedGrade').onchange = () => {
-          let gradeId = document.getElementById('selectedGrade').value;
-          if (gradeId) {
-              let grade = availableGrades.find(g => g.id == gradeId);
+          currentGradeId = document.getElementById('selectedGrade').value;
+          if (currentGradeId) {
+              let grade = availableGrades.find(g => g.id == currentGradeId);
               if (grade) {
                   currentGrade = grade.name;
                   let subjects = grade.subjects || [];
                   schoolSubjects = subjects;
                   subjectFields = {};
-                  subjects.forEach(sub => { subjectFields[sub.name] = sub.fields; });
+                  subjects.forEach(sub => { subjectFields[sub.name] = sub.fields || ['أعمال سنة', 'امتحان نهائي']; });
                   renderSubjects();
                   loadStudents();
               }
@@ -134,7 +135,7 @@
   function renderSubjects() {
       let container = document.getElementById('subjectsContainer');
       if (schoolSubjects.length === 0) {
-          container.innerHTML = '<div class="info-card"><p style="color:#dc3545">⚠️ لا توجد مواد لهذا الصف</p></div>';
+          container.innerHTML = '<div class="info-card"><p style="color:#dc3545">⚠️ لا توجد مواد لهذا الصف. قم بمزامنة المواد من المرحلة أولاً</p></div>';
           return;
       }
       
@@ -156,10 +157,50 @@
       `;
   }
   
+  // مزامنة المواد من المرحلة (من جدول grades)
+  document.getElementById('syncBtn').onclick = async () => {
+      if (!confirm("سيتم مزامنة المواد من المرحلة الأساسية. استمر؟")) return;
+      showToast("جاري مزامنة المواد...");
+      
+      // جلب المواد من جدول grades
+      let { data: grades } = await supabase.from('grades').select('*');
+      if (!grades || grades.length === 0) {
+          showToast("لا توجد مواد في المرحلة الأساسية", true);
+          return;
+      }
+      
+      // تحديث جدول grades في المدرسة
+      for (let grade of grades) {
+          let { error } = await supabase
+              .from('grades')
+              .update({ subjects: grade.subjects })
+              .eq('id', grade.id);
+          if (error) console.error("خطأ في تحديث grade:", error);
+      }
+      
+      // تحديث المتغيرات المحلية
+      availableGrades = grades;
+      let gradeSelect = document.getElementById('selectedGrade');
+      gradeSelect.innerHTML = '<option value="">-- اختر الصف --</option>' + grades.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+      
+      if (currentGradeId) {
+          let grade = grades.find(g => g.id == currentGradeId);
+          if (grade) {
+              currentGrade = grade.name;
+              schoolSubjects = grade.subjects || [];
+              subjectFields = {};
+              schoolSubjects.forEach(sub => { subjectFields[sub.name] = sub.fields || ['أعمال سنة', 'امتحان نهائي']; });
+              renderSubjects();
+          }
+      }
+      
+      showToast("✅ تمت مزامنة المواد بنجاح");
+  };
+  
   // تحميل القالب
   document.getElementById('downloadBtn').onclick = () => {
       if (!currentGrade) { showToast("اختر الصف أولاً", true); return; }
-      if (schoolSubjects.length === 0) { showToast("لا توجد مواد لهذا الصف", true); return; }
+      if (schoolSubjects.length === 0) { showToast("لا توجد مواد لهذا الصف. قم بالمزامنة أولاً", true); return; }
       
       let headers = ["اسم الطالب", "رقم الجلوس", "الكود", "الرقم القومي"];
       schoolSubjects.forEach(subject => {
@@ -190,8 +231,8 @@
   document.getElementById('uploadBtn').onclick = async () => {
       let file = document.getElementById('excelFile').files[0];
       if (!file) { showToast("اختر ملف Excel أولاً", true); return; }
-      if (!currentGrade) { showToast("اختر الصف أولاً", true); return; }
-      if (schoolSubjects.length === 0) { showToast("لا توجد مواد لهذا الصف", true); return; }
+      if (!currentGradeId) { showToast("اختر الصف أولاً", true); return; }
+      if (schoolSubjects.length === 0) { showToast("لا توجد مواد لهذا الصف. قم بالمزامنة أولاً", true); return; }
       
       document.getElementById('loadingIndicator').style.display = 'block';
       
@@ -213,7 +254,7 @@
               
               if (!name || !seat) { errorCount++; continue; }
               
-              // البحث عن الطالب في student_results
+              // البحث عن الطالب
               let { data: existingStudent } = await supabase
                   .from('student_results')
                   .select('id')
@@ -242,7 +283,7 @@
                       seat_number: seat,
                       code: code,
                       national_id: nationalId,
-                      grade_id: document.getElementById('selectedGrade').value,
+                      grade_id: currentGradeId,
                       scores: scores
                   }]);
               } else {
@@ -269,14 +310,13 @@
   };
   
   async function loadStudents() {
-      let gradeId = document.getElementById('selectedGrade').value;
-      if (!gradeId) { document.getElementById('studentsList').innerHTML = '<p>اختر الصف أولاً</p>'; return; }
+      if (!currentGradeId) { document.getElementById('studentsList').innerHTML = '<p>اختر الصف أولاً</p>'; return; }
       
       let { data: students } = await supabase
           .from('student_results')
           .select('*')
           .eq('school_id', schoolId)
-          .eq('grade_id', gradeId);
+          .eq('grade_id', currentGradeId);
       
       let container = document.getElementById('studentsList');
       if (!students?.length) { container.innerHTML = '<p>لا يوجد طلاب في هذا الصف</p>'; return; }
@@ -308,20 +348,9 @@
   window.viewStudentResult = (studentId) => { sessionStorage.setItem('viewStudentId', studentId); window.open('student-result.html', '_blank'); };
   window.deleteStudent = async (id) => { if (confirm("حذف الطالب؟")) { await supabase.from('student_results').delete().eq('id', id); loadStudents(); } };
   
-  document.getElementById('clearResultsBtn').onclick = async () => { if (confirm(`مسح نتائج الصف ${currentGrade}؟`)) { let gradeId = document.getElementById('selectedGrade').value; await supabase.from('student_results').update({ scores: {} }).eq('school_id', schoolId).eq('grade_id', gradeId); showToast("✅ تم مسح النتائج"); loadStudents(); } };
-  document.getElementById('deleteStudentsBtn').onclick = async () => { if (confirm(`حذف جميع طلاب الصف ${currentGrade}؟`)) { let gradeId = document.getElementById('selectedGrade').value; await supabase.from('student_results').delete().eq('school_id', schoolId).eq('grade_id', gradeId); showToast("✅ تم الحذف"); loadStudents(); } };
+  document.getElementById('clearResultsBtn').onclick = async () => { if (confirm(`مسح نتائج الصف ${currentGrade}؟`)) { await supabase.from('student_results').update({ scores: {} }).eq('school_id', schoolId).eq('grade_id', currentGradeId); showToast("✅ تم مسح النتائج"); loadStudents(); } };
+  document.getElementById('deleteStudentsBtn').onclick = async () => { if (confirm(`حذف جميع طلاب الصف ${currentGrade}؟`)) { await supabase.from('student_results').delete().eq('school_id', schoolId).eq('grade_id', currentGradeId); showToast("✅ تم الحذف"); loadStudents(); } };
   document.getElementById('exportBtn').onclick = async () => { let { data: students } = await supabase.from('student_results').select('*').eq('school_id', schoolId); if (!students?.length) return; let headers = ['الاسم', 'رقم الجلوس', 'الكود', 'الصف', 'المادة', 'التفاصيل']; let rows = [headers]; for (let s of students) { let scores = s.scores || {}; for (let [subject, subjectScores] of Object.entries(scores)) { let details = Object.entries(subjectScores).map(([k,v]) => `${k}: ${v}`).join(' | '); rows.push([s.student_name, s.seat_number, s.code || '', s.grade_id || '', subject, details]); } } let ws = XLSX.utils.aoa_to_sheet(rows); let wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'نتائج'); XLSX.writeFile(wb, `نتائج_${new Date().toISOString().slice(0,10)}.xlsx`); showToast("✅ تم التصدير"); };
-  
-  document.getElementById('syncBtn').onclick = async () => {
-      if (!confirm("مزامنة المواد من المرحلة؟")) return;
-      let { data: grades } = await supabase.from('grades').select('*').eq('stage_id', 1);
-      if (grades) {
-          availableGrades = grades;
-          let gradeSelect = document.getElementById('selectedGrade');
-          gradeSelect.innerHTML = '<option value="">-- اختر الصف --</option>' + grades.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
-          showToast("✅ تمت المزامنة");
-      }
-  };
   
   window.logout = () => { sessionStorage.clear(); window.location.href = 'login.html'; };
   
