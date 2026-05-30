@@ -3,184 +3,97 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>نتائج الطلاب - نظام إدارة النتائج المدرسية</title>
-  <link rel="stylesheet" href="style.css">
+  <title>نتائج الطلاب</title>
   <style>
-    /* تحسينات إضافية للوضع المظلم */
-    .dark-mode {
-      background: #1a1a2e;
-      color: white;
-    }
-    .dark-mode .container {
-      background: #16213e;
-      color: white;
-    }
-    .dark-mode .card {
-      background: #0f3460;
-    }
-    .dark-mode button {
-      background: #e94560;
-    }
-    .theme-toggle {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      background: #1e3c72;
-      border-radius: 30px;
-      padding: 8px 15px;
-      cursor: pointer;
-      z-index: 1000;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f7ff; padding: 20px; }
+    .container { max-width: 600px; margin: auto; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+    h1 { color: #1e3c72; text-align: center; margin-bottom: 20px; }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    select, input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ccc; font-size: 16px; }
+    button { background: #1e3c72; color: white; border: none; cursor: pointer; }
+    button:hover { background: #0f2b4f; }
+    .card { background: #eef2fa; padding: 20px; border-radius: 15px; margin-top: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #b0c4de; padding: 10px; text-align: center; }
+    th { background: #cfe3ff; }
+    @media (max-width: 600px) { .container { padding: 15px; } }
   </style>
 </head>
 <body>
-<button class="theme-toggle" onclick="toggleDarkMode()">🌙 وضع مظلم</button>
 <div class="container">
   <h1>🏫 نظام النتائج المدرسية</h1>
   <label>اختر المدرسة:</label>
-  <select id="schoolSelect">
-    <option value="">-- جاري تحميل المدارس --</option>
-  </select>
-  <div id="loginFieldContainer">
-    <label id="identifierLabel">رقم الجلوس:</label>
-    <input type="text" id="studentId" placeholder="أدخل رقم الجلوس">
-  </div>
+  <select id="schoolSelect"></select>
+  <label>رقم الجلوس:</label>
+  <input type="text" id="studentSeat" placeholder="أدخل رقم الجلوس">
   <button id="searchBtn">🔍 عرض النتيجة</button>
   <div id="resultCard"></div>
-  <div id="loading" style="display:none; text-align:center">⏳ جاري البحث...</div>
 </div>
 <script type="module">
   import { supabase } from './supabase-config.js';
-
-  let currentSchoolId = null;
   
-  // إظهار وإخفاء التحميل
-  function showLoading() { document.getElementById('loading').style.display = 'block'; }
-  function hideLoading() { document.getElementById('loading').style.display = 'none'; }
+  const schoolSelect = document.getElementById('schoolSelect');
+  const studentSeat = document.getElementById('studentSeat');
+  const searchBtn = document.getElementById('searchBtn');
+  const resultDiv = document.getElementById('resultCard');
   
-  // تحميل المدارس
+  let studentCustomFields = [];
+  
   async function loadSchools() {
-    showLoading();
-    const { data: schools, error } = await supabase.from('schools').select('id, name, student_identifier_field, student_identifier_label');
-    hideLoading();
-    if (error) {
-      console.error(error);
-      document.getElementById('schoolSelect').innerHTML = '<option value="">خطأ في تحميل المدارس</option>';
-      return;
-    }
-    const select = document.getElementById('schoolSelect');
-    select.innerHTML = '<option value="">-- اختر مدرسة --</option>';
+    const { data: schools } = await supabase.from('schools').select('id, name');
+    schoolSelect.innerHTML = '<option value="">-- اختر مدرسة --</option>';
     schools.forEach(school => {
       const option = document.createElement('option');
       option.value = school.id;
       option.textContent = school.name;
-      option.dataset.loginField = school.student_identifier_field || 'seat_number';
-      option.dataset.loginLabel = school.student_identifier_label || 'رقم الجلوس';
-      select.appendChild(option);
+      schoolSelect.appendChild(option);
     });
   }
   
-  // تغيير طريقة الدخول حسب المدرسة المختارة
-  document.getElementById('schoolSelect').addEventListener('change', (e) => {
-    const option = e.target.options[e.target.selectedIndex];
-    if (!option.value) return;
-    currentSchoolId = option.value;
-    const loginField = option.dataset.loginField;
-    const loginLabel = option.dataset.loginLabel;
-    const labels = {
-      'seat_number': 'رقم الجلوس',
-      'code': 'الكود',
-      'national_id': 'الرقم القومي'
-    };
-    document.getElementById('identifierLabel').textContent = (loginLabel || labels[loginField] || 'رقم الجلوس') + ':';
-    document.getElementById('studentId').placeholder = `أدخل ${loginLabel || labels[loginField] || 'رقم الجلوس'}`;
-  });
-  
-  // البحث عن الطالب
-  document.getElementById('searchBtn').addEventListener('click', async () => {
-    const idValue = document.getElementById('studentId').value.trim();
-    if (!currentSchoolId || !idValue) {
-      alert("يرجى اختيار المدرسة وإدخال بيانات الطالب");
-      return;
-    }
-    showLoading();
+  searchBtn.addEventListener('click', async () => {
+    const schoolId = schoolSelect.value;
+    const seat = studentSeat.value.trim();
     
-    // جلب إعدادات المدرسة
-    const { data: school, error: schoolError } = await supabase
-      .from('schools')
-      .select('student_identifier_field, custom_grades')
-      .eq('id', currentSchoolId)
-      .single();
-    
-    if (schoolError) {
-      hideLoading();
-      alert("خطأ في جلب بيانات المدرسة");
+    if (!schoolId || !seat) {
+      alert("يرجى اختيار المدرسة وإدخال رقم الجلوس");
       return;
     }
     
-    const loginField = school.student_identifier_field || 'seat_number';
+    const { data: school } = await supabase.from('schools').select('student_custom_fields').eq('id', schoolId).single();
+    studentCustomFields = school?.student_custom_fields || [];
     
-    // البحث عن الطالب
-    const { data: students, error: studentError } = await supabase
+    const { data: student } = await supabase
       .from('students')
       .select('*')
-      .eq('school_id', currentSchoolId)
-      .eq(loginField, idValue)
-      .limit(1);
+      .eq('school_id', schoolId)
+      .eq('seat_number', seat)
+      .single();
     
-    hideLoading();
-    
-    if (studentError || !students || students.length === 0) {
-      document.getElementById('resultCard').innerHTML = "<p style='color:red;text-align:center'>⚠️ لا يوجد طالب بهذه البيانات</p>";
+    if (!student) {
+      resultDiv.innerHTML = "<p style='color:red;text-align:center'>⚠️ لا يوجد طالب بهذا الرقم</p>";
       return;
     }
     
-    const student = students[0];
-    const results = student.results || {};
+    let html = `<div class="card"><h2>${student.name}</h2>`;
+    html += `<p><strong>رقم الجلوس:</strong> ${student.seat_number}</p>`;
+    html += `<p><strong>الصف:</strong> ${student.grade || '-'}</p>`;
     
-    // بناء كارت النتيجة
-    let html = `
-      <div class="card">
-        <h2>${student.name}</h2>
-        <p><strong>${school.student_identifier_label || 'رقم الجلوس'}:</strong> ${student[loginField] || '-'}</p>
-        <table border="1">
-          <thead><tr><th>المادة</th><th>الدرجة</th><th>التقدير</th></tr></thead>
-          <tbody>
-    `;
-    
-    // حساب التقدير
-    const getGrade = (score) => {
-      if (score >= 90) return 'ممتاز';
-      if (score >= 80) return 'جيد جداً';
-      if (score >= 70) return 'جيد';
-      if (score >= 60) return 'مقبول';
-      return 'راسب';
-    };
-    
-    for (const [subject, score] of Object.entries(results)) {
-      html += `<tr><td>${subject}</td><td>${score}</td><td>${getGrade(score)}</td></tr>`;
+    if (studentCustomFields.length > 0) {
+      html += `<h4>📋 بيانات إضافية</h4>`;
+      studentCustomFields.forEach(field => {
+        html += `<p><strong>${field.name}:</strong> ${student.custom_data?.[field.name] || '-'}</p>`;
+      });
     }
     
-    html += `
-          </tbody>
-        </table>
-        <button onclick="window.print()" style="margin-top:15px">🖨️ طباعة الكارت</button>
-      </div>
-    `;
+    html += `<h4>📊 النتائج</h4><table border="1"><tr><th>المادة</th><th>الدرجة</th></tr>`;
+    for (const [subject, score] of Object.entries(student.results || {})) {
+      html += `<tr><td>${subject}</td><td>${score}</td></tr>`;
+    }
+    html += `<table><button onclick="window.print()" style="margin-top:15px">🖨️ طباعة</button></div>`;
     
-    document.getElementById('resultCard').innerHTML = html;
+    resultDiv.innerHTML = html;
   });
-  
-  // الوضع المظلم
-  window.toggleDarkMode = () => {
-    document.body.classList.toggle('dark-mode');
-    localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
-  };
-  
-  // استعادة الوضع المظلم من التخزين المحلي
-  if (localStorage.getItem('darkMode') === 'true') {
-    document.body.classList.add('dark-mode');
-  }
   
   loadSchools();
 </script>
