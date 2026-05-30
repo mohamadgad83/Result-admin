@@ -8,12 +8,17 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f7ff; padding: 20px; }
-    .container { max-width: 900px; margin: auto; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+    .container { max-width: 1000px; margin: auto; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
     h1, h2, h3 { color: #1e3c72; margin-bottom: 15px; }
     button, input, select { padding: 10px; margin: 5px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; }
     button { background: #1e3c72; color: white; border: none; cursor: pointer; }
     button:hover { background: #0f2b4f; }
     .student-card { background: #eef2fa; padding: 15px; margin: 10px 0; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+    .preview-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 12px; }
+    .preview-table th, .preview-table td { border: 1px solid #ccc; padding: 5px; text-align: center; }
+    .preview-table th { background: #cfe3ff; }
+    .field-mapping { display: flex; gap: 10px; margin: 10px 0; flex-wrap: wrap; }
+    .settings-panel { background: #f0f7ff; padding: 15px; border-radius: 12px; margin: 15px 0; border-right: 4px solid #1e3c72; }
     @media (max-width: 600px) { .student-card { flex-direction: column; text-align: center; } button, input, select { width: 100%; margin: 5px 0; } }
   </style>
 </head>
@@ -23,19 +28,50 @@
     <h1 style="margin:0">🏫 لوحة إدارة المدرسة</h1>
     <div>
       <button onclick="window.location.href='index.html'" style="background:#28a745">🏠 الرئيسية</button>
+      <button onclick="exportToExcel()" style="background:#17a2b8">📥 تصدير إلى Excel</button>
       <button onclick="logout()" style="background:#dc3545">تسجيل خروج</button>
     </div>
   </div>
   
   <div id="schoolInfo"></div>
+  
+  <!-- إعدادات البحث - جديدة -->
+  <div class="settings-panel">
+    <h3>🔍 إعدادات البحث للطلاب</h3>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end">
+      <div style="flex: 2">
+        <label>حقل البحث:</label>
+        <select id="searchFieldSelect" style="width:100%">
+          <option value="seat_number">رقم الجلوس</option>
+          <option value="code">الكود</option>
+          <option value="national_id">الرقم القومي</option>
+        </select>
+      </div>
+      <div style="flex: 2">
+        <label>التسمية الظاهرة:</label>
+        <input type="text" id="searchFieldLabelInput" placeholder="مثال: رقم الجلوس">
+      </div>
+      <div style="flex: 1">
+        <button onclick="saveSearchSettings()" style="background:#28a745; margin:0">💾 حفظ الإعدادات</button>
+      </div>
+    </div>
+    <div id="searchSettingsStatus" style="margin-top:10px; font-size:12px; color:#666"></div>
+  </div>
+  
   <div id="subjectsContainer" style="background:#eef2fa; padding:15px; border-radius:12px; margin:10px 0"></div>
   <hr>
   
-  <h2>📤 رفع نتائج من Excel</h2>
+  <h2>📤 استيراد نتائج من Excel</h2>
   <div style="background:#f0f7ff; padding:15px; border-radius:12px; margin:10px 0">
-    <p><strong>تنسيق الملف المطلوب:</strong> الاسم - رقم الجلوس - الصف - المادة - الدرجة</p>
-    <input type="file" id="excelFile" accept=".xlsx, .xls, .csv" style="width:100%">
-    <button onclick="uploadExcel()" style="background:#28a745; margin-top:10px">📊 رفع الملف</button>
+    <p><strong>طريقة الاستيراد:</strong></p>
+    <ul>
+      <li>الملف يجب أن يكون بصيغة Excel (.xlsx, .xls) أو CSV</li>
+      <li>أول صف في الملف يحتوي على <strong>أسماء الحقول</strong> (سيتم استخدامها كتسمية)</li>
+      <li>باقي الصفوف تحتوي على بيانات الطلاب والنتائج</li>
+    </ul>
+    <input type="file" id="excelFile" accept=".xlsx, .xls, .csv" style="width:100%; margin-bottom:10px">
+    <div id="excelPreviewArea" style="display:none; margin-top:15px; border-top:1px solid #ccc; padding-top:15px"></div>
+    <button onclick="uploadExcel()" style="background:#28a745">📊 رفع الملف واستيراد</button>
     <div id="uploadResult"></div>
   </div>
   
@@ -73,10 +109,16 @@
   let schoolGrades = [];
   let studentCustomFields = [];
   let resultCustomFields = [];
+  let currentExcelData = null;
+  let currentExcelHeaders = [];
   
   async function loadSchool() {
     const { data: school } = await supabase.from('schools').select('*, stages(name)').eq('id', schoolId).single();
     document.getElementById('schoolInfo').innerHTML = `<h2>🏫 ${school?.name}</h2><p>المرحلة: ${school?.stages?.name}</p>`;
+    
+    // تحميل إعدادات البحث الحالية
+    document.getElementById('searchFieldSelect').value = school?.search_field || 'seat_number';
+    document.getElementById('searchFieldLabelInput').value = school?.search_field_label || '';
     
     studentCustomFields = school.student_custom_fields || [];
     resultCustomFields = school.result_custom_fields || [];
@@ -117,6 +159,29 @@
     }
   }
   
+  // حفظ إعدادات البحث
+  window.saveSearchSettings = async () => {
+    const searchField = document.getElementById('searchFieldSelect').value;
+    const searchLabel = document.getElementById('searchFieldLabelInput').value.trim();
+    
+    const updateData = { search_field: searchField };
+    if (searchLabel) updateData.search_field_label = searchLabel;
+    
+    const { error } = await supabase
+      .from('schools')
+      .update(updateData)
+      .eq('id', schoolId);
+    
+    if (error) {
+      document.getElementById('searchSettingsStatus').innerHTML = `<span style="color:red">❌ خطأ: ${error.message}</span>`;
+    } else {
+      document.getElementById('searchSettingsStatus').innerHTML = `<span style="color:green">✅ تم حفظ إعدادات البحث بنجاح</span>`;
+      setTimeout(() => {
+        document.getElementById('searchSettingsStatus').innerHTML = '';
+      }, 3000);
+    }
+  };
+  
   async function loadStudents() {
     const { data: students } = await supabase.from('students').select('*').eq('school_id', schoolId);
     const div = document.getElementById('studentsList');
@@ -128,7 +193,8 @@
       <div class="student-card">
         <div>
           <strong>${s.name}</strong><br>
-          <small>رقم الجلوس: ${s.seat_number} | الصف: ${s.grade || '-'}</small><br>
+          <small>رقم الجلوس: ${s.seat_number || '-'} | الكود: ${s.code || '-'} | الرقم القومي: ${s.national_id || '-'}</small><br>
+          <small>الصف: ${s.grade || '-'}</small><br>
           ${studentCustomFields.map(f => `<small>${f.name}: ${s.custom_data?.[f.name] || '-'}</small><br>`).join('')}
           <small>النتائج: ${Object.entries(s.results || {}).map(([k,v]) => `${k}: ${v}`).join(' | ') || 'لا توجد نتائج'}</small>
         </div>
@@ -221,18 +287,88 @@
     const workbook = XLSX.read(data);
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    
     if (rows.length < 2) return alert("الملف فارغ");
+    
+    const headers = rows[0].map(h => h?.toString().trim() || '');
+    const dataRows = rows.slice(1);
+    
+    currentExcelHeaders = headers;
+    currentExcelData = dataRows;
+    
+    let previewHtml = `
+      <h4>📋 معاينة البيانات (أول 5 صفوف)</h4>
+      <p><strong>أسماء الحقول المستخرجة من أول صف:</strong> ${headers.join(' | ')}</p>
+      <table class="preview-table">
+        <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</thead>
+        <tbody>
+    `;
+    
+    for (let i = 0; i < Math.min(dataRows.length, 5); i++) {
+      previewHtml += `<tr>${dataRows[i].map(c => `<td>${c || '-'}</td>`).join('')}</tr>`;
+    }
+    previewHtml += `</tbody></table>`;
+    
+    previewHtml += `
+      <div style="margin-top:15px">
+        <label><strong>اختر الصف الدراسي لهذه البيانات:</strong></label>
+        <select id="importGradeSelect" style="width:100%; margin:10px 0">
+          <option value="">-- اختر الصف --</option>
+          ${schoolGrades.map(g => `<option value="${g}">${g}</option>`).join('')}
+        </select>
+        
+        <label><strong>تطابق الحقول:</strong></label>
+        <div class="field-mapping">
+          <select id="mapNameField" style="width:30%">
+            <option value="">-- حقل الاسم --</option>
+            ${headers.map((h, idx) => `<option value="${idx}">${h}</option>`).join('')}
+          </select>
+          <select id="mapSeatField" style="width:30%">
+            <option value="">-- حقل رقم الجلوس --</option>
+            ${headers.map((h, idx) => `<option value="${idx}">${h}</option>`).join('')}
+          </select>
+          <select id="mapSubjectField" style="width:30%">
+            <option value="">-- حقل المادة --</option>
+            ${headers.map((h, idx) => `<option value="${idx}">${h}</option>`).join('')}
+          </select>
+          <select id="mapScoreField" style="width:30%">
+            <option value="">-- حقل الدرجة --</option>
+            ${headers.map((h, idx) => `<option value="${idx}">${h}</option>`).join('')}
+          </select>
+        </div>
+        
+        <button onclick="confirmImport()" style="background:#28a745">✅ تأكيد الاستيراد</button>
+      </div>
+    `;
+    
+    document.getElementById('excelPreviewArea').style.display = 'block';
+    document.getElementById('excelPreviewArea').innerHTML = previewHtml;
+  };
+  
+  window.confirmImport = async () => {
+    const grade = document.getElementById('importGradeSelect').value;
+    const nameIdx = document.getElementById('mapNameField').value;
+    const seatIdx = document.getElementById('mapSeatField').value;
+    const subjectIdx = document.getElementById('mapSubjectField').value;
+    const scoreIdx = document.getElementById('mapScoreField').value;
+    
+    if (!grade) return alert("يرجى اختيار الصف الدراسي");
+    if (nameIdx === "" || seatIdx === "" || subjectIdx === "" || scoreIdx === "") {
+      return alert("يرجى تحديد تطابق الحقول الأساسية");
+    }
     
     let successCount = 0, errorCount = 0;
     
-    for (let i = 1; i < rows.length; i++) {
-      const row = rows[i];
-      const name = row[0]?.toString().trim();
-      const seat = row[1]?.toString().trim();
-      const grade = row[2]?.toString().trim();
-      const subject = row[3]?.toString().trim();
-      const score = parseFloat(row[4]);
-      if (!name || !seat || !grade || !subject || isNaN(score)) continue;
+    for (const row of currentExcelData) {
+      const name = row[nameIdx]?.toString().trim();
+      const seat = row[seatIdx]?.toString().trim();
+      const subject = row[subjectIdx]?.toString().trim();
+      const score = parseFloat(row[scoreIdx]);
+      
+      if (!name || !seat || !subject || isNaN(score)) {
+        errorCount++;
+        continue;
+      }
       
       let { data: student } = await supabase
         .from('students')
@@ -252,13 +388,61 @@
       }
       
       const newResults = { ...(student.results || {}), [subject]: score };
-      const { error } = await supabase.from('students').update({ results: newResults }).eq('id', student.id);
+      const { error } = await supabase
+        .from('students')
+        .update({ results: newResults })
+        .eq('id', student.id);
+      
       if (error) errorCount++;
       else successCount++;
     }
     
-    alert(`✅ تم استيراد ${successCount} نتيجة\n❌ فشل ${errorCount}`);
+    alert(`✅ تم استيراد ${successCount} نتيجة بنجاح\n❌ فشل ${errorCount}`);
+    document.getElementById('excelPreviewArea').style.display = 'none';
+    document.getElementById('excelFile').value = '';
     loadStudents();
+  };
+  
+  window.exportToExcel = async () => {
+    const { data: students } = await supabase.from('students').select('*').eq('school_id', schoolId);
+    if (!students || students.length === 0) {
+      alert("لا يوجد بيانات للتصدير");
+      return;
+    }
+    
+    const exportData = [];
+    const headers = ['اسم الطالب', 'رقم الجلوس', 'الكود', 'الرقم القومي', 'الصف'];
+    studentCustomFields.forEach(f => headers.push(f.name));
+    headers.push('المادة', 'الدرجة');
+    resultCustomFields.forEach(f => headers.push(`${f.name} (النتيجة)`));
+    exportData.push(headers);
+    
+    for (const student of students) {
+      const results = student.results || {};
+      for (const [subject, score] of Object.entries(results)) {
+        const row = [
+          student.name,
+          student.seat_number || '',
+          student.code || '',
+          student.national_id || '',
+          student.grade || ''
+        ];
+        studentCustomFields.forEach(f => {
+          row.push(student.custom_data?.[f.name] || '');
+        });
+        row.push(subject, score);
+        resultCustomFields.forEach(f => {
+          const resultData = student.result_custom_data?.[subject] || {};
+          row.push(resultData[f.name] || '');
+        });
+        exportData.push(row);
+      }
+    }
+    
+    const ws = XLSX.utils.aoa_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, `نتائج_${new Date().toLocaleDateString()}`);
+    XLSX.writeFile(wb, `نتائج_المدرسة_${new Date().toISOString().slice(0,10)}.xlsx`);
   };
   
   window.deleteStudent = async (id) => {
