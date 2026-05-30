@@ -2,63 +2,74 @@
 <html dir="rtl" lang="ar">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>لوحة السوبر أدمن</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="container">
   <h1>👑 لوحة التحكم العامة</h1>
-  <button id="logoutBtn">تسجيل خروج</button>
+  <button onclick="sessionStorage.clear(); window.location.href='login.html'" style="background:#dc3545">تسجيل خروج</button>
   <hr>
+  
   <h2>➕ إضافة مدرسة جديدة</h2>
-  <input type="text" id="newSchoolName" placeholder="اسم المدرسة">
-  <input type="text" id="schoolUsername" placeholder="اسم مستخدم مدير المدرسة">
-  <button id="addSchoolBtn">إضافة مدرسة</button>
+  <div style="background:#f0f7ff; padding:15px; border-radius:12px; margin-bottom:20px">
+    <input type="text" id="newSchoolName" placeholder="اسم المدرسة" style="width:100%; margin-bottom:10px">
+    <input type="text" id="schoolUsername" placeholder="اسم مستخدم مدير المدرسة" style="width:100%; margin-bottom:10px">
+    <input type="password" id="schoolPassword" placeholder="كلمة سر مدير المدرسة" style="width:100%; margin-bottom:10px">
+    <button id="addSchoolBtn" style="background:#28a745">➕ إضافة مدرسة</button>
+  </div>
   
   <h2>🏫 المدارس</h2>
-  <div id="schoolsList"></div>
+  <div id="schoolsList">جاري التحميل...</div>
 </div>
 <script type="module">
   import { supabase } from './supabase-config.js';
 
-  // التحقق من تسجيل الدخول
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
+  // التحقق من الجلسة
+  const role = sessionStorage.getItem('userRole');
+  if (role !== 'superAdmin') {
     window.location.href = 'login.html';
   }
 
-  // تسجيل الخروج
-  document.getElementById('logoutBtn').onclick = () => {
-    supabase.auth.signOut();
-    window.location.href = 'login.html';
-  };
-
-  // عرض المدارس
   async function renderSchools() {
     const { data: schools } = await supabase.from('schools').select('id, name');
     const div = document.getElementById('schoolsList');
     if (!schools || schools.length === 0) {
-      div.innerHTML = 'لا توجد مدارس';
+      div.innerHTML = '<p>لا توجد مدارس</p>';
       return;
     }
     div.innerHTML = schools.map(s => `
-      <div style="background:#f5f5f5; padding:10px; margin:5px 0; border-radius:8px">
-        ${s.name}
+      <div style="background:#f5f5f5; padding:10px; margin:5px 0; border-radius:8px; display:flex; justify-content:space-between; align-items:center">
+        <span><strong>${s.name}</strong></span>
+        <div>
+          <button onclick="openSchool('${s.id}')" style="background:#1e3c72; margin:0 5px">👁️ فتح المدرسة</button>
+          <button onclick="deleteSchool('${s.id}')" style="background:#dc3545; margin:0 5px">🗑️ حذف</button>
+        </div>
       </div>
     `).join('');
   }
 
-  // إضافة مدرسة
+  window.openSchool = (schoolId) => {
+    sessionStorage.setItem('impersonatedSchoolId', schoolId);
+    window.location.href = 'school-admin.html';
+  };
+
+  window.deleteSchool = async (id) => {
+    if (!confirm("هل أنت متأكد من حذف هذه المدرسة؟")) return;
+    await supabase.from('schools').delete().eq('id', id);
+    renderSchools();
+  };
+
   document.getElementById('addSchoolBtn').onclick = async () => {
     const name = document.getElementById('newSchoolName').value.trim();
     const username = document.getElementById('schoolUsername').value.trim();
-    if (!name || !username) {
-      alert("املأ جميع الحقول");
+    const password = document.getElementById('schoolPassword').value.trim();
+
+    if (!name || !username || !password) {
+      alert("❌ املأ جميع الحقول");
       return;
     }
-
-    const tempPass = Math.random().toString(36).slice(-8);
-    const fakeEmail = `${username}@school.local`;
 
     // إضافة المدرسة
     const { data: newSchool, error: schoolError } = await supabase
@@ -72,30 +83,27 @@
       return;
     }
 
-    // إنشاء حساب Auth
-    const { data: authUser, error: authError } = await supabase.auth.signUp({
-      email: fakeEmail,
-      password: tempPass
-    });
+    // إضافة مدير المدرسة في جدول users
+    const { error: userError } = await supabase
+      .from('users')
+      .insert([{
+        id: crypto.randomUUID(),
+        username: username,
+        password: password,
+        role: 'schoolAdmin',
+        school_id: newSchool.id
+      }]);
 
-    if (authError) {
+    if (userError) {
       await supabase.from('schools').delete().eq('id', newSchool.id);
-      alert("فشل إنشاء حساب: " + authError.message);
+      alert("خطأ في إضافة المستخدم: " + userError.message);
       return;
     }
 
-    // إضافة المستخدم في جدول users
-    await supabase.from('users').insert([{
-      id: authUser.user.id,
-      email: fakeEmail,
-      username: username,
-      role: 'schoolAdmin',
-      school_id: newSchool.id
-    }]);
-
-    alert(`✅ تمت الإضافة!\n\nاسم المستخدم: ${username}\nكلمة المرور: ${tempPass}`);
+    alert(`✅ تمت الإضافة بنجاح!\n\n👤 اسم المستخدم: ${username}\n🔑 كلمة المرور: ${password}`);
     document.getElementById('newSchoolName').value = '';
     document.getElementById('schoolUsername').value = '';
+    document.getElementById('schoolPassword').value = '';
     renderSchools();
   };
 
