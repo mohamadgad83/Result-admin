@@ -8,60 +8,109 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f7ff; padding: 20px; }
-    .container { max-width: 1000px; margin: auto; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+    .container { max-width: 1200px; margin: auto; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
     h1, h2, h3 { color: #1e3c72; margin-bottom: 15px; }
     button, input, select { padding: 10px; margin: 5px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; }
-    button { background: #1e3c72; color: white; border: none; cursor: pointer; }
-    button:hover { background: #0f2b4f; }
-    .student-card { background: #eef2fa; padding: 15px; margin: 10px 0; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-    .grade-selector { display: flex; gap: 10px; margin: 15px 0; flex-wrap: wrap; }
-    @media (max-width: 600px) { .student-card { flex-direction: column; text-align: center; } button, input, select { width: 100%; margin: 5px 0; } }
+    button { background: #1e3c72; color: white; border: none; cursor: pointer; transition: 0.2s; }
+    button:hover { background: #0f2b4f; transform: scale(1.02); }
+    .btn-success { background: #28a745; }
+    .btn-danger { background: #dc3545; }
+    .btn-warning { background: #ffc107; color: #333; }
+    .btn-info { background: #17a2b8; }
+    .student-card { background: #eef2fa; padding: 15px; margin: 10px 0; border-radius: 12px; }
+    .subject-score { display: flex; flex-wrap: wrap; gap: 15px; margin: 10px 0; padding: 10px; background: white; border-radius: 8px; }
+    .score-item { flex: 1; min-width: 120px; }
+    .score-item label { display: block; font-size: 12px; color: #666; }
+    .result-card { background: white; border-radius: 15px; padding: 20px; margin-top: 20px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
+    .result-header { text-align: center; border-bottom: 2px solid #1e3c72; padding-bottom: 15px; margin-bottom: 15px; }
+    .result-school { font-size: 20px; font-weight: bold; color: #1e3c72; }
+    .result-student { font-size: 18px; margin: 10px 0; }
+    .result-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    .result-table th, .result-table td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+    .result-table th { background: #1e3c72; color: white; }
+    .total-row { background: #eef2fa; font-weight: bold; }
+    .grade-A { color: #28a745; font-weight: bold; }
+    .grade-B { color: #17a2b8; font-weight: bold; }
+    .grade-C { color: #ffc107; font-weight: bold; }
+    .grade-D { color: #fd7e14; font-weight: bold; }
+    .grade-F { color: #dc3545; font-weight: bold; }
+    @media (max-width: 768px) { .subject-score { flex-direction: column; } }
   </style>
 </head>
 <body>
 <div class="container">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px">
     <h1 style="margin:0">🏫 لوحة إدارة المدرسة</h1>
     <div>
-      <button onclick="window.location.href='index.html'" style="background:#28a745">🏠 الرئيسية</button>
-      <button onclick="logout()" style="background:#dc3545">تسجيل خروج</button>
+      <button onclick="window.location.href='index.html'" class="btn-info">🏠 الرئيسية</button>
+      <button onclick="logout()" class="btn-danger">🚪 تسجيل خروج</button>
     </div>
   </div>
   
   <div id="schoolInfo"></div>
-  <div id="subjectsContainer" style="background:#eef2fa; padding:15px; border-radius:12px; margin:10px 0"></div>
-  <hr>
-
-  <h2>📥 تحميل قالب Excel جاهز</h2>
-  <div style="background:#f0f7ff; padding:15px; border-radius:12px; margin:10px 0">
-    <p>اختر الصف لتحميل قالب Excel جاهز يحتوي على المواد المحددة لهذا الصف:</p>
-    <div class="grade-selector" id="gradeSelector"></div>
-    <button id="downloadTemplateBtn" style="background:#17a2b8">📥 تحميل قالب Excel للصف المختار</button>
+  
+  <!-- إعدادات المدرسة -->
+  <div class="settings-panel" style="background: #eef2fa; padding: 15px; border-radius: 12px; margin: 15px 0">
+    <h3>⚙️ إعدادات المدرسة</h3>
+    <div style="display: flex; flex-wrap: wrap; gap: 15px">
+      <div style="flex: 1">
+        <label>نظام التقييم:</label>
+        <select id="gradingSystem">
+          <option value="100">من 0 إلى 100</option>
+          <option value="50">من 0 إلى 50</option>
+          <option value="20">من 0 إلى 20</option>
+        </select>
+      </div>
+      <div style="flex: 1">
+        <label>الحد الأدنى للنجاح:</label>
+        <input type="number" id="minPassScore" value="50" style="width: 100%">
+      </div>
+      <div>
+        <button onclick="saveSchoolSettings()" class="btn-success">💾 حفظ الإعدادات</button>
+      </div>
+    </div>
   </div>
-
+  
+  <!-- الصفوف المتاحة -->
+  <div id="gradesPanel" style="background: #f0f7ff; padding: 15px; border-radius: 12px; margin: 15px 0"></div>
+  
+  <!-- تحميل قالب Excel -->
+  <h2>📥 تحميل قالب Excel للاستيراد</h2>
+  <div style="background: #f0f7ff; padding: 15px; border-radius: 12px; margin: 10px 0">
+    <select id="templateGradeSelect" style="width: 200px">
+      <option value="">-- اختر الصف --</option>
+    </select>
+    <button onclick="downloadTemplate()" class="btn-info">📥 تحميل قالب Excel</button>
+  </div>
+  
+  <!-- رفع Excel -->
   <h2>📤 رفع ملف Excel بعد التعبئة</h2>
-  <div style="background:#f0f7ff; padding:15px; border-radius:12px; margin:10px 0">
+  <div style="background: #f0f7ff; padding: 15px; border-radius: 12px; margin: 10px 0">
     <input type="file" id="excelFile" accept=".xlsx, .xls, .csv">
-    <button onclick="uploadExcel()" style="background:#28a745">📊 رفع الملف واستيراد</button>
+    <button onclick="uploadExcel()" class="btn-success">📊 رفع الملف واستيراد</button>
     <div id="uploadResult"></div>
   </div>
   
+  <!-- إضافة طالب -->
   <h2>➕ إضافة طالب جديد</h2>
-  <div style="background:#f0f7ff; padding:15px; border-radius:12px; margin:10px 0">
-    <input type="text" id="studentName" placeholder="اسم الطالب" style="width:100%; margin-bottom:10px">
-    <input type="text" id="studentSeat" placeholder="رقم الجلوس" style="width:100%; margin-bottom:10px">
-    <select id="studentGrade" style="width:100%; margin-bottom:10px"></select>
-    <button onclick="addStudent()">➕ إضافة طالب</button>
+  <div style="background: #f0f7ff; padding: 15px; border-radius: 12px; margin: 10px 0">
+    <input type="text" id="studentName" placeholder="اسم الطالب" style="width: 100%; margin-bottom: 10px">
+    <input type="text" id="studentSeat" placeholder="رقم الجلوس" style="width: 100%; margin-bottom: 10px">
+    <select id="studentGradeSelect" style="width: 100%; margin-bottom: 10px"></select>
+    <button onclick="addStudent()" class="btn-success">➕ إضافة طالب</button>
   </div>
   
-  <h2>📝 إضافة نتيجة لطالب</h2>
-  <div style="background:#f0f7ff; padding:15px; border-radius:12px; margin:10px 0">
-    <input type="text" id="resultSeat" placeholder="رقم الجلوس" style="width:100%; margin-bottom:10px">
-    <select id="resultSubject" style="width:100%; margin-bottom:10px"></select>
-    <input type="number" id="resultScore" placeholder="الدرجة" style="width:100%; margin-bottom:10px">
-    <button onclick="addResult()">📝 إضافة نتيجة</button>
+  <!-- إضافة نتيجة متعددة الدرجات -->
+  <h2>📝 إضافة نتيجة لطالب (درجات متعددة)</h2>
+  <div style="background: #f0f7ff; padding: 15px; border-radius: 12px; margin: 10px 0">
+    <input type="text" id="resultSeat" placeholder="رقم الجلوس" style="width: 100%; margin-bottom: 10px">
+    <select id="resultSubject" style="width: 100%; margin-bottom: 10px"></select>
+    <div id="multiScoreContainer"></div>
+    <button onclick="addMultiScoreField()" class="btn-info">+ إضافة نوع درجة</button>
+    <button onclick="addMultiResult()" class="btn-success" style="margin-top: 10px">📝 إضافة النتيجة</button>
   </div>
   
+  <!-- قائمة الطلاب -->
   <h2>📚 قائمة الطلاب</h2>
   <div id="studentsList">جاري التحميل...</div>
 </div>
@@ -82,45 +131,134 @@
     const { data: school } = await supabase.from('schools').select('*, stages(name)').eq('id', schoolId).single();
     document.getElementById('schoolInfo').innerHTML = `<h2>🏫 ${school?.name}</h2><p>المرحلة: ${school?.stages?.name}</p>`;
     
-    if (school.custom_subjects && school.custom_subjects.length > 0) {
-      schoolSubjects = school.custom_subjects;
-      schoolGrades = [...new Set(schoolSubjects.map(s => s.grade))];
-      
-      let subjectsHtml = '<h3>📚 المواد المتاحة حسب الصف</h3>';
-      schoolGrades.forEach(grade => {
-        const subjects = schoolSubjects.filter(s => s.grade === grade).map(s => s.subject);
-        subjectsHtml += `<div><strong>${grade}:</strong> ${subjects.join(' - ')}</div>`;
-      });
-      document.getElementById('subjectsContainer').innerHTML = subjectsHtml;
-      
-      // تعبئة قائمة الصفوف
-      const gradeSelect = document.getElementById('studentGrade');
-      gradeSelect.innerHTML = schoolGrades.map(g => `<option value="${g}">${g}</option>`).join('');
-      
-      const subjectSelect = document.getElementById('resultSubject');
-      const allSubjects = [...new Set(schoolSubjects.map(s => s.subject))];
-      subjectSelect.innerHTML = allSubjects.map(s => `<option value="${s}">${s}</option>`).join('');
-      
-      // تعبئة محدد الصف لتحميل القالب
-      const gradeSelector = document.getElementById('gradeSelector');
-      gradeSelector.innerHTML = schoolGrades.map(g => `
-        <label style="margin-left:10px"><input type="radio" name="templateGrade" value="${g}"> ${g}</label>
-      `).join('');
-    }
+    // تحميل إعدادات التقييم
+    const gradingSystem = school.grading_system || { max: 100, min_pass: 50 };
+    document.getElementById('gradingSystem').value = gradingSystem.max || 100;
+    document.getElementById('minPassScore').value = gradingSystem.min_pass || 50;
+    
+    // تحميل الصفوف المتاحة للمدرسة
+    const selectedGrades = school.selected_grades || [];
+    schoolSubjects = school.custom_subjects || [];
+    schoolGrades = selectedGrades.length > 0 ? selectedGrades : [...new Set(schoolSubjects.map(s => s.grade))];
+    
+    // عرض الصفوف المتاحة
+    const gradesPanel = document.getElementById('gradesPanel');
+    gradesPanel.innerHTML = `
+      <h3>📚 الصفوف المتاحة في هذه المدرسة</h3>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px">
+        ${schoolGrades.map(g => `
+          <span style="background: #1e3c72; color: white; padding: 5px 15px; border-radius: 20px">${g}</span>
+        `).join('')}
+      </div>
+    `;
+    
+    // تعبئة قائمة الصفوف للقالب
+    const templateSelect = document.getElementById('templateGradeSelect');
+    templateSelect.innerHTML = '<option value="">-- اختر الصف --</option>' + schoolGrades.map(g => `<option value="${g}">${g}</option>`).join('');
+    
+    // تعبئة قائمة الصفوف لإضافة طالب
+    const studentGradeSelect = document.getElementById('studentGradeSelect');
+    studentGradeSelect.innerHTML = schoolGrades.map(g => `<option value="${g}">${g}</option>`).join('');
+    
+    // تعبئة قائمة المواد
+    const allSubjects = [...new Set(schoolSubjects.map(s => s.subject))];
+    const subjectSelect = document.getElementById('resultSubject');
+    subjectSelect.innerHTML = allSubjects.map(s => `<option value="${s}">${s}</option>`).join('');
   }
   
-  // تحميل قالب Excel جاهز
-  document.getElementById('downloadTemplateBtn').onclick = () => {
-    const selected = document.querySelector('input[name="templateGrade"]:checked');
-    if (!selected) { alert("اختر الصف أولاً"); return; }
-    const grade = selected.value;
-    const subjects = schoolSubjects.filter(s => s.grade === grade).map(s => s.subject);
+  // حفظ إعدادات المدرسة
+  window.saveSchoolSettings = async () => {
+    const maxScore = parseInt(document.getElementById('gradingSystem').value);
+    const minPass = parseInt(document.getElementById('minPassScore').value);
+    await supabase.from('schools').update({
+      grading_system: { max: maxScore, min_pass: minPass }
+    }).eq('id', schoolId);
+    alert("✅ تم حفظ الإعدادات");
+  };
+  
+  // إضافة حقول درجات متعددة
+  let scoreFields = [{ name: 'أعمال سنة', max: 100 }, { name: 'امتحان نهائي', max: 100 }];
+  
+  window.addMultiScoreField = () => {
+    const container = document.getElementById('multiScoreContainer');
+    const idx = scoreFields.length;
+    container.innerHTML += `
+      <div class="subject-score" id="scoreField-${idx}">
+        <div class="score-item">
+          <label>نوع الدرجة:</label>
+          <input type="text" id="scoreType-${idx}" placeholder="مثال: أعمال سنة" value="درجة ${idx+1}">
+        </div>
+        <div class="score-item">
+          <label>الدرجة:</label>
+          <input type="number" id="scoreValue-${idx}" placeholder="الدرجة">
+        </div>
+        <div class="score-item">
+          <label>الدرجة العظمى:</label>
+          <input type="number" id="scoreMax-${idx}" placeholder="الدرجة العظمى" value="100">
+        </div>
+        <button onclick="removeScoreField(${idx})" class="btn-danger">✖</button>
+      </div>
+    `;
+    scoreFields.push({ name: `درجة ${idx+1}`, max: 100 });
+  };
+  
+  window.removeScoreField = (idx) => {
+    document.getElementById(`scoreField-${idx}`)?.remove();
+    scoreFields.splice(idx, 1);
+  };
+  
+  // إضافة نتيجة متعددة الدرجات
+  window.addMultiResult = async () => {
+    const seat = document.getElementById('resultSeat').value.trim();
+    const subject = document.getElementById('resultSubject').value;
     
-    // إنشاء قالب Excel
-    const headers = ['اسم الطالب', 'رقم الجلوس', ...subjects];
+    if (!seat || !subject) { alert("املأ الحقول الأساسية"); return; }
+    
+    const scores = {};
+    for (let i = 0; i < scoreFields.length; i++) {
+      const type = document.getElementById(`scoreType-${i}`)?.value;
+      const value = parseFloat(document.getElementById(`scoreValue-${i}`)?.value);
+      const max = parseFloat(document.getElementById(`scoreMax-${i}`)?.value) || 100;
+      if (type && !isNaN(value)) {
+        scores[type] = { score: value, max: max };
+      }
+    }
+    
+    // حساب المجموع والنسبة المئوية
+    let totalScore = 0, totalMax = 0;
+    Object.values(scores).forEach(s => { totalScore += s.score; totalMax += s.max; });
+    const percentage = totalMax > 0 ? (totalScore / totalMax * 100).toFixed(1) : 0;
+    
+    const { data: student } = await supabase
+      .from('students')
+      .select('id, multi_scores')
+      .eq('school_id', schoolId)
+      .eq('seat_number', seat)
+      .single();
+    
+    if (!student) { alert("لا يوجد طالب بهذا الرقم"); return; }
+    
+    const existingScores = student.multi_scores || {};
+    existingScores[subject] = { scores: scores, total: totalScore, max: totalMax, percentage: percentage };
+    
+    await supabase.from('students').update({ multi_scores: existingScores }).eq('id', student.id);
+    alert("✅ تمت إضافة النتيجة");
+    loadStudents();
+  };
+  
+  // تحميل قالب Excel
+  window.downloadTemplate = () => {
+    const grade = document.getElementById('templateGradeSelect').value;
+    if (!grade) { alert("اختر الصف أولاً"); return; }
+    
+    const subjects = schoolSubjects.filter(s => s.grade === grade).map(s => s.subject);
+    const headers = ['اسم الطالب', 'رقم الجلوس'];
+    subjects.forEach(s => {
+      headers.push(`${s} (أعمال سنة)`, `${s} (امتحان نهائي)`, `${s} (المجموع)`);
+    });
+    
     const wsData = [headers];
-    // إضافة صف فارغ كمثال
-    wsData.push(['مثال: أحمد محمد', '123', ...subjects.map(() => '')]);
+    wsData.push(['مثال: أحمد محمد', '123', ...subjects.flatMap(() => ['', '', ''])]);
     
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     const wb = XLSX.utils.book_new();
@@ -128,7 +266,7 @@
     XLSX.writeFile(wb, `قالب_${grade}_${new Date().toISOString().slice(0,10)}.xlsx`);
   };
   
-  // استيراد Excel بعد التعبئة
+  // استيراد Excel
   window.uploadExcel = async () => {
     const file = document.getElementById('excelFile').files[0];
     if (!file) return alert("اختر ملف أولاً");
@@ -140,102 +278,112 @@
     
     if (rows.length < 2) return alert("الملف فارغ");
     
-    const headers = rows[0].map(h => h?.toString().trim() || '');
-    const nameIdx = 0;
-    const seatIdx = 1;
-    const subjectStartIdx = 2;
-    
+    const headers = rows[0];
     let successCount = 0, errorCount = 0;
     
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
-      const name = row[nameIdx]?.toString().trim();
-      const seat = row[seatIdx]?.toString().trim();
+      const name = row[0]?.toString().trim();
+      const seat = row[1]?.toString().trim();
       if (!name || !seat) { errorCount++; continue; }
       
-      // البحث عن الطالب أو إضافته
       let { data: student } = await supabase
         .from('students')
-        .select('id, results')
+        .select('id, multi_scores')
         .eq('school_id', schoolId)
         .eq('seat_number', seat)
         .single();
       
       if (!student) {
-        const { data: newStudent, error } = await supabase
+        const { data: newStudent } = await supabase
           .from('students')
-          .insert([{ school_id: schoolId, name, seat_number: seat, results: {} }])
+          .insert([{ school_id: schoolId, name, seat_number: seat, multi_scores: {} }])
           .select()
           .single();
-        if (error) { errorCount++; continue; }
         student = newStudent;
       }
       
-      // إضافة النتائج
-      const newResults = { ...(student.results || {}) };
-      for (let j = subjectStartIdx; j < headers.length; j++) {
-        const subject = headers[j];
-        const score = parseFloat(row[j]);
-        if (subject && !isNaN(score)) {
-          newResults[subject] = score;
+      const multiScores = student.multi_scores || {};
+      let colIdx = 2;
+      while (colIdx < headers.length) {
+        const subject = headers[colIdx]?.replace(/\s*\(.*/, '');
+        if (subject && row[colIdx] && row[colIdx+1]) {
+          const workScore = parseFloat(row[colIdx]) || 0;
+          const examScore = parseFloat(row[colIdx+1]) || 0;
+          const total = workScore + examScore;
+          
+          multiScores[subject] = {
+            scores: { 'أعمال سنة': { score: workScore, max: 100 }, 'امتحان نهائي': { score: examScore, max: 100 } },
+            total: total,
+            max: 200,
+            percentage: (total / 200 * 100).toFixed(1)
+          };
         }
+        colIdx += 3;
       }
       
-      const { error } = await supabase
-        .from('students')
-        .update({ results: newResults })
-        .eq('id', student.id);
-      
-      if (error) errorCount++;
-      else successCount++;
+      await supabase.from('students').update({ multi_scores: multiScores }).eq('id', student.id);
+      successCount++;
     }
     
     alert(`✅ تم استيراد ${successCount} طالب\n❌ فشل ${errorCount}`);
-    document.getElementById('excelFile').value = '';
     loadStudents();
   };
   
-  async function loadStudents() {
-    const { data: students } = await supabase.from('students').select('*').eq('school_id', schoolId);
-    const div = document.getElementById('studentsList');
-    if (!students || students.length === 0) { div.innerHTML = '<p>لا يوجد طلاب</p>'; return; }
-    div.innerHTML = students.map(s => `
-      <div class="student-card">
-        <div>
-          <strong>${s.name}</strong><br>
-          <small>رقم الجلوس: ${s.seat_number || '-'}</small><br>
-          <small>النتائج: ${Object.entries(s.results || {}).map(([k,v]) => `${k}: ${v}`).join(' | ') || 'لا توجد نتائج'}</small>
-        </div>
-        <button onclick="deleteStudent(${s.id})" style="background:#dc3545">🗑️ حذف</button>
-      </div>
-    `).join('');
-  }
-  
+  // إضافة طالب
   window.addStudent = async () => {
     const name = document.getElementById('studentName').value.trim();
     const seat = document.getElementById('studentSeat').value.trim();
-    const grade = document.getElementById('studentGrade').value;
-    if (!name || !seat || !grade) return alert("املأ الحقول");
-    const { error } = await supabase.from('students').insert([{ school_id: schoolId, name, seat_number: seat, grade, results: {} }]);
-    if (error) alert("خطأ: " + error.message);
-    else { alert("✅ تمت الإضافة"); document.getElementById('studentName').value = ''; document.getElementById('studentSeat').value = ''; loadStudents(); }
-  };
-  
-  window.addResult = async () => {
-    const seat = document.getElementById('resultSeat').value.trim();
-    const subject = document.getElementById('resultSubject').value;
-    const score = parseInt(document.getElementById('resultScore').value);
-    if (!seat || !subject || isNaN(score)) return alert("املأ الحقول");
-    const { data: student } = await supabase.from('students').select('id, results').eq('school_id', schoolId).eq('seat_number', seat).single();
-    if (!student) return alert("لا يوجد طالب بهذا الرقم");
-    const newResults = { ...(student.results || {}), [subject]: score };
-    await supabase.from('students').update({ results: newResults }).eq('id', student.id);
-    alert("✅ تمت إضافة النتيجة");
-    document.getElementById('resultSeat').value = ''; document.getElementById('resultScore').value = '';
+    const grade = document.getElementById('studentGradeSelect').value;
+    if (!name || !seat || !grade) return alert("املأ جميع الحقول");
+    
+    await supabase.from('students').insert([{
+      school_id: schoolId, name, seat_number: seat, grade, multi_scores: {}
+    }]);
+    alert("✅ تمت الإضافة");
     loadStudents();
   };
   
-  window.deleteStudent = async (id) => { if (confirm("هل أنت متأكد؟")) { await supabase.from('students').delete().eq('id', id); loadStudents(); } };
+  // تحميل قائمة الطلاب
+  async function loadStudents() {
+    const { data: students } = await supabase.from('students').select('*').eq('school_id', schoolId);
+    const container = document.getElementById('studentsList');
+    if (!students || students.length === 0) { container.innerHTML = '<p>لا يوجد طلاب</p>'; return; }
+    
+    container.innerHTML = students.map(s => {
+      const multiScores = s.multi_scores || {};
+      return `
+        <div class="student-card">
+          <div class="flex-between" style="display: flex; justify-content: space-between; flex-wrap: wrap">
+            <div>
+              <strong>${s.name}</strong><br>
+              <small>رقم الجلوس: ${s.seat_number} | الصف: ${s.grade || '-'}</small>
+            </div>
+            <button onclick="showStudentResult(${s.id}, '${s.name}', '${s.seat_number}')" class="btn-info">📊 عرض النتيجة</button>
+            <button onclick="deleteStudent(${s.id})" class="btn-danger">🗑️ حذف</button>
+          </div>
+          ${Object.entries(multiScores).map(([subject, data]) => `
+            <div class="subject-score">
+              <strong>${subject}:</strong>
+              ${Object.entries(data.scores || {}).map(([type, val]) => `<span>${type}: ${val.score}/${val.max}</span>`).join(' | ')}
+              <strong style="color:#1e3c72">المجموع: ${data.total}/${data.max} (${data.percentage}%)</strong>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }).join('');
+  }
+  
+  // عرض نتيجة الطالب بشكل منسق
+  window.showStudentResult = (studentId, studentName, seatNumber) => {
+    // سيتم تنفيذها لعرض كرت النتيجة
+    alert(`سيتم عرض نتيجة ${studentName}`);
+  };
+  
+  window.deleteStudent = async (id) => {
+    if (confirm("هل أنت متأكد؟")) { await supabase.from('students').delete().eq('id', id); loadStudents(); }
+  };
+  
   window.logout = () => { sessionStorage.clear(); window.location.href = 'login.html'; };
   
   loadSchool();
