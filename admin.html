@@ -84,47 +84,7 @@
   window.showAddSchoolModal=async()=>{ const {data:stages}=await supabase.from('stages').select('*'); const stageSelect=document.getElementById('schoolStageSelect'); stageSelect.innerHTML='<option value="">-- اختر المرحلة --</option>'+stages.map(s=>`<option value="${s.id}">${s.name}</option>`).join(''); stageSelect.onchange=async()=>{ const stageId=stageSelect.value; if(!stageId) return; const {data:stage}=await supabase.from('stages').select('grades').eq('id',stageId).single(); const grades=typeof stage.grades==='string'?JSON.parse(stage.grades):(stage.grades||[]); document.getElementById('schoolGradesContainer').innerHTML=grades.map(g=>`<label><input type="checkbox" class="school-grade-checkbox" value="${g.grade}"> ${g.grade}</label>`).join(''); }; document.getElementById('newSchoolName').value=''; document.getElementById('schoolUsername').value=''; document.getElementById('schoolPassword').value=''; document.getElementById('addSchoolModal').style.display='flex'; };
   window.addSchool=async()=>{ const name=document.getElementById('newSchoolName').value.trim(); const stageId=document.getElementById('schoolStageSelect').value; const username=document.getElementById('schoolUsername').value.trim(); const password=document.getElementById('schoolPassword').value.trim(); const searchField=document.getElementById('schoolSearchField').value; const searchLabel=document.getElementById('schoolSearchLabel').value.trim(); const selectedGrades=[...document.querySelectorAll('.school-grade-checkbox:checked')].map(cb=>cb.value); if(!name||!stageId||!username||!password) return alert("املأ جميع الحقول"); const {data:stage}=await supabase.from('stages').select('grades').eq('id',stageId).single(); const customSubjects=typeof stage.grades==='string'?JSON.parse(stage.grades):(stage.grades||[]); const {data:newSchool}=await supabase.from('schools').insert([{name,stage_id:stageId,custom_subjects:customSubjects,search_field:searchField,search_field_label:searchLabel,selected_grades:selectedGrades}]).select().single(); await supabase.from('users').insert([{username,password,role:'schoolAdmin',school_id:newSchool.id}]); alert(`✅ تمت الإضافة!\n👤 ${username}\n🔑 ${password}`); closeModal('addSchoolModal'); loadSchools(); loadStats(); };
   
-  // دالة عرض المديرين - المُصلحة بالكامل
-  async function loadAdmins() {
-    console.log("جاري تحميل المديرين...");
-    // جلب جميع المستخدمين من نوع schoolAdmin
-    const { data: admins, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('role', 'schoolAdmin');
-
-    console.log("البيانات المستلمة:", admins, error);
-    const div = document.getElementById('adminsList');
-    if (error) {
-        div.innerHTML = `<p style="color:red">خطأ في التحميل: ${error.message}</p>`;
-        return;
-    }
-    if (!admins || admins.length === 0) {
-        div.innerHTML = '<p>لا يوجد مديرين مدارس</p>';
-        return;
-    }
-    // جلب أسماء المدارس بشكل منفصل
-    const { data: schools } = await supabase.from('schools').select('id, name');
-    const schoolMap = {};
-    if (schools) {
-        schools.forEach(s => { schoolMap[s.id] = s.name; });
-    }
-    div.innerHTML = admins.map(a => `
-        <div class="user-card">
-            <div>
-                <strong>👤 ${a.username}</strong><br>
-                <small>🏫 ${a.school_id ? (schoolMap[a.school_id] || 'مدرسة غير معروفة') : 'غير مرتبط بمدرسة'}</small><br>
-                <small>🆔 ID: ${a.id}</small>
-            </div>
-            <div>
-                <button onclick="editAdmin(${a.id}, ${a.school_id || 0}, '${a.username}')" class="btn-warning">تعديل</button>
-                <button onclick="resetAdminPassword(${a.id})" class="btn-info">تغيير كلمة المرور</button>
-                <button onclick="deleteAdmin(${a.id})" class="btn-danger">حذف</button>
-            </div>
-        </div>
-    `).join('');
-  }
-  
+  async function loadAdmins(){ const {data:admins}=await supabase.from('users').select('*').eq('role','schoolAdmin'); const div=document.getElementById('adminsList'); if(!admins||admins.length===0){ div.innerHTML='<p>لا يوجد مديرين</p>'; return; } const {data:schools}=await supabase.from('schools').select('id,name'); const schoolMap={}; if(schools) schools.forEach(s=>{schoolMap[s.id]=s.name;}); div.innerHTML=admins.map(a=>`<div class="user-card"><div><strong>👤 ${a.username}</strong><br><small>🏫 ${a.school_id?schoolMap[a.school_id]||'غير مرتبط':'-'}</small></div><div><button onclick="editAdmin(${a.id},${a.school_id||0},'${a.username}')" class="btn-warning">تعديل</button><button onclick="resetAdminPassword(${a.id})" class="btn-info">تغيير كلمة المرور</button><button onclick="deleteAdmin(${a.id})" class="btn-danger">حذف</button></div></div>`).join(''); }
   window.showAddAdminModal=async()=>{ const {data:schools}=await supabase.from('schools').select('id,name'); const select=document.getElementById('adminSchoolSelect'); select.innerHTML='<option value="">-- اختر مدرسة --</option>'+schools.map(s=>`<option value="${s.id}">${s.name}</option>`).join(''); document.getElementById('adminUsername').value=''; document.getElementById('adminPassword').value=''; document.getElementById('addAdminModal').style.display='flex'; };
   window.addAdmin=async()=>{ const schoolId=document.getElementById('adminSchoolSelect').value; const username=document.getElementById('adminUsername').value.trim(); const password=document.getElementById('adminPassword').value.trim(); if(!schoolId||!username||!password) return alert("املأ الحقول"); const {data:school}=await supabase.from('schools').select('id').eq('id',schoolId).single(); if(!school) return alert("المدرسة غير موجودة"); await supabase.from('users').insert([{username,password,role:'schoolAdmin',school_id:schoolId}]); alert("✅ تمت الإضافة"); closeModal('addAdminModal'); loadAdmins(); loadStats(); };
   window.editAdmin=(id,schoolId,username)=>{ editingAdminId=id; document.getElementById('editAdminUsername').value=username; document.getElementById('editAdminPassword').value=''; (async()=>{ const {data:schools}=await supabase.from('schools').select('id,name'); const select=document.getElementById('editAdminSchoolSelect'); select.innerHTML='<option value="">-- لا توجد مدرسة --</option>'+schools.map(s=>`<option value="${s.id}" ${s.id==schoolId?'selected':''}>${s.name}</option>`).join(''); document.getElementById('editAdminModal').style.display='flex'; })(); };
