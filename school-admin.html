@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة مدير المدرسة</title>
+    <title>لوحة مدير المدرسة - التحكم الكامل</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f7ff; padding: 20px; }
-        .container { max-width: 1200px; margin: auto; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .container { max-width: 1400px; margin: auto; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
         h1, h2, h3 { color: #1e3c72; margin-bottom: 15px; }
         button, input, select { padding: 10px; margin: 5px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; }
         button { background: #1e3c72; color: white; border: none; cursor: pointer; transition: 0.2s; }
@@ -17,12 +17,22 @@
         .btn-danger { background: #dc3545; }
         .btn-warning { background: #ffc107; color: #333; }
         .btn-info { background: #17a2b8; }
+        .card { background: #f8f9fa; border-radius: 12px; padding: 15px; margin: 10px 0; }
+        .subjects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; margin: 15px 0; }
+        .grade-box { background: #eef2fa; border-radius: 12px; padding: 15px; border-right: 4px solid #1e3c72; }
+        .grade-title { font-size: 18px; font-weight: bold; color: #1e3c72; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .subjects-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+        .subject-item { background: white; border-radius: 20px; padding: 5px 12px; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .subject-item button { background: #dc3545; padding: 2px 8px; margin: 0; font-size: 11px; border-radius: 20px; }
+        .add-subject { display: flex; gap: 8px; margin-top: 10px; }
+        .add-subject input { flex: 1; margin: 0; }
+        .add-subject button { margin: 0; padding: 8px 12px; background: #28a745; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         .student-card { background: #eef2fa; padding: 15px; margin: 10px 0; border-radius: 12px; }
         .subject-score { display: flex; flex-wrap: wrap; gap: 15px; margin: 10px 0; padding: 10px; background: white; border-radius: 8px; }
-        .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .danger-zone { background: #fff5f5; border: 1px solid #dc3545; border-radius: 12px; padding: 15px; margin: 15px 0; }
         .loading { display: none; text-align: center; padding: 20px; color: #1e3c72; font-weight: bold; }
-        @media (max-width: 768px) { .subject-score { flex-direction: column; } button, input, select { width: 100%; } }
+        .danger-zone { background: #fff5f5; border: 1px solid #dc3545; border-radius: 12px; padding: 15px; margin: 15px 0; }
+        @media (max-width: 768px) { .subjects-grid { grid-template-columns: 1fr; } button, input, select { width: 100%; } }
     </style>
 </head>
 <body>
@@ -30,15 +40,24 @@
     <div class="flex-between" style="margin-bottom: 20px">
         <h1 style="margin:0">🏫 لوحة إدارة المدرسة</h1>
         <div>
-            <button onclick="window.location.href='index.html'" class="btn-info">الرئيسية</button>
-            <button onclick="window.location.href='student-search.html'" class="btn-success">عرض النتائج</button>
-            <button onclick="logout()" class="btn-danger">خروج</button>
+            <button onclick="window.location.href='index.html'" class="btn-info">🏠 الرئيسية</button>
+            <button onclick="window.location.href='student-search.html'" class="btn-success">🔍 عرض النتائج</button>
+            <button onclick="logout()" class="btn-danger">🚪 خروج</button>
         </div>
     </div>
-    <div id="schoolInfo"></div>
-    <div id="gradesPanel" style="background:#f0f7ff; padding:15px; border-radius:12px; margin:15px 0"></div>
     
-    <div class="flex-between" style="gap:20px; flex-wrap:wrap">
+    <div id="schoolInfo"></div>
+    
+    <!-- قسم إدارة المواد - متكامل -->
+    <div class="card">
+        <div class="flex-between">
+            <h2>📚 إدارة المواد الدراسية</h2>
+            <button onclick="syncFromStage()" class="btn-info">🔄 مزامنة من المرحلة</button>
+        </div>
+        <div id="subjectsManagement" style="margin-top:15px">جاري التحميل...</div>
+    </div>
+    
+    <div class="flex-between" style="gap:20px; flex-wrap:wrap; margin: 20px 0">
         <div style="flex:1; background:#f0f7ff; padding:15px; border-radius:12px">
             <h3>📥 تحميل قالب Excel</h3>
             <select id="templateGradeSelect" style="width:100%"></select>
@@ -52,14 +71,16 @@
         </div>
     </div>
     
-    <div class="loading" id="loadingIndicator">⏳ جاري معالجة البيانات...</div>
-    
     <h2>➕ إضافة طالب</h2>
     <div style="background:#f0f7ff; padding:15px; border-radius:12px; margin:10px 0">
-        <input type="text" id="studentName" placeholder="الاسم" style="width:100%">
-        <input type="text" id="studentSeat" placeholder="رقم الجلوس" style="width:100%">
-        <input type="text" id="studentCode" placeholder="الكود" style="width:100%">
-        <input type="text" id="studentNationalId" placeholder="الرقم القومي" style="width:100%">
+        <div class="flex-between">
+            <input type="text" id="studentName" placeholder="الاسم" style="flex:2">
+            <input type="text" id="studentSeat" placeholder="رقم الجلوس" style="flex:1">
+        </div>
+        <div class="flex-between">
+            <input type="text" id="studentCode" placeholder="الكود" style="flex:1">
+            <input type="text" id="studentNationalId" placeholder="الرقم القومي" style="flex:2">
+        </div>
         <select id="studentGradeSelect" style="width:100%"></select>
         <div id="studentCustomFields"></div>
         <button onclick="addStudent()" class="btn-success">➕ إضافة طالب</button>
@@ -73,7 +94,7 @@
         <button onclick="addResult()" class="btn-success">📝 إضافة نتيجة</button>
     </div>
     
-    <h2>📚 الطلاب</h2>
+    <h2>📚 قائمة الطلاب</h2>
     <div id="studentsList">جاري التحميل...</div>
     
     <div class="danger-zone">
@@ -92,303 +113,370 @@
   if (!schoolId) window.location.href = 'login.html';
   
   let schoolSubjects = [], schoolGrades = [], studentCustomFields = [];
+  let currentSchoolData = null;
   
   async function loadSchool() {
-    const { data: school } = await supabase.from('schools').select('*, stages(name)').eq('id', schoolId).single();
-    document.getElementById('schoolInfo').innerHTML = `<h2>🏫 ${school?.name}</h2><p>المرحلة: ${school?.stages?.name}</p>`;
-    
-    studentCustomFields = school?.student_custom_fields || [];
-    const studentFieldsDiv = document.getElementById('studentCustomFields');
-    if (studentCustomFields.length) studentFieldsDiv.innerHTML = studentCustomFields.map(f => `<input type="text" id="custom_${f.name}" placeholder="${f.name}" style="width:100%; margin-bottom:5px">`).join('');
-    
-    schoolSubjects = school.custom_subjects || [];
-    const selectedGrades = school.selected_grades || [];
-    schoolGrades = selectedGrades.length ? selectedGrades : [...new Set(schoolSubjects.map(s => s.grade))];
-    
-    document.getElementById('gradesPanel').innerHTML = `<h3>📚 الصفوف المتاحة</h3><div class="flex-between">${schoolGrades.map(g => `<span style="background:#1e3c72;color:white;padding:5px 15px;border-radius:20px">${g}</span>`).join('')}</div>`;
-    
-    const templateSelect = document.getElementById('templateGradeSelect');
-    templateSelect.innerHTML = schoolGrades.map(g => `<option value="${g}">${g}</option>`).join('');
-    document.getElementById('studentGradeSelect').innerHTML = schoolGrades.map(g => `<option value="${g}">${g}</option>`).join('');
-    
-    const allSubjects = [...new Set(schoolSubjects.map(s => s.subject))];
-    document.getElementById('resultSubject').innerHTML = allSubjects.map(s => `<option value="${s}">${s}</option>`).join('');
+      const { data: school } = await supabase.from('schools').select('*, stages(name)').eq('id', schoolId).single();
+      currentSchoolData = school;
+      document.getElementById('schoolInfo').innerHTML = `<h2>🏫 ${school?.name}</h2><p>المرحلة: ${school?.stages?.name}</p>`;
+      
+      studentCustomFields = school?.student_custom_fields || [];
+      const studentFieldsDiv = document.getElementById('studentCustomFields');
+      if (studentCustomFields.length) studentFieldsDiv.innerHTML = studentCustomFields.map(f => `<input type="text" id="custom_${f.name}" placeholder="${f.name}" style="width:100%; margin-bottom:5px">`).join('');
+      
+      // تحميل المواد
+      await loadSubjects();
+      
+      const allSubjects = [...new Set(schoolSubjects.map(s => s.subject))];
+      document.getElementById('resultSubject').innerHTML = allSubjects.map(s => `<option value="${s}">${s}</option>`).join('');
+      
+      const gradeSelect = document.getElementById('studentGradeSelect');
+      gradeSelect.innerHTML = schoolGrades.map(g => `<option value="${g}">${g}</option>`).join('');
+      
+      const templateSelect = document.getElementById('templateGradeSelect');
+      templateSelect.innerHTML = schoolGrades.map(g => `<option value="${g}">${g}</option>`).join('');
   }
   
+  async function loadSubjects() {
+      const { data: school } = await supabase.from('schools').select('custom_subjects, selected_grades').eq('id', schoolId).single();
+      schoolSubjects = school.custom_subjects || [];
+      schoolGrades = school.selected_grades || [];
+      
+      if (schoolGrades.length === 0 && schoolSubjects.length > 0) {
+          schoolGrades = [...new Set(schoolSubjects.map(s => s.grade))];
+      }
+      
+      renderSubjectsManagement();
+  }
+  
+  function renderSubjectsManagement() {
+      const container = document.getElementById('subjectsManagement');
+      if (schoolGrades.length === 0) {
+          container.innerHTML = '<p style="color:#dc3545">⚠️ لا توجد صفوف. قم بإضافة صفوف من لوحة السوبر أدمن أولاً</p>';
+          return;
+      }
+      
+      container.innerHTML = `
+          <div class="subjects-grid">
+              ${schoolGrades.map(grade => {
+                  const subjects = schoolSubjects.filter(s => s.grade === grade).map(s => s.subject);
+                  return `
+                      <div class="grade-box">
+                          <div class="grade-title">
+                              <span>🎓 ${grade}</span>
+                              <button onclick="deleteGrade('${grade}')" class="btn-danger btn-small" style="padding:4px 12px">🗑️ حذف الصف</button>
+                          </div>
+                          <div class="subjects-list" id="subjects-list-${grade.replace(/\s/g, '')}">
+                              ${subjects.map(sub => `
+                                  <span class="subject-item">
+                                      ${sub}
+                                      <button onclick="deleteSubject('${grade}', '${sub}')" class="btn-danger">✖</button>
+                                  </span>
+                              `).join('')}
+                          </div>
+                          <div class="add-subject">
+                              <input type="text" id="newSub-${grade.replace(/\s/g, '')}" placeholder="مادة جديدة">
+                              <button onclick="addSubject('${grade}')" class="btn-success">+ إضافة</button>
+                          </div>
+                      </div>
+                  `;
+              }).join('')}
+          </div>
+      `;
+  }
+  
+  // إضافة مادة جديدة
+  window.addSubject = async (grade) => {
+      const input = document.getElementById(`newSub-${grade.replace(/\s/g, '')}`);
+      const newSubject = input.value.trim();
+      if (!newSubject) return alert("أدخل اسم المادة");
+      
+      const updatedSubjects = [...schoolSubjects];
+      updatedSubjects.push({ grade: grade, subject: newSubject });
+      
+      const { error } = await supabase
+          .from('schools')
+          .update({ custom_subjects: updatedSubjects })
+          .eq('id', schoolId);
+      
+      if (error) alert("خطأ: " + error.message);
+      else {
+          schoolSubjects = updatedSubjects;
+          renderSubjectsManagement();
+          input.value = '';
+          alert(`✅ تم إضافة مادة "${newSubject}" للصف ${grade}`);
+      }
+  };
+  
+  // حذف مادة
+  window.deleteSubject = async (grade, subject) => {
+      if (!confirm(`هل أنت متأكد من حذف مادة "${subject}" من الصف ${grade}؟`)) return;
+      
+      const updatedSubjects = schoolSubjects.filter(s => !(s.grade === grade && s.subject === subject));
+      
+      const { error } = await supabase
+          .from('schools')
+          .update({ custom_subjects: updatedSubjects })
+          .eq('id', schoolId);
+      
+      if (error) alert("خطأ: " + error.message);
+      else {
+          schoolSubjects = updatedSubjects;
+          renderSubjectsManagement();
+          alert(`✅ تم حذف مادة "${subject}"`);
+      }
+  };
+  
+  // حذف صف كامل
+  window.deleteGrade = async (grade) => {
+      if (!confirm(`⚠️ تحذير: سيتم حذف جميع مواد الصف "${grade}" والنتائج المرتبطة بها! هل أنت متأكد؟`)) return;
+      
+      // حذف المواد الخاصة بهذا الصف
+      const updatedSubjects = schoolSubjects.filter(s => s.grade !== grade);
+      
+      // تحديث قائمة الصفوف المختارة للمدرسة
+      const updatedGrades = schoolGrades.filter(g => g !== grade);
+      
+      const { error } = await supabase
+          .from('schools')
+          .update({ custom_subjects: updatedSubjects, selected_grades: updatedGrades })
+          .eq('id', schoolId);
+      
+      if (error) alert("خطأ: " + error.message);
+      else {
+          schoolSubjects = updatedSubjects;
+          schoolGrades = updatedGrades;
+          renderSubjectsManagement();
+          loadStudents(); // تحديث قائمة الطلاب
+          alert(`✅ تم حذف الصف "${grade}" وجميع مواده`);
+      }
+  };
+  
+  // مزامنة المواد من المرحلة
+  window.syncFromStage = async () => {
+      if (!confirm("سيتم استبدال المواد الحالية بمواد المرحلة الأساسية. استمر؟")) return;
+      
+      const { data: stage } = await supabase.from('stages').select('grades').eq('id', currentSchoolData.stage_id).single();
+      const grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
+      
+      let allSubjects = [];
+      grades.forEach(grade => {
+          grade.subjects.forEach(subject => {
+              allSubjects.push({ grade: grade.grade, subject: subject });
+          });
+      });
+      
+      const { error } = await supabase
+          .from('schools')
+          .update({ custom_subjects: allSubjects })
+          .eq('id', schoolId);
+      
+      if (error) alert("خطأ: " + error.message);
+      else {
+          await loadSubjects();
+          alert("✅ تمت مزامنة المواد من المرحلة الأساسية");
+      }
+  };
+  
   window.downloadTemplate = () => {
-    const grade = document.getElementById('templateGradeSelect').value;
-    if (!grade) { alert("❌ اختر الصف أولاً"); return; }
-    
-    const subjects = schoolSubjects.filter(s => s.grade === grade).map(s => s.subject);
-    if (subjects.length === 0) { alert("❌ لا توجد مواد لهذا الصف"); return; }
-    
-    const headers = ["اسم الطالب", "رقم الجلوس", "الكود", "الرقم القومي"];
-    subjects.forEach(s => { headers.push(`${s} (أعمال سنة)`, `${s} (امتحان نهائي)`); });
-    if (studentCustomFields.length > 0) studentCustomFields.forEach(f => headers.push(f.name));
-    
-    const sheetData = [headers];
-    let exampleRow = ["مثال: أحمد محمد", "101", "A123", "12345678901234"];
-    subjects.forEach(() => { exampleRow.push("", ""); });
-    if (studentCustomFields.length > 0) studentCustomFields.forEach(() => exampleRow.push(""));
-    sheetData.push(exampleRow);
-    for (let i = 0; i < 15; i++) {
-        let emptyRow = ["", "", "", ""];
-        subjects.forEach(() => { emptyRow.push("", ""); });
-        if (studentCustomFields.length > 0) studentCustomFields.forEach(() => emptyRow.push(""));
-        sheetData.push(emptyRow);
-    }
-    
-    const ws = XLSX.utils.aoa_to_sheet(sheetData);
-    ws['!cols'] = headers.map(() => ({ wch: 20 }));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, `قالب_${grade}`);
-    XLSX.writeFile(wb, `قالب_استيراد_الطلاب_${grade}_${new Date().toISOString().slice(0,10)}.xlsx`);
+      const grade = document.getElementById('templateGradeSelect').value;
+      if (!grade) { alert("❌ اختر الصف أولاً"); return; }
+      
+      const subjects = schoolSubjects.filter(s => s.grade === grade).map(s => s.subject);
+      if (subjects.length === 0) { alert("❌ لا توجد مواد لهذا الصف. قم بإضافة مواد أولاً"); return; }
+      
+      const headers = ["اسم الطالب", "رقم الجلوس", "الكود", "الرقم القومي"];
+      subjects.forEach(s => { headers.push(`${s} (أعمال سنة)`, `${s} (امتحان نهائي)`); });
+      if (studentCustomFields.length > 0) studentCustomFields.forEach(f => headers.push(f.name));
+      
+      const sheetData = [headers];
+      let exampleRow = ["مثال: أحمد محمد", "101", "A123", "12345678901234"];
+      subjects.forEach(() => { exampleRow.push("", ""); });
+      if (studentCustomFields.length > 0) studentCustomFields.forEach(() => exampleRow.push(""));
+      sheetData.push(exampleRow);
+      for (let i = 0; i < 15; i++) {
+          let emptyRow = ["", "", "", ""];
+          subjects.forEach(() => { emptyRow.push("", ""); });
+          if (studentCustomFields.length > 0) studentCustomFields.forEach(() => emptyRow.push(""));
+          sheetData.push(emptyRow);
+      }
+      
+      const ws = XLSX.utils.aoa_to_sheet(sheetData);
+      ws['!cols'] = headers.map(() => ({ wch: 20 }));
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, `قالب_${grade}`);
+      XLSX.writeFile(wb, `قالب_استيراد_الطلاب_${grade}_${new Date().toISOString().slice(0,10)}.xlsx`);
   };
   
-  // دالة الاستيراد - المُصلحة
   window.uploadExcel = async () => {
-    const file = document.getElementById('excelFile').files[0];
-    if (!file) {
-        alert("❌ اختر ملف Excel أولاً");
-        return;
-    }
-    
-    const grade = document.getElementById('templateGradeSelect').value;
-    if (!grade) {
-        alert("❌ اختر الصف أولاً");
-        return;
-    }
-    
-    const subjects = schoolSubjects.filter(s => s.grade === grade).map(s => s.subject);
-    if (subjects.length === 0) {
-        alert("❌ لا توجد مواد لهذا الصف. قم بإضافة المواد أولاً من لوحة السوبر أدمن");
-        return;
-    }
-    
-    document.getElementById('loadingIndicator').style.display = 'block';
-    document.getElementById('uploadResult').innerHTML = '';
-    
-    try {
-        const data = await file.arrayBuffer();
-        const workbook = XLSX.read(data);
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
-        
-        if (!rows || rows.length < 3) {
-            throw new Error("الملف فارغ أو لا يحتوي على بيانات كافية");
-        }
-        
-        let successCount = 0;
-        let errorCount = 0;
-        const errors = [];
-        
-        for (let i = 2; i < rows.length; i++) {
-            const row = rows[i];
-            if (!row || row.length < 4) continue;
-            
-            const name = row[0]?.toString().trim();
-            const seat = row[1]?.toString().trim();
-            const code = row[2]?.toString().trim() || null;
-            const nationalId = row[3]?.toString().trim() || null;
-            
-            if (!name || !seat) {
-                errorCount++;
-                errors.push(`الصف ${i+1}: اسم الطالب أو رقم الجلوس مفقود`);
-                continue;
-            }
-            
-            // البحث عن الطالب أو إنشاؤه
-            let { data: student, error: findError } = await supabase
-                .from('students')
-                .select('id, multi_scores, custom_data')
-                .eq('school_id', schoolId)
-                .eq('seat_number', seat)
-                .maybeSingle();
-            
-            // جمع البيانات المخصصة
-            const customData = {};
-            if (studentCustomFields.length > 0) {
-                for (let j = 0; j < studentCustomFields.length; j++) {
-                    const fieldName = studentCustomFields[j].name;
-                    const colIndex = 4 + (subjects.length * 2) + j;
-                    const fieldValue = row[colIndex]?.toString().trim();
-                    if (fieldValue) customData[fieldName] = fieldValue;
-                }
-            }
-            
-            if (!student) {
-                // إنشاء طالب جديد
-                const { data: newStudent, error: insertError } = await supabase
-                    .from('students')
-                    .insert([{ 
-                        school_id: schoolId, 
-                        name, 
-                        seat_number: seat, 
-                        code, 
-                        national_id: nationalId, 
-                        grade: grade, 
-                        multi_scores: {}, 
-                        custom_data: customData 
-                    }])
-                    .select()
-                    .single();
-                
-                if (insertError) {
-                    errorCount++;
-                    errors.push(`الصف ${i+1}: فشل إنشاء الطالب ${name} - ${insertError.message}`);
-                    continue;
-                }
-                student = newStudent;
-            } else {
-                // تحديث بيانات الطالب
-                await supabase
-                    .from('students')
-                    .update({ code, national_id: nationalId, custom_data: customData })
-                    .eq('id', student.id);
-            }
-            
-            // معالجة النتائج
-            const multiScores = student.multi_scores || {};
-            let colIndex = 4;
-            
-            for (let s = 0; s < subjects.length; s++) {
-                const subject = subjects[s];
-                const work = parseFloat(row[colIndex]) || 0;
-                const exam = parseFloat(row[colIndex + 1]) || 0;
-                const total = work + exam;
-                const percentage = (total / 200) * 100;
-                
-                multiScores[subject] = {
-                    scores: { 
-                        'أعمال سنة': { score: work, max: 100 }, 
-                        'امتحان نهائي': { score: exam, max: 100 } 
-                    },
-                    total: total,
-                    max: 200,
-                    percentage: percentage.toFixed(1)
-                };
-                colIndex += 2;
-            }
-            
-            const { error: updateError } = await supabase
-                .from('students')
-                .update({ multi_scores: multiScores })
-                .eq('id', student.id);
-            
-            if (updateError) {
-                errorCount++;
-                errors.push(`الصف ${i+1}: فشل حفظ نتائج ${name} - ${updateError.message}`);
-            } else {
-                successCount++;
-            }
-        }
-        
-        let resultMessage = `✅ تم استيراد ${successCount} طالب/نتيجة بنجاح`;
-        if (errorCount > 0) {
-            resultMessage += `\n⚠️ فشل ${errorCount} سجل`;
-            console.log("الأخطاء:", errors);
-        }
-        alert(resultMessage);
-        document.getElementById('uploadResult').innerHTML = `<span style="color:green">✅ استوردت ${successCount} طالب</span>`;
-        document.getElementById('excelFile').value = '';
-        loadStudents();
-        
-    } catch (err) {
-        console.error("خطأ في الاستيراد:", err);
-        alert("❌ خطأ في قراءة الملف: " + err.message);
-        document.getElementById('uploadResult').innerHTML = `<span style="color:red">❌ ${err.message}</span>`;
-    } finally {
-        document.getElementById('loadingIndicator').style.display = 'none';
-    }
+      const file = document.getElementById('excelFile').files[0];
+      if (!file) return alert("اختر ملف أولاً");
+      
+      const grade = document.getElementById('templateGradeSelect').value;
+      if (!grade) return alert("اختر الصف أولاً");
+      
+      const subjects = schoolSubjects.filter(s => s.grade === grade).map(s => s.subject);
+      if (subjects.length === 0) return alert("لا توجد مواد لهذا الصف");
+      
+      document.getElementById('loadingIndicator').style.display = 'block';
+      
+      try {
+          const data = await file.arrayBuffer();
+          const workbook = XLSX.read(data);
+          const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, defval: "" });
+          
+          let successCount = 0, errorCount = 0;
+          
+          for (let i = 2; i < rows.length; i++) {
+              const row = rows[i];
+              if (!row || !row[0] || !row[1]) continue;
+              
+              const name = row[0]?.toString().trim();
+              const seat = row[1]?.toString().trim();
+              const code = row[2]?.toString().trim() || null;
+              const nationalId = row[3]?.toString().trim() || null;
+              
+              if (!name || !seat) { errorCount++; continue; }
+              
+              let { data: student } = await supabase
+                  .from('students')
+                  .select('id, multi_scores, custom_data')
+                  .eq('school_id', schoolId)
+                  .eq('seat_number', seat)
+                  .maybeSingle();
+              
+              const customData = {};
+              if (studentCustomFields.length > 0) {
+                  for (let j = 0; j < studentCustomFields.length; j++) {
+                      const fieldName = studentCustomFields[j].name;
+                      const colIndex = 4 + (subjects.length * 2) + j;
+                      const fieldValue = row[colIndex]?.toString().trim();
+                      if (fieldValue) customData[fieldName] = fieldValue;
+                  }
+              }
+              
+              if (!student) {
+                  const { data: newStudent } = await supabase
+                      .from('students')
+                      .insert([{ school_id: schoolId, name, seat_number: seat, code, national_id: nationalId, grade: grade, multi_scores: {}, custom_data: customData }])
+                      .select()
+                      .single();
+                  student = newStudent;
+              } else {
+                  await supabase.from('students').update({ code, national_id: nationalId, custom_data: customData }).eq('id', student.id);
+              }
+              
+              const multiScores = student.multi_scores || {};
+              let colIndex = 4;
+              for (let s = 0; s < subjects.length; s++) {
+                  const subject = subjects[s];
+                  const work = parseFloat(row[colIndex]) || 0;
+                  const exam = parseFloat(row[colIndex + 1]) || 0;
+                  const total = work + exam;
+                  multiScores[subject] = {
+                      scores: { 'أعمال سنة': { score: work, max: 100 }, 'امتحان نهائي': { score: exam, max: 100 } },
+                      total: total,
+                      max: 200,
+                      percentage: ((total / 200) * 100).toFixed(1)
+                  };
+                  colIndex += 2;
+              }
+              await supabase.from('students').update({ multi_scores: multiScores }).eq('id', student.id);
+              successCount++;
+          }
+          
+          alert(`✅ تم استيراد ${successCount} طالب\n❌ فشل ${errorCount}`);
+          loadStudents();
+      } catch (err) {
+          alert("❌ خطأ: " + err.message);
+      } finally {
+          document.getElementById('loadingIndicator').style.display = 'none';
+      }
   };
-  
-  // ربط الزر بالدالة
-  document.getElementById('uploadExcelBtn').onclick = window.uploadExcel;
   
   window.addStudent = async () => {
-    const name = document.getElementById('studentName').value.trim();
-    const seat = document.getElementById('studentSeat').value.trim();
-    const code = document.getElementById('studentCode').value.trim();
-    const nationalId = document.getElementById('studentNationalId').value.trim();
-    const grade = document.getElementById('studentGradeSelect').value;
-    if (!name || !seat || !grade) return alert("املأ الحقول الأساسية");
-    const customData = {};
-    studentCustomFields.forEach(f => { const val = document.getElementById(`custom_${f.name}`)?.value.trim(); if (val) customData[f.name] = val; });
-    const { error } = await supabase.from('students').insert([{ school_id: schoolId, name, seat_number: seat, code: code || null, national_id: nationalId || null, grade, multi_scores: {}, custom_data: customData }]);
-    if (error) alert("خطأ: " + error.message);
-    else { alert("✅ تمت إضافة الطالب"); loadStudents(); }
+      const name = document.getElementById('studentName').value.trim();
+      const seat = document.getElementById('studentSeat').value.trim();
+      const code = document.getElementById('studentCode').value.trim();
+      const nationalId = document.getElementById('studentNationalId').value.trim();
+      const grade = document.getElementById('studentGradeSelect').value;
+      if (!name || !seat || !grade) return alert("املأ الحقول الأساسية");
+      const customData = {};
+      studentCustomFields.forEach(f => { const val = document.getElementById(`custom_${f.name}`)?.value.trim(); if (val) customData[f.name] = val; });
+      await supabase.from('students').insert([{ school_id: schoolId, name, seat_number: seat, code: code || null, national_id: nationalId || null, grade, multi_scores: {}, custom_data: customData }]);
+      alert("✅ تمت إضافة الطالب");
+      loadStudents();
   };
   
   window.addResult = async () => {
-    const seat = document.getElementById('resultSeat').value.trim();
-    const subject = document.getElementById('resultSubject').value;
-    const work = parseFloat(document.getElementById('workScore').value) || 0;
-    const exam = parseFloat(document.getElementById('examScore').value) || 0;
-    if (!seat || !subject) return alert("املأ البيانات");
-    const { data: student } = await supabase.from('students').select('id, multi_scores').eq('school_id', schoolId).eq('seat_number', seat).single();
-    if (!student) return alert("لا يوجد طالب بهذا الرقم");
-    const multiScores = student.multi_scores || {};
-    const total = work + exam;
-    multiScores[subject] = { scores: { 'أعمال سنة': { score: work, max: 100 }, 'امتحان نهائي': { score: exam, max: 100 } }, total: total, max: 200, percentage: ((total / 200) * 100).toFixed(1) };
-    await supabase.from('students').update({ multi_scores: multiScores }).eq('id', student.id);
-    alert("✅ تمت إضافة النتيجة");
-    loadStudents();
+      const seat = document.getElementById('resultSeat').value.trim();
+      const subject = document.getElementById('resultSubject').value;
+      const work = parseFloat(document.getElementById('workScore').value) || 0;
+      const exam = parseFloat(document.getElementById('examScore').value) || 0;
+      if (!seat || !subject) return alert("املأ البيانات");
+      const { data: student } = await supabase.from('students').select('id, multi_scores').eq('school_id', schoolId).eq('seat_number', seat).single();
+      if (!student) return alert("لا يوجد طالب بهذا الرقم");
+      const multiScores = student.multi_scores || {};
+      const total = work + exam;
+      multiScores[subject] = { scores: { 'أعمال سنة': { score: work, max: 100 }, 'امتحان نهائي': { score: exam, max: 100 } }, total: total, max: 200, percentage: ((total / 200) * 100).toFixed(1) };
+      await supabase.from('students').update({ multi_scores: multiScores }).eq('id', student.id);
+      alert("✅ تمت إضافة النتيجة");
+      loadStudents();
   };
   
   async function loadStudents() {
-    const { data: students } = await supabase.from('students').select('*').eq('school_id', schoolId);
-    const container = document.getElementById('studentsList');
-    if (!students?.length) { container.innerHTML = '<p>لا يوجد طلاب</p>'; return; }
-    container.innerHTML = students.map(s => {
-        const multi = s.multi_scores || {};
-        return `<div class="student-card">
-            <div class="flex-between">
-                <div>
-                    <strong>${s.name}</strong><br>
-                    <small>رقم الجلوس: ${s.seat_number} | الكود: ${s.code || '-'} | الرقم القومي: ${s.national_id || '-'}</small><br>
-                    <small>الصف: ${s.grade || '-'}</small>
-                    ${studentCustomFields.map(f => `<br><small>${f.name}: ${s.custom_data?.[f.name] || '-'}</small>`).join('')}
-                </div>
-                <div>
-                    <button onclick="clearStudentResults('${s.id}')" class="btn-warning">🗑️ مسح نتائج هذا الطالب</button>
-                    <button onclick="deleteStudent(${s.id})" class="btn-danger">حذف الطالب</button>
-                </div>
-            </div>
-            ${Object.entries(multi).map(([sub, d]) => `<div class="subject-score"><strong>${sub}:</strong> أعمال سنة: ${d.scores['أعمال سنة']?.score || 0} | امتحان نهائي: ${d.scores['امتحان نهائي']?.score || 0} | المجموع: ${d.total} (${d.percentage}%)</div>`).join('')}
-        </div>`;
-    }).join('');
+      const { data: students } = await supabase.from('students').select('*').eq('school_id', schoolId);
+      const container = document.getElementById('studentsList');
+      if (!students?.length) { container.innerHTML = '<p>لا يوجد طلاب</p>'; return; }
+      container.innerHTML = students.map(s => {
+          const multi = s.multi_scores || {};
+          return `<div class="student-card">
+              <div class="flex-between">
+                  <div>
+                      <strong>${s.name}</strong><br>
+                      <small>رقم الجلوس: ${s.seat_number} | الكود: ${s.code || '-'} | الرقم القومي: ${s.national_id || '-'}</small><br>
+                      <small>الصف: ${s.grade || '-'}</small>
+                      ${studentCustomFields.map(f => `<br><small>${f.name}: ${s.custom_data?.[f.name] || '-'}</small>`).join('')}
+                  </div>
+                  <div>
+                      <button onclick="clearStudentResults('${s.id}')" class="btn-warning">🗑️ مسح نتائج هذا الطالب</button>
+                      <button onclick="deleteStudent(${s.id})" class="btn-danger">🗑️ حذف الطالب</button>
+                  </div>
+              </div>
+              ${Object.entries(multi).map(([sub, d]) => `<div class="subject-score"><strong>${sub}:</strong> أعمال سنة: ${d.scores['أعمال سنة']?.score || 0} | امتحان نهائي: ${d.scores['امتحان نهائي']?.score || 0} | المجموع: ${d.total} (${d.percentage}%)</div>`).join('')}
+          </div>`;
+      }).join('');
   }
   
   window.clearStudentResults = async (studentId) => {
-    if (!confirm("هل أنت متأكد من مسح جميع نتائج هذا الطالب؟")) return;
-    await supabase.from('students').update({ multi_scores: {} }).eq('id', studentId);
-    alert("✅ تم مسح نتائج الطالب");
-    loadStudents();
+      if (!confirm("مسح نتائج هذا الطالب؟")) return;
+      await supabase.from('students').update({ multi_scores: {} }).eq('id', studentId);
+      alert("✅ تم مسح نتائج الطالب");
+      loadStudents();
   };
   
   window.clearAllStudentResults = async () => {
-    if (!confirm("⚠️ تحذير: سيتم مسح نتائج ALL الطلاب في هذه المدرسة! هل أنت متأكد؟")) return;
-    const { data: students } = await supabase.from('students').select('id').eq('school_id', schoolId);
-    if (students && students.length > 0) {
-        for (const student of students) {
-            await supabase.from('students').update({ multi_scores: {} }).eq('id', student.id);
-        }
-    }
-    alert("✅ تم مسح نتائج جميع الطلاب");
-    loadStudents();
+      if (!confirm("⚠️ مسح نتائج جميع الطلاب؟")) return;
+      const { data: students } = await supabase.from('students').select('id').eq('school_id', schoolId);
+      for (const student of students) {
+          await supabase.from('students').update({ multi_scores: {} }).eq('id', student.id);
+      }
+      alert("✅ تم مسح نتائج جميع الطلاب");
+      loadStudents();
   };
   
   window.deleteStudent = async (id) => { if (confirm("حذف الطالب نهائياً؟")) { await supabase.from('students').delete().eq('id', id); loadStudents(); } };
   
   window.deleteAllStudents = async () => {
-    if (!confirm("⚠️ تحذير نهائي: سيتم حذف جميع الطلاب وجميع نتائجهم بشكل دائم! هل أنت متأكد 100%؟")) return;
-    await supabase.from('students').delete().eq('school_id', schoolId);
-    alert("✅ تم حذف جميع الطلاب");
-    loadStudents();
+      if (!confirm("⚠️ حذف جميع الطلاب نهائياً؟")) return;
+      await supabase.from('students').delete().eq('school_id', schoolId);
+      alert("✅ تم حذف جميع الطلاب");
+      loadStudents();
   };
   
   window.logout = () => { sessionStorage.clear(); window.location.href = 'login.html'; };
+  
+  document.getElementById('uploadExcelBtn').onclick = window.uploadExcel;
   
   loadSchool(); 
   loadStudents();
