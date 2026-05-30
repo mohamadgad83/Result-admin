@@ -584,4 +584,187 @@
     const select = document.getElementById('adminSchoolSelect');
     select.innerHTML = '<option value="">-- اختر المدرسة --</option>' + schools.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
     document.getElementById('adminUsername').value = '';
-    document
+    document.getElementById('adminPassword').value = '';
+    document.getElementById('addAdminModal').style.display = 'flex';
+  };
+  
+  window.addAdmin = async () => {
+    const schoolId = document.getElementById('adminSchoolSelect').value;
+    const username = document.getElementById('adminUsername').value.trim();
+    const password = document.getElementById('adminPassword').value.trim();
+    if (!schoolId || !username || !password) { alert("املأ جميع الحقول"); return; }
+    const { error } = await supabase.from('users').insert([{ username, password, role: 'schoolAdmin', school_id: schoolId }]);
+    if (error) alert("خطأ: " + error.message);
+    else { alert("✅ تمت الإضافة"); closeModal('addAdminModal'); loadAdmins(); loadStats(); }
+  };
+  
+  window.editAdmin = (id, schoolId, username) => {
+    editingAdminId = id;
+    document.getElementById('editAdminUsername').value = username;
+    document.getElementById('editAdminPassword').value = '';
+    (async () => {
+      const { data: schools } = await supabase.from('schools').select('id, name');
+      const select = document.getElementById('editAdminSchoolSelect');
+      select.innerHTML = schools.map(s => `<option value="${s.id}" ${s.id == schoolId ? 'selected' : ''}>${s.name}</option>`).join('');
+      document.getElementById('editAdminModal').style.display = 'flex';
+    })();
+  };
+  
+  window.saveAdminEdit = async () => {
+    const schoolId = document.getElementById('editAdminSchoolSelect').value;
+    const newUsername = document.getElementById('editAdminUsername').value.trim();
+    const newPassword = document.getElementById('editAdminPassword').value.trim();
+    if (!newUsername) { alert("اسم المستخدم مطلوب"); return; }
+    const updateData = { username: newUsername, school_id: schoolId };
+    if (newPassword) updateData.password = newPassword;
+    await supabase.from('users').update(updateData).eq('id', editingAdminId);
+    alert("✅ تم التحديث");
+    closeModal('editAdminModal');
+    loadAdmins();
+  };
+  
+  window.resetAdminPassword = async (id) => {
+    const newPassword = prompt("أدخل كلمة المرور الجديدة:");
+    if (newPassword) {
+      await supabase.from('users').update({ password: newPassword }).eq('id', id);
+      alert("✅ تم تغيير كلمة المرور");
+    }
+  };
+  
+  window.deleteAdmin = async (id) => {
+    if (confirm("هل أنت متأكد من حذف هذا المدير؟")) {
+      await supabase.from('users').delete().eq('id', id);
+      loadAdmins();
+      loadStats();
+    }
+  };
+  
+  // ==================== الإعدادات العامة ====================
+  async function loadGlobalSettings() {
+    const { data: settings } = await supabase.from('system_settings').select('*');
+    const globalStudentFields = settings?.find(s => s.key === 'global_student_fields')?.value || [];
+    const globalResultFields = settings?.find(s => s.key === 'global_result_fields')?.value || [];
+    
+    const studentContainer = document.getElementById('globalStudentFields');
+    studentContainer.innerHTML = globalStudentFields.map((f, idx) => `
+      <div class="flex-between" style="margin: 5px 0">
+        <input type="text" value="${f.name}" id="globalField-${idx}" style="flex:2">
+        <select id="globalFieldType-${idx}">
+          <option value="text" ${f.type === 'text' ? 'selected' : ''}>نص</option>
+          <option value="number" ${f.type === 'number' ? 'selected' : ''}>رقم</option>
+          <option value="date" ${f.type === 'date' ? 'selected' : ''}>تاريخ</option>
+        </select>
+        <button onclick="removeGlobalStudentField(${idx})" class="btn-danger">✖</button>
+      </div>
+    `).join('');
+    
+    const resultContainer = document.getElementById('globalResultFields');
+    resultContainer.innerHTML = globalResultFields.map((f, idx) => `
+      <div class="flex-between" style="margin: 5px 0">
+        <input type="text" value="${f.name}" id="globalResultField-${idx}" style="flex:2">
+        <select id="globalResultFieldType-${idx}">
+          <option value="text" ${f.type === 'text' ? 'selected' : ''}>نص</option>
+          <option value="number" ${f.type === 'number' ? 'selected' : ''}>رقم</option>
+          <option value="date" ${f.type === 'date' ? 'selected' : ''}>تاريخ</option>
+        </select>
+        <button onclick="removeGlobalResultField(${idx})" class="btn-danger">✖</button>
+      </div>
+    `).join('');
+  }
+  
+  window.addGlobalStudentField = () => {
+    // سيتم تنفيذها
+  };
+  
+  window.addGlobalResultField = () => {
+    // سيتم تنفيذها
+  };
+  
+  window.saveDefaultSettings = async () => {
+    const searchField = document.getElementById('defaultSearchField').value;
+    const searchLabel = document.getElementById('defaultSearchLabel').value;
+    await supabase.from('system_settings').upsert([{ key: 'default_search', value: { search_field: searchField, search_label: searchLabel } }]);
+    alert("✅ تم حفظ الإعدادات الافتراضية");
+  };
+  
+  window.backupAllData = async () => {
+    const stages = await supabase.from('stages').select('*');
+    const schools = await supabase.from('schools').select('*');
+    const users = await supabase.from('users').select('*');
+    const backup = { stages: stages.data, schools: schools.data, users: users.data, date: new Date().toISOString() };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `backup_${new Date().toISOString().slice(0,19)}.json`;
+    link.click();
+  };
+  
+  window.restoreFromBackup = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      const text = await file.text();
+      const backup = JSON.parse(text);
+      if (confirm("استعادة البيانات ستحل محل البيانات الحالية! استمر؟")) {
+        await supabase.from('stages').delete().neq('id', 0);
+        await supabase.from('schools').delete().neq('id', 0);
+        await supabase.from('users').delete().neq('id', 0).neq('username', 'admin');
+        if (backup.stages) await supabase.from('stages').insert(backup.stages);
+        if (backup.schools) await supabase.from('schools').insert(backup.schools);
+        if (backup.users) await supabase.from('users').insert(backup.users);
+        alert("✅ تمت الاستعادة");
+        location.reload();
+      }
+    };
+    input.click();
+  };
+  
+  // ==================== تبويبات ====================
+  window.showTab = (tabId) => {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    document.querySelector(`.tab-btn[onclick="showTab('${tabId}')"]`).classList.add('active');
+    document.getElementById(`tab-${tabId}`).classList.add('active');
+    if (tabId === 'stages') loadStages();
+    else if (tabId === 'schools') loadSchools();
+    else if (tabId === 'users') loadAdmins();
+    else if (tabId === 'settings') loadGlobalSettings();
+  };
+  
+  window.closeModal = (id) => { document.getElementById(id).style.display = 'none'; };
+  window.logout = () => { sessionStorage.clear(); window.location.href = 'login.html'; };
+  
+  // إنشاء جدول الإعدادات إذا لم يكن موجوداً
+  async function initSystemSettings() {
+    const { data } = await supabase.from('system_settings').select('*');
+    if (!data || data.length === 0) {
+      await supabase.from('system_settings').insert([{ key: 'default_search', value: { search_field: 'seat_number', search_label: 'رقم الجلوس' } }]);
+      await supabase.from('system_settings').insert([{ key: 'global_student_fields', value: [] }]);
+      await supabase.from('system_settings').insert([{ key: 'global_result_fields', value: [] }]);
+    }
+  }
+  
+  // إنشاء جدول الإعدادات
+  async function createSettingsTable() {
+    const { error } = await supabase.from('system_settings').select('*');
+    if (error && error.message.includes('does not exist')) {
+      await supabase.query(`
+        CREATE TABLE IF NOT EXISTS system_settings (
+          id SERIAL PRIMARY KEY,
+          key TEXT UNIQUE,
+          value JSONB
+        );
+      `);
+    }
+    initSystemSettings();
+  }
+  
+  loadCurrentUser();
+  loadStats();
+  createSettingsTable();
+  loadStages();
+</script>
+</body>
+</html>
