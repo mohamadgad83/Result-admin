@@ -52,6 +52,8 @@
     <div style="background:#f0f7ff; padding:15px; border-radius:12px; margin:10px 0">
         <input type="text" id="studentName" placeholder="الاسم" style="width:100%">
         <input type="text" id="studentSeat" placeholder="رقم الجلوس" style="width:100%">
+        <input type="text" id="studentCode" placeholder="الكود" style="width:100%">
+        <input type="text" id="studentNationalId" placeholder="الرقم القومي" style="width:100%">
         <select id="studentGradeSelect" style="width:100%"></select>
         <div id="studentCustomFields"></div>
         <button onclick="addStudent()" class="btn-success">إضافة طالب</button>
@@ -71,7 +73,7 @@
   import { supabase } from './supabase-config.js';
   let schoolId = sessionStorage.getItem('userSchoolId') || sessionStorage.getItem('impersonatedSchoolId');
   if (!schoolId) window.location.href = 'login.html';
-  let schoolSubjects = [], schoolGrades = [], studentCustomFields = [], selectedGradeSubjects = [];
+  let schoolSubjects = [], schoolGrades = [], studentCustomFields = [];
   
   async function loadSchool() {
     const { data: school } = await supabase.from('schools').select('*, stages(name)').eq('id', schoolId).single();
@@ -95,33 +97,34 @@
     document.getElementById('resultSubject').innerHTML = allSubjects.map(s => `<option value="${s}">${s}</option>`).join('');
   }
   
-  // تحميل القالب - حسب الصف المختار فقط
+  // تحميل القالب - يحتوي على الاسم + رقم الجلوس + الكود + الرقم القومي + المواد
   window.downloadTemplate = () => {
     const grade = document.getElementById('templateGradeSelect').value;
     if (!grade) { alert("❌ اختر الصف أولاً"); return; }
     
-    // جلب المواد الخاصة بهذا الصف فقط
     const subjects = schoolSubjects.filter(s => s.grade === grade).map(s => s.subject);
     if (subjects.length === 0) { alert("❌ لا توجد مواد لهذا الصف"); return; }
     
-    // رؤوس الأعمدة
-    const headers = ["اسم الطالب", "رقم الجلوس"];
+    // رؤوس الأعمدة الأساسية
+    const headers = ["اسم الطالب", "رقم الجلوس", "الكود", "الرقم القومي"];
+    // إضافة المواد (لكل مادة عمودين)
     subjects.forEach(s => {
         headers.push(`${s} (أعمال سنة)`, `${s} (امتحان نهائي)`);
     });
+    // إضافة الحقول المخصصة إن وجدت
     if (studentCustomFields.length > 0) {
         studentCustomFields.forEach(f => headers.push(f.name));
     }
     
     const sheetData = [headers];
     // صف مثال
-    let exampleRow = ["مثال: أحمد محمد", "101"];
+    let exampleRow = ["مثال: أحمد محمد", "101", "A123", "12345678901234"];
     subjects.forEach(() => { exampleRow.push("", ""); });
     if (studentCustomFields.length > 0) studentCustomFields.forEach(() => exampleRow.push(""));
     sheetData.push(exampleRow);
     // 10 صفوف فارغة
     for (let i = 0; i < 10; i++) {
-        let emptyRow = ["", ""];
+        let emptyRow = ["", "", "", ""];
         subjects.forEach(() => { emptyRow.push("", ""); });
         if (studentCustomFields.length > 0) studentCustomFields.forEach(() => emptyRow.push(""));
         sheetData.push(emptyRow);
@@ -132,7 +135,7 @@
     
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, `قالب_${grade}`);
-    XLSX.writeFile(wb, `قالب_استيراد_${grade}_${new Date().toISOString().slice(0,10)}.xlsx`);
+    XLSX.writeFile(wb, `قالب_استيراد_الطلاب_${grade}_${new Date().toISOString().slice(0,10)}.xlsx`);
   };
   
   // استيراد البيانات
@@ -158,7 +161,10 @@
         if (!row || !row[0] || !row[1]) continue;
         
         const name = row[0]?.toString().trim();
-        const seat = row[1]?.toString().toString().trim();
+        const seat = row[1]?.toString().trim();
+        const code = row[2]?.toString().trim() || null;
+        const nationalId = row[3]?.toString().trim() || null;
+        
         if (!name || !seat) { fail++; continue; }
         
         // البحث عن الطالب
@@ -169,11 +175,12 @@
             .eq('seat_number', seat)
             .single();
         
+        // جمع البيانات المخصصة
         const customData = {};
         if (studentCustomFields.length > 0) {
             for (let j = 0; j < studentCustomFields.length; j++) {
                 const fieldName = studentCustomFields[j].name;
-                const colIndex = 2 + (subjects.length * 2) + j;
+                const colIndex = 4 + (subjects.length * 2) + j;
                 const fieldValue = row[colIndex]?.toString().trim();
                 if (fieldValue) customData[fieldName] = fieldValue;
             }
@@ -182,16 +189,29 @@
         if (!student) {
             const { data: newStudent } = await supabase
                 .from('students')
-                .insert([{ school_id: schoolId, name, seat_number: seat, grade: grade, multi_scores: {}, custom_data: customData }])
+                .insert([{ 
+                    school_id: schoolId, 
+                    name, 
+                    seat_number: seat, 
+                    code: code,
+                    national_id: nationalId,
+                    grade: grade, 
+                    multi_scores: {}, 
+                    custom_data: customData 
+                }])
                 .select()
                 .single();
             student = newStudent;
-        } else if (Object.keys(customData).length > 0) {
-            await supabase.from('students').update({ custom_data: customData }).eq('id', student.id);
+        } else {
+            // تحديث البيانات الإضافية
+            await supabase
+                .from('students')
+                .update({ code: code, national_id: nationalId, custom_data: customData })
+                .eq('id', student.id);
         }
         
         const multiScores = student.multi_scores || {};
-        let colIndex = 2;
+        let colIndex = 4; // بعد الأعمدة الأساسية الأربعة
         
         for (let s = 0; s < subjects.length; s++) {
             const subject = subjects[s];
@@ -220,12 +240,38 @@
   window.addStudent = async () => {
     const name = document.getElementById('studentName').value.trim();
     const seat = document.getElementById('studentSeat').value.trim();
+    const code = document.getElementById('studentCode').value.trim();
+    const nationalId = document.getElementById('studentNationalId').value.trim();
     const grade = document.getElementById('studentGradeSelect').value;
-    if (!name || !seat || !grade) return alert("املأ الحقول");
+    
+    if (!name || !seat || !grade) return alert("املأ الحقول الأساسية (الاسم، رقم الجلوس، الصف)");
+    
     const customData = {};
-    studentCustomFields.forEach(f => { const val = document.getElementById(`custom_${f.name}`)?.value.trim(); if (val) customData[f.name] = val; });
-    await supabase.from('students').insert([{ school_id: schoolId, name, seat_number: seat, grade, multi_scores: {}, custom_data: customData }]);
-    alert("✅ تمت الإضافة");
+    studentCustomFields.forEach(f => { 
+        const val = document.getElementById(`custom_${f.name}`)?.value.trim(); 
+        if (val) customData[f.name] = val; 
+    });
+    
+    await supabase.from('students').insert([{ 
+        school_id: schoolId, 
+        name, 
+        seat_number: seat, 
+        code: code || null,
+        national_id: nationalId || null,
+        grade, 
+        multi_scores: {}, 
+        custom_data: customData 
+    }]);
+    
+    alert("✅ تمت إضافة الطالب");
+    document.getElementById('studentName').value = '';
+    document.getElementById('studentSeat').value = '';
+    document.getElementById('studentCode').value = '';
+    document.getElementById('studentNationalId').value = '';
+    studentCustomFields.forEach(f => { 
+        const input = document.getElementById(`custom_${f.name}`); 
+        if (input) input.value = ''; 
+    });
     loadStudents();
   };
   
@@ -234,9 +280,16 @@
     const subject = document.getElementById('resultSubject').value;
     const work = parseFloat(document.getElementById('workScore').value) || 0;
     const exam = parseFloat(document.getElementById('examScore').value) || 0;
+    
     if (!seat || !subject) return alert("املأ البيانات");
     
-    const { data: student } = await supabase.from('students').select('id, multi_scores').eq('school_id', schoolId).eq('seat_number', seat).single();
+    const { data: student } = await supabase
+        .from('students')
+        .select('id, multi_scores')
+        .eq('school_id', schoolId)
+        .eq('seat_number', seat)
+        .single();
+    
     if (!student) return alert("لا يوجد طالب بهذا الرقم");
     
     const multiScores = student.multi_scores || {};
@@ -247,8 +300,12 @@
         max: 200,
         percentage: ((total / 200) * 100).toFixed(1)
     };
+    
     await supabase.from('students').update({ multi_scores: multiScores }).eq('id', student.id);
     alert("✅ تمت إضافة النتيجة");
+    document.getElementById('resultSeat').value = '';
+    document.getElementById('workScore').value = '';
+    document.getElementById('examScore').value = '';
     loadStudents();
   };
   
@@ -256,9 +313,31 @@
     const { data: students } = await supabase.from('students').select('*').eq('school_id', schoolId);
     const container = document.getElementById('studentsList');
     if (!students?.length) { container.innerHTML = '<p>لا يوجد طلاب</p>'; return; }
+    
     container.innerHTML = students.map(s => {
         const multi = s.multi_scores || {};
-        return `<div class="student-card"><div class="flex-between"><div><strong>${s.name}</strong><br>رقم الجلوس: ${s.seat_number} | الصف: ${s.grade}<br>${studentCustomFields.map(f => `${f.name}: ${s.custom_data?.[f.name] || '-'}`).join(' | ')}</div><div><button onclick="viewStudent('${s.id}')" class="btn-info">عرض النتيجة</button><button onclick="deleteStudent(${s.id})" class="btn-danger">حذف</button></div></div>${Object.entries(multi).map(([sub, d]) => `<div class="subject-score"><strong>${sub}:</strong> أعمال سنة: ${d.scores['أعمال سنة']?.score || 0} | امتحان نهائي: ${d.scores['امتحان نهائي']?.score || 0} | المجموع: ${d.total} (${d.percentage}%)</div>`).join('')}</div>`;
+        return `<div class="student-card">
+            <div class="flex-between">
+                <div>
+                    <strong>${s.name}</strong><br>
+                    <small>رقم الجلوس: ${s.seat_number} | الكود: ${s.code || '-'} | الرقم القومي: ${s.national_id || '-'}</small><br>
+                    <small>الصف: ${s.grade || '-'}</small><br>
+                    ${studentCustomFields.map(f => `<small>${f.name}: ${s.custom_data?.[f.name] || '-'}</small><br>`).join('')}
+                </div>
+                <div>
+                    <button onclick="viewStudent('${s.id}')" class="btn-info">عرض النتيجة</button>
+                    <button onclick="deleteStudent(${s.id})" class="btn-danger">حذف</button>
+                </div>
+            </div>
+            ${Object.entries(multi).map(([sub, d]) => `
+                <div class="subject-score">
+                    <strong>${sub}:</strong>
+                    أعمال سنة: ${d.scores['أعمال سنة']?.score || 0} | 
+                    امتحان نهائي: ${d.scores['امتحان نهائي']?.score || 0} | 
+                    المجموع: ${d.total} (${d.percentage}%)
+                </div>
+            `).join('')}
+        </div>`;
     }).join('');
   }
   
@@ -266,7 +345,8 @@
   window.deleteStudent = async (id) => { if (confirm("حذف؟")) await supabase.from('students').delete().eq('id', id); loadStudents(); };
   window.logout = () => { sessionStorage.clear(); window.location.href = 'login.html'; };
   
-  loadSchool(); loadStudents();
+  loadSchool(); 
+  loadStudents();
 </script>
 </body>
 </html>
