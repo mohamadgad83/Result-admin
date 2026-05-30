@@ -36,88 +36,26 @@
   if (!studentId) window.location.href = 'student-search.html';
   
   async function load() {
-    const { data: student } = await supabase
-        .from('students')
-        .select('*, schools(id, name, search_field_label)')
-        .eq('id', studentId)
-        .single();
-    
-    if (!student) { 
-        document.getElementById('resultContainer').innerHTML = '<div class="card"><p style="color:red">⚠️ لا توجد بيانات</p></div>'; 
-        return; 
-    }
-    
+    const { data: student } = await supabase.from('students').select('*, schools(id, name, search_field_label)').eq('id', studentId).single();
+    if (!student) { document.getElementById('resultContainer').innerHTML = '<div class="card"><p style="color:red">⚠️ لا توجد بيانات</p></div>'; return; }
     const school = student.schools;
     const multi = student.multi_scores || {};
     let totalScore = 0, totalMax = 0, subjectsHtml = '';
-    
     for (const [sub, d] of Object.entries(multi)) {
         const work = d.scores?.['أعمال سنة']?.score || 0;
         const exam = d.scores?.['امتحان نهائي']?.score || 0;
         const percent = parseFloat(d.percentage);
         const gradeClass = percent >= 90 ? 'grade-A' : percent >= 80 ? 'grade-B' : percent >= 70 ? 'grade-C' : percent >= 60 ? 'grade-D' : 'grade-F';
         const gradeText = percent >= 90 ? 'ممتاز' : percent >= 80 ? 'جيد جداً' : percent >= 70 ? 'جيد' : percent >= 60 ? 'مقبول' : 'راسب';
-        
-        subjectsHtml += `
-            <tr>
-                <td><strong>${sub}</strong></td>
-                <td>${work}</td>
-                <td>${exam}</td>
-                <td>${d.total}/${d.max}</td>
-                <td class="${gradeClass}">${percent}%</td>
-                <td class="${gradeClass}">${gradeText}</td>
-            </tr>
-        `;
-        totalScore += d.total;
-        totalMax += d.max;
+        subjectsHtml += `<tr><td><strong>${sub}</strong></td><td>${work}</td><td>${exam}</td><td>${d.total}/${d.max}</td><td class="${gradeClass}">${percent}%</td><td class="${gradeClass}">${gradeText}</td></tr>`;
+        totalScore += d.total; totalMax += d.max;
     }
-    
-    if (Object.keys(multi).length === 0) {
-        subjectsHtml = '<tr><td colspan="6" style="text-align:center">⚠️ لا توجد نتائج مسجلة</td></tr>';
-    }
-    
+    if (Object.keys(multi).length === 0) subjectsHtml = '<tr><td colspan="6" style="text-align:center">⚠️ لا توجد نتائج مسجلة</td></tr>';
     const totalPercent = totalMax ? ((totalScore / totalMax) * 100).toFixed(1) : 0;
     const totalClass = totalPercent >= 90 ? 'grade-A' : totalPercent >= 80 ? 'grade-B' : totalPercent >= 70 ? 'grade-C' : totalPercent >= 60 ? 'grade-D' : 'grade-F';
-    
-    const html = `
-        <div class="card">
-            <div class="header">
-                <div class="school-name">🏫 ${school?.name}</div>
-                <div style="font-size:20px;margin:10px 0">👨‍🎓 ${student.name}</div>
-                <div>📌 رقم الجلوس: ${student.seat_number || '-'}</div>
-                <div>🔑 الكود: ${student.code || '-'}</div>
-                <div>🆔 الرقم القومي: ${student.national_id || '-'}</div>
-                <div>📚 الصف: ${student.grade || '-'}</div>
-            </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>المادة</th>
-                        <th>أعمال سنة</th>
-                        <th>امتحان نهائي</th>
-                        <th>المجموع</th>
-                        <th>النسبة</th>
-                        <th>التقدير</th>
-                    </tr>
-                </thead>
-                <tbody>${subjectsHtml}</tbody>
-                ${Object.keys(multi).length > 0 ? `
-                <tfoot>
-                    <tr class="total">
-                        <td colspan="3"><strong>الإجمالي</strong></td>
-                        <td><strong>${totalScore}/${totalMax}</strong></td>
-                        <td class="${totalClass}"><strong>${totalPercent}%</strong></td>
-                        <td class="${totalClass}"><strong>${totalPercent >= 50 ? 'نجاح' : 'رسوب'}</strong></td>
-                    </tr>
-                </tfoot>
-                ` : ''}
-            </table>
-        </div>
-    `;
-    
+    const html = `<div class="card"><div class="header"><div class="school-name">🏫 ${school?.name}</div><div style="font-size:20px;margin:10px 0">👨‍🎓 ${student.name}</div><div>📌 رقم الجلوس: ${student.seat_number || '-'}</div><div>🔑 الكود: ${student.code || '-'}</div><div>🆔 الرقم القومي: ${student.national_id || '-'}</div><div>📚 الصف: ${student.grade || '-'}</div></div><table><thead><tr><th>المادة</th><th>أعمال سنة</th><th>امتحان نهائي</th><th>المجموع</th><th>النسبة</th><th>التقدير</th></tr></thead><tbody>${subjectsHtml}</tbody>${Object.keys(multi).length > 0 ? `<tfoot><tr class="total"><td colspan="3"><strong>الإجمالي</strong></td><td><strong>${totalScore}/${totalMax}</strong></td><td class="${totalClass}"><strong>${totalPercent}%</strong></td><td class="${totalClass}"><strong>${totalPercent >= 50 ? 'نجاح' : 'رسوب'}</strong></td></tr></tfoot>` : ''}</table></div>`;
     document.getElementById('resultContainer').innerHTML = html;
   }
-  
   load();
 </script>
 </body>
