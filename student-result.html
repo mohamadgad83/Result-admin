@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نتيجة الطالب - نظام النتائج المدرسية</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f7ff; padding: 20px; }
+    .container { max-width: 800px; margin: auto; }
+    .result-card { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+    .result-header { text-align: center; border-bottom: 3px solid #1e3c72; padding-bottom: 20px; margin-bottom: 25px; }
+    .school-name { font-size: 24px; font-weight: bold; color: #1e3c72; }
+    .student-name { font-size: 22px; margin: 15px 0 5px; }
+    .student-info { color: #666; margin-bottom: 10px; }
+    .result-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+    .result-table th, .result-table td { border: 1px solid #ddd; padding: 12px; text-align: center; }
+    .result-table th { background: #1e3c72; color: white; }
+    .total-row { background: #eef2fa; font-weight: bold; }
+    .grade-A { color: #28a745; font-weight: bold; }
+    .grade-B { color: #17a2b8; font-weight: bold; }
+    .grade-C { color: #ffc107; font-weight: bold; }
+    .grade-D { color: #fd7e14; font-weight: bold; }
+    .grade-F { color: #dc3545; font-weight: bold; }
+    .print-btn { background: #28a745; color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; font-size: 16px; margin-top: 20px; width: 100%; }
+    .print-btn:hover { background: #1e6b2f; }
+    .back-btn { background: #1e3c72; color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; font-size: 16px; margin-top: 10px; width: 100%; }
+    @media print {
+      body { background: white; padding: 0; }
+      .no-print { display: none; }
+      .result-card { box-shadow: none; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div id="resultContainer"></div>
+  <button onclick="window.print()" class="print-btn no-print">🖨️ طباعة النتيجة</button>
+  <button onclick="goBack()" class="back-btn no-print">🔙 العودة</button>
+</div>
+
+<script type="module">
+  import { supabase } from './supabase-config.js';
+  
+  const studentId = sessionStorage.getItem('viewStudentId');
+  const studentName = sessionStorage.getItem('viewStudentName');
+  const studentSeat = sessionStorage.getItem('viewStudentSeat');
+  
+  if (!studentId) {
+    window.location.href = 'student-search.html';
+  }
+  
+  function getGradeClass(percentage) {
+    if (percentage >= 90) return 'grade-A';
+    if (percentage >= 80) return 'grade-B';
+    if (percentage >= 70) return 'grade-C';
+    if (percentage >= 60) return 'grade-D';
+    return 'grade-F';
+  }
+  
+  function getGradeText(percentage) {
+    if (percentage >= 90) return 'ممتاز';
+    if (percentage >= 80) return 'جيد جداً';
+    if (percentage >= 70) return 'جيد';
+    if (percentage >= 60) return 'مقبول';
+    return 'راسب';
+  }
+  
+  async function loadResult() {
+    const { data: student } = await supabase
+      .from('students')
+      .select('*, schools(id, name, grading_system, search_field_label)')
+      .eq('id', studentId)
+      .single();
+    
+    if (!student) {
+      document.getElementById('resultContainer').innerHTML = '<div class="result-card"><p style="color:red">⚠️ لا توجد بيانات للطالب</p></div>';
+      return;
+    }
+    
+    const school = student.schools;
+    const multiScores = student.multi_scores || {};
+    const gradingSystem = school?.grading_system || { max: 100, min_pass: 50 };
+    
+    let totalScore = 0, totalMax = 0;
+    let subjectsHtml = '';
+    
+    for (const [subject, data] of Object.entries(multiScores)) {
+      const percentage = parseFloat(data.percentage);
+      const gradeClass = getGradeClass(percentage);
+      const gradeText = getGradeText(percentage);
+      
+      subjectsHtml += `
+        <tr>
+          <td><strong>${subject}</strong></td>
+          <td>${Object.entries(data.scores || {}).map(([type, val]) => `${type}: ${val.score}/${val.max}`).join('<br>')}</td>
+          <td>${data.total}/${data.max}</td>
+          <td class="${gradeClass}">${percentage}%</td>
+          <td class="${gradeClass}">${gradeText}</td>
+        </tr>
+      `;
+      totalScore += data.total;
+      totalMax += data.max;
+    }
+    
+    const overallPercentage = totalMax > 0 ? (totalScore / totalMax * 100).toFixed(1) : 0;
+    const overallGradeClass = getGradeClass(overallPercentage);
+    const overallGradeText = getGradeText(overallPercentage);
+    
+    const resultHtml = `
+      <div class="result-card">
+        <div class="result-header">
+          <div class="school-name">🏫 ${school?.name || 'المدرسة'}</div>
+          <div class="student-name">👨‍🎓 ${student.name}</div>
+          <div class="student-info">📌 ${school?.search_field_label || 'رقم الجلوس'}: ${student.seat_number}</div>
+          <div class="student-info">📚 الصف: ${student.grade || '-'}</div>
+        </div>
+        
+        <table class="result-table">
+          <thead>
+            <tr>
+              <th>المادة</th>
+              <th>تفاصيل الدرجات</th>
+              <th>المجموع</th>
+              <th>النسبة</th>
+              <th>التقدير</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${subjectsHtml}
+            <tr class="total-row">
+              <td colspan="2"><strong>النتيجة الإجمالية</strong></td>
+              <td><strong>${totalScore}/${totalMax}</strong></td>
+              <td class="${overallGradeClass}"><strong>${overallPercentage}%</strong></td>
+              <td class="${overallGradeClass}"><strong>${overallGradeText}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+        
+        <div style="text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee">
+          <p>الحد الأدنى للنجاح: ${gradingSystem.min_pass}% | الدرجة العظمى: ${gradingSystem.max}</p>
+          <p style="font-size: 12px; color: #666">تم إنشاء هذه النتيجة بواسطة نظام النتائج المدرسية</p>
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('resultContainer').innerHTML = resultHtml;
+  }
+  
+  window.goBack = () => {
+    window.location.href = 'school-admin.html';
+  };
+  
+  loadResult();
+</script>
+</body>
+</html>
