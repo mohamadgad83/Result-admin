@@ -6,199 +6,102 @@
     <title>لوحة السوبر أدمن</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f0f7ff;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1400px;
-            margin: auto;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f7ff; padding: 20px; }
+        .container { max-width: 1400px; margin: auto; }
         
-        /* التبويبات الرئيسية */
         .main-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 25px;
-            background: white;
-            padding: 10px 20px;
-            border-radius: 15px;
-            flex-wrap: wrap;
+            display: flex; gap: 10px; margin-bottom: 25px;
+            background: white; padding: 10px 20px; border-radius: 15px; flex-wrap: wrap;
         }
         .main-tab {
-            padding: 10px 25px;
-            background: #eef2fa;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 15px;
+            padding: 10px 25px; background: #eef2fa; border: none; border-radius: 10px;
+            cursor: pointer; font-size: 15px;
         }
-        .main-tab.active {
-            background: #1e3c72;
-            color: white;
-        }
+        .main-tab.active { background: #1e3c72; color: white; }
         
-        /* تبويبات المراحل */
         .stage-tabs {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            border-bottom: 2px solid #cfe3ff;
-            padding-bottom: 10px;
+            display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;
+            border-bottom: 2px solid #cfe3ff; padding-bottom: 10px;
         }
         .stage-tab {
-            padding: 8px 20px;
-            background: #eef2fa;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 14px;
+            padding: 8px 20px; background: #eef2fa; border: none; border-radius: 20px;
+            cursor: pointer; font-size: 14px;
         }
-        .stage-tab.active {
-            background: #1e3c72;
-            color: white;
-        }
+        .stage-tab.active { background: #1e3c72; color: white; }
         
         .main-content { display: none; }
         .main-content.active { display: block; }
         .stage-content { display: none; }
         .stage-content.active { display: block; }
         
-        /* البطاقات */
         .grade-card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            background: white; border-radius: 15px; padding: 20px;
+            margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);
         }
         .grade-header {
-            font-size: 20px;
-            font-weight: bold;
-            color: #1e3c72;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
+            font-size: 20px; font-weight: bold; color: #1e3c72;
+            padding-bottom: 10px; margin-bottom: 15px;
             border-bottom: 2px solid #1e3c72;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
         }
         .subjects-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 15px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 15px;
         }
         .subject-card {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 15px;
+            background: #f8f9fa; border-radius: 12px; padding: 15px;
             border-right: 3px solid #1e3c72;
         }
         .subject-name {
-            font-weight: bold;
-            font-size: 16px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
+            font-weight: bold; font-size: 16px; margin-bottom: 10px;
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
         }
         .fields-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin: 10px 0;
+            display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0;
         }
         .field-badge {
-            background: #1e3c72;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            background: #1e3c72; color: white; padding: 4px 12px;
+            border-radius: 20px; font-size: 12px;
+            display: inline-flex; align-items: center; gap: 8px;
         }
         .field-badge button {
-            background: #dc3545;
-            padding: 2px 6px;
-            margin: 0;
-            font-size: 10px;
-            border-radius: 20px;
+            background: #dc3545; padding: 2px 6px; margin: 0;
+            font-size: 10px; border-radius: 20px;
         }
         .add-field-row {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
+            display: flex; gap: 8px; margin-top: 10px;
         }
         .add-field-row input { flex: 2; }
         .add-field-row button { margin: 0; }
         
         button, input, select {
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            font-size: 14px;
+            padding: 8px 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 14px;
         }
-        button {
-            background: #1e3c72;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
+        button { background: #1e3c72; color: white; border: none; cursor: pointer; }
         .btn-success { background: #28a745; }
         .btn-danger { background: #dc3545; }
         .btn-warning { background: #ffc107; color: #333; }
         .btn-sm { padding: 4px 10px; font-size: 12px; }
         
         .school-card, .user-card {
-            background: #eef2fa;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
+            background: #eef2fa; padding: 15px; margin: 10px 0;
+            border-radius: 12px; display: flex;
+            justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
         }
         
         .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; background: rgba(0,0,0,0.5);
+            align-items: center; justify-content: center; z-index: 1000;
         }
         .modal-content {
-            background: white;
-            padding: 25px;
-            border-radius: 20px;
-            max-width: 500px;
-            width: 90%;
+            background: white; padding: 25px; border-radius: 20px;
+            max-width: 500px; width: 90%;
         }
         .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            background: #28a745;
-            color: white;
-            padding: 12px;
-            border-radius: 10px;
-            text-align: center;
-            z-index: 1000;
+            position: fixed; bottom: 20px; left: 20px; right: 20px;
+            background: #28a745; color: white; padding: 12px;
+            border-radius: 10px; text-align: center; z-index: 1000;
             animation: fadeOut 3s ease forwards;
         }
         .toast.error { background: #dc3545; }
@@ -212,33 +115,28 @@
 </head>
 <body>
 <div class="container">
-    <!-- رأس الصفحة -->
     <div class="flex-between" style="margin-bottom: 20px; background: white; padding: 15px 25px; border-radius: 15px;">
         <h1 style="margin:0">👑 لوحة التحكم العامة</h1>
         <div><span id="currentUserDisplay"></span> <button onclick="logout()" class="btn-danger">🚪 خروج</button></div>
     </div>
 
-    <!-- التبويبات الرئيسية -->
     <div class="main-tabs">
         <button class="main-tab active" onclick="showMainTab('stages')">📚 المراحل والمواد</button>
         <button class="main-tab" onclick="showMainTab('schools')">🏫 المدارس</button>
         <button class="main-tab" onclick="showMainTab('users')">👥 المديرون</button>
     </div>
 
-    <!-- محتوى المراحل -->
     <div id="main-stages" class="main-content active">
         <div id="stageTabs" class="stage-tabs"></div>
         <div id="stageContents"></div>
         <button onclick="showAddStageModal()" class="btn-success" style="margin-top:20px">➕ إضافة مرحلة جديدة</button>
     </div>
 
-    <!-- محتوى المدارس -->
     <div id="main-schools" class="main-content">
         <div id="schoolsList"></div>
         <button onclick="showAddSchoolModal()" class="btn-success" style="margin-top:20px">➕ إضافة مدرسة جديدة</button>
     </div>
 
-    <!-- محتوى المديرين -->
     <div id="main-users" class="main-content">
         <div id="adminsList"></div>
         <button onclick="showAddAdminModal()" class="btn-success" style="margin-top:20px">➕ إضافة مدير مدرسة</button>
@@ -293,6 +191,19 @@
     </div>
 </div>
 
+<!-- نافذة تعديل اسم الخانة -->
+<div id="editFieldModal" class="modal">
+    <div class="modal-content">
+        <h3>✏️ تعديل اسم الخانة</h3>
+        <p>الاسم الحالي: <span id="currentFieldName"></span></p>
+        <input type="text" id="newFieldName" placeholder="الاسم الجديد" style="width:100%">
+        <div class="flex-between" style="margin-top:15px">
+            <button onclick="saveFieldNameEdit()" class="btn-success">💾 حفظ</button>
+            <button onclick="closeModal('editFieldModal')" class="btn-danger">إلغاء</button>
+        </div>
+    </div>
+</div>
+
 <script type="module">
   import { supabase } from './supabase-config.js';
   
@@ -300,6 +211,7 @@
   let stagesData = [];
   let editingAdminId = null;
   let tempGrades = [];
+  let pendingFieldEdit = { stageId: null, subjectName: null, oldName: null, isGlobal: false };
   
   function showToast(msg, isErr = false) {
       let t = document.createElement('div');
@@ -318,16 +230,24 @@
       if (u) { currentUser = u; document.getElementById('currentUserDisplay').innerHTML = `👤 ${u.username}`; }
   }
   
-  // ========== التبويبات ==========
   window.showMainTab = (tab) => {
       document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.main-content').forEach(c => c.classList.remove('active'));
-      if (tab === 'stages') { document.querySelector('.main-tab:first-child').classList.add('active'); document.getElementById('main-stages').classList.add('active'); loadStages(); }
-      else if (tab === 'schools') { document.querySelectorAll('.main-tab')[1].classList.add('active'); document.getElementById('main-schools').classList.add('active'); loadSchools(); }
-      else if (tab === 'users') { document.querySelectorAll('.main-tab')[2].classList.add('active'); document.getElementById('main-users').classList.add('active'); loadAdmins(); }
+      if (tab === 'stages') {
+          document.querySelectorAll('.main-tab')[0].classList.add('active');
+          document.getElementById('main-stages').classList.add('active');
+          loadStages();
+      } else if (tab === 'schools') {
+          document.querySelectorAll('.main-tab')[1].classList.add('active');
+          document.getElementById('main-schools').classList.add('active');
+          loadSchools();
+      } else if (tab === 'users') {
+          document.querySelectorAll('.main-tab')[2].classList.add('active');
+          document.getElementById('main-users').classList.add('active');
+          loadAdmins();
+      }
   };
   
-  // ========== المراحل والمواد ==========
   async function loadStages() {
       let { data: stages } = await supabase.from('stages').select('*');
       stagesData = stages || [];
@@ -336,9 +256,7 @@
           document.getElementById('stageContents').innerHTML = '';
           return;
       }
-      // تبويبات المراحل
-      let tabsHtml = '';
-      let contentsHtml = '';
+      let tabsHtml = '', contentsHtml = '';
       stagesData.forEach((stage, idx) => {
           let active = idx === 0 ? 'active' : '';
           tabsHtml += `<button class="stage-tab ${active}" onclick="showStageTab(${idx})">📖 ${stage.name}</button>`;
@@ -377,12 +295,18 @@
                                           <button onclick="deleteSubject(${stage.id}, ${gidx}, ${sidx}, '${subject}')" class="btn-danger btn-sm">🗑️</button>
                                       </div>
                                   </div>
-                                  <div class="fields-container" id="fields-${stage.id}-${gidx}-${sidx}">
-                                      ${subjectFields.map(f => `<span class="field-badge">${f}<button onclick="removeField('${stage.id}', ${gidx}, ${sidx}, '${subject}', '${f}')">✖</button></span>`).join('')}
+                                  <div class="fields-container" id="fields-${stage.id}-${subject}">
+                                      ${subjectFields.map(f => `
+                                          <span class="field-badge" id="field-${stage.id}-${subject}-${f.replace(/\s/g, '')}">
+                                              ${f}
+                                              <button onclick="editField('${stage.id}', '${subject}', '${f}')" class="btn-warning btn-sm" style="background:#ffc107; color:#333;">✏️</button>
+                                              <button onclick="removeField('${stage.id}', '${subject}', '${f}')" class="btn-danger btn-sm">✖</button>
+                                          </span>
+                                      `).join('')}
                                   </div>
                                   <div class="add-field-row">
-                                      <input type="text" id="newField-${stage.id}-${gidx}-${sidx}" placeholder="خانة جديدة">
-                                      <button onclick="addField('${stage.id}', ${gidx}, ${sidx}, '${subject}')" class="btn-success btn-sm">+ إضافة</button>
+                                      <input type="text" id="newField-${stage.id}-${subject.replace(/\s/g, '')}" placeholder="خانة جديدة (مثال: شفهي)">
+                                      <button onclick="addField('${stage.id}', '${subject}')" class="btn-success btn-sm">+ إضافة</button>
                                   </div>
                               </div>
                           `;
@@ -403,7 +327,113 @@
       document.querySelectorAll('.stage-content').forEach((c, i) => c.classList.toggle('active', i === idx));
   };
   
-  // إضافة صف جديد
+  // ========== إدارة الخانات ==========
+  
+  // إضافة خانة (تعمل بشكل صحيح)
+  window.addField = async (stageId, subjectName) => {
+      let input = document.getElementById(`newField-${stageId}-${subjectName.replace(/\s/g, '')}`);
+      let fieldName = input.value.trim();
+      if (!fieldName) { showToast("أدخل اسم الخانة", true); return; }
+      
+      let stage = stagesData.find(s => s.id == stageId);
+      let fields = stage.subject_fields || {};
+      let currentFields = fields[subjectName] || ['أعمال سنة', 'امتحان نهائي'];
+      if (currentFields.includes(fieldName)) {
+          showToast("هذه الخانة موجودة بالفعل", true);
+          return;
+      }
+      currentFields.push(fieldName);
+      fields[subjectName] = currentFields;
+      
+      let { error } = await supabase.from('stages').update({ subject_fields: fields }).eq('id', stageId);
+      if (error) {
+          showToast("خطأ: " + error.message, true);
+      } else {
+          showToast(`✅ تم إضافة خانة "${fieldName}"`);
+          input.value = '';
+          loadStages(); // إعادة تحميل الصفحة لعرض التغييرات
+      }
+  };
+  
+  // حذف خانة
+  window.removeField = async (stageId, subjectName, fieldName) => {
+      if (!confirm(`حذف خانة "${fieldName}" من مادة "${subjectName}"؟`)) return;
+      
+      let stage = stagesData.find(s => s.id == stageId);
+      let fields = stage.subject_fields || {};
+      let currentFields = fields[subjectName] || ['أعمال سنة', 'امتحان نهائي'];
+      currentFields = currentFields.filter(f => f !== fieldName);
+      if (currentFields.length === 0) currentFields = ['أعمال سنة', 'امتحان نهائي'];
+      fields[subjectName] = currentFields;
+      
+      let { error } = await supabase.from('stages').update({ subject_fields: fields }).eq('id', stageId);
+      if (error) showToast("خطأ: " + error.message, true);
+      else { showToast(`✅ تم حذف خانة "${fieldName}"`); loadStages(); }
+  };
+  
+  // تعديل اسم خانة (لفتح النافذة)
+  window.editField = (stageId, subjectName, fieldName) => {
+      pendingFieldEdit = { stageId: parseInt(stageId), subjectName, oldName: fieldName, isGlobal: false };
+      document.getElementById('currentFieldName').innerText = fieldName;
+      document.getElementById('newFieldName').value = fieldName;
+      document.getElementById('editFieldModal').style.display = 'flex';
+  };
+  
+  // حفظ تعديل اسم الخانة
+  window.saveFieldNameEdit = async () => {
+      let newName = document.getElementById('newFieldName').value.trim();
+      if (!newName) { showToast("أدخل الاسم الجديد", true); return; }
+      if (newName === pendingFieldEdit.oldName) {
+          closeModal('editFieldModal');
+          return;
+      }
+      
+      let stage = stagesData.find(s => s.id == pendingFieldEdit.stageId);
+      let fields = stage.subject_fields || {};
+      let subjectName = pendingFieldEdit.subjectName;
+      let currentFields = fields[subjectName] || ['أعمال سنة', 'امتحان نهائي'];
+      let index = currentFields.indexOf(pendingFieldEdit.oldName);
+      if (index !== -1) {
+          currentFields[index] = newName;
+          fields[subjectName] = currentFields;
+          
+          let { error } = await supabase.from('stages').update({ subject_fields: fields }).eq('id', pendingFieldEdit.stageId);
+          if (error) showToast("خطأ: " + error.message, true);
+          else { showToast(`✅ تم تعديل اسم الخانة إلى "${newName}"`); closeModal('editFieldModal'); loadStages(); }
+      } else {
+          showToast("حدث خطأ: لم يتم العثور على الخانة", true);
+      }
+  };
+  
+  // تعديل اسم خانة في كل المواد (تعديل جماعي)
+  window.editFieldGlobal = async (stageId, oldName, newName) => {
+      if (!confirm(`تعديل اسم الخانة "${oldName}" إلى "${newName}" في جميع المواد؟`)) return;
+      
+      let stage = stagesData.find(s => s.id == stageId);
+      let fields = stage.subject_fields || {};
+      let changed = false;
+      
+      for (let subject in fields) {
+          let currentFields = fields[subject];
+          let index = currentFields.indexOf(oldName);
+          if (index !== -1) {
+              currentFields[index] = newName;
+              fields[subject] = currentFields;
+              changed = true;
+          }
+      }
+      
+      if (changed) {
+          let { error } = await supabase.from('stages').update({ subject_fields: fields }).eq('id', stageId);
+          if (error) showToast("خطأ: " + error.message, true);
+          else { showToast(`✅ تم تعديل اسم الخانة في جميع المواد`); loadStages(); }
+      } else {
+          showToast("لم يتم العثور على هذه الخانة في أي مادة", true);
+      }
+  };
+  
+  // ========== إدارة الصفوف والمواد ==========
+  
   window.addNewGrade = async (stageId) => {
       let gradeName = prompt("أدخل اسم الصف (مثال: الصف الأول الثانوي)");
       if (!gradeName) return;
@@ -415,7 +445,6 @@
       else { showToast("✅ تم إضافة الصف"); loadStages(); }
   };
   
-  // حذف صف
   window.deleteGrade = async (stageId, gradeIdx) => {
       if (!confirm("حذف هذا الصف وجميع مواده؟")) return;
       let stage = stagesData.find(s => s.id == stageId);
@@ -426,7 +455,6 @@
       else { showToast("✅ تم حذف الصف"); loadStages(); }
   };
   
-  // تعديل اسم الصف
   window.editGradeName = async (stageId, gradeIdx, currentName) => {
       let newName = prompt("الاسم الجديد للصف:", currentName);
       if (!newName || newName === currentName) return;
@@ -438,7 +466,6 @@
       else { showToast("✅ تم تعديل اسم الصف"); loadStages(); }
   };
   
-  // إضافة مادة
   window.addSubject = async (stageId, gradeIdx) => {
       let input = document.getElementById(`newSubject-${stageId}-${gradeIdx}`);
       let subjectName = input.value.trim();
@@ -446,67 +473,56 @@
       let stage = stagesData.find(s => s.id == stageId);
       let grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
       if (!grades[gradeIdx].subjects) grades[gradeIdx].subjects = [];
+      if (grades[gradeIdx].subjects.includes(subjectName)) {
+          showToast("هذه المادة موجودة بالفعل", true);
+          return;
+      }
       grades[gradeIdx].subjects.push(subjectName);
       let { error } = await supabase.from('stages').update({ grades: JSON.stringify(grades) }).eq('id', stageId);
       if (error) showToast("خطأ: " + error.message, true);
       else { showToast(`✅ تم إضافة مادة "${subjectName}"`); input.value = ''; loadStages(); }
   };
   
-  // تعديل اسم المادة
   window.editSubjectName = async (stageId, gradeIdx, subIdx, currentName) => {
       let newName = prompt("الاسم الجديد للمادة:", currentName);
       if (!newName || newName === currentName) return;
       let stage = stagesData.find(s => s.id == stageId);
       let grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
       grades[gradeIdx].subjects[subIdx] = newName;
-      let { error } = await supabase.from('stages').update({ grades: JSON.stringify(grades) }).eq('id', stageId);
+      
+      // تحديث subject_fields أيضاً
+      let fields = stage.subject_fields || {};
+      if (fields[currentName]) {
+          fields[newName] = fields[currentName];
+          delete fields[currentName];
+      }
+      
+      let { error } = await supabase.from('stages').update({ 
+          grades: JSON.stringify(grades),
+          subject_fields: fields
+      }).eq('id', stageId);
       if (error) showToast("خطأ: " + error.message, true);
       else { showToast(`✅ تم تعديل اسم المادة إلى "${newName}"`); loadStages(); }
   };
   
-  // حذف مادة
   window.deleteSubject = async (stageId, gradeIdx, subIdx, subjectName) => {
       if (!confirm(`حذف مادة "${subjectName}"؟`)) return;
       let stage = stagesData.find(s => s.id == stageId);
       let grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
       grades[gradeIdx].subjects.splice(subIdx, 1);
-      let { error } = await supabase.from('stages').update({ grades: JSON.stringify(grades) }).eq('id', stageId);
+      
+      // حذف subject_fields لهذه المادة
+      let fields = stage.subject_fields || {};
+      delete fields[subjectName];
+      
+      let { error } = await supabase.from('stages').update({ 
+          grades: JSON.stringify(grades),
+          subject_fields: fields
+      }).eq('id', stageId);
       if (error) showToast("خطأ: " + error.message, true);
       else { showToast(`✅ تم حذف مادة "${subjectName}"`); loadStages(); }
   };
   
-  // إضافة خانة (تعمل بشكل صحيح)
-  window.addField = async (stageId, gradeIdx, subIdx, subjectName) => {
-      let input = document.getElementById(`newField-${stageId}-${gradeIdx}-${subIdx}`);
-      let fieldName = input.value.trim();
-      if (!fieldName) { showToast("أدخل اسم الخانة", true); return; }
-      
-      let stage = stagesData.find(s => s.id == stageId);
-      let fields = stage.subject_fields || {};
-      let currentFields = fields[subjectName] || ['أعمال سنة', 'امتحان نهائي'];
-      currentFields.push(fieldName);
-      fields[subjectName] = currentFields;
-      
-      let { error } = await supabase.from('stages').update({ subject_fields: fields }).eq('id', stageId);
-      if (error) showToast("خطأ: " + error.message, true);
-      else { showToast(`✅ تم إضافة خانة "${fieldName}"`); input.value = ''; loadStages(); }
-  };
-  
-  // حذف خانة
-  window.removeField = async (stageId, gradeIdx, subIdx, subjectName, fieldName) => {
-      if (!confirm(`حذف خانة "${fieldName}"؟`)) return;
-      let stage = stagesData.find(s => s.id == stageId);
-      let fields = stage.subject_fields || {};
-      let currentFields = fields[subjectName] || ['أعمال سنة', 'امتحان نهائي'];
-      currentFields = currentFields.filter(f => f !== fieldName);
-      if (currentFields.length === 0) currentFields = ['أعمال سنة', 'امتحان نهائي'];
-      fields[subjectName] = currentFields;
-      let { error } = await supabase.from('stages').update({ subject_fields: fields }).eq('id', stageId);
-      if (error) showToast("خطأ: " + error.message, true);
-      else { showToast(`✅ تم حذف خانة "${fieldName}"`); loadStages(); }
-  };
-  
-  // تعديل اسم المرحلة
   window.editStageName = async (stageId, currentName) => {
       let newName = prompt("الاسم الجديد للمرحلة:", currentName);
       if (!newName || newName === currentName) return;
@@ -515,14 +531,13 @@
       else { showToast("✅ تم تعديل اسم المرحلة"); loadStages(); }
   };
   
-  // حذف مرحلة
   window.deleteStage = async (id) => {
       if (!confirm("حذف المرحلة سيؤثر على المدارس المرتبطة! استمر؟")) return;
       await supabase.from('stages').delete().eq('id', id);
       loadStages();
   };
   
-  // إضافة مرحلة جديدة
+  // ========== إضافة مرحلة جديدة ==========
   window.showAddStageModal = () => {
       tempGrades = [];
       document.getElementById('newStageName').value = '';
@@ -551,6 +566,10 @@
       let input = document.getElementById(`newSubjectInput-${gradeIdx}`);
       let subject = input.value.trim();
       if (!subject) return;
+      if (tempGrades[gradeIdx].subjects.includes(subject)) {
+          showToast("هذه المادة موجودة بالفعل", true);
+          return;
+      }
       tempGrades[gradeIdx].subjects.push(subject);
       let subjectsDiv = document.getElementById(`newGradeSubjects-${gradeIdx}`);
       subjectsDiv.innerHTML = tempGrades[gradeIdx].subjects.map((s, i) => `
