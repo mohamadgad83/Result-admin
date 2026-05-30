@@ -227,4 +227,50 @@
     
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
-      const name = row
+      const name = row[0]?.toString().trim();
+      const seat = row[1]?.toString().trim();
+      const grade = row[2]?.toString().trim();
+      const subject = row[3]?.toString().trim();
+      const score = parseFloat(row[4]);
+      if (!name || !seat || !grade || !subject || isNaN(score)) continue;
+      
+      let { data: student } = await supabase
+        .from('students')
+        .select('id, results')
+        .eq('school_id', schoolId)
+        .eq('seat_number', seat)
+        .single();
+      
+      if (!student) {
+        const { data: newStudent, error } = await supabase
+          .from('students')
+          .insert([{ school_id: schoolId, name, seat_number: seat, grade, results: {}, custom_data: {} }])
+          .select()
+          .single();
+        if (error) { errorCount++; continue; }
+        student = newStudent;
+      }
+      
+      const newResults = { ...(student.results || {}), [subject]: score };
+      const { error } = await supabase.from('students').update({ results: newResults }).eq('id', student.id);
+      if (error) errorCount++;
+      else successCount++;
+    }
+    
+    alert(`✅ تم استيراد ${successCount} نتيجة\n❌ فشل ${errorCount}`);
+    loadStudents();
+  };
+  
+  window.deleteStudent = async (id) => {
+    if (!confirm("هل أنت متأكد؟")) return;
+    await supabase.from('students').delete().eq('id', id);
+    loadStudents();
+  };
+  
+  window.logout = () => { sessionStorage.clear(); window.location.href = 'login.html'; };
+  
+  loadSchool();
+  loadStudents();
+</script>
+</body>
+</html>
