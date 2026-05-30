@@ -3,72 +3,151 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>لوحة السوبر أدمن</title>
+  <title>لوحة السوبر أدمن - النظام المتكامل</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f7ff; padding: 20px; }
-    .container { max-width: 1400px; margin: auto; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
-    h1, h2, h3 { color: #1e3c72; margin-bottom: 15px; }
+    .container { max-width: 1400px; margin: auto; }
+    /* تبويبات */
+    .tabs { display: flex; gap: 5px; margin-bottom: 20px; flex-wrap: wrap; background: white; padding: 10px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .tab-btn { padding: 12px 25px; background: #eef2fa; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; transition: 0.2s; }
+    .tab-btn.active { background: #1e3c72; color: white; }
+    .tab-btn:hover:not(.active) { background: #cfe3ff; }
+    .tab-content { display: none; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+    .tab-content.active { display: block; }
+    /* عناصر عامة */
+    h2, h3 { color: #1e3c72; margin-bottom: 15px; }
     button, input, select { padding: 10px; margin: 5px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; }
     button { background: #1e3c72; color: white; border: none; cursor: pointer; transition: 0.2s; }
     button:hover { background: #0f2b4f; transform: scale(1.02); }
-    .stage-card { background: #eef2fa; padding: 15px; margin: 20px 0; border-radius: 12px; border-right: 5px solid #1e3c72; }
-    .stage-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #cfe3ff; }
-    .grade-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 15px; margin-top: 15px; }
-    .grade-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: 0.2s; }
-    .grade-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); transform: translateY(-2px); }
-    .grade-title { font-size: 18px; font-weight: bold; color: #1e3c72; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #1e3c72; display: flex; justify-content: space-between; align-items: center; }
-    .subjects-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
-    .subject-tag { background: #1e3c72; color: white; padding: 5px 12px; border-radius: 20px; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; }
-    .subject-tag button { background: #dc3545; padding: 2px 8px; margin: 0; font-size: 11px; border-radius: 20px; }
-    .add-subject { display: flex; gap: 8px; margin-top: 10px; }
-    .add-subject input { flex: 1; margin: 0; }
-    .add-subject button { margin: 0; padding: 8px 12px; background: #28a745; }
-    .grade-actions { margin-top: 12px; display: flex; gap: 8px; justify-content: flex-end; }
-    .school-card { background: #eef2fa; padding: 15px; margin: 10px 0; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
-    .modal-content { background: white; padding: 25px; border-radius: 20px; max-width: 500px; width: 90%; max-height: 80%; overflow-y: auto; }
-    .btn-small { padding: 5px 10px; font-size: 12px; }
+    .btn-success { background: #28a745; }
     .btn-danger { background: #dc3545; }
     .btn-warning { background: #ffc107; color: #333; }
-    .btn-success { background: #28a745; }
-    @media (max-width: 768px) { .grade-grid { grid-template-columns: 1fr; } .stage-header { flex-direction: column; gap: 10px; } }
+    .btn-info { background: #17a2b8; }
+    /* بطاقات */
+    .card { background: #f8f9fa; border-radius: 12px; padding: 15px; margin: 10px 0; border-right: 4px solid #1e3c72; }
+    .stage-card { background: #eef2fa; padding: 15px; margin: 20px 0; border-radius: 12px; }
+    .stage-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #cfe3ff; }
+    .grade-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 15px; margin-top: 15px; }
+    .grade-card { background: white; border-radius: 12px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .grade-title { font-size: 18px; font-weight: bold; color: #1e3c72; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #1e3c72; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .subjects-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    .subject-tag { background: #1e3c72; color: white; padding: 5px 12px; border-radius: 20px; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; }
+    .school-card, .user-card { background: #eef2fa; padding: 15px; margin: 10px 0; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
+    .modal-content { background: white; padding: 25px; border-radius: 20px; max-width: 500px; width: 90%; max-height: 80%; overflow-y: auto; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+    .form-group input, .form-group select { width: 100%; margin: 0; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .stat-card { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; padding: 20px; border-radius: 15px; text-align: center; }
+    @media (max-width: 768px) { .grade-grid { grid-template-columns: 1fr; } .tabs { justify-content: center; } }
   </style>
 </head>
 <body>
 <div class="container">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px">
-    <h1 style="margin:0">👑 لوحة التحكم العامة</h1>
+  <!-- الرأس -->
+  <div class="flex-between" style="margin-bottom: 20px; background: white; padding: 15px 25px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1)">
+    <h1 style="margin:0; color:#1e3c72">👑 نظام إدارة المدارس المتكامل</h1>
     <div>
-      <button onclick="window.location.href='index.html'" style="background:#28a745">🏠 الرئيسية</button>
-      <button onclick="logout()" style="background:#dc3545">تسجيل خروج</button>
+      <span id="currentUserDisplay" style="margin-left: 15px; font-weight: bold;"></span>
+      <button onclick="logout()" class="btn-danger">🚪 تسجيل خروج</button>
     </div>
   </div>
-  
-  <div style="background:#eef2fa; padding:15px; border-radius:12px; margin-bottom:20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap">
-    <h3 style="margin:0">👤 المستخدم الحالي: <span id="currentUsername"></span></h3>
-    <button onclick="showEditUserModal()" style="background:#ffc107; color:#333">✏️ تعديل بياناتي</button>
-  </div>
-  <hr style="margin: 15px 0">
 
-  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 15px">
-    <h2 style="margin:0">📚 إدارة المراحل الدراسية</h2>
-    <button onclick="showAddStageModal()" style="background:#28a745">➕ إضافة مرحلة جديدة</button>
-  </div>
-  <div id="stagesList"></div>
+  <!-- إحصائيات سريعة -->
+  <div class="stats" id="statsContainer"></div>
 
-  <h2 style="margin-top: 30px">🏫 المدارس</h2>
-  <button onclick="showAddSchoolModal()" style="background:#28a745; margin-bottom:10px">➕ إضافة مدرسة جديدة</button>
-  <div id="schoolsList">جاري التحميل...</div>
+  <!-- التبويبات -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('stages')">📚 المراحل والصفوف</button>
+    <button class="tab-btn" onclick="showTab('schools')">🏫 المدارس</button>
+    <button class="tab-btn" onclick="showTab('users')">👥 مديرو المدارس</button>
+    <button class="tab-btn" onclick="showTab('settings')">⚙️ الإعدادات العامة</button>
+  </div>
+
+  <!-- تبويب المراحل والصفوف -->
+  <div id="tab-stages" class="tab-content active">
+    <div class="flex-between" style="margin-bottom: 15px">
+      <h2>📚 إدارة المراحل الدراسية</h2>
+      <button onclick="showAddStageModal()" class="btn-success">➕ إضافة مرحلة جديدة</button>
+    </div>
+    <div id="stagesList"></div>
+  </div>
+
+  <!-- تبويب المدارس -->
+  <div id="tab-schools" class="tab-content">
+    <div class="flex-between" style="margin-bottom: 15px">
+      <h2>🏫 المدارس</h2>
+      <button onclick="showAddSchoolModal()" class="btn-success">➕ إضافة مدرسة جديدة</button>
+    </div>
+    <div id="schoolsList">جاري التحميل...</div>
+  </div>
+
+  <!-- تبويب مديرو المدارس -->
+  <div id="tab-users" class="tab-content">
+    <div class="flex-between" style="margin-bottom: 15px">
+      <h2>👥 مديرو المدارس</h2>
+      <button onclick="showAddAdminModal()" class="btn-success">➕ إضافة مدير مدرسة</button>
+    </div>
+    <div id="adminsList">جاري التحميل...</div>
+  </div>
+
+  <!-- تبويب الإعدادات العامة -->
+  <div id="tab-settings" class="tab-content">
+    <h2>⚙️ الإعدادات العامة للنظام</h2>
+    <div class="card">
+      <h3>🔍 إعدادات البحث الافتراضية للمدارس الجديدة</h3>
+      <div class="form-group">
+        <label>حقل البحث الافتراضي:</label>
+        <select id="defaultSearchField">
+          <option value="seat_number">رقم الجلوس</option>
+          <option value="code">الكود</option>
+          <option value="national_id">الرقم القومي</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>التسمية الظاهرة:</label>
+        <input type="text" id="defaultSearchLabel" placeholder="مثال: رقم الجلوس">
+      </div>
+      <button onclick="saveDefaultSettings()" class="btn-success">💾 حفظ الإعدادات الافتراضية</button>
+    </div>
+    
+    <div class="card">
+      <h3>📋 الحقول المخصصة للطلاب (لجميع المدارس)</h3>
+      <div id="globalStudentFields"></div>
+      <button onclick="addGlobalStudentField()" class="btn-success">+ إضافة حقل جديد</button>
+    </div>
+    
+    <div class="card">
+      <h3>📊 الحقول المخصصة للنتائج (لجميع المدارس)</h3>
+      <div id="globalResultFields"></div>
+      <button onclick="addGlobalResultField()" class="btn-success">+ إضافة حقل جديد</button>
+    </div>
+    
+    <div class="card">
+      <h3>💾 النسخ الاحتياطي</h3>
+      <button onclick="backupAllData()" class="btn-info">📥 تصدير جميع البيانات (JSON)</button>
+      <button onclick="restoreFromBackup()" class="btn-warning">📤 استعادة بيانات من ملف</button>
+    </div>
+  </div>
 </div>
 
 <!-- نافذة إضافة مرحلة -->
 <div id="addStageModal" class="modal">
   <div class="modal-content">
     <h3>➕ إضافة مرحلة جديدة</h3>
-    <input type="text" id="stageName" placeholder="اسم المرحلة (مثال: ابتدائي)" style="width:100%; margin:10px 0">
-    <button onclick="saveStage()" style="background:#1e3c72">💾 حفظ المرحلة</button>
-    <button onclick="closeModal('addStageModal')" style="background:#dc3545">إلغاء</button>
+    <div class="form-group">
+      <label>اسم المرحلة:</label>
+      <input type="text" id="stageName" placeholder="مثال: ابتدائي">
+    </div>
+    <div id="stageGradesContainer"></div>
+    <button onclick="addGradeToStage()" class="btn-success" style="margin:10px 0">+ إضافة صف</button>
+    <div class="flex-between">
+      <button onclick="saveStage()" class="btn-success" style="flex:1">💾 حفظ المرحلة</button>
+      <button onclick="closeModal('addStageModal')" class="btn-danger" style="flex:1">إلغاء</button>
+    </div>
   </div>
 </div>
 
@@ -76,16 +155,19 @@
 <div id="editGradeModal" class="modal">
   <div class="modal-content">
     <h3 id="editGradeTitle">✏️ تعديل الصف</h3>
-    <input type="text" id="editGradeName" placeholder="اسم الصف" style="width:100%; margin:10px 0">
-    <h4>📚 المواد</h4>
-    <div id="editSubjectsList" style="margin:10px 0"></div>
-    <div style="display: flex; gap: 8px; margin-top: 10px">
-      <input type="text" id="newSubjectName" placeholder="مادة جديدة" style="flex:1">
-      <button onclick="addSubjectToEdit()" style="background:#28a745">+ إضافة</button>
+    <div class="form-group">
+      <label>اسم الصف:</label>
+      <input type="text" id="editGradeName">
     </div>
-    <div style="display: flex; gap: 10px; margin-top: 20px">
-      <button onclick="saveGradeEdit()" style="background:#1e3c72; flex:1">💾 حفظ التغييرات</button>
-      <button onclick="closeModal('editGradeModal')" style="background:#dc3545; flex:1">إلغاء</button>
+    <h4>📚 المواد</h4>
+    <div id="editSubjectsList"></div>
+    <div class="flex-between" style="margin:10px 0">
+      <input type="text" id="newSubjectName" placeholder="مادة جديدة" style="flex:2">
+      <button onclick="addSubjectToEdit()" class="btn-success">+ إضافة</button>
+    </div>
+    <div class="flex-between">
+      <button onclick="saveGradeEdit()" class="btn-success" style="flex:1">💾 حفظ</button>
+      <button onclick="closeModal('editGradeModal')" class="btn-danger" style="flex:1">إلغاء</button>
     </div>
   </div>
 </div>
@@ -94,25 +176,80 @@
 <div id="addSchoolModal" class="modal">
   <div class="modal-content">
     <h3>➕ إضافة مدرسة جديدة</h3>
-    <input type="text" id="newSchoolName" placeholder="اسم المدرسة" style="width:100%; margin:10px 0">
-    <select id="schoolStageSelect" style="width:100%; margin:10px 0">
-      <option value="">-- اختر المرحلة --</option>
-    </select>
-    <input type="text" id="schoolUsername" placeholder="اسم مستخدم مدير المدرسة" style="width:100%; margin:10px 0">
-    <input type="password" id="schoolPassword" placeholder="كلمة سر مدير المدرسة" style="width:100%; margin:10px 0">
-    <button onclick="addSchool()" style="background:#1e3c72">➕ إضافة مدرسة</button>
-    <button onclick="closeModal('addSchoolModal')" style="background:#dc3545">إلغاء</button>
+    <div class="form-group">
+      <label>اسم المدرسة:</label>
+      <input type="text" id="newSchoolName">
+    </div>
+    <div class="form-group">
+      <label>المرحلة الدراسية:</label>
+      <select id="schoolStageSelect"></select>
+    </div>
+    <div class="form-group">
+      <label>حقل البحث:</label>
+      <select id="schoolSearchField"></select>
+    </div>
+    <div class="form-group">
+      <label>التسمية الظاهرة للبحث:</label>
+      <input type="text" id="schoolSearchLabel">
+    </div>
+    <div class="form-group">
+      <label>اسم مستخدم مدير المدرسة:</label>
+      <input type="text" id="schoolUsername">
+    </div>
+    <div class="form-group">
+      <label>كلمة سر مدير المدرسة:</label>
+      <input type="password" id="schoolPassword">
+    </div>
+    <div class="flex-between">
+      <button onclick="addSchool()" class="btn-success" style="flex:1">➕ إضافة</button>
+      <button onclick="closeModal('addSchoolModal')" class="btn-danger" style="flex:1">إلغاء</button>
+    </div>
   </div>
 </div>
 
-<!-- نافذة تعديل المستخدم -->
-<div id="editUserModal" class="modal">
+<!-- نافذة إضافة مدير مدرسة -->
+<div id="addAdminModal" class="modal">
   <div class="modal-content">
-    <h3>✏️ تعديل بيانات المستخدم</h3>
-    <input type="text" id="editUsername" placeholder="اسم المستخدم الجديد" style="width:100%; margin:10px 0">
-    <input type="password" id="editPassword" placeholder="كلمة المرور الجديدة" style="width:100%; margin:10px 0">
-    <button onclick="updateUser()" style="background:#1e3c72">💾 حفظ</button>
-    <button onclick="closeModal('editUserModal')" style="background:#dc3545">إلغاء</button>
+    <h3>➕ إضافة مدير مدرسة</h3>
+    <div class="form-group">
+      <label>المدرسة:</label>
+      <select id="adminSchoolSelect"></select>
+    </div>
+    <div class="form-group">
+      <label>اسم المستخدم:</label>
+      <input type="text" id="adminUsername">
+    </div>
+    <div class="form-group">
+      <label>كلمة المرور:</label>
+      <input type="password" id="adminPassword">
+    </div>
+    <div class="flex-between">
+      <button onclick="addAdmin()" class="btn-success" style="flex:1">➕ إضافة</button>
+      <button onclick="closeModal('addAdminModal')" class="btn-danger" style="flex:1">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- نافذة تعديل مدير مدرسة -->
+<div id="editAdminModal" class="modal">
+  <div class="modal-content">
+    <h3>✏️ تعديل بيانات مدير المدرسة</h3>
+    <div class="form-group">
+      <label>المدرسة:</label>
+      <select id="editAdminSchoolSelect"></select>
+    </div>
+    <div class="form-group">
+      <label>اسم المستخدم الجديد:</label>
+      <input type="text" id="editAdminUsername">
+    </div>
+    <div class="form-group">
+      <label>كلمة المرور الجديدة (اتركها فارغة إذا لا تريد التغيير):</label>
+      <input type="password" id="editAdminPassword">
+    </div>
+    <div class="flex-between">
+      <button onclick="saveAdminEdit()" class="btn-success" style="flex:1">💾 حفظ</button>
+      <button onclick="closeModal('editAdminModal')" class="btn-danger" style="flex:1">إلغاء</button>
+    </div>
   </div>
 </div>
 
@@ -123,16 +260,36 @@
   let currentStageId = null;
   let currentGradeIndex = null;
   let currentSubjects = [];
+  let tempGrades = [];
+  let editingAdminId = null;
   
+  // التحقق من الصلاحية
   const role = sessionStorage.getItem('userRole');
   const userId = sessionStorage.getItem('userId');
   if (role !== 'superAdmin') window.location.href = 'login.html';
   
+  // تحميل المستخدم الحالي
   async function loadCurrentUser() {
     const { data: user } = await supabase.from('users').select('*').eq('id', userId).single();
-    if (user) { currentUser = user; document.getElementById('currentUsername').innerText = user.username; }
+    if (user) {
+      currentUser = user;
+      document.getElementById('currentUserDisplay').innerHTML = `👤 ${user.username}`;
+    }
   }
   
+  // تحميل الإحصائيات
+  async function loadStats() {
+    const { data: stages } = await supabase.from('stages').select('id');
+    const { data: schools } = await supabase.from('schools').select('id');
+    const { data: admins } = await supabase.from('users').select('id').eq('role', 'schoolAdmin');
+    document.getElementById('statsContainer').innerHTML = `
+      <div class="stat-card"><h3>📚 ${stages?.length || 0}</h3><p>مرحلة دراسية</p></div>
+      <div class="stat-card"><h3>🏫 ${schools?.length || 0}</h3><p>مدرسة</p></div>
+      <div class="stat-card"><h3>👥 ${admins?.length || 0}</h3><p>مدير مدرسة</p></div>
+    `;
+  }
+  
+  // ==================== إدارة المراحل ====================
   async function loadStages() {
     const { data: stages } = await supabase.from('stages').select('*');
     const container = document.getElementById('stagesList');
@@ -161,84 +318,54 @@
                 <div class="subjects-list">
                   ${g.subjects.map(sub => `<span class="subject-tag">${sub}</span>`).join('')}
                 </div>
-                <div class="add-subject">
-                  <input type="text" id="newSub-${stage.id}-${idx}" placeholder="مادة جديدة">
+                <div class="flex-between" style="margin-top: 10px">
+                  <input type="text" id="newSub-${stage.id}-${idx}" placeholder="مادة جديدة" style="flex:2">
                   <button onclick="addSubject(${stage.id}, ${idx})" class="btn-success">+</button>
-                </div>
-                <div class="grade-actions">
-                  <button onclick="duplicateGrade(${stage.id}, ${idx})" class="btn-small" style="background:#17a2b8">📋 نسخ الصف</button>
                 </div>
               </div>
             `).join('')}
           </div>
-          <div style="margin-top: 15px; display: flex; gap: 10px">
-            <button onclick="addNewGrade(${stage.id})" style="background:#28a745">➕ إضافة صف جديد</button>
-          </div>
+          <button onclick="addNewGrade(${stage.id})" class="btn-success" style="margin-top: 15px">➕ إضافة صف جديد</button>
         </div>
       `;
     }).join('');
-    
-    // تحديث قائمة المراحل في نافذة إضافة مدرسة
-    const schoolStageSelect = document.getElementById('schoolStageSelect');
-    schoolStageSelect.innerHTML = '<option value="">-- اختر المرحلة --</option>' + stages.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
   }
   
-  // إضافة مادة جديدة لصف
   window.addSubject = async (stageId, gradeIdx) => {
     const input = document.getElementById(`newSub-${stageId}-${gradeIdx}`);
     const newSubject = input.value.trim();
     if (!newSubject) return;
-    
     const { data: stage } = await supabase.from('stages').select('grades').eq('id', stageId).single();
     let grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
     if (!grades[gradeIdx].subjects) grades[gradeIdx].subjects = [];
     grades[gradeIdx].subjects.push(newSubject);
-    
-    const { error } = await supabase.from('stages').update({ grades: JSON.stringify(grades) }).eq('id', stageId);
-    if (error) alert("خطأ: " + error.message);
-    else { input.value = ''; loadStages(); }
+    await supabase.from('stages').update({ grades: JSON.stringify(grades) }).eq('id', stageId);
+    input.value = '';
+    loadStages();
   };
   
-  // حذف صف
   window.deleteGrade = async (stageId, gradeIdx) => {
     if (!confirm("هل أنت متأكد من حذف هذا الصف؟")) return;
     const { data: stage } = await supabase.from('stages').select('grades').eq('id', stageId).single();
     let grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
     grades.splice(gradeIdx, 1);
-    const { error } = await supabase.from('stages').update({ grades: JSON.stringify(grades) }).eq('id', stageId);
-    if (error) alert("خطأ: " + error.message);
-    else loadStages();
+    await supabase.from('stages').update({ grades: JSON.stringify(grades) }).eq('id', stageId);
+    loadStages();
   };
   
-  // نسخ صف
-  window.duplicateGrade = async (stageId, gradeIdx) => {
-    const { data: stage } = await supabase.from('stages').select('grades').eq('id', stageId).single();
-    let grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
-    const newGrade = JSON.parse(JSON.stringify(grades[gradeIdx]));
-    newGrade.grade = newGrade.grade + " (نسخة)";
-    grades.push(newGrade);
-    const { error } = await supabase.from('stages').update({ grades: JSON.stringify(grades) }).eq('id', stageId);
-    if (error) alert("خطأ: " + error.message);
-    else loadStages();
-  };
-  
-  // إضافة صف جديد
   window.addNewGrade = async (stageId) => {
     const gradeName = prompt("أدخل اسم الصف (مثال: الصف الأول)");
     if (!gradeName) return;
     const subjectsStr = prompt("أدخل المواد مفصولة بفواصل (مثال: عربي, رياضيات, علوم)");
     if (!subjectsStr) return;
     const subjects = subjectsStr.split(',').map(s => s.trim());
-    
     const { data: stage } = await supabase.from('stages').select('grades').eq('id', stageId).single();
     let grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
     grades.push({ grade: gradeName, subjects: subjects });
-    const { error } = await supabase.from('stages').update({ grades: JSON.stringify(grades) }).eq('id', stageId);
-    if (error) alert("خطأ: " + error.message);
-    else loadStages();
+    await supabase.from('stages').update({ grades: JSON.stringify(grades) }).eq('id', stageId);
+    loadStages();
   };
   
-  // تعديل صف
   window.editGrade = (stageId, gradeIdx, gradeName, subjectsJson) => {
     currentStageId = stageId;
     currentGradeIndex = gradeIdx;
@@ -252,9 +379,9 @@
   function renderEditSubjects() {
     const container = document.getElementById('editSubjectsList');
     container.innerHTML = currentSubjects.map((sub, idx) => `
-      <div style="display: flex; gap: 8px; margin: 5px 0; align-items: center">
-        <input type="text" value="${sub}" id="editSub-${idx}" style="flex:1">
-        <button onclick="removeSubjectFromEdit(${idx})" style="background:#dc3545; padding:5px 10px">✖</button>
+      <div class="flex-between" style="margin: 5px 0">
+        <input type="text" value="${sub}" id="editSub-${idx}" style="flex:2">
+        <button onclick="removeSubjectFromEdit(${idx})" class="btn-danger">✖</button>
       </div>
     `).join('');
   }
@@ -276,46 +403,79 @@
   window.saveGradeEdit = async () => {
     const newGradeName = document.getElementById('editGradeName').value.trim();
     if (!newGradeName) { alert("اسم الصف مطلوب"); return; }
-    
-    // جمع المواد المعدلة
     const updatedSubjects = [];
     for (let i = 0; i < currentSubjects.length; i++) {
       const sub = document.getElementById(`editSub-${i}`)?.value.trim();
       if (sub) updatedSubjects.push(sub);
     }
-    
     const { data: stage } = await supabase.from('stages').select('grades').eq('id', currentStageId).single();
     let grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
     grades[currentGradeIndex] = { grade: newGradeName, subjects: updatedSubjects };
-    
-    const { error } = await supabase.from('stages').update({ grades: JSON.stringify(grades) }).eq('id', currentStageId);
-    if (error) alert("خطأ: " + error.message);
-    else {
-      alert("✅ تم التحديث");
-      closeModal('editGradeModal');
-      loadStages();
-    }
+    await supabase.from('stages').update({ grades: JSON.stringify(grades) }).eq('id', currentStageId);
+    alert("✅ تم التحديث");
+    closeModal('editGradeModal');
+    loadStages();
   };
   
   window.showAddStageModal = () => {
+    tempGrades = [];
     document.getElementById('stageName').value = '';
+    document.getElementById('stageGradesContainer').innerHTML = '';
     document.getElementById('addStageModal').style.display = 'flex';
+  };
+  
+  window.addGradeToStage = () => {
+    const container = document.getElementById('stageGradesContainer');
+    const idx = tempGrades.length;
+    container.innerHTML += `
+      <div class="card" id="grade-${idx}">
+        <input type="text" placeholder="اسم الصف" id="grade-name-${idx}" style="width:100%; margin-bottom:5px">
+        <input type="text" placeholder="المواد (مفصولة بفواصل)" id="grade-subjects-${idx}" style="width:100%">
+        <button onclick="removeTempGrade(${idx})" class="btn-danger" style="margin-top:5px">حذف</button>
+      </div>
+    `;
+    tempGrades.push({ grade: '', subjects: [] });
+  };
+  
+  window.removeTempGrade = (idx) => {
+    tempGrades.splice(idx, 1);
+    document.getElementById('stageGradesContainer').innerHTML = '';
+    tempGrades.forEach((_, i) => {
+      document.getElementById('stageGradesContainer').innerHTML += `
+        <div class="card" id="grade-${i}">
+          <input type="text" placeholder="اسم الصف" id="grade-name-${i}" style="width:100%; margin-bottom:5px">
+          <input type="text" placeholder="المواد (مفصولة بفواصل)" id="grade-subjects-${i}" style="width:100%">
+          <button onclick="removeTempGrade(${i})" class="btn-danger" style="margin-top:5px">حذف</button>
+        </div>
+      `;
+    });
   };
   
   window.saveStage = async () => {
     const name = document.getElementById('stageName').value.trim();
     if (!name) { alert("اسم المرحلة مطلوب"); return; }
-    const { error } = await supabase.from('stages').insert([{ name, grades: '[]' }]);
+    const grades = [];
+    for (let i = 0; i < tempGrades.length; i++) {
+      const gradeName = document.getElementById(`grade-name-${i}`)?.value.trim();
+      const subjectsStr = document.getElementById(`grade-subjects-${i}`)?.value.trim();
+      if (gradeName && subjectsStr) {
+        grades.push({ grade: gradeName, subjects: subjectsStr.split(',').map(s => s.trim()) });
+      }
+    }
+    if (grades.length === 0) { alert("أضف صف واحد على الأقل"); return; }
+    const { error } = await supabase.from('stages').insert([{ name, grades: JSON.stringify(grades) }]);
     if (error) alert("خطأ: " + error.message);
-    else { alert("✅ تمت إضافة المرحلة"); closeModal('addStageModal'); loadStages(); }
+    else { alert("✅ تمت إضافة المرحلة"); closeModal('addStageModal'); loadStages(); loadStats(); }
   };
   
   window.deleteStage = async (id) => {
     if (!confirm("حذف المرحلة سيؤثر على المدارس المرتبطة! استمر؟")) return;
     await supabase.from('stages').delete().eq('id', id);
     loadStages();
+    loadStats();
   };
   
+  // ==================== إدارة المدارس ====================
   async function loadSchools() {
     const { data: schools } = await supabase.from('schools').select('*, stages(name)');
     const div = document.getElementById('schoolsList');
@@ -324,17 +484,46 @@
       <div class="school-card">
         <div>
           <strong>${s.name}</strong><br>
-          <small>المرحلة: ${s.stages?.name || 'غير محدد'}</small>
+          <small>المرحلة: ${s.stages?.name || 'غير محدد'}</small><br>
+          <small>🔍 بحث بـ: ${s.search_field_label || s.search_field || 'رقم الجلوس'}</small>
         </div>
         <div>
-          <button onclick="openSchool(${s.id})">👁️ فتح المدرسة</button>
-          <button onclick="deleteSchool(${s.id})" style="background:#dc3545">🗑️ حذف</button>
+          <button onclick="editSchool(${s.id})" class="btn-warning">✏️ تعديل</button>
+          <button onclick="openSchool(${s.id})" class="btn-info">👁️ فتح المدرسة</button>
+          <button onclick="deleteSchool(${s.id})" class="btn-danger">🗑️ حذف</button>
         </div>
       </div>
     `).join('');
   }
   
-  window.showAddSchoolModal = () => {
+  window.editSchool = async (id) => {
+    const { data: school } = await supabase.from('schools').select('*').eq('id', id).single();
+    const newName = prompt("اسم المدرسة الجديد:", school.name);
+    if (newName && newName !== school.name) {
+      await supabase.from('schools').update({ name: newName }).eq('id', id);
+      loadSchools();
+    }
+  };
+  
+  window.openSchool = (schoolId) => { sessionStorage.setItem('impersonatedSchoolId', schoolId); window.location.href = 'school-admin.html'; };
+  window.deleteSchool = async (id) => { if (confirm("حذف المدرسة سيحذف كل بياناتها! استمر؟")) { await supabase.from('schools').delete().eq('id', id); loadSchools(); loadStats(); } };
+  
+  window.showAddSchoolModal = async () => {
+    const { data: stages } = await supabase.from('stages').select('*');
+    const stageSelect = document.getElementById('schoolStageSelect');
+    stageSelect.innerHTML = '<option value="">-- اختر المرحلة --</option>' + stages.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    
+    const { data: settings } = await supabase.from('system_settings').select('*').eq('key', 'default_search').single();
+    const defaultField = settings?.value?.search_field || 'seat_number';
+    const defaultLabel = settings?.value?.search_label || 'رقم الجلوس';
+    
+    const searchFieldSelect = document.getElementById('schoolSearchField');
+    searchFieldSelect.innerHTML = `
+      <option value="seat_number" ${defaultField === 'seat_number' ? 'selected' : ''}>رقم الجلوس</option>
+      <option value="code" ${defaultField === 'code' ? 'selected' : ''}>الكود</option>
+      <option value="national_id" ${defaultField === 'national_id' ? 'selected' : ''}>الرقم القومي</option>
+    `;
+    document.getElementById('schoolSearchLabel').value = defaultLabel;
     document.getElementById('newSchoolName').value = '';
     document.getElementById('schoolUsername').value = '';
     document.getElementById('schoolPassword').value = '';
@@ -346,13 +535,19 @@
     const stageId = document.getElementById('schoolStageSelect').value;
     const username = document.getElementById('schoolUsername').value.trim();
     const password = document.getElementById('schoolPassword').value.trim();
+    const searchField = document.getElementById('schoolSearchField').value;
+    const searchLabel = document.getElementById('schoolSearchLabel').value.trim() || 
+      (searchField === 'seat_number' ? 'رقم الجلوس' : searchField === 'code' ? 'الكود' : 'الرقم القومي');
     
     if (!name || !stageId || !username || !password) { alert("املأ جميع الحقول"); return; }
     
     const { data: stage } = await supabase.from('stages').select('grades').eq('id', stageId).single();
     const customSubjects = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
     
-    const { data: newSchool, error: schoolError } = await supabase.from('schools').insert([{ name, stage_id: stageId, custom_subjects: customSubjects }]).select().single();
+    const { data: newSchool, error: schoolError } = await supabase.from('schools').insert([{ 
+      name, stage_id: stageId, custom_subjects: customSubjects,
+      search_field: searchField, search_field_label: searchLabel
+    }]).select().single();
     if (schoolError) { alert("خطأ: " + schoolError.message); return; }
     
     const { error: userError } = await supabase.from('users').insert([{ username, password, role: 'schoolAdmin', school_id: newSchool.id }]);
@@ -361,18 +556,32 @@
     alert(`✅ تمت الإضافة!\n👤 اسم المستخدم: ${username}\n🔑 كلمة المرور: ${password}`);
     closeModal('addSchoolModal');
     loadSchools();
+    loadStats();
   };
   
-  window.openSchool = (schoolId) => { sessionStorage.setItem('impersonatedSchoolId', schoolId); window.location.href = 'school-admin.html'; };
-  window.deleteSchool = async (id) => { if (confirm("حذف المدرسة؟")) await supabase.from('schools').delete().eq('id', id); loadSchools(); };
-  window.showEditUserModal = () => { document.getElementById('editUsername').value = currentUser?.username || ''; document.getElementById('editPassword').value = ''; document.getElementById('editUserModal').style.display = 'flex'; };
-  window.updateUser = async () => { const newUsername = document.getElementById('editUsername').value.trim(); const newPassword = document.getElementById('editPassword').value.trim(); if (!newUsername) return alert("اسم المستخدم مطلوب"); const updateData = { username: newUsername }; if (newPassword) updateData.password = newPassword; await supabase.from('users').update(updateData).eq('id', userId); alert("✅ تم التحديث"); closeModal('editUserModal'); loadCurrentUser(); };
-  window.closeModal = (id) => { document.getElementById(id).style.display = 'none'; };
-  window.logout = () => { sessionStorage.clear(); window.location.href = 'login.html'; };
+  // ==================== إدارة المديرين ====================
+  async function loadAdmins() {
+    const { data: admins } = await supabase.from('users').select('*, schools(name)').eq('role', 'schoolAdmin');
+    const div = document.getElementById('adminsList');
+    if (!admins || admins.length === 0) { div.innerHTML = '<p>لا يوجد مديرين مدارس</p>'; return; }
+    div.innerHTML = admins.map(a => `
+      <div class="user-card">
+        <div>
+          <strong>👤 ${a.username}</strong><br>
+          <small>🏫 ${a.schools?.name || 'غير مرتبط بمدرسة'}</small>
+        </div>
+        <div>
+          <button onclick="editAdmin(${a.id}, ${a.school_id}, '${a.username}')" class="btn-warning">✏️ تعديل</button>
+          <button onclick="resetAdminPassword(${a.id})" class="btn-info">🔑 تغيير كلمة المرور</button>
+          <button onclick="deleteAdmin(${a.id})" class="btn-danger">🗑️ حذف</button>
+        </div>
+      </div>
+    `).join('');
+  }
   
-  loadCurrentUser();
-  loadStages();
-  loadSchools();
-</script>
-</body>
-</html>
+  window.showAddAdminModal = async () => {
+    const { data: schools } = await supabase.from('schools').select('id, name');
+    const select = document.getElementById('adminSchoolSelect');
+    select.innerHTML = '<option value="">-- اختر المدرسة --</option>' + schools.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    document.getElementById('adminUsername').value = '';
+    document
