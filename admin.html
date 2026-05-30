@@ -37,6 +37,7 @@
         .grade-card {
             background: white; border-radius: 15px; padding: 20px;
             margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border: 1px solid #eef2fa;
         }
         .grade-header {
             font-size: 20px; font-weight: bold; color: #1e3c72;
@@ -44,13 +45,14 @@
             border-bottom: 2px solid #1e3c72;
             display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
         }
-        .subjects-list { display: flex; flex-direction: column; gap: 10px; }
+        .subjects-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
         .subject-item {
             background: #f8f9fa; border-radius: 12px; padding: 12px;
             border-right: 3px solid #1e3c72;
         }
         .subject-header {
             display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+            margin-bottom: 8px;
         }
         .subject-name { font-weight: bold; font-size: 16px; display: flex; align-items: center; gap: 10px; }
         .subject-actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -76,10 +78,12 @@
         button, input, select {
             padding: 8px 12px; border-radius: 8px; border: 1px solid #ddd; font-size: 14px;
         }
-        button { background: #1e3c72; color: white; border: none; cursor: pointer; }
+        button { background: #1e3c72; color: white; border: none; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #0f2b4f; transform: scale(1.02); }
         .btn-success { background: #28a745; }
         .btn-danger { background: #dc3545; }
         .btn-warning { background: #ffc107; color: #333; }
+        .btn-info { background: #17a2b8; }
         .btn-sm { padding: 4px 10px; font-size: 12px; }
         
         .school-card, .user-card {
@@ -111,7 +115,7 @@
             90% { opacity: 1; }
             100% { opacity: 0; visibility: hidden; }
         }
-        @media (max-width: 768px) { .grade-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .subjects-list { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -277,6 +281,7 @@
   function renderStageContent(stage) {
       let grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
       let fields = stage.subject_fields || {};
+      let includeInTotal = stage.subject_include_in_total || {};
       
       return `
           <div style="margin-bottom:20px">
@@ -284,34 +289,39 @@
               <button onclick="deleteStage(${stage.id})" class="btn-danger btn-sm">🗑️ حذف المرحلة</button>
           </div>
           ${grades.map((grade, gidx) => `
-              <div class="grade-card">
+              <div class="grade-card" id="grade-card-${stage.id}-${gidx}">
                   <div class="grade-header">
                       <span>🎓 ${grade.grade}</span>
                       <div>
                           <button onclick="editGradeName(${stage.id}, ${gidx}, '${grade.grade}')" class="btn-warning btn-sm">✏️ تعديل</button>
-                          <button onclick="deleteGrade(${stage.id}, ${gidx})" class="btn-danger btn-sm">🗑️ حذف</button>
+                          <button onclick="deleteGrade(${stage.id}, ${gidx})" class="btn-danger btn-sm">🗑️ حذف الصف</button>
+                          <button onclick="saveGradeData(${stage.id}, ${gidx})" class="btn-success btn-sm">💾 حفظ التغييرات</button>
                       </div>
                   </div>
-                  <div class="subjects-list">
+                  <div class="subjects-list" id="subjects-${stage.id}-${gidx}">
                       ${grade.subjects.map((subject, sidx) => {
                           let subjectFields = fields[subject] || ['أعمال سنة', 'امتحان نهائي'];
+                          let isIncluded = includeInTotal[subject] !== false;
                           return `
-                              <div class="subject-item">
+                              <div class="subject-item" data-subject="${subject}" data-grade="${gidx}">
                                   <div class="subject-header">
                                       <div class="subject-name">
                                           📖 ${subject}
+                                          <label style="font-size:12px; margin-right:15px; display:inline-flex; align-items:center; gap:4px">
+                                              <input type="checkbox" class="include-checkbox" data-stage="${stage.id}" data-subject="${subject}" ${isIncluded ? 'checked' : ''}> يُحتسب في المجموع
+                                          </label>
                                       </div>
                                       <div class="subject-actions">
                                           <button onclick="editSubjectName(${stage.id}, ${gidx}, ${sidx}, '${subject}')" class="btn-warning btn-sm">✏️ تعديل الاسم</button>
-                                          <button onclick="editSubjectFields(${stage.id}, '${subject}', '${encodeURIComponent(JSON.stringify(subjectFields))}')" class="btn-info btn-sm">⚙️ تعديل الخانات</button>
-                                          <button onclick="deleteSubject(${stage.id}, ${gidx}, ${sidx}, '${subject}')" class="btn-danger btn-sm">🗑️ حذف المادة</button>
+                                          <button onclick="editSubjectFields(${stage.id}, '${subject}', '${encodeURIComponent(JSON.stringify(subjectFields))}')" class="btn-info btn-sm">⚙️ الخانات</button>
+                                          <button onclick="deleteSubject(${stage.id}, ${gidx}, ${sidx}, '${subject}')" class="btn-danger btn-sm">🗑️ حذف</button>
                                       </div>
                                   </div>
                                   <div class="fields-list" id="fields-${stage.id}-${subject.replace(/\s/g, '')}">
                                       ${subjectFields.map(f => `
                                           <span class="field-tag">
                                               ${f}
-                                              <button onclick="removeField('${stage.id}', '${subject}', '${f}')" class="btn-danger btn-sm" style="background:#dc3545; padding:2px 6px;">✖</button>
+                                              <button onclick="removeField('${stage.id}', '${subject}', '${f}')" class="btn-danger btn-sm">✖</button>
                                           </span>
                                       `).join('')}
                                   </div>
@@ -332,6 +342,46 @@
           <button onclick="addNewGrade(${stage.id})" class="btn-success" style="margin-top:15px">➕ إضافة صف جديد</button>
       `;
   }
+  
+  // حفظ بيانات الصف بأكمله
+  window.saveGradeData = async (stageId, gradeIdx) => {
+      showToast("جاري حفظ البيانات...");
+      
+      let stage = stagesData.find(s => s.id == stageId);
+      let grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
+      let grade = grades[gradeIdx];
+      
+      // جمع المواد من الواجهة
+      let subjectsContainer = document.getElementById(`subjects-${stageId}-${gradeIdx}`);
+      let subjectItems = subjectsContainer.querySelectorAll('.subject-item');
+      let updatedSubjects = [];
+      let includeData = {};
+      
+      subjectItems.forEach(item => {
+          let subjectName = item.querySelector('.subject-name').innerText.replace('📖', '').trim();
+          let includeCheckbox = item.querySelector('.include-checkbox');
+          if (includeCheckbox) {
+              includeData[subjectName] = includeCheckbox.checked;
+          }
+          updatedSubjects.push(subjectName);
+      });
+      
+      // تحديث المواد في الصف
+      grade.subjects = updatedSubjects;
+      
+      // تحديث subject_include_in_total
+      let subjectInclude = stage.subject_include_in_total || {};
+      Object.assign(subjectInclude, includeData);
+      
+      // حفظ كل شيء
+      let { error } = await supabase.from('stages').update({ 
+          grades: JSON.stringify(grades),
+          subject_include_in_total: subjectInclude
+      }).eq('id', stageId);
+      
+      if (error) showToast("خطأ: " + error.message, true);
+      else showToast("✅ تم حفظ بيانات الصف بنجاح");
+  };
   
   window.showStageTab = (idx) => {
       document.querySelectorAll('.stage-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
@@ -383,7 +433,16 @@
       if (grades[gradeIdx].subjects.includes(subjectName)) { showToast("هذه المادة موجودة بالفعل", true); return; }
       
       grades[gradeIdx].subjects.push(subjectName);
-      let { error } = await supabase.from('stages').update({ grades: JSON.stringify(grades) }).eq('id', stageId);
+      
+      // إضافة الخانات الافتراضية للمادة الجديدة
+      let fields = stage.subject_fields || {};
+      fields[subjectName] = ['أعمال سنة', 'امتحان نهائي'];
+      
+      let { error } = await supabase.from('stages').update({ 
+          grades: JSON.stringify(grades),
+          subject_fields: fields
+      }).eq('id', stageId);
+      
       if (error) showToast("خطأ: " + error.message, true);
       else { showToast(`✅ تم إضافة مادة "${subjectName}"`); input.value = ''; loadStages(); }
   };
@@ -396,17 +455,14 @@
       let grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
       let oldName = grades[gradeIdx].subjects[subIdx];
       
-      // تحديث اسم المادة في قائمة المواد
       grades[gradeIdx].subjects[subIdx] = newName;
       
-      // تحديث subject_fields إذا كان موجوداً
       let fields = stage.subject_fields || {};
       if (fields[oldName]) {
           fields[newName] = fields[oldName];
           delete fields[oldName];
       }
       
-      // تحديث subject_include_in_total
       let include = stage.subject_include_in_total || {};
       if (include[oldName] !== undefined) {
           include[newName] = include[oldName];
@@ -424,19 +480,16 @@
   };
   
   window.deleteSubject = async (stageId, gradeIdx, subIdx, subjectName) => {
-      if (!confirm(`حذف مادة "${subjectName}" نهائياً؟\nسيتم حذف جميع الخانات والنتائج المرتبطة بها.`)) return;
+      if (!confirm(`⚠️ حذف مادة "${subjectName}" نهائياً؟\nسيتم حذف جميع الخانات والنتائج المرتبطة بها.`)) return;
       
       let stage = stagesData.find(s => s.id == stageId);
       let grades = typeof stage.grades === 'string' ? JSON.parse(stage.grades) : (stage.grades || []);
       
-      // حذف المادة من القائمة
       grades[gradeIdx].subjects.splice(subIdx, 1);
       
-      // حذف الخانات المرتبطة
       let fields = stage.subject_fields || {};
       delete fields[subjectName];
       
-      // حذف من الاحتساب
       let include = stage.subject_include_in_total || {};
       delete include[subjectName];
       
@@ -519,7 +572,6 @@
   };
   
   window.saveFieldsEdit = async () => {
-      // جمع الخانات المعدلة
       let updatedFields = [];
       for (let i = 0; i < editingFields.length; i++) {
           let input = document.getElementById(`editField-${i}`);
