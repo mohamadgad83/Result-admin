@@ -25,8 +25,10 @@
   <h1>🏫 نظام النتائج المدرسية</h1>
   <label>اختر المدرسة:</label>
   <select id="schoolSelect"></select>
-  <label>رقم الجلوس:</label>
-  <input type="text" id="studentSeat" placeholder="أدخل رقم الجلوس">
+  <div id="searchContainer">
+    <label id="searchLabel">رقم الجلوس:</label>
+    <input type="text" id="searchValue" placeholder="أدخل رقم الجلوس">
+  </div>
   <button id="searchBtn">🔍 عرض النتيجة</button>
   <div id="resultCard"></div>
 </div>
@@ -34,51 +36,72 @@
   import { supabase } from './supabase-config.js';
   
   const schoolSelect = document.getElementById('schoolSelect');
-  const studentSeat = document.getElementById('studentSeat');
+  const searchValue = document.getElementById('searchValue');
+  const searchLabel = document.getElementById('searchLabel');
   const searchBtn = document.getElementById('searchBtn');
   const resultDiv = document.getElementById('resultCard');
   
+  let currentSchoolId = null;
+  let currentSearchField = 'seat_number';
   let studentCustomFields = [];
   
   async function loadSchools() {
-    const { data: schools } = await supabase.from('schools').select('id, name');
+    const { data: schools } = await supabase.from('schools').select('id, name, search_field, search_field_label');
     schoolSelect.innerHTML = '<option value="">-- اختر مدرسة --</option>';
     schools.forEach(school => {
       const option = document.createElement('option');
       option.value = school.id;
+      option.dataset.searchField = school.search_field || 'seat_number';
+      option.dataset.searchLabel = school.search_field_label || 'رقم الجلوس';
       option.textContent = school.name;
       schoolSelect.appendChild(option);
     });
   }
   
-  searchBtn.addEventListener('click', async () => {
-    const schoolId = schoolSelect.value;
-    const seat = studentSeat.value.trim();
+  schoolSelect.addEventListener('change', async (e) => {
+    const option = e.target.options[e.target.selectedIndex];
+    currentSchoolId = option.value;
+    if (!currentSchoolId) return;
     
-    if (!schoolId || !seat) {
-      alert("يرجى اختيار المدرسة وإدخال رقم الجلوس");
+    currentSearchField = option.dataset.searchField;
+    const label = option.dataset.searchLabel;
+    
+    searchLabel.textContent = label + ':';
+    searchValue.placeholder = `أدخل ${label}`;
+    
+    // جلب الحقول المخصصة للطالب في هذه المدرسة
+    const { data: school } = await supabase.from('schools').select('student_custom_fields').eq('id', currentSchoolId).single();
+    studentCustomFields = school?.student_custom_fields || [];
+  });
+  
+  searchBtn.addEventListener('click', async () => {
+    const searchId = searchValue.value.trim();
+    if (!currentSchoolId || !searchId) {
+      alert("يرجى اختيار المدرسة وإدخال بيانات البحث");
       return;
     }
     
-    const { data: school } = await supabase.from('schools').select('student_custom_fields').eq('id', schoolId).single();
-    studentCustomFields = school?.student_custom_fields || [];
-    
+    // البحث باستخدام الحقل المحدد من إعدادات المدرسة
     const { data: student } = await supabase
       .from('students')
       .select('*')
-      .eq('school_id', schoolId)
-      .eq('seat_number', seat)
+      .eq('school_id', currentSchoolId)
+      .eq(currentSearchField, searchId)
       .single();
     
     if (!student) {
-      resultDiv.innerHTML = "<p style='color:red;text-align:center'>⚠️ لا يوجد طالب بهذا الرقم</p>";
+      resultDiv.innerHTML = "<p style='color:red;text-align:center'>⚠️ لا يوجد طالب بهذه البيانات</p>";
       return;
     }
     
     let html = `<div class="card"><h2>${student.name}</h2>`;
-    html += `<p><strong>رقم الجلوس:</strong> ${student.seat_number}</p>`;
+    
+    // عرض حقل البحث المستخدم
+    const fieldLabel = schoolSelect.options[schoolSelect.selectedIndex]?.dataset.searchLabel || 'رقم الجلوس';
+    html += `<p><strong>${fieldLabel}:</strong> ${student[currentSearchField] || '-'}</p>`;
     html += `<p><strong>الصف:</strong> ${student.grade || '-'}</p>`;
     
+    // عرض الحقول المخصصة للطالب
     if (studentCustomFields.length > 0) {
       html += `<h4>📋 بيانات إضافية</h4>`;
       studentCustomFields.forEach(field => {
@@ -86,11 +109,12 @@
       });
     }
     
+    // عرض النتائج
     html += `<h4>📊 النتائج</h4><table border="1"><tr><th>المادة</th><th>الدرجة</th></tr>`;
     for (const [subject, score] of Object.entries(student.results || {})) {
       html += `<tr><td>${subject}</td><td>${score}</td></tr>`;
     }
-    html += `<table><button onclick="window.print()" style="margin-top:15px">🖨️ طباعة</button></div>`;
+    html += `</table><button onclick="window.print()" style="margin-top:15px">🖨️ طباعة</button></div>`;
     
     resultDiv.innerHTML = html;
   });
