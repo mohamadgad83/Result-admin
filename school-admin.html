@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة مدير المدرسة - النظام المتكامل</title>
+    <title>لوحة مدير المدرسة - النظام الكامل</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -17,22 +17,24 @@
         .btn-danger { background: #dc3545; }
         .btn-warning { background: #ffc107; color: #333; }
         .btn-info { background: #17a2b8; }
-        .card { background: #f8f9fa; border-radius: 12px; padding: 15px; margin: 10px 0; }
-        .grade-box { background: #eef2fa; border-radius: 12px; padding: 15px; margin: 15px 0; border-right: 4px solid #1e3c72; }
-        .subject-item { background: white; border-radius: 10px; padding: 10px; margin: 8px 0; }
-        .subject-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .fields-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+        
+        .grade-card { background: #eef2fa; border-radius: 15px; padding: 20px; margin-bottom: 25px; }
+        .grade-header { font-size: 20px; font-weight: bold; color: #1e3c72; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #1e3c72; }
+        .subjects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+        .subject-card { background: white; border-radius: 12px; padding: 15px; border-right: 3px solid #1e3c72; }
+        .subject-name { font-weight: bold; font-size: 16px; margin-bottom: 10px; }
+        .fields-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
         .field-tag { background: #1e3c72; color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; }
-        .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        
         .student-card { background: #eef2fa; padding: 15px; margin: 10px 0; border-radius: 12px; }
         .subject-score { background: white; border-radius: 8px; padding: 10px; margin: 8px 0; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
         .loading { display: none; text-align: center; padding: 20px; background: #eef2fa; border-radius: 12px; margin: 10px 0; }
         .danger-zone { background: #fff5f5; border: 1px solid #dc3545; border-radius: 12px; padding: 15px; margin: 15px 0; }
-        .toast { position: fixed; bottom: 20px; left: 20px; right: 20px; background: #333; color: white; padding: 12px 20px; border-radius: 10px; text-align: center; z-index: 1000; animation: fadeInOut 3s ease; }
-        @keyframes fadeInOut { 0% { opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; } }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: white; padding: 25px; border-radius: 20px; max-width: 500px; width: 90%; }
-        @media (max-width: 768px) { button, input, select { width: 100%; } }
+        .toast { position: fixed; bottom: 20px; left: 20px; right: 20px; background: #28a745; color: white; padding: 12px; border-radius: 10px; text-align: center; z-index: 1000; animation: fadeOut 3s ease forwards; }
+        .toast.error { background: #dc3545; }
+        @keyframes fadeOut { 0% { opacity: 0; transform: translateY(20px); } 10% { opacity: 1; transform: translateY(0); } 90% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+        @media (max-width: 768px) { .subjects-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -49,7 +51,7 @@
     <div id="schoolInfo"></div>
     
     <!-- اختيار الصف -->
-    <div class="card">
+    <div class="grade-card">
         <h3>📚 اختر الصف الدراسي</h3>
         <select id="selectedGrade" style="width:100%">
             <option value="">-- اختر الصف --</option>
@@ -57,7 +59,7 @@
     </div>
     
     <!-- عرض المواد حسب الصف -->
-    <div id="subjectsContainer" style="margin: 15px 0"></div>
+    <div id="subjectsContainer"></div>
     
     <!-- تحميل ورفع Excel -->
     <div class="flex-between" style="gap:20px; flex-wrap:wrap; margin: 20px 0">
@@ -100,7 +102,7 @@
     <h2>📚 قائمة الطلاب</h2>
     <div id="studentsList">جاري التحميل...</div>
     
-    <!-- منطقة الحذف -->
+    <!-- منطقة الحذف والتصدير -->
     <div class="danger-zone">
         <h3 style="color:#dc3545">⚠️ منطقة حذف البيانات</h3>
         <div class="flex-between">
@@ -126,17 +128,16 @@
   let currentGrade = '';
   let studentCustomFields = [];
   
-  function showToast(message, type = 'success') {
-      const toast = document.createElement('div');
-      toast.className = 'toast';
-      toast.style.background = type === 'error' ? '#dc3545' : '#28a745';
-      toast.innerText = message;
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 3000);
+  function showToast(msg, isErr = false) {
+      let t = document.createElement('div');
+      t.className = `toast ${isErr ? 'error' : ''}`;
+      t.innerText = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3000);
   }
   
   async function loadSchool() {
-      const { data: school } = await supabase.from('schools').select('*, stages(name)').eq('id', schoolId).single();
+      let { data: school } = await supabase.from('schools').select('*, stages(name)').eq('id', schoolId).single();
       if (!school) return;
       schoolData = school;
       document.getElementById('schoolInfo').innerHTML = `<h2>🏫 ${school.name}</h2><p>المرحلة: ${school.stages?.name}</p>`;
@@ -144,11 +145,9 @@
       studentCustomFields = school.student_custom_fields || [];
       schoolSubjects = school.custom_subjects || [];
       subjectFields = school.subject_fields || {};
-      
-      // استخراج الصفوف الفريدة
       schoolGrades = [...new Set(schoolSubjects.map(s => s.grade))];
       
-      const gradeSelect = document.getElementById('selectedGrade');
+      let gradeSelect = document.getElementById('selectedGrade');
       gradeSelect.innerHTML = '<option value="">-- اختر الصف --</option>' + schoolGrades.map(g => `<option value="${g}">${g}</option>`).join('');
       
       gradeSelect.onchange = () => {
@@ -165,43 +164,43 @@
   }
   
   function renderSubjectsByGrade() {
-      const subjects = schoolSubjects.filter(s => s.grade === currentGrade);
-      const container = document.getElementById('subjectsContainer');
+      let subjects = schoolSubjects.filter(s => s.grade === currentGrade);
+      let container = document.getElementById('subjectsContainer');
       if (subjects.length === 0) {
-          container.innerHTML = '<div class="card"><p style="color:#dc3545">⚠️ لا توجد مواد لهذا الصف</p></div>';
+          container.innerHTML = '<div class="grade-card"><p style="color:#dc3545">⚠️ لا توجد مواد لهذا الصف</p></div>';
           return;
       }
       
       container.innerHTML = `
-          <div class="card">
-              <h3>📚 مواد الصف ${currentGrade}</h3>
-              ${subjects.map(sub => {
-                  const fields = subjectFields[sub.subject] || ['أعمال سنة', 'امتحان نهائي'];
-                  return `
-                      <div class="subject-item">
-                          <div class="subject-header">
-                              <strong>📖 ${sub.subject}</strong>
+          <div class="grade-card">
+              <div class="grade-header">📚 مواد الصف ${currentGrade}</div>
+              <div class="subjects-grid">
+                  ${subjects.map(sub => {
+                      let fields = subjectFields[sub.subject] || ['أعمال سنة', 'امتحان نهائي'];
+                      return `
+                          <div class="subject-card">
+                              <div class="subject-name">📖 ${sub.subject}</div>
+                              <div class="fields-list">
+                                  ${fields.map(f => `<span class="field-tag">${f}</span>`).join('')}
+                              </div>
                           </div>
-                          <div class="fields-list">
-                              ${fields.map(f => `<span class="field-tag">${f}</span>`).join('')}
-                          </div>
-                      </div>
-                  `;
-              }).join('')}
+                      `;
+                  }).join('')}
+              </div>
           </div>
       `;
       
       // تحديث قائمة المواد في نموذج إضافة نتيجة
-      const subjectSelect = document.getElementById('resultSubject');
+      let subjectSelect = document.getElementById('resultSubject');
       subjectSelect.innerHTML = subjects.map(s => `<option value="${s.subject}">${s.subject}</option>`).join('');
       subjectSelect.onchange = () => renderResultFields();
       renderResultFields();
   }
   
   function renderResultFields() {
-      const subject = document.getElementById('resultSubject').value;
-      const fields = subjectFields[subject] || ['أعمال سنة', 'امتحان نهائي'];
-      const container = document.getElementById('resultFieldsContainer');
+      let subject = document.getElementById('resultSubject').value;
+      let fields = subjectFields[subject] || ['أعمال سنة', 'امتحان نهائي'];
+      let container = document.getElementById('resultFieldsContainer');
       container.innerHTML = fields.map((field, idx) => `
           <div style="flex:1">
               <label style="font-size:12px">${field}</label>
@@ -210,23 +209,24 @@
       `).join('');
   }
   
+  // تحميل قالب Excel
   window.downloadTemplate = () => {
-      if (!currentGrade) { showToast("اختر الصف أولاً", 'error'); return; }
+      if (!currentGrade) { showToast("اختر الصف أولاً", true); return; }
       
-      const subjects = schoolSubjects.filter(s => s.grade === currentGrade);
-      if (subjects.length === 0) { showToast("لا توجد مواد لهذا الصف", 'error'); return; }
+      let subjects = schoolSubjects.filter(s => s.grade === currentGrade);
+      if (subjects.length === 0) { showToast("لا توجد مواد لهذا الصف", true); return; }
       
-      const headers = ["اسم الطالب", "رقم الجلوس", "الكود", "الرقم القومي"];
+      let headers = ["اسم الطالب", "رقم الجلوس", "الكود", "الرقم القومي"];
       subjects.forEach(subject => {
-          const fields = subjectFields[subject.subject] || ['أعمال سنة', 'امتحان نهائي'];
+          let fields = subjectFields[subject.subject] || ['أعمال سنة', 'امتحان نهائي'];
           fields.forEach(field => { headers.push(`${subject.subject} (${field})`); });
       });
       if (studentCustomFields.length > 0) studentCustomFields.forEach(f => headers.push(f.name));
       
-      const sheetData = [headers];
+      let sheetData = [headers];
       let exampleRow = ["مثال: أحمد محمد", "101", "A123", "12345678901234"];
       subjects.forEach(subject => {
-          const fields = subjectFields[subject.subject] || ['أعمال سنة', 'امتحان نهائي'];
+          let fields = subjectFields[subject.subject] || ['أعمال سنة', 'امتحان نهائي'];
           fields.forEach(() => { exampleRow.push(""); });
       });
       if (studentCustomFields.length > 0) studentCustomFields.forEach(() => exampleRow.push(""));
@@ -235,48 +235,47 @@
       for (let i = 0; i < 15; i++) {
           let emptyRow = ["", "", "", ""];
           subjects.forEach(subject => {
-              const fields = subjectFields[subject.subject] || ['أعمال سنة', 'امتحان نهائي'];
+              let fields = subjectFields[subject.subject] || ['أعمال سنة', 'امتحان نهائي'];
               fields.forEach(() => { emptyRow.push(""); });
           });
           if (studentCustomFields.length > 0) studentCustomFields.forEach(() => emptyRow.push(""));
           sheetData.push(emptyRow);
       }
       
-      const ws = XLSX.utils.aoa_to_sheet(sheetData);
+      let ws = XLSX.utils.aoa_to_sheet(sheetData);
       ws['!cols'] = headers.map(() => ({ wch: 18 }));
-      const wb = XLSX.utils.book_new();
+      let wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, `قالب_${currentGrade}`);
       XLSX.writeFile(wb, `قالب_استيراد_الطلاب_${currentGrade}_${new Date().toISOString().slice(0,10)}.xlsx`);
       showToast("✅ تم تحميل القالب");
   };
   
-  document.getElementById('downloadTemplateBtn').onclick = window.downloadTemplate;
-  
-  document.getElementById('uploadExcelBtn').onclick = async () => {
-      const file = document.getElementById('excelFile').files[0];
-      if (!file) { showToast("اختر ملف Excel أولاً", 'error'); return; }
-      if (!currentGrade) { showToast("اختر الصف أولاً", 'error'); return; }
+  // استيراد البيانات من Excel
+  window.uploadExcel = async () => {
+      let file = document.getElementById('excelFile').files[0];
+      if (!file) { showToast("اختر ملف Excel أولاً", true); return; }
+      if (!currentGrade) { showToast("اختر الصف أولاً", true); return; }
       
-      const subjects = schoolSubjects.filter(s => s.grade === currentGrade);
-      if (subjects.length === 0) { showToast("لا توجد مواد لهذا الصف", 'error'); return; }
+      let subjects = schoolSubjects.filter(s => s.grade === currentGrade);
+      if (subjects.length === 0) { showToast("لا توجد مواد لهذا الصف", true); return; }
       
       document.getElementById('loadingIndicator').style.display = 'block';
       
       try {
-          const data = await file.arrayBuffer();
-          const workbook = XLSX.read(data);
-          const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, defval: "" });
+          let data = await file.arrayBuffer();
+          let workbook = XLSX.read(data);
+          let rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, defval: "" });
           
           let successCount = 0, errorCount = 0;
           
           for (let i = 2; i < rows.length; i++) {
-              const row = rows[i];
+              let row = rows[i];
               if (!row || !row[0] || !row[1]) continue;
               
-              const name = row[0]?.toString().trim();
-              const seat = row[1]?.toString().trim();
-              const code = row[2]?.toString().trim() || null;
-              const nationalId = row[3]?.toString().trim() || null;
+              let name = row[0]?.toString().trim();
+              let seat = row[1]?.toString().trim();
+              let code = row[2]?.toString().trim() || null;
+              let nationalId = row[3]?.toString().trim() || null;
               
               if (!name || !seat) { errorCount++; continue; }
               
@@ -288,7 +287,7 @@
                   .maybeSingle();
               
               if (!student) {
-                  const { data: newStudent } = await supabase
+                  let { data: newStudent } = await supabase
                       .from('students')
                       .insert([{ school_id: schoolId, name, seat_number: seat, code, national_id: nationalId, grade: currentGrade, multi_scores: {} }])
                       .select()
@@ -298,17 +297,17 @@
                   await supabase.from('students').update({ code, national_id: nationalId }).eq('id', student.id);
               }
               
-              const multiScores = student.multi_scores || {};
+              let multiScores = student.multi_scores || {};
               let colIndex = 4;
               
               for (let s = 0; s < subjects.length; s++) {
-                  const subject = subjects[s].subject;
-                  const fields = subjectFields[subject] || ['أعمال سنة', 'امتحان نهائي'];
-                  const scores = {};
+                  let subject = subjects[s].subject;
+                  let fields = subjectFields[subject] || ['أعمال سنة', 'امتحان نهائي'];
+                  let scores = {};
                   let total = 0, maxTotal = 0;
                   
                   for (let f = 0; f < fields.length; f++) {
-                      const value = parseFloat(row[colIndex + f]) || 0;
+                      let value = parseFloat(row[colIndex + f]) || 0;
                       scores[fields[f]] = value;
                       total += value;
                       maxTotal += 100;
@@ -331,21 +330,21 @@
           document.getElementById('excelFile').value = '';
           loadStudents();
       } catch (err) {
-          showToast("❌ خطأ: " + err.message, 'error');
+          showToast("❌ خطأ: " + err.message, true);
       } finally {
           document.getElementById('loadingIndicator').style.display = 'none';
       }
   };
   
   window.addStudent = async () => {
-      const name = document.getElementById('studentName').value.trim();
-      const seat = document.getElementById('studentSeat').value.trim();
-      const code = document.getElementById('studentCode').value.trim();
-      const nationalId = document.getElementById('studentNationalId').value.trim();
-      if (!name || !seat || !currentGrade) return showToast("املأ الحقول الأساسية واختر الصف", 'error');
+      let name = document.getElementById('studentName').value.trim();
+      let seat = document.getElementById('studentSeat').value.trim();
+      let code = document.getElementById('studentCode').value.trim();
+      let nationalId = document.getElementById('studentNationalId').value.trim();
+      if (!name || !seat || !currentGrade) return showToast("املأ الحقول الأساسية واختر الصف", true);
       
-      const { error } = await supabase.from('students').insert([{ school_id: schoolId, name, seat_number: seat, code: code || null, national_id: nationalId || null, grade: currentGrade, multi_scores: {} }]);
-      if (error) showToast("خطأ: " + error.message, 'error');
+      let { error } = await supabase.from('students').insert([{ school_id: schoolId, name, seat_number: seat, code: code || null, national_id: nationalId || null, grade: currentGrade, multi_scores: {} }]);
+      if (error) showToast("خطأ: " + error.message, true);
       else {
           showToast("✅ تمت إضافة الطالب");
           document.getElementById('studentName').value = '';
@@ -357,25 +356,25 @@
   };
   
   window.addResult = async () => {
-      const seat = document.getElementById('resultSeat').value.trim();
-      const subject = document.getElementById('resultSubject').value;
-      if (!seat || !subject) return showToast("املأ البيانات", 'error');
+      let seat = document.getElementById('resultSeat').value.trim();
+      let subject = document.getElementById('resultSubject').value;
+      if (!seat || !subject) return showToast("املأ البيانات", true);
       
-      const fields = subjectFields[subject] || ['أعمال سنة', 'امتحان نهائي'];
-      const scores = {};
+      let fields = subjectFields[subject] || ['أعمال سنة', 'امتحان نهائي'];
+      let scores = {};
       let total = 0, maxTotal = 0;
       
       for (let i = 0; i < fields.length; i++) {
-          const value = parseFloat(document.getElementById(`resultField_${i}`)?.value) || 0;
+          let value = parseFloat(document.getElementById(`resultField_${i}`)?.value) || 0;
           scores[fields[i]] = value;
           total += value;
           maxTotal += 100;
       }
       
-      const { data: student } = await supabase.from('students').select('id, multi_scores').eq('school_id', schoolId).eq('seat_number', seat).single();
-      if (!student) return showToast("لا يوجد طالب بهذا الرقم", 'error');
+      let { data: student } = await supabase.from('students').select('id, multi_scores').eq('school_id', schoolId).eq('seat_number', seat).single();
+      if (!student) return showToast("لا يوجد طالب بهذا الرقم", true);
       
-      const multiScores = student.multi_scores || {};
+      let multiScores = student.multi_scores || {};
       multiScores[subject] = {
           scores: scores,
           total: total,
@@ -389,21 +388,22 @@
   };
   
   async function loadStudents() {
-      const { data: students } = await supabase.from('students').select('*').eq('school_id', schoolId);
-      const container = document.getElementById('studentsList');
+      let { data: students } = await supabase.from('students').select('*').eq('school_id', schoolId);
+      let container = document.getElementById('studentsList');
       if (!students?.length) { container.innerHTML = '<p>لا يوجد طلاب</p>'; return; }
       
-      const filtered = currentGrade ? students.filter(s => s.grade === currentGrade) : students;
+      let filtered = currentGrade ? students.filter(s => s.grade === currentGrade) : students;
       if (filtered.length === 0) { container.innerHTML = '<p>لا يوجد طلاب في هذا الصف</p>'; return; }
       
       container.innerHTML = filtered.map(s => {
-          const multi = s.multi_scores || {};
+          let multi = s.multi_scores || {};
           return `
               <div class="student-card">
                   <div class="flex-between">
                       <div>
                           <strong>${s.name}</strong><br>
-                          <small>رقم الجلوس: ${s.seat_number} | الكود: ${s.code || '-'} | الرقم القومي: ${s.national_id || '-'}</small>
+                          <small>رقم الجلوس: ${s.seat_number} | الكود: ${s.code || '-'} | الرقم القومي: ${s.national_id || '-'}</small><br>
+                          <small>الصف: ${s.grade || '-'}</small>
                       </div>
                       <div>
                           <button onclick="viewStudentResult('${s.id}')" class="btn-info">📊 عرض النتيجة</button>
@@ -412,7 +412,7 @@
                   </div>
                   ${Object.entries(multi).map(([sub, d]) => `
                       <div class="subject-score">
-                          <strong>${sub}:</strong> ${Object.entries(d.scores).map(([k,v]) => `${k}: ${v}`).join(' | ')} | المجموع: ${d.total} (${d.percentage}%)
+                          <strong>${sub}:</strong> ${Object.entries(d.scores).map(([k,v]) => `${k}: ${v}`).join(' | ')} | المجموع: ${d.total}/${d.max} (${d.percentage}%)
                       </div>
                   `).join('')}
               </div>
@@ -429,8 +429,8 @@
   
   window.clearAllStudentResults = async () => {
       if (!confirm("مسح نتائج جميع الطلاب؟")) return;
-      const { data: students } = await supabase.from('students').select('id').eq('school_id', schoolId);
-      for (const student of students) { await supabase.from('students').update({ multi_scores: {} }).eq('id', student.id); }
+      let { data: students } = await supabase.from('students').select('id').eq('school_id', schoolId);
+      for (let student of students) { await supabase.from('students').update({ multi_scores: {} }).eq('id', student.id); }
       showToast("✅ تم مسح النتائج"); loadStudents();
   };
   
@@ -441,28 +441,31 @@
   };
   
   window.exportSchoolResults = async () => {
-      const { data: students } = await supabase.from('students').select('*').eq('school_id', schoolId);
-      if (!students?.length) return showToast("لا يوجد طلاب", 'error');
+      let { data: students } = await supabase.from('students').select('*').eq('school_id', schoolId);
+      if (!students?.length) return showToast("لا يوجد طلاب", true);
       
-      const headers = ['اسم الطالب', 'رقم الجلوس', 'الكود', 'الرقم القومي', 'الصف', 'المادة', 'التفاصيل', 'المجموع', 'النسبة'];
-      const rows = [headers];
+      let headers = ['اسم الطالب', 'رقم الجلوس', 'الكود', 'الرقم القومي', 'الصف', 'المادة', 'التفاصيل', 'المجموع', 'النسبة'];
+      let rows = [headers];
       
-      for (const student of students) {
-          const multi = student.multi_scores || {};
-          for (const [subject, data] of Object.entries(multi)) {
-              const details = Object.entries(data.scores).map(([k,v]) => `${k}: ${v}`).join(' | ');
+      for (let student of students) {
+          let multi = student.multi_scores || {};
+          for (let [subject, data] of Object.entries(multi)) {
+              let details = Object.entries(data.scores).map(([k,v]) => `${k}: ${v}`).join(' | ');
               rows.push([student.name, student.seat_number, student.code || '', student.national_id || '', student.grade || '', subject, details, `${data.total}/${data.max}`, `${data.percentage}%`]);
           }
       }
       
-      const ws = XLSX.utils.aoa_to_sheet(rows);
-      const wb = XLSX.utils.book_new();
+      let ws = XLSX.utils.aoa_to_sheet(rows);
+      let wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, `نتائج_${schoolData?.name}`);
       XLSX.writeFile(wb, `نتائج_${schoolData?.name}_${new Date().toISOString().slice(0,10)}.xlsx`);
       showToast("✅ تم تصدير النتائج");
   };
   
   window.logout = () => { sessionStorage.clear(); window.location.href = 'login.html'; };
+  
+  document.getElementById('downloadTemplateBtn').onclick = window.downloadTemplate;
+  document.getElementById('uploadExcelBtn').onclick = window.uploadExcel;
   
   loadSchool();
 </script>
