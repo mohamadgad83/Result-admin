@@ -3,252 +3,341 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>نتيجة الطالب - مدرسة دشنا الثانوية</title>
+    <title>البحث عن نتيجة - مدرسة دشنا الثانوية</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background: linear-gradient(135deg, #0f2b4f 0%, #1e3c72 50%, #2a5298 100%);
             min-height: 100vh;
             padding: 20px;
+            position: relative;
         }
-        .container { max-width: 800px; margin: auto; }
-        
-        .result-card {
-            background: white;
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        /* زخرفة خلفية بسيطة */
+        body::before {
+            content: "🏫";
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            font-size: 80px;
+            opacity: 0.05;
+            pointer-events: none;
+        }
+        body::after {
+            content: "📚";
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 80px;
+            opacity: 0.05;
+            pointer-events: none;
         }
         
-        /* رأس البطاقة */
-        .card-header {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: white;
-            padding: 25px 20px;
+        .container { max-width: 550px; margin: auto; position: relative; z-index: 1; }
+        
+        /* بطاقة البحث الرئيسية */
+        .search-card {
+            background: rgba(255,255,255,0.98);
+            border-radius: 40px;
+            padding: 30px 25px;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.3);
             text-align: center;
+            backdrop-filter: blur(5px);
+            transition: transform 0.3s;
         }
-        .school-name { font-size: 20px; font-weight: bold; opacity: 0.9; }
-        .student-name { font-size: 26px; margin: 10px 0; font-weight: bold; }
-        .student-info {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-        }
-        .student-info span {
-            background: rgba(255,255,255,0.2);
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
+        .search-card:hover {
+            transform: translateY(-5px);
         }
         
-        /* قسم الحالة والمواد (في الأعلى تحت بيانات الطالب) */
-        .status-materials {
-            background: #f0f7ff;
-            padding: 15px 20px;
+        /* شعار المدرسة */
+        .school-logo {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            border-radius: 50%;
             display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            border-bottom: 1px solid #eef2fa;
+            align-items: center;
+            justify-content: center;
+            margin: -50px auto 15px auto;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
-        .status-box, .materials-box {
-            flex: 1;
-            background: white;
-            border-radius: 12px;
-            padding: 12px 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .status-box .label, .materials-box .label {
-            font-size: 12px;
-            color: #666;
-            display: block;
+        .school-logo span { font-size: 35px; }
+        
+        .school-header { margin-bottom: 20px; }
+        .school-name {
+            font-size: 26px;
+            font-weight: bold;
+            color: #1e3c72;
             margin-bottom: 5px;
         }
-        .status-box .value {
-            font-size: 18px;
-            font-weight: bold;
-            color: #1e3c72;
-        }
-        .materials-box .value {
-            font-size: 14px;
-            color: #333;
+        .school-name small {
+            font-size: 13px;
+            color: #666;
+            display: block;
         }
         
-        /* المواد الدراسية */
-        .subjects-section {
-            padding: 20px;
+        /* بطاقات الإدارة - تصميم عصري */
+        .management-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 20px 0;
         }
-        .subjects-title {
-            font-size: 18px;
+        .management-card {
+            background: linear-gradient(135deg, #f8f9fa, #eef2fa);
+            border-radius: 20px;
+            padding: 12px 8px;
+            text-align: center;
+            transition: 0.3s;
+            border: 1px solid rgba(30,60,114,0.1);
+        }
+        .management-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+        .management-icon { font-size: 24px; margin-bottom: 5px; }
+        .management-label {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        .management-name {
+            font-size: 13px;
             font-weight: bold;
             color: #1e3c72;
-            margin-bottom: 15px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #1e3c72;
         }
-        .subjects-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+        
+        /* قسم الحاسب */
+        .it-card {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            border-radius: 25px;
+            padding: 18px;
+            margin: 20px 0;
+            color: white;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
         }
-        .subject-card {
-            background: #f8f9fa;
-            border-radius: 16px;
-            overflow: hidden;
-            border-right: 4px solid #1e3c72;
-        }
-        .subject-header {
-            background: #eef2fa;
-            padding: 12px 16px;
+        .it-title {
             font-weight: bold;
             font-size: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .it-names {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .it-names span {
+            background: rgba(255,255,255,0.2);
+            padding: 6px 15px;
+            border-radius: 30px;
+            font-size: 13px;
+        }
+        
+        /* حقل البحث */
+        .search-box {
+            background: #f8f9fa;
+            border-radius: 60px;
+            padding: 5px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 25px 0 15px;
+            border: 2px solid #eef2fa;
+            transition: 0.2s;
+        }
+        .search-box:focus-within {
+            border-color: #1e3c72;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(30,60,114,0.1);
+        }
+        .search-icon {
+            font-size: 20px;
             color: #1e3c72;
         }
-        .score-value {
-            padding: 12px 16px;
+        .search-box input {
+            flex: 1;
+            padding: 16px 0;
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            outline: none;
+        }
+        .search-box input::placeholder {
+            color: #aaa;
+        }
+        
+        /* زر البحث */
+        .search-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            border: none;
+            border-radius: 60px;
             font-size: 18px;
             font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            margin: 15px 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .search-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(30,60,114,0.4);
+        }
+        
+        /* رسائل الحالة */
+        .error {
+            color: #dc3545;
+            margin: 10px 0;
+            font-size: 14px;
+            background: #ffe6e6;
+            padding: 10px;
+            border-radius: 12px;
+        }
+        .loading {
+            margin: 15px 0;
             color: #1e3c72;
+            display: none;
+            font-size: 14px;
         }
         
         /* تذييل */
-        .card-footer {
-            background: #f8f9fa;
-            padding: 12px 20px;
+        .footer {
             text-align: center;
-            font-size: 11px;
-            color: #666;
+            padding-top: 20px;
+            margin-top: 15px;
             border-top: 1px solid #eef2fa;
+            font-size: 11px;
+            color: #888;
         }
-        
-        /* أزرار */
-        .action-buttons {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 30px;
-            font-size: 14px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.2s;
-            flex: 1;
-            min-width: 120px;
-        }
-        .btn-primary { background: #1e3c72; color: white; }
-        .btn-primary:hover { background: #0f2b4f; transform: scale(1.02); }
-        .btn-success { background: #28a745; color: white; }
-        .btn-success:hover { background: #1e6b2f; transform: scale(1.02); }
-        
-        @media print {
-            body { background: white; padding: 0; }
-            .no-print { display: none; }
-            .card-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .status-materials { background: #f0f7ff; -webkit-print-color-adjust: exact; }
+        .signature {
+            margin-top: 8px;
+            font-size: 10px;
+            color: #aaa;
         }
         
         @media (max-width: 500px) {
-            .status-materials { flex-direction: column; gap: 10px; }
-            .student-name { font-size: 22px; }
-            .btn { padding: 10px 16px; font-size: 13px; }
+            .search-card { padding: 20px; }
+            .school-name { font-size: 22px; }
+            .management-grid { gap: 8px; }
+            .management-name { font-size: 11px; }
+            .it-names { flex-direction: column; gap: 8px; align-items: center; }
+            .search-btn { font-size: 16px; padding: 14px; }
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <div id="resultContainer"></div>
-    <div class="action-buttons no-print">
-        <button class="btn btn-primary" onclick="window.print()">🖨️ طباعة النتيجة</button>
-        <button class="btn btn-success" onclick="history.back()">🔙 رجوع</button>
+    <div class="search-card">
+        <!-- شعار واسم المدرسة -->
+        <div class="school-logo"><span>🏫</span></div>
+        <div class="school-header">
+            <div class="school-name">مدرسة دشنا الثانوية</div>
+            <div class="school-name"><small>Dishna Secondary School</small></div>
+        </div>
+        
+        <!-- بطاقات الإدارة - 3 أقسام -->
+        <div class="management-grid">
+            <div class="management-card">
+                <div class="management-icon">📊</div>
+                <div class="management-label">رئيس الكنترول</div>
+                <div class="management-name">أ/ محرم فؤاد</div>
+            </div>
+            <div class="management-card">
+                <div class="management-icon">👨‍🎓</div>
+                <div class="management-label">وكيل شئون الطلاب</div>
+                <div class="management-name">أ/ عاطف أبوالعباس</div>
+            </div>
+            <div class="management-card">
+                <div class="management-icon">🏫</div>
+                <div class="management-label">مدير المدرسة</div>
+                <div class="management-name">أ/ عبدالرحمن فهمي</div>
+            </div>
+        </div>
+        
+        <!-- قسم الحاسب -->
+        <div class="it-card">
+            <div class="it-title">💻 قسم الحاسب الآلي والبرمجة</div>
+            <div class="it-names">
+                <span>أ/ خالد عبدالسلام محمد</span>
+                <span>أ/ محمد جاد عبداللاه</span>
+            </div>
+        </div>
+        
+        <!-- حقل البحث -->
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchValue" placeholder="ابحث عن النتيجة بادخال الكود او الرقم القومي">
+        </div>
+        
+        <!-- زر البحث -->
+        <button class="search-btn" onclick="searchResult()">
+            <span>🔍</span> عرض النتيجة
+        </button>
+        
+        <div id="errorMsg" class="error"></div>
+        <div id="loading" class="loading">⏳ جاري البحث...</div>
+        
+        <!-- تذييل -->
+        <div class="footer">
+            <div>جميع الحقوق محفوظة ©</div>
+            <div>قسم البرمجة - مدرسة دشنا الثانوية</div>
+            <div class="signature">
+                <strong>أ/ محمد جاد عبداللاه</strong> | مسئول IT<br>
+                سفير مادة البرمجة بوزارة التربية والتعليم
+            </div>
+        </div>
     </div>
 </div>
 
 <script type="module">
   import { supabase } from './supabase-config.js';
   
-  const studentId = sessionStorage.getItem('viewStudentId');
-  if (!studentId) window.location.href = 'student-search.html';
+  const schoolId = 1;
+  let searchFields = ['code', 'national_id'];
   
-  async function loadResult() {
-      let { data: student } = await supabase.from('student_results').select('*, schools(name)').eq('id', studentId).single();
-      if (!student) {
-          document.getElementById('resultContainer').innerHTML = '<div class="result-card"><div class="card-header">خطأ</div><div class="subjects-section"><p style="color:red; text-align:center">لا توجد بيانات</p></div></div>';
-          return;
-      }
-      
-      let school = student.schools;
-      let scores = student.scores || {};
-      let gradeId = student.grade_id;
-      let { data: grade } = await supabase.from('grades').select('name, subjects').eq('id', gradeId).single();
-      let subjectsList = grade?.subjects?.sort((a,b)=>a.order-b.order) || [];
-      
-      // بناء قائمة المواد
-      let subjectsHtml = '';
-      for (let sub of subjectsList) {
-          let score = scores[sub.name] !== undefined ? scores[sub.name] : '—';
-          subjectsHtml += `
-              <div class="subject-card">
-                  <div class="subject-header">📖 ${sub.name}</div>
-                  <div class="score-value">الدرجة: ${score}</div>
-              </div>
-          `;
-      }
-      
-      if (subjectsHtml === '') {
-          subjectsHtml = '<div style="text-align:center; padding:30px; color:#dc3545;">⚠️ لا توجد نتائج مسجلة</div>';
-      }
-      
-      // الحالة والمواد
-      let status = student.status || '—';
-      let materials = student.materials || '—';
-      
-      let html = `
-          <div class="result-card">
-              <div class="card-header">
-                  <div class="school-name">🏫 ${school?.name || 'مدرسة دشنا الثانوية'}</div>
-                  <div class="student-name">👨‍🎓 ${student.student_name}</div>
-                  <div class="student-info">
-                      <span>📌 رقم الجلوس: ${student.seat_number || '-'}</span>
-                      <span>🔑 الكود: ${student.code || '-'}</span>
-                      <span>🆔 الرقم القومي: ${student.national_id || '-'}</span>
-                      <span>📅 السنة: ${student.academic_year || '2024/2025'}</span>
-                  </div>
-              </div>
-              
-              <!-- الحالة والمواد (في الأعلى) -->
-              <div class="status-materials">
-                  <div class="status-box">
-                      <span class="label">📋 الحالة</span>
-                      <span class="value">${status}</span>
-                  </div>
-                  <div class="materials-box">
-                      <span class="label">📚 المواد</span>
-                      <span class="value">${materials}</span>
-                  </div>
-              </div>
-              
-              <div class="subjects-section">
-                  <div class="subjects-title">📊 المواد الدراسية</div>
-                  <div class="subjects-list">${subjectsHtml}</div>
-              </div>
-              
-              <div class="card-footer">
-                  © نظام النتائج المدرسية - مدرسة دشنا الثانوية
-              </div>
-          </div>
-      `;
-      
-      document.getElementById('resultContainer').innerHTML = html;
+  async function loadSearchSettings() {
+      let { data: school } = await supabase.from('schools').select('search_fields').eq('id', schoolId).single();
+      if (school?.search_fields && school.search_fields.length > 0) searchFields = school.search_fields;
   }
   
-  loadResult();
+  window.searchResult = async () => {
+      let searchValue = document.getElementById('searchValue').value.trim();
+      if (!searchValue) {
+          document.getElementById('errorMsg').innerText = "⚠️ يرجى إدخال رقم الجلوس أو الكود أو الرقم القومي";
+          return;
+      }
+      document.getElementById('errorMsg').innerText = '';
+      document.getElementById('loading').style.display = 'block';
+      
+      let orConditions = searchFields.map(field => `${field}.eq.${searchValue}`).join(',');
+      let { data: student, error } = await supabase
+          .from('student_results')
+          .select('id')
+          .eq('school_id', schoolId)
+          .or(orConditions)
+          .single();
+      
+      document.getElementById('loading').style.display = 'none';
+      if (error || !student) {
+          document.getElementById('errorMsg').innerHTML = "⚠️ لا يوجد طالب بهذه البيانات<br><small>تأكد من صحة البيانات أو تواصل مع إدارة المدرسة</small>";
+          return;
+      }
+      sessionStorage.setItem('viewStudentId', student.id);
+      window.location.href = 'student-result.html';
+  };
+  
+  loadSearchSettings();
 </script>
 </body>
 </html>
