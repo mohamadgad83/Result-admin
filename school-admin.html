@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة مدير المدرسة</title>
+    <title>لوحة مدير المدرسة - مدرسة دشنا الثانوية</title>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f7ff; padding: 20px; }
-        .container { max-width: 1000px; margin: auto; background: white; border-radius: 20px; padding: 25px; }
+        .container { max-width: 1000px; margin: auto; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
         h1, h2, h3 { color: #1e3c72; margin-bottom: 15px; }
-        button, input, select { padding: 10px; margin: 5px; border-radius: 8px; border: 1px solid #ccc; }
-        button { background: #1e3c72; color: white; border: none; cursor: pointer; }
+        button, input, select { padding: 10px; margin: 5px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; }
+        button { background: #1e3c72; color: white; border: none; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #0f2b4f; transform: scale(1.02); }
         .btn-success { background: #28a745; }
         .btn-danger { background: #dc3545; }
         .btn-info { background: #17a2b8; }
@@ -64,7 +65,7 @@
 <body>
 <div class="container">
     <div class="flex-between" style="margin-bottom: 20px">
-        <h1>🏫 لوحة إدارة المدرسة</h1>
+        <h1>🏫 لوحة إدارة المدرسة - دشنا الثانوية</h1>
         <div>
             <button onclick="window.location.href='index.html'" class="btn-info">🏠 الرئيسية</button>
             <button onclick="window.location.href='student-search.html'" class="btn-success">🔍 عرض النتائج</button>
@@ -77,11 +78,23 @@
     <!-- الإحصائيات السريعة -->
     <div class="stats-grid" id="statsContainer"></div>
     
+    <!-- اختيار الصف والمزامنة -->
     <div class="info-card">
         <div class="flex-between">
             <select id="selectedGrade" style="flex:3">
                 <option value="">-- اختر الصف --</option>
             </select>
+            <button id="syncBtn" class="btn-info">🔄 مزامنة المواد</button>
+        </div>
+    </div>
+    
+    <!-- عرض المواد -->
+    <div id="subjectsContainer"></div>
+    
+    <!-- السنة الدراسية -->
+    <div class="info-card">
+        <div class="flex-between">
+            <label>📅 السنة الدراسية:</label>
             <select id="academicYear" style="flex:1">
                 <option value="2023/2024">2023/2024</option>
                 <option value="2024/2025" selected>2024/2025</option>
@@ -89,8 +102,6 @@
             </select>
         </div>
     </div>
-    
-    <div id="subjectsContainer"></div>
     
     <div class="flex-between" style="gap:20px; flex-wrap:wrap; margin: 20px 0">
         <div style="flex:1; background:#f0f7ff; padding:15px; border-radius:12px">
@@ -107,7 +118,13 @@
     
     <div class="loading" id="loadingIndicator">⏳ جاري المعالجة...</div>
     
-    <!-- قائمة الطلاب (في نافذة منبثقة) -->
+    <!-- زر عرض الطلاب -->
+    <div class="flex-between" style="margin-bottom: 15px;">
+        <button id="viewStudentsBtn" class="btn-info">👁️ عرض قائمة الطلاب</button>
+        <button id="printAllBtn" class="btn-warning">📄 طباعة كشف بجميع الطلاب</button>
+    </div>
+    
+    <!-- نافذة الطلاب المنبثقة -->
     <div id="studentsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:1000;">
         <div style="background:white; border-radius:20px; padding:20px; width:90%; max-width:800px; max-height:80%; overflow:auto;">
             <div class="flex-between"><h3>📚 قائمة الطلاب</h3><button onclick="closeStudentsModal()" class="btn-danger">✖</button></div>
@@ -123,6 +140,7 @@
   let currentGradeId = null;
   let currentSubjects = [];
   let currentYear = '2024/2025';
+  let gradesList = [];
   
   function showToast(msg, isErr = false) {
       let t = document.createElement('div');
@@ -134,7 +152,10 @@
   
   // تحميل الإحصائيات
   async function loadStats() {
-      if (!currentGradeId) return;
+      if (!currentGradeId) {
+          document.getElementById('statsContainer').innerHTML = '';
+          return;
+      }
       
       let { count: totalStudents } = await supabase
           .from('student_results')
@@ -149,96 +170,66 @@
       `;
   }
   
-  // طباعة كشف درجات للطالب
-  window.printStudentReport = async (studentId, studentName) => {
-      let { data: student } = await supabase
-          .from('student_results')
-          .select('*')
-          .eq('id', studentId)
-          .single();
-      
-      let scores = student.scores || {};
-      let printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-          <html dir="rtl">
-          <head><title>نتيجة ${studentName}</title>
-          <style>
-              body { font-family: 'Segoe UI', sans-serif; padding: 30px; }
-              .header { text-align: center; margin-bottom: 30px; }
-              .school { font-size: 24px; font-weight: bold; color: #1e3c72; }
-              .student { font-size: 20px; margin: 10px 0; }
-              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-              th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
-              th { background: #1e3c72; color: white; }
-              .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
-          </style>
-          </head>
-          <body>
-          <div class="header">
-              <div class="school">🏫 مدرسة دشنا الثانوية</div>
-              <div class="student">👨‍🎓 ${student.student_name}</div>
-              <div>📌 رقم الجلوس: ${student.seat_number} | 🔑 الكود: ${student.code || '-'}</div>
-              <div>📅 السنة الدراسية: ${student.academic_year || '2024/2025'}</div>
-          </div>
-          <table>
-              <thead><tr><th>المادة</th><th>الدرجة</th></tr></thead>
-              <tbody>
-                  ${currentSubjects.map(sub => `<tr><td>${sub.name}</td><td>${scores[sub.name] !== undefined ? scores[sub.name] : '—'}</td></tr>`).join('')}
-              </tbody>
-          </table>
-          <div class="footer">تم الطباعة من نظام النتائج المدرسية - مدرسة دشنا الثانوية</div>
-          </body>
-          </html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
-  };
-  
-  async function loadSchool() {
-      let { data: school } = await supabase.from('schools').select('*').eq('id', schoolId).single();
-      document.getElementById('schoolInfo').innerHTML = `<h2>🏫 ${school.name}</h2>`;
-      
+  // تحميل الصفوف
+  async function loadGrades() {
       let { data: grades } = await supabase.from('grades').select('*').order('id');
+      gradesList = grades || [];
       let select = document.getElementById('selectedGrade');
-      select.innerHTML = '<option value="">-- اختر الصف --</option>' + grades.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
-      
-      document.getElementById('academicYear').onchange = () => {
-          currentYear = document.getElementById('academicYear').value;
-          if (currentGradeId) loadStats();
-      };
-      
-      select.onchange = () => {
-          currentGradeId = select.value;
-          if (currentGradeId) {
-              let grade = grades.find(g => g.id == currentGradeId);
-              currentSubjects = (grade.subjects || []).sort((a,b)=>a.order-b.order);
-              renderSubjects();
-              loadStats();
-          }
-      };
+      select.innerHTML = '<option value="">-- اختر الصف --</option>' + gradesList.map(g => `<option value="${g.id}">${g.name}</option>`).join('');
   }
   
+  // مزامنة المواد من المرحلة (جدول grades)
+  window.syncSubjects = async () => {
+      if (!currentGradeId) {
+          showToast("اختر الصف أولاً", true);
+          return;
+      }
+      
+      let grade = gradesList.find(g => g.id == currentGradeId);
+      if (!grade) {
+          showToast("الصف غير موجود", true);
+          return;
+      }
+      
+      let subjects = grade.subjects || [];
+      if (subjects.length === 0) {
+          showToast("لا توجد مواد في هذا الصف. قم بإضافتها من لوحة السوبر أدمن أولاً", true);
+          return;
+      }
+      
+      currentSubjects = [...subjects];
+      currentSubjects.sort((a, b) => (a.order || 0) - (b.order || 0));
+      renderSubjects();
+      loadStats();
+      showToast("✅ تم مزامنة المواد بنجاح");
+  };
+  
+  // عرض المواد
   function renderSubjects() {
       let container = document.getElementById('subjectsContainer');
       if (!currentSubjects.length) {
-          container.innerHTML = '<div class="info-card"><p>⚠️ لا توجد مواد لهذا الصف</p></div>';
+          container.innerHTML = '<div class="info-card"><p>⚠️ لا توجد مواد. اضغط "مزامنة المواد" أولاً</p></div>';
           return;
       }
       container.innerHTML = `
           <div class="info-card">
-              <h3>📚 المواد (درجة واحدة لكل مادة)</h3>
-              ${currentSubjects.map(sub => `
-                  <div style="background:white; border-radius:10px; padding:10px; margin:10px 0">
-                      <strong>📖 ${sub.name}</strong>
-                  </div>
-              `).join('')}
+              <h3>📚 المواد الدراسية (درجة واحدة لكل مادة)</h3>
+              <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px;">
+                  ${currentSubjects.map(sub => `
+                      <div style="background: white; border-radius: 10px; padding: 8px 15px; border-right: 3px solid #1e3c72;">
+                          📖 ${sub.name}
+                      </div>
+                  `).join('')}
+              </div>
           </div>
       `;
   }
   
+  // تحميل القالب
   document.getElementById('downloadBtn').onclick = () => {
       if (!currentGradeId) { showToast("اختر الصف أولاً", true); return; }
-      if (!currentSubjects.length) { showToast("لا توجد مواد", true); return; }
+      if (!currentSubjects.length) { showToast("لا توجد مواد. قم بالمزامنة أولاً", true); return; }
+      
       let headers = ["اسم الطالب", "رقم الجلوس", "الكود", "الرقم القومي"];
       currentSubjects.forEach(sub => headers.push(`${sub.name} (الدرجة)`));
       let sheetData = [headers];
@@ -254,11 +245,13 @@
       showToast("✅ تم تحميل القالب");
   };
   
+  // استيراد البيانات
   document.getElementById('uploadBtn').onclick = async () => {
       let file = document.getElementById('excelFile').files[0];
       if (!file) { showToast("اختر ملف Excel أولاً", true); return; }
       if (!currentGradeId) { showToast("اختر الصف أولاً", true); return; }
-      if (!currentSubjects.length) { showToast("لا توجد مواد", true); return; }
+      if (!currentSubjects.length) { showToast("لا توجد مواد. قم بالمزامنة أولاً", true); return; }
+      
       document.getElementById('loadingIndicator').style.display = 'block';
       try {
           let data = await file.arrayBuffer();
@@ -302,10 +295,157 @@
       finally { document.getElementById('loadingIndicator').style.display = 'none'; }
   };
   
-  window.closeStudentsModal = () => { document.getElementById('studentsModal').style.display = 'none'; };
+  // عرض الطلاب
+  document.getElementById('viewStudentsBtn').onclick = async () => {
+      if (!currentGradeId) { showToast("اختر الصف أولاً", true); return; }
+      document.getElementById('studentsModal').style.display = 'flex';
+      document.getElementById('studentsList').innerHTML = 'جاري التحميل...';
+      
+      let { data: students } = await supabase
+          .from('student_results')
+          .select('*')
+          .eq('school_id', schoolId)
+          .eq('grade_id', currentGradeId)
+          .eq('academic_year', currentYear);
+      
+      if (!students || students.length === 0) {
+          document.getElementById('studentsList').innerHTML = '<p>لا يوجد طلاب</p>';
+          return;
+      }
+      
+      document.getElementById('studentsList').innerHTML = `
+          <div style="max-height:400px; overflow-y:auto;">
+              ${students.map(s => `
+                  <div style="background:#f8f9fa; padding:10px; margin:8px 0; border-radius:8px;">
+                      <div class="flex-between">
+                          <div><strong>${s.student_name}</strong><br><small>رقم الجلوس: ${s.seat_number}</small></div>
+                          <div><button onclick="printStudentReport('${s.id}', '${s.student_name}')" class="btn-warning btn-sm" style="padding:5px 10px;">📄 طباعة</button></div>
+                      </div>
+                  </div>
+              `).join('')}
+          </div>
+      `;
+  };
+  
+  // طباعة كشف طالب
+  window.printStudentReport = async (studentId, studentName) => {
+      let { data: student } = await supabase.from('student_results').select('*').eq('id', studentId).single();
+      let scores = student.scores || {};
+      let printWindow = window.open('', '_blank');
+      printWindow.document.write(`
+          <html dir="rtl">
+          <head><title>كشف درجات ${studentName}</title>
+          <style>
+              body { font-family: 'Segoe UI', sans-serif; padding: 30px; }
+              .header { text-align: center; margin-bottom: 30px; }
+              .school { font-size: 24px; font-weight: bold; color: #1e3c72; }
+              .student { font-size: 20px; margin: 10px 0; }
+              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+              th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+              th { background: #1e3c72; color: white; }
+              .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
+          </style>
+          </head>
+          <body>
+          <div class="header">
+              <div class="school">🏫 مدرسة دشنا الثانوية</div>
+              <div class="student">👨‍🎓 ${student.student_name}</div>
+              <div>📌 رقم الجلوس: ${student.seat_number} | 🔑 الكود: ${student.code || '-'}</div>
+              <div>📅 السنة الدراسية: ${student.academic_year || currentYear}</div>
+          </div>
+          <table>
+              <thead><tr><th>المادة</th><th>الدرجة</th></tr></thead>
+              <tbody>
+                  ${Object.entries(scores).map(([subject, score]) => `<tr><td style="text-align:right">${subject}</td><td>${score}</td></tr>`).join('')}
+              </tbody>
+          </table>
+          <div class="footer">تم الطباعة من نظام النتائج المدرسية</div>
+          </body>
+          </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+  };
+  
+  // طباعة جميع الطلاب
+  document.getElementById('printAllBtn').onclick = async () => {
+      if (!currentGradeId) { showToast("اختر الصف أولاً", true); return; }
+      let { data: students } = await supabase
+          .from('student_results')
+          .select('*')
+          .eq('school_id', schoolId)
+          .eq('grade_id', currentGradeId)
+          .eq('academic_year', currentYear);
+      
+      if (!students || students.length === 0) { showToast("لا يوجد طلاب", true); return; }
+      
+      let printWindow = window.open('', '_blank');
+      let studentsHtml = '';
+      for (let s of students) {
+          let scores = s.scores || {};
+          studentsHtml += `
+              <div style="page-break-after: always; margin-bottom: 30px;">
+                  <div class="header">
+                      <div class="school">🏫 مدرسة دشنا الثانوية</div>
+                      <div class="student">👨‍🎓 ${s.student_name}</div>
+                      <div>📌 رقم الجلوس: ${s.seat_number}</div>
+                      <div>📅 السنة الدراسية: ${s.academic_year || currentYear}</div>
+                  </div>
+                  <table border="1" style="width:100%; border-collapse:collapse;">
+                      <thead><tr><th>المادة</th><th>الدرجة</th></tr></thead>
+                      <tbody>${Object.entries(scores).map(([sub, score]) => `<tr><td style="text-align:right">${sub}</td><td>${score}</td></tr>`).join('')}</tbody>
+                  </table>
+              </div>
+          `;
+      }
+      
+      printWindow.document.write(`
+          <html dir="rtl">
+          <head><title>كشف درجات جميع الطلاب</title>
+          <style>
+              body { font-family: 'Segoe UI', sans-serif; padding: 20px; }
+              .header { text-align: center; margin-bottom: 20px; }
+              .school { font-size: 20px; font-weight: bold; color: #1e3c72; }
+              .student { font-size: 18px; margin: 5px 0; }
+              table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+              th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+              th { background: #1e3c72; color: white; }
+              @media print { .page-break { page-break-after: always; } }
+          </style>
+          </head>
+          <body>${studentsHtml}</body>
+          </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+  };
+  
+  function closeStudentsModal() { document.getElementById('studentsModal').style.display = 'none'; }
+  window.closeStudentsModal = closeStudentsModal;
   window.logout = () => { sessionStorage.clear(); window.location.href = 'login.html'; };
   
-  loadSchool();
+  // ربط الأحداث
+  document.getElementById('selectedGrade').onchange = () => {
+      currentGradeId = document.getElementById('selectedGrade').value;
+      if (currentGradeId) {
+          // عند تغيير الصف، نمسح المواد ونطلب المزامنة
+          currentSubjects = [];
+          renderSubjects();
+          loadStats();
+      } else {
+          document.getElementById('subjectsContainer').innerHTML = '';
+          document.getElementById('statsContainer').innerHTML = '';
+      }
+  };
+  
+  document.getElementById('syncBtn').onclick = window.syncSubjects;
+  document.getElementById('academicYear').onchange = () => {
+      currentYear = document.getElementById('academicYear').value;
+      if (currentGradeId) loadStats();
+  };
+  
+  // تحميل الصفوف عند بدء التشغيل
+  loadGrades();
 </script>
 </body>
 </html>
