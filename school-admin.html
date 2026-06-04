@@ -181,7 +181,7 @@
           let workbook = XLSX.read(data);
           let rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, defval: "" });
           let success = 0, error = 0;
-          for (let i = 2; i < rows.length; i++) {
+          for (let i = 1; i < rows.length; i++) {
               let row = rows[i];
               if (!row || !row[0] || !row[1]) continue;
               let name = row[0]?.toString().trim();
