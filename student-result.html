@@ -207,10 +207,15 @@
   let currentStudentData = null;
   
   function formatNumber(value) {
-      if (value === undefined || value === null) return '—';
-      if (typeof value === 'number') return value.toFixed(1);
-      return value;
-  }
+    if (value === undefined || value === null) return '—';
+    if (typeof value === 'number') {
+        if (Number.isInteger(value)) {
+            return value.toString();  // 85 وليس 85.0
+        }
+        return value.toFixed(1);  // 85.5 يبقى 85.5
+    }
+    return value;
+}
   
   function getMaxTotal(gradeName) {
       if (gradeName.includes('الأول') || gradeName.includes('أولى')) return 600;
