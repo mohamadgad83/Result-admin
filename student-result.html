@@ -4,30 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>نتيجة الطالب - مدرسة دشنا الثانوية</title>
+    <!-- مكتبة jsPDF لإنشاء PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- مكتبة html2canvas لتحويل HTML إلى صورة -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background: linear-gradient(135deg, #0f2b4f 0%, #1e3c72 50%, #2a5298 100%);
             min-height: 100vh;
             padding: 20px;
         }
         .container { max-width: 800px; margin: auto; }
         
+        /* بطاقة النتيجة */
         .result-card {
             background: white;
             border-radius: 24px;
             overflow: hidden;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+            transition: transform 0.3s;
         }
+        .result-card:hover { transform: translateY(-3px); }
         
+        /* رأس البطاقة */
         .card-header {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
             padding: 25px 20px;
             text-align: center;
         }
-        .school-name { font-size: 20px; font-weight: bold; opacity: 0.9; }
+        .school-name { font-size: 22px; font-weight: bold; opacity: 0.95; }
         .student-name { font-size: 26px; margin: 10px 0; font-weight: bold; }
         .student-info {
             display: flex;
@@ -43,8 +51,9 @@
             font-size: 12px;
         }
         
+        /* الحالة والمواد */
         .status-materials {
-            background: #f0f7ff;
+            background: linear-gradient(135deg, #f8f9fa, #eef2fa);
             padding: 15px 20px;
             display: flex;
             gap: 20px;
@@ -54,9 +63,10 @@
         .status-box, .materials-box {
             flex: 1;
             background: white;
-            border-radius: 12px;
+            border-radius: 15px;
             padding: 12px 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            text-align: center;
         }
         .status-box .label, .materials-box .label {
             font-size: 12px;
@@ -64,19 +74,44 @@
             display: block;
             margin-bottom: 5px;
         }
-        .status-box .value {
+        .status-icon { font-size: 28px; display: block; margin-bottom: 5px; }
+        .status-value {
             font-size: 18px;
+            font-weight: bold;
+        }
+        .status-pass { color: #28a745; }
+        .status-fail { color: #dc3545; }
+        
+        /* إحصائيات سريعة */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            padding: 15px 20px;
+            background: white;
+            border-bottom: 1px solid #eef2fa;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 12px 8px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 24px;
             font-weight: bold;
             color: #1e3c72;
         }
-        .materials-box .value {
-            font-size: 14px;
-            color: #333;
+        .stat-label {
+            font-size: 11px;
+            color: #666;
+            margin-top: 4px;
         }
+        .best-subject { color: #28a745; }
+        .worst-subject { color: #dc3545; }
         
-        .subjects-section {
-            padding: 20px;
-        }
+        /* المواد الدراسية */
+        .subjects-section { padding: 20px; }
         .subjects-title {
             font-size: 18px;
             font-weight: bold;
@@ -84,31 +119,43 @@
             margin-bottom: 15px;
             padding-bottom: 8px;
             border-bottom: 2px solid #1e3c72;
-        }
-        .subjects-list {
             display: flex;
-            flex-direction: column;
-            gap: 12px;
+            justify-content: space-between;
+            align-items: center;
         }
+        .subjects-list { display: flex; flex-direction: column; gap: 12px; }
         .subject-card {
             background: #f8f9fa;
             border-radius: 16px;
             overflow: hidden;
             border-right: 4px solid #1e3c72;
-        }
-        .subject-header {
-            background: #eef2fa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             padding: 12px 16px;
-            font-weight: bold;
-            font-size: 16px;
-            color: #1e3c72;
         }
-        .score-value {
-            padding: 12px 16px;
-            font-size: 18px;
-            font-weight: bold;
-            color: #1e3c72;
+        .subject-name { font-weight: bold; font-size: 16px; color: #1e3c72; }
+        .score-value { font-size: 18px; font-weight: bold; color: #1e3c72; }
+        
+        /* توقيع */
+        .signature-section {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #eef2fa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
+        .signature-box { text-align: center; }
+        .signature-line {
+            width: 150px;
+            border-top: 1px solid #999;
+            margin-top: 25px;
+            margin-bottom: 5px;
+        }
+        .signature-name { font-size: 12px; color: #666; }
         
         .card-footer {
             background: #f8f9fa;
@@ -119,6 +166,7 @@
             border-top: 1px solid #eef2fa;
         }
         
+        /* أزرار */
         .action-buttons {
             display: flex;
             gap: 12px;
@@ -127,32 +175,39 @@
             flex-wrap: wrap;
         }
         .btn {
-            padding: 12px 24px;
+            padding: 12px 20px;
             border: none;
-            border-radius: 30px;
+            border-radius: 40px;
             font-size: 14px;
             cursor: pointer;
             font-weight: bold;
             transition: 0.2s;
-            flex: 1;
-            min-width: 120px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
         .btn-primary { background: #1e3c72; color: white; }
         .btn-primary:hover { background: #0f2b4f; transform: scale(1.02); }
         .btn-success { background: #28a745; color: white; }
         .btn-success:hover { background: #1e6b2f; transform: scale(1.02); }
+        .btn-whatsapp { background: #25D366; color: white; }
+        .btn-whatsapp:hover { background: #128C7E; transform: scale(1.02); }
         
         @media print {
-            body { background: white; padding: 0; }
+            body { background: white; padding: 0; margin: 0; }
             .no-print { display: none; }
+            .result-card { box-shadow: none; margin: 0; border-radius: 0; }
             .card-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .status-materials { background: #f0f7ff; -webkit-print-color-adjust: exact; }
+            .btn, .action-buttons { display: none; }
+            .signature-section { border-top: 1px solid #ccc; }
         }
         
-        @media (max-width: 500px) {
-            .status-materials { flex-direction: column; gap: 10px; }
-            .student-name { font-size: 22px; }
-            .btn { padding: 10px 16px; font-size: 13px; }
+        @media (max-width: 550px) {
+            .stats-row { gap: 8px; }
+            .stat-number { font-size: 18px; }
+            .subject-card { flex-direction: column; text-align: center; gap: 8px; }
+            .signature-section { flex-direction: column; text-align: center; }
         }
     </style>
 </head>
@@ -160,8 +215,10 @@
 <div class="container">
     <div id="resultContainer"></div>
     <div class="action-buttons no-print">
-        <button class="btn btn-primary" onclick="window.print()">🖨️ طباعة النتيجة</button>
-        <button class="btn btn-success" onclick="history.back()">🔙 رجوع</button>
+        <button class="btn btn-primary" onclick="window.print()">🖨️ طباعة</button>
+        <button class="btn btn-success" id="downloadPdfBtn">📄 تحميل PDF</button>
+        <button class="btn btn-whatsapp" id="shareWhatsappBtn">📱 مشاركة واتساب</button>
+        <button class="btn btn-primary" onclick="history.back()">🔙 رجوع</button>
     </div>
 </div>
 
@@ -171,13 +228,38 @@
   const studentId = sessionStorage.getItem('viewStudentId');
   if (!studentId) window.location.href = 'student-search.html';
   
+  let currentStudentData = null;
+  
   function formatNumber(value) {
       if (value === undefined || value === null) return '—';
-      if (typeof value === 'number') {
-          // تقريب لرقم عشري واحد
-          return value.toFixed(1);
-      }
+      if (typeof value === 'number') return value.toFixed(1);
       return value;
+  }
+  
+  // حساب الإحصائيات
+  function calculateStats(scores, subjectsList) {
+      let scoresArray = [];
+      let subjectScores = {};
+      
+      for (let sub of subjectsList) {
+          let score = scores[sub.name];
+          if (score !== undefined && typeof score === 'number') {
+              scoresArray.push(score);
+              subjectScores[sub.name] = score;
+          }
+      }
+      
+      if (scoresArray.length === 0) {
+          return { totalSubjects: 0, bestScore: null, worstScore: null, bestSubject: null, worstSubject: null, average: 0 };
+      }
+      
+      let bestScore = Math.max(...scoresArray);
+      let worstScore = Math.min(...scoresArray);
+      let bestSubject = Object.keys(subjectScores).find(key => subjectScores[key] === bestScore);
+      let worstSubject = Object.keys(subjectScores).find(key => subjectScores[key] === worstScore);
+      let average = scoresArray.reduce((a,b) => a + b, 0) / scoresArray.length;
+      
+      return { totalSubjects: scoresArray.length, bestScore, worstScore, bestSubject, worstSubject, average: average.toFixed(1) };
   }
   
   async function loadResult() {
@@ -187,21 +269,28 @@
           return;
       }
       
+      currentStudentData = student;
       let school = student.schools;
       let scores = student.scores || {};
       let gradeId = student.grade_id;
       let { data: grade } = await supabase.from('grades').select('name, subjects').eq('id', gradeId).single();
       let subjectsList = grade?.subjects?.sort((a,b)=>a.order-b.order) || [];
       
-      // بناء قائمة المواد مع تنسيق الأرقام
+      // حساب الإحصائيات
+      let stats = calculateStats(scores, subjectsList);
+      let status = student.status || '—';
+      let materials = student.materials || '—';
+      let isPass = status === 'ناجح' || status === 'نجاح' || (stats.average >= 50);
+      
+      // بناء قائمة المواد
       let subjectsHtml = '';
       for (let sub of subjectsList) {
           let scoreValue = scores[sub.name];
           let displayScore = formatNumber(scoreValue);
           subjectsHtml += `
               <div class="subject-card">
-                  <div class="subject-header">📖 ${sub.name}</div>
-                  <div class="score-value">الدرجة: ${displayScore}</div>
+                  <span class="subject-name">📖 ${sub.name}</span>
+                  <span class="score-value">${displayScore}</span>
               </div>
           `;
       }
@@ -210,11 +299,12 @@
           subjectsHtml = '<div style="text-align:center; padding:30px; color:#dc3545;">⚠️ لا توجد نتائج مسجلة</div>';
       }
       
-      let status = student.status || '—';
-      let materials = student.materials || '—';
+      let statusIcon = isPass ? '✅' : '⚠️';
+      let statusClass = isPass ? 'status-pass' : 'status-fail';
+      let statusText = status !== '—' ? status : (isPass ? 'ناجح' : 'راسب');
       
       let html = `
-          <div class="result-card">
+          <div class="result-card" id="resultCard">
               <div class="card-header">
                   <div class="school-name">🏫 ${school?.name || 'مدرسة دشنا الثانوية'}</div>
                   <div class="student-name">👨‍🎓 ${student.student_name}</div>
@@ -228,28 +318,91 @@
               
               <div class="status-materials">
                   <div class="status-box">
-                      <span class="label">📋 الحالة</span>
-                      <span class="value">${status}</span>
+                      <span class="status-icon">${statusIcon}</span>
+                      <span class="label">الحالة</span>
+                      <span class="status-value ${statusClass}">${statusText}</span>
                   </div>
                   <div class="materials-box">
                       <span class="label">📚 المواد</span>
-                      <span class="value">${materials}</span>
+                      <span class="status-value">${materials}</span>
+                  </div>
+              </div>
+              
+              <div class="stats-row">
+                  <div class="stat-card">
+                      <div class="stat-number">${stats.totalSubjects}</div>
+                      <div class="stat-label">المواد</div>
+                  </div>
+                  <div class="stat-card">
+                      <div class="stat-number ${stats.bestScore >= 80 ? 'best-subject' : ''}">${stats.bestScore !== null ? stats.bestScore : '—'}</div>
+                      <div class="stat-label">أعلى درجة</div>
+                      ${stats.bestSubject ? `<div style="font-size:10px; color:#666;">${stats.bestSubject}</div>` : ''}
+                  </div>
+                  <div class="stat-card">
+                      <div class="stat-number ${stats.worstScore < 50 ? 'worst-subject' : ''}">${stats.worstScore !== null ? stats.worstScore : '—'}</div>
+                      <div class="stat-label">أقل درجة</div>
+                      ${stats.worstSubject ? `<div style="font-size:10px; color:#666;">${stats.worstSubject}</div>` : ''}
                   </div>
               </div>
               
               <div class="subjects-section">
-                  <div class="subjects-title">📊 المواد الدراسية</div>
+                  <div class="subjects-title">
+                      <span>📊 المواد الدراسية</span>
+                      <span style="font-size:12px;">${stats.totalSubjects} مادة</span>
+                  </div>
                   <div class="subjects-list">${subjectsHtml}</div>
               </div>
               
+              <div class="signature-section">
+                  <div class="signature-box">
+                      <div class="signature-line"></div>
+                      <div class="signature-name">مدير المدرسة</div>
+                      <div class="signature-name">أ/ عبدالرحمن فهمي</div>
+                  </div>
+                  <div class="signature-box">
+                      <div class="signature-line"></div>
+                      <div class="signature-name">رئيس الكنترول</div>
+                      <div class="signature-name">أ/ محرم فؤاد</div>
+                  </div>
+                  <div class="signature-box">
+                      <div class="signature-line"></div>
+                      <div class="signature-name">مسئول البرمجة</div>
+                      <div class="signature-name">أ/ محمد جاد عبداللاه</div>
+                  </div>
+              </div>
+              
               <div class="card-footer">
-                  © نظام النتائج المدرسية - مدرسة دشنا الثانوية
+                  <div>📅 تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</div>
+                  <div>© نظام النتائج المدرسية - مدرسة دشنا الثانوية</div>
               </div>
           </div>
       `;
       
       document.getElementById('resultContainer').innerHTML = html;
   }
+  
+  // تحميل PDF
+  document.getElementById('downloadPdfBtn')?.addEventListener('click', async () => {
+      const { jsPDF } = window.jspdf;
+      const element = document.getElementById('resultCard');
+      if (!element) return;
+      
+      const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff' });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 190;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      pdf.save(`نتيجة_${currentStudentData?.student_name || 'طالب'}.pdf`);
+  });
+  
+  // مشاركة عبر واتساب
+  document.getElementById('shareWhatsappBtn')?.addEventListener('click', () => {
+      let text = `نتيجة الطالب ${currentStudentData?.student_name || ''}\n`;
+      text += `رقم الجلوس: ${currentStudentData?.seat_number || '-'}\n`;
+      text += `للاطلاع على النتيجة الكاملة: ${window.location.href}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  });
   
   loadResult();
 </script>
