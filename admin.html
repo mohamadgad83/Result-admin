@@ -3,11 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة الإدارة - التحكم في الصفوف والمواد</title>
+    <title>لوحة الإدارة - مدرسة دشنا الثانوية</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f7ff; padding: 20px; }
         .container { max-width: 1200px; margin: auto; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        
+        /* التبويبات */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            background: #eef2fa;
+            padding: 10px;
+            border-radius: 15px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 10px 25px;
+            background: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .tab-btn.active {
+            background: #1e3c72;
+            color: white;
+        }
+        .tab-btn:hover:not(.active) {
+            background: #cfe3ff;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        
         h1, h2, h3 { color: #1e3c72; margin-bottom: 15px; }
         button, input, select { padding: 10px; margin: 5px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; }
         button { background: #1e3c72; color: white; border: none; cursor: pointer; transition: 0.2s; }
@@ -47,15 +82,20 @@
             flex-wrap: wrap;
             gap: 10px;
             border-right: 3px solid #1e3c72;
-            cursor: move;
         }
-        .subject-item.dragging { opacity: 0.5; background: #cfe3ff; }
-        .drag-handle { cursor: grab; color: #1e3c72; font-size: 18px; margin-left: 5px; }
+        .subject-name { font-weight: bold; font-size: 16px; }
         .subject-order { background: #eef2fa; padding: 4px 10px; border-radius: 20px; font-size: 12px; }
         .add-subject-row { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
         .add-subject-row input { flex: 2; }
         .add-subject-row input[type="number"] { flex: 0.5; min-width: 80px; }
-        .settings-card { background: #f0f7ff; border-radius: 15px; padding: 20px; margin-bottom: 25px; border: 1px solid #cfe3ff; }
+        
+        .settings-card {
+            background: #f0f7ff;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px solid #cfe3ff;
+        }
         .checkbox-group { display: flex; gap: 20px; flex-wrap: wrap; margin: 10px 0; }
         .checkbox-group label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
         
@@ -99,31 +139,45 @@
             90% { opacity: 1; }
             100% { opacity: 0; visibility: hidden; }
         }
+        @media (max-width: 600px) {
+            .grade-header { flex-direction: column; text-align: center; }
+            .subject-item { flex-direction: column; text-align: center; }
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="flex-between" style="margin-bottom: 20px;">
-        <h1>👑 لوحة التحكم - إدارة الصفوف والمواد</h1>
+        <h1>👑 لوحة التحكم - مدرسة دشنا الثانوية</h1>
         <button onclick="logout()" class="btn-danger">🚪 تسجيل خروج</button>
     </div>
     
-    <!-- إعدادات البحث -->
-    <div class="settings-card">
-        <h3>🔍 إعدادات البحث للطلاب</h3>
-        <p style="font-size:12px; color:#666; margin-bottom:10px;">اختر الحقول التي سيتم البحث بها (يمكن اختيار أكثر من حقل)</p>
-        <div class="checkbox-group">
-            <label><input type="checkbox" id="searchSeat" value="seat_number"> رقم الجلوس</label>
-            <label><input type="checkbox" id="searchCode" value="code"> الكود</label>
-            <label><input type="checkbox" id="searchNational" value="national_id"> الرقم القومي</label>
-        </div>
-        <button onclick="saveSearchSettings()" class="btn-success" style="margin-top:10px;">💾 حفظ إعدادات البحث</button>
-        <div id="searchSettingsStatus" style="margin-top:10px; font-size:12px;"></div>
+    <!-- التبويبات -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('materials')">📚 إدارة المواد والصفوف</button>
+        <button class="tab-btn" onclick="showTab('search')">🔍 إعدادات البحث</button>
     </div>
     
-    <div id="gradesContainer"></div>
+    <!-- تبويب إدارة المواد -->
+    <div id="tab-materials" class="tab-content active">
+        <div id="gradesContainer"></div>
+        <button onclick="showAddGradeModal()" class="btn-success" style="margin-top: 15px;">➕ إضافة صف جديد</button>
+    </div>
     
-    <button onclick="showAddGradeModal()" class="btn-success" style="margin-top: 15px;">➕ إضافة صف جديد</button>
+    <!-- تبويب إعدادات البحث -->
+    <div id="tab-search" class="tab-content">
+        <div class="settings-card">
+            <h3>🔍 إعدادات البحث للطلاب</h3>
+            <p style="font-size:12px; color:#666; margin-bottom:10px;">اختر الحقول التي سيتم البحث بها (يمكن اختيار أكثر من حقل)</p>
+            <div class="checkbox-group">
+                <label><input type="checkbox" id="searchSeat" value="seat_number"> رقم الجلوس</label>
+                <label><input type="checkbox" id="searchCode" value="code"> الكود</label>
+                <label><input type="checkbox" id="searchNational" value="national_id"> الرقم القومي</label>
+            </div>
+            <button onclick="saveSearchSettings()" class="btn-success" style="margin-top:10px;">💾 حفظ إعدادات البحث</button>
+            <div id="searchSettingsStatus" style="margin-top:10px; font-size:12px;"></div>
+        </div>
+    </div>
 </div>
 
 <!-- نافذة إضافة صف جديد -->
@@ -154,8 +208,7 @@
   import { supabase } from './supabase-config.js';
   
   let currentEditGradeId = null;
-  let draggingIndex = null;
-  let currentSchoolId = 1; // مدرسة ديشن الثانوية
+  let currentSchoolId = 1; // مدرسة دشنا الثانوية
   
   const role = sessionStorage.getItem('userRole');
   if (role !== 'superAdmin') window.location.href = 'login.html';
@@ -168,6 +221,20 @@
       setTimeout(() => t.remove(), 3000);
   }
   
+  // التبويبات
+  window.showTab = (tabId) => {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      if (tabId === 'materials') {
+          document.querySelector('.tab-btn:first-child').classList.add('active');
+          document.getElementById('tab-materials').classList.add('active');
+      } else {
+          document.querySelector('.tab-btn:last-child').classList.add('active');
+          document.getElementById('tab-search').classList.add('active');
+      }
+  };
+  
+  // إعدادات البحث
   async function loadSearchSettings() {
       let { data: school } = await supabase.from('schools').select('search_fields').eq('id', currentSchoolId).single();
       let fields = school?.search_fields || ['code', 'national_id'];
@@ -192,6 +259,7 @@
       else showToast("✅ تم حفظ إعدادات البحث");
   };
   
+  // إدارة الصفوف والمواد
   async function loadGrades() {
       let { data: grades } = await supabase.from('grades').select('*').order('id');
       const container = document.getElementById('gradesContainer');
@@ -206,7 +274,7 @@
           subjects.sort((a, b) => (a.order || 0) - (b.order || 0));
           
           container.innerHTML += `
-              <div class="grade-card" data-grade-id="${grade.id}">
+              <div class="grade-card">
                   <div class="grade-header">
                       <div class="grade-title">🎓 ${grade.name}</div>
                       <div>
@@ -214,11 +282,10 @@
                           <button onclick="deleteGrade(${grade.id})" class="btn-danger btn-sm">🗑️ حذف الصف</button>
                       </div>
                   </div>
-                  <div class="subjects-list" id="subjects-${grade.id}">
+                  <div class="subjects-list">
                       ${subjects.map((sub, idx) => `
-                          <div class="subject-item" draggable="true" data-subject-index="${idx}" data-subject-name="${sub.name}">
+                          <div class="subject-item">
                               <div class="subject-name">
-                                  <span class="drag-handle">⋮⋮</span>
                                   📖 ${sub.name}
                                   <span class="subject-order">ترتيب: ${sub.order || idx+1}</span>
                               </div>
@@ -237,39 +304,6 @@
               </div>
           `;
       }
-      setupDragAndDrop();
-  }
-  
-  function setupDragAndDrop() {
-      document.querySelectorAll('.subjects-list').forEach(container => {
-          let items = container.querySelectorAll('.subject-item');
-          items.forEach(item => {
-              item.addEventListener('dragstart', (e) => {
-                  draggingIndex = parseInt(item.dataset.subjectIndex);
-                  item.classList.add('dragging');
-                  e.dataTransfer.setData('text/plain', draggingIndex);
-              });
-              item.addEventListener('dragend', (e) => { item.classList.remove('dragging'); draggingIndex = null; });
-              item.addEventListener('dragover', (e) => { e.preventDefault(); });
-              item.addEventListener('drop', async (e) => {
-                  e.preventDefault();
-                  let targetItem = e.target.closest('.subject-item');
-                  if (!targetItem) return;
-                  let targetIndex = parseInt(targetItem.dataset.subjectIndex);
-                  if (draggingIndex === targetIndex) return;
-                  let gradeId = parseInt(container.closest('.grade-card').dataset.gradeId);
-                  let { data: grade } = await supabase.from('grades').select('subjects').eq('id', gradeId).single();
-                  let subjects = grade.subjects || [];
-                  let draggedItem = subjects[draggingIndex];
-                  subjects.splice(draggingIndex, 1);
-                  subjects.splice(targetIndex, 0, draggedItem);
-                  subjects.forEach((sub, idx) => { sub.order = idx + 1; });
-                  let { error } = await supabase.from('grades').update({ subjects }).eq('id', gradeId);
-                  if (error) showToast("خطأ في حفظ الترتيب: " + error.message, true);
-                  else { showToast("✅ تم تحديث ترتيب المواد"); loadGrades(); }
-              });
-          });
-      });
   }
   
   window.showAddGradeModal = () => {
