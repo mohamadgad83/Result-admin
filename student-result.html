@@ -6,61 +6,165 @@
     <title>نتيجة الطالب - مدرسة دشنا الثانوية</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 16px; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
         .container { max-width: 800px; margin: auto; }
-        .result-card { background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
-        .card-header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 24px 20px; text-align: center; }
-        .school-name { font-size: 20px; font-weight: bold; }
-        .student-name { font-size: 24px; margin: 8px 0; }
-        .student-info { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
-        .student-info span { background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px; font-size: 12px; }
-        .card-body { padding: 20px; }
-        .subjects-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
-        .subject-card { background: #f8f9fa; border-radius: 16px; overflow: hidden; border-right: 4px solid #1e3c72; }
-        .subject-header { background: #eef2fa; padding: 12px 16px; font-weight: bold; }
-        .score-value { padding: 12px 16px; font-size: 18px; font-weight: bold; color: #1e3c72; }
         
-        /* الخانتين الجديدتين */
-        .extra-info {
-            background: #f0f7ff;
-            border-radius: 16px;
-            padding: 15px;
-            margin-top: 20px;
-            border-right: 4px solid #28a745;
+        .result-card {
+            background: white;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+        
+        /* رأس البطاقة */
+        .card-header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+        }
+        .school-name { font-size: 20px; font-weight: bold; opacity: 0.9; }
+        .student-name { font-size: 26px; margin: 10px 0; font-weight: bold; }
+        .student-info {
             display: flex;
-            flex-wrap: wrap;
+            justify-content: center;
             gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 10px;
         }
-        .extra-item {
+        .student-info span {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        /* قسم الحالة والمواد (في الأعلى تحت بيانات الطالب) */
+        .status-materials {
+            background: #f0f7ff;
+            padding: 15px 20px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #eef2fa;
+        }
+        .status-box, .materials-box {
             flex: 1;
-            min-width: 150px;
+            background: white;
+            border-radius: 12px;
+            padding: 12px 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
-        .extra-item .label {
-            font-weight: bold;
-            color: #1e3c72;
-            font-size: 14px;
+        .status-box .label, .materials-box .label {
+            font-size: 12px;
+            color: #666;
             display: block;
             margin-bottom: 5px;
         }
-        .extra-item .value {
+        .status-box .value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1e3c72;
+        }
+        .materials-box .value {
             font-size: 14px;
             color: #333;
-            background: white;
-            padding: 8px 12px;
-            border-radius: 10px;
         }
         
-        .card-footer { background: #f8f9fa; padding: 12px; text-align: center; font-size: 12px; color: #666; }
-        .btn { padding: 12px 24px; border: none; border-radius: 30px; font-size: 14px; cursor: pointer; margin-top: 20px; width: 100%; }
+        /* المواد الدراسية */
+        .subjects-section {
+            padding: 20px;
+        }
+        .subjects-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1e3c72;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #1e3c72;
+        }
+        .subjects-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .subject-card {
+            background: #f8f9fa;
+            border-radius: 16px;
+            overflow: hidden;
+            border-right: 4px solid #1e3c72;
+        }
+        .subject-header {
+            background: #eef2fa;
+            padding: 12px 16px;
+            font-weight: bold;
+            font-size: 16px;
+            color: #1e3c72;
+        }
+        .score-value {
+            padding: 12px 16px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #1e3c72;
+        }
+        
+        /* تذييل */
+        .card-footer {
+            background: #f8f9fa;
+            padding: 12px 20px;
+            text-align: center;
+            font-size: 11px;
+            color: #666;
+            border-top: 1px solid #eef2fa;
+        }
+        
+        /* أزرار */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 30px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+            flex: 1;
+            min-width: 120px;
+        }
         .btn-primary { background: #1e3c72; color: white; }
+        .btn-primary:hover { background: #0f2b4f; transform: scale(1.02); }
         .btn-success { background: #28a745; color: white; }
-        @media print { body { background: white; } .no-print { display: none; } .card-header { -webkit-print-color-adjust: exact; } }
+        .btn-success:hover { background: #1e6b2f; transform: scale(1.02); }
+        
+        @media print {
+            body { background: white; padding: 0; }
+            .no-print { display: none; }
+            .card-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .status-materials { background: #f0f7ff; -webkit-print-color-adjust: exact; }
+        }
+        
+        @media (max-width: 500px) {
+            .status-materials { flex-direction: column; gap: 10px; }
+            .student-name { font-size: 22px; }
+            .btn { padding: 10px 16px; font-size: 13px; }
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <div id="resultContainer"></div>
-    <div class="no-print" style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <div class="action-buttons no-print">
         <button class="btn btn-primary" onclick="window.print()">🖨️ طباعة النتيجة</button>
         <button class="btn btn-success" onclick="history.back()">🔙 رجوع</button>
     </div>
@@ -75,15 +179,17 @@
   async function loadResult() {
       let { data: student } = await supabase.from('student_results').select('*, schools(name)').eq('id', studentId).single();
       if (!student) {
-          document.getElementById('resultContainer').innerHTML = '<div class="result-card"><div class="card-header">خطأ</div><div class="card-body">لا توجد بيانات</div></div>';
+          document.getElementById('resultContainer').innerHTML = '<div class="result-card"><div class="card-header">خطأ</div><div class="subjects-section"><p style="color:red; text-align:center">لا توجد بيانات</p></div></div>';
           return;
       }
+      
       let school = student.schools;
       let scores = student.scores || {};
       let gradeId = student.grade_id;
       let { data: grade } = await supabase.from('grades').select('name, subjects').eq('id', gradeId).single();
       let subjectsList = grade?.subjects?.sort((a,b)=>a.order-b.order) || [];
       
+      // بناء قائمة المواد
       let subjectsHtml = '';
       for (let sub of subjectsList) {
           let score = scores[sub.name] !== undefined ? scores[sub.name] : '—';
@@ -95,7 +201,11 @@
           `;
       }
       
-      // الخانتين الجديدتين: الحالة والمواد
+      if (subjectsHtml === '') {
+          subjectsHtml = '<div style="text-align:center; padding:30px; color:#dc3545;">⚠️ لا توجد نتائج مسجلة</div>';
+      }
+      
+      // الحالة والمواد
       let status = student.status || '—';
       let materials = student.materials || '—';
       
@@ -111,23 +221,30 @@
                       <span>📅 السنة: ${student.academic_year || '2024/2025'}</span>
                   </div>
               </div>
-              <div class="card-body">
-                  <div class="subjects-list">${subjectsHtml}</div>
-                  
-                  <div class="extra-info">
-                      <div class="extra-item">
-                          <div class="label">📋 الحالة</div>
-                          <div class="value">${status}</div>
-                      </div>
-                      <div class="extra-item">
-                          <div class="label">📚 المواد</div>
-                          <div class="value">${materials}</div>
-                      </div>
+              
+              <!-- الحالة والمواد (في الأعلى) -->
+              <div class="status-materials">
+                  <div class="status-box">
+                      <span class="label">📋 الحالة</span>
+                      <span class="value">${status}</span>
+                  </div>
+                  <div class="materials-box">
+                      <span class="label">📚 المواد</span>
+                      <span class="value">${materials}</span>
                   </div>
               </div>
-              <div class="card-footer">© نظام النتائج المدرسية - مدرسة دشنا الثانوية</div>
+              
+              <div class="subjects-section">
+                  <div class="subjects-title">📊 المواد الدراسية</div>
+                  <div class="subjects-list">${subjectsHtml}</div>
+              </div>
+              
+              <div class="card-footer">
+                  © نظام النتائج المدرسية - مدرسة دشنا الثانوية
+              </div>
           </div>
       `;
+      
       document.getElementById('resultContainer').innerHTML = html;
   }
   
