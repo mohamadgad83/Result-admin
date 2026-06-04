@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>نتيجة الطالب - مدرسة دشنا الثانوية</title>
-    <!-- مكتبة jsPDF لإنشاء PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- مكتبة html2canvas لتحويل HTML إلى صورة -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -23,9 +21,7 @@
             border-radius: 24px;
             overflow: hidden;
             box-shadow: 0 15px 35px rgba(0,0,0,0.25);
-            transition: transform 0.3s;
         }
-        .result-card:hover { transform: translateY(-3px); }
         
         .card-header {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
@@ -33,7 +29,7 @@
             padding: 25px 20px;
             text-align: center;
         }
-        .school-name { font-size: 22px; font-weight: bold; opacity: 0.95; }
+        .school-name { font-size: 22px; font-weight: bold; }
         .student-name { font-size: 26px; margin: 10px 0; font-weight: bold; }
         .student-info {
             display: flex;
@@ -50,7 +46,7 @@
         }
         
         .status-materials {
-            background: linear-gradient(135deg, #f8f9fa, #eef2fa);
+            background: #f0f7ff;
             padding: 15px 20px;
             display: flex;
             gap: 20px;
@@ -62,8 +58,8 @@
             background: white;
             border-radius: 15px;
             padding: 12px 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
         .status-box .label, .materials-box .label {
             font-size: 12px;
@@ -72,32 +68,27 @@
             margin-bottom: 5px;
         }
         .status-icon { font-size: 28px; display: block; margin-bottom: 5px; }
-        .status-value {
-            font-size: 18px;
-            font-weight: bold;
-        }
+        .status-value { font-size: 18px; font-weight: bold; }
         .status-pass { color: #28a745; }
         .status-fail { color: #dc3545; }
         
-        /* المجموع الكلي والنسبة */
         .total-row {
             display: flex;
             justify-content: center;
             gap: 30px;
             padding: 15px 20px;
-            background: #f0f7ff;
-            border-bottom: 1px solid #cfe3ff;
+            background: white;
+            border-bottom: 1px solid #eef2fa;
             flex-wrap: wrap;
         }
         .total-card {
             text-align: center;
-            background: white;
+            background: #f8f9fa;
             padding: 12px 25px;
             border-radius: 25px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
         .total-number {
-            font-size: 28px;
+            font-size: 26px;
             font-weight: bold;
             color: #1e3c72;
         }
@@ -107,7 +98,6 @@
             margin-top: 4px;
         }
         
-        /* المواد الدراسية */
         .subjects-section { padding: 20px; }
         .subjects-title {
             font-size: 18px;
@@ -117,21 +107,19 @@
             padding-bottom: 8px;
             border-bottom: 2px solid #1e3c72;
         }
-        .subjects-list { display: flex; flex-direction: column; gap: 12px; }
+        .subjects-list { display: flex; flex-direction: column; gap: 10px; }
         .subject-card {
             background: #f8f9fa;
-            border-radius: 16px;
-            overflow: hidden;
-            border-right: 4px solid #1e3c72;
+            border-radius: 14px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 16px;
+            padding: 10px 16px;
+            border-right: 3px solid #1e3c72;
         }
-        .subject-name { font-weight: bold; font-size: 15px; color: #1e3c72; }
+        .subject-name { font-weight: bold; font-size: 16px; color: #1e3c72; }
         .subject-score { font-size: 18px; font-weight: bold; color: #1e3c72; }
         
-        /* توقيع */
         .signature-section {
             padding: 15px 20px;
             background: #f8f9fa;
@@ -144,16 +132,16 @@
         }
         .signature-box { text-align: center; }
         .signature-line {
-            width: 130px;
+            width: 120px;
             border-top: 1px solid #999;
             margin-top: 25px;
             margin-bottom: 5px;
         }
-        .signature-name { font-size: 12px; color: #666; }
+        .signature-name { font-size: 11px; color: #666; }
         
         .card-footer {
             background: #f8f9fa;
-            padding: 12px 20px;
+            padding: 10px 20px;
             text-align: center;
             font-size: 11px;
             color: #666;
@@ -168,38 +156,34 @@
             flex-wrap: wrap;
         }
         .btn {
-            padding: 12px 20px;
+            padding: 10px 20px;
             border: none;
             border-radius: 40px;
             font-size: 14px;
             cursor: pointer;
             font-weight: bold;
-            transition: 0.2s;
             display: inline-flex;
             align-items: center;
             gap: 8px;
         }
         .btn-primary { background: #1e3c72; color: white; }
-        .btn-primary:hover { background: #0f2b4f; transform: scale(1.02); }
+        .btn-primary:hover { background: #0f2b4f; }
         .btn-success { background: #28a745; color: white; }
-        .btn-success:hover { background: #1e6b2f; transform: scale(1.02); }
         .btn-whatsapp { background: #25D366; color: white; }
-        .btn-whatsapp:hover { background: #128C7E; transform: scale(1.02); }
         
         @media print {
-            body { background: white; padding: 0; margin: 0; }
+            body { background: white; padding: 0; }
             .no-print { display: none; }
-            .result-card { box-shadow: none; margin: 0; border-radius: 0; }
             .card-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .btn, .action-buttons { display: none; }
         }
         
         @media (max-width: 550px) {
             .total-row { gap: 15px; }
-            .total-number { font-size: 22px; }
-            .subject-card { flex-direction: column; text-align: center; gap: 8px; }
+            .total-number { font-size: 20px; }
+            .subject-card { flex-direction: column; text-align: center; gap: 5px; }
             .signature-section { flex-direction: column; text-align: center; }
             .signature-line { width: 100px; }
+            .student-name { font-size: 22px; }
         }
     </style>
 </head>
@@ -208,8 +192,8 @@
     <div id="resultContainer"></div>
     <div class="action-buttons no-print">
         <button class="btn btn-primary" onclick="window.print()">🖨️ طباعة</button>
-        <button class="btn btn-success" id="downloadPdfBtn">📄 تحميل PDF</button>
-        <button class="btn btn-whatsapp" id="shareWhatsappBtn">📱 مشاركة واتساب</button>
+        <button class="btn btn-success" id="downloadPdfBtn">📄 PDF</button>
+        <button class="btn btn-whatsapp" id="shareWhatsappBtn">📱 واتساب</button>
         <button class="btn btn-primary" onclick="history.back()">🔙 رجوع</button>
     </div>
 </div>
@@ -228,7 +212,6 @@
       return value;
   }
   
-  // حساب المجموع الكلي حسب الصف
   function getMaxTotal(gradeName) {
       if (gradeName.includes('الأول') || gradeName.includes('أولى')) return 600;
       return 380;
@@ -249,17 +232,12 @@
       let gradeName = grade?.name || '';
       let subjectsList = grade?.subjects?.sort((a,b)=>a.order-b.order) || [];
       
-      // حساب المجموع الكلي
       let totalScore = 0;
       let maxTotal = getMaxTotal(gradeName);
-      let subjectScores = [];
       
       for (let sub of subjectsList) {
           let score = scores[sub.name];
-          if (score !== undefined && typeof score === 'number') {
-              totalScore += score;
-              subjectScores.push({ name: sub.name, score: score });
-          }
+          if (typeof score === 'number') totalScore += score;
       }
       
       let percentage = maxTotal > 0 ? ((totalScore / maxTotal) * 100).toFixed(1) : 0;
@@ -267,15 +245,13 @@
       let materials = student.materials || '—';
       let isPass = status === 'ناجح' || status === 'نجاح' || (percentage >= 50);
       
-      // بناء قائمة المواد مع عرض المجموع بين قوسين
       let subjectsHtml = '';
       for (let sub of subjectsList) {
           let scoreValue = scores[sub.name];
           let displayScore = formatNumber(scoreValue);
-          let maxScore = 100; // كل مادة من 100
           subjectsHtml += `
               <div class="subject-card">
-                  <span class="subject-name">📖 ${sub.name} (من ${maxScore})</span>
+                  <span class="subject-name">📖 ${sub.name}</span>
                   <span class="subject-score">${displayScore}</span>
               </div>
           `;
@@ -284,10 +260,6 @@
       if (subjectsHtml === '') {
           subjectsHtml = '<div style="text-align:center; padding:30px; color:#dc3545;">⚠️ لا توجد نتائج مسجلة</div>';
       }
-      
-      let statusIcon = isPass ? '✅' : '⚠️';
-      let statusClass = isPass ? 'status-pass' : 'status-fail';
-      let statusText = status !== '—' ? status : (isPass ? 'ناجح' : 'راسب');
       
       let html = `
           <div class="result-card" id="resultCard">
@@ -305,9 +277,9 @@
               
               <div class="status-materials">
                   <div class="status-box">
-                      <span class="status-icon">${statusIcon}</span>
+                      <span class="status-icon">${isPass ? '✅' : '⚠️'}</span>
                       <span class="label">الحالة</span>
-                      <span class="status-value ${statusClass}">${statusText}</span>
+                      <span class="status-value ${isPass ? 'status-pass' : 'status-fail'}">${status !== '—' ? status : (isPass ? 'ناجح' : 'راسب')}</span>
                   </div>
                   <div class="materials-box">
                       <span class="label">📚 المواد</span>
@@ -332,26 +304,12 @@
               </div>
               
               <div class="signature-section">
-                  <div class="signature-box">
-                      <div class="signature-line"></div>
-                      <div class="signature-name">مدير المدرسة</div>
-                      <div class="signature-name">أ/ عبدالرحمن فهمي</div>
-                  </div>
-                  <div class="signature-box">
-                      <div class="signature-line"></div>
-                      <div class="signature-name">رئيس الكنترول</div>
-                      <div class="signature-name">أ/ محرم فؤاد</div>
-                  </div>
-                  <div class="signature-box">
-                      <div class="signature-line"></div>
-                      <div class="signature-name">مسئول البرمجة</div>
-                      <div class="signature-name">أ/ محمد جاد عبداللاه</div>
-                  </div>
+                  <div class="signature-box"><div class="signature-line"></div><div class="signature-name">مدير المدرسة</div><div class="signature-name">أ/ عبدالرحمن فهمي</div></div>
+                  <div class="signature-box"><div class="signature-line"></div><div class="signature-name">رئيس الكنترول</div><div class="signature-name">أ/ محرم فؤاد</div></div>
               </div>
               
               <div class="card-footer">
-                  <div>📅 تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</div>
-                  <div>© نظام النتائج المدرسية - مدرسة دشنا الثانوية</div>
+                  <div>📅 ${new Date().toLocaleDateString('ar-EG')} | © نظام النتائج المدرسية</div>
               </div>
           </div>
       `;
@@ -359,12 +317,10 @@
       document.getElementById('resultContainer').innerHTML = html;
   }
   
-  // تحميل PDF
   document.getElementById('downloadPdfBtn')?.addEventListener('click', async () => {
       const { jsPDF } = window.jspdf;
       const element = document.getElementById('resultCard');
       if (!element) return;
-      
       const canvas = await html2canvas(element, { scale: 2, backgroundColor: '#ffffff' });
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -374,12 +330,8 @@
       pdf.save(`نتيجة_${currentStudentData?.student_name || 'طالب'}.pdf`);
   });
   
-  // مشاركة عبر واتساب
   document.getElementById('shareWhatsappBtn')?.addEventListener('click', () => {
-      let text = `نتيجة الطالب ${currentStudentData?.student_name || ''}\n`;
-      text += `رقم الجلوس: ${currentStudentData?.seat_number || '-'}\n`;
-      text += `المجموع الكلي: ${currentStudentData?.total || '-'}\n`;
-      text += `للاطلاع على النتيجة الكاملة: ${window.location.href}`;
+      let text = `نتيجة الطالب ${currentStudentData?.student_name || ''}\nرقم الجلوس: ${currentStudentData?.seat_number || '-'}\nللاطلاع على النتيجة: ${window.location.href}`;
       window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   });
   
