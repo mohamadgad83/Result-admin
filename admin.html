@@ -9,7 +9,6 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f7ff; padding: 20px; }
         .container { max-width: 1200px; margin: auto; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
         
-        /* التبويبات */
         .tabs {
             display: flex;
             gap: 10px;
@@ -29,19 +28,10 @@
             font-weight: bold;
             transition: 0.2s;
         }
-        .tab-btn.active {
-            background: #1e3c72;
-            color: white;
-        }
-        .tab-btn:hover:not(.active) {
-            background: #cfe3ff;
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
+        .tab-btn.active { background: #1e3c72; color: white; }
+        .tab-btn:hover:not(.active) { background: #cfe3ff; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
         
         h1, h2, h3 { color: #1e3c72; margin-bottom: 15px; }
         button, input, select { padding: 10px; margin: 5px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; }
@@ -53,14 +43,14 @@
         .btn-info { background: #17a2b8; }
         .btn-sm { padding: 5px 10px; font-size: 12px; }
         
-        .grade-card {
+        .grade-card, .school-card {
             background: #eef2fa;
             border-radius: 15px;
             padding: 20px;
             margin-bottom: 25px;
             border: 1px solid #cfe3ff;
         }
-        .grade-header {
+        .grade-header, .school-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -70,7 +60,7 @@
             padding-bottom: 10px;
             border-bottom: 2px solid #1e3c72;
         }
-        .grade-title { font-size: 20px; font-weight: bold; color: #1e3c72; }
+        .grade-title, .school-title { font-size: 20px; font-weight: bold; color: #1e3c72; }
         .subjects-list { display: flex; flex-direction: column; gap: 10px; margin: 15px 0; }
         .subject-item {
             background: white;
@@ -140,7 +130,7 @@
             100% { opacity: 0; visibility: hidden; }
         }
         @media (max-width: 600px) {
-            .grade-header { flex-direction: column; text-align: center; }
+            .grade-header, .school-header { flex-direction: column; text-align: center; }
             .subject-item { flex-direction: column; text-align: center; }
         }
     </style>
@@ -152,39 +142,44 @@
         <button onclick="logout()" class="btn-danger">🚪 تسجيل خروج</button>
     </div>
     
-    <!-- التبويبات -->
     <div class="tabs">
-        <button class="tab-btn active" onclick="showTab('materials')">📚 إدارة المواد والصفوف</button>
+        <button class="tab-btn active" onclick="showTab('materials')">📚 المواد والصفوف</button>
+        <button class="tab-btn" onclick="showTab('schools')">🏫 المدارس</button>
         <button class="tab-btn" onclick="showTab('search')">🔍 إعدادات البحث</button>
     </div>
     
-    <!-- تبويب إدارة المواد -->
+    <!-- تبويب المواد -->
     <div id="tab-materials" class="tab-content active">
         <div id="gradesContainer"></div>
         <button onclick="showAddGradeModal()" class="btn-success" style="margin-top: 15px;">➕ إضافة صف جديد</button>
+    </div>
+    
+    <!-- تبويب المدارس -->
+    <div id="tab-schools" class="tab-content">
+        <div id="schoolsList"></div>
+        <button onclick="showAddSchoolModal()" class="btn-success" style="margin-top: 15px;">➕ إضافة مدرسة جديدة</button>
     </div>
     
     <!-- تبويب إعدادات البحث -->
     <div id="tab-search" class="tab-content">
         <div class="settings-card">
             <h3>🔍 إعدادات البحث للطلاب</h3>
-            <p style="font-size:12px; color:#666; margin-bottom:10px;">اختر الحقول التي سيتم البحث بها (يمكن اختيار أكثر من حقل)</p>
+            <p style="font-size:12px; color:#666;">اختر الحقول التي سيتم البحث بها (يمكن اختيار أكثر من حقل)</p>
             <div class="checkbox-group">
                 <label><input type="checkbox" id="searchSeat" value="seat_number"> رقم الجلوس</label>
                 <label><input type="checkbox" id="searchCode" value="code"> الكود</label>
                 <label><input type="checkbox" id="searchNational" value="national_id"> الرقم القومي</label>
             </div>
-            <button onclick="saveSearchSettings()" class="btn-success" style="margin-top:10px;">💾 حفظ إعدادات البحث</button>
-            <div id="searchSettingsStatus" style="margin-top:10px; font-size:12px;"></div>
+            <button onclick="saveSearchSettings()" class="btn-success">💾 حفظ إعدادات البحث</button>
         </div>
     </div>
 </div>
 
-<!-- نافذة إضافة صف جديد -->
+<!-- نافذة إضافة صف -->
 <div id="addGradeModal" class="modal">
     <div class="modal-content">
         <h3>➕ إضافة صف جديد</h3>
-        <input type="text" id="newGradeName" placeholder="اسم الصف (مثال: الصف الثالث علمي)" style="width:100%; margin:10px 0">
+        <input type="text" id="newGradeName" placeholder="اسم الصف" style="width:100%; margin:10px 0">
         <div class="flex-between">
             <button onclick="saveNewGrade()" class="btn-success">💾 حفظ</button>
             <button onclick="closeModal('addGradeModal')" class="btn-danger">إلغاء</button>
@@ -204,11 +199,23 @@
     </div>
 </div>
 
+<!-- نافذة إضافة مدرسة -->
+<div id="addSchoolModal" class="modal">
+    <div class="modal-content">
+        <h3>➕ إضافة مدرسة جديدة</h3>
+        <input type="text" id="newSchoolName" placeholder="اسم المدرسة" style="width:100%; margin:10px 0">
+        <div class="flex-between">
+            <button onclick="addNewSchool()" class="btn-success">💾 حفظ</button>
+            <button onclick="closeModal('addSchoolModal')" class="btn-danger">إلغاء</button>
+        </div>
+    </div>
+</div>
+
 <script type="module">
   import { supabase } from './supabase-config.js';
   
   let currentEditGradeId = null;
-  let currentSchoolId = 1; // مدرسة دشنا الثانوية
+  let currentSchoolId = 1;
   
   const role = sessionStorage.getItem('userRole');
   if (role !== 'superAdmin') window.location.href = 'login.html';
@@ -226,10 +233,15 @@
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
       if (tabId === 'materials') {
-          document.querySelector('.tab-btn:first-child').classList.add('active');
+          document.querySelectorAll('.tab-btn')[0].classList.add('active');
           document.getElementById('tab-materials').classList.add('active');
+          loadGrades();
+      } else if (tabId === 'schools') {
+          document.querySelectorAll('.tab-btn')[1].classList.add('active');
+          document.getElementById('tab-schools').classList.add('active');
+          loadSchools();
       } else {
-          document.querySelector('.tab-btn:last-child').classList.add('active');
+          document.querySelectorAll('.tab-btn')[2].classList.add('active');
           document.getElementById('tab-search').classList.add('active');
       }
   };
@@ -248,18 +260,58 @@
       if (document.getElementById('searchSeat').checked) searchFields.push('seat_number');
       if (document.getElementById('searchCode').checked) searchFields.push('code');
       if (document.getElementById('searchNational').checked) searchFields.push('national_id');
-      
-      if (searchFields.length === 0) {
-          showToast("يجب اختيار حقل بحث واحد على الأقل", true);
-          return;
-      }
-      
+      if (searchFields.length === 0) { showToast("اختر حقل بحث واحد على الأقل", true); return; }
       let { error } = await supabase.from('schools').update({ search_fields: searchFields }).eq('id', currentSchoolId);
       if (error) showToast("خطأ: " + error.message, true);
       else showToast("✅ تم حفظ إعدادات البحث");
   };
   
-  // إدارة الصفوف والمواد
+  // إدارة المدارس
+  async function loadSchools() {
+      let { data: schools } = await supabase.from('schools').select('*');
+      const div = document.getElementById('schoolsList');
+      if (!schools || schools.length === 0) {
+          div.innerHTML = '<p>لا توجد مدارس</p>';
+          return;
+      }
+      div.innerHTML = schools.map(s => `
+          <div class="school-card">
+              <div><strong>🏫 ${s.name}</strong></div>
+              <div>
+                  <button onclick="openSchool(${s.id})" class="btn-info">👁️ فتح لوحة المدرسة</button>
+                  <button onclick="deleteSchool(${s.id})" class="btn-danger">🗑️ حذف</button>
+              </div>
+          </div>
+      `).join('');
+  }
+  
+  window.openSchool = (id) => {
+      sessionStorage.setItem('impersonatedSchoolId', id);
+      window.location.href = 'school-admin.html';
+  };
+  
+  window.deleteSchool = async (id) => {
+      if (!confirm("حذف المدرسة سيحذف جميع بياناتها؟")) return;
+      await supabase.from('student_results').delete().eq('school_id', id);
+      await supabase.from('schools').delete().eq('id', id);
+      showToast("✅ تم حذف المدرسة");
+      loadSchools();
+  };
+  
+  window.showAddSchoolModal = () => {
+      document.getElementById('newSchoolName').value = '';
+      document.getElementById('addSchoolModal').style.display = 'flex';
+  };
+  
+  window.addNewSchool = async () => {
+      let name = document.getElementById('newSchoolName').value.trim();
+      if (!name) { showToast("اسم المدرسة مطلوب", true); return; }
+      let { error } = await supabase.from('schools').insert([{ name, search_fields: ['code', 'national_id'] }]);
+      if (error) showToast("خطأ: " + error.message, true);
+      else { showToast("✅ تم إضافة المدرسة"); closeModal('addSchoolModal'); loadSchools(); }
+  };
+  
+  // إدارة المواد والصفوف
   async function loadGrades() {
       let { data: grades } = await supabase.from('grades').select('*').order('id');
       const container = document.getElementById('gradesContainer');
@@ -267,12 +319,10 @@
           container.innerHTML = '<p>لا توجد صفوف. أضف صفاً جديداً</p>';
           return;
       }
-      
       container.innerHTML = '';
       for (let grade of grades) {
           let subjects = grade.subjects || [];
           subjects.sort((a, b) => (a.order || 0) - (b.order || 0));
-          
           container.innerHTML += `
               <div class="grade-card">
                   <div class="grade-header">
@@ -285,10 +335,7 @@
                   <div class="subjects-list">
                       ${subjects.map((sub, idx) => `
                           <div class="subject-item">
-                              <div class="subject-name">
-                                  📖 ${sub.name}
-                                  <span class="subject-order">ترتيب: ${sub.order || idx+1}</span>
-                              </div>
+                              <div class="subject-name">📖 ${sub.name} <span class="subject-order">ترتيب: ${sub.order || idx+1}</span></div>
                               <div>
                                   <button onclick="editSubject(${grade.id}, ${idx}, '${sub.name}', ${sub.order || idx+1})" class="btn-warning btn-sm">✏️ تعديل</button>
                                   <button onclick="deleteSubject(${grade.id}, ${idx}, '${sub.name}')" class="btn-danger btn-sm">🗑️ حذف</button>
@@ -299,7 +346,7 @@
                   <div class="add-subject-row">
                       <input type="text" id="newSubject-${grade.id}" placeholder="مادة جديدة">
                       <input type="number" id="newOrder-${grade.id}" placeholder="الترتيب" value="${subjects.length + 1}">
-                      <button onclick="addSubject(${grade.id})" class="btn-success">+ إضافة مادة</button>
+                      <button onclick="addSubject(${grade.id})" class="btn-success">+ إضافة</button>
                   </div>
               </div>
           `;
@@ -335,9 +382,9 @@
   
   window.deleteGrade = async (id) => {
       if (!confirm("حذف هذا الصف سيحذف جميع بيانات الطلاب المرتبطة به! استمر؟")) return;
-      let { error } = await supabase.from('grades').delete().eq('id', id);
-      if (error) showToast("خطأ: " + error.message, true);
-      else { showToast("✅ تم حذف الصف"); loadGrades(); }
+      await supabase.from('grades').delete().eq('id', id);
+      showToast("✅ تم حذف الصف");
+      loadGrades();
   };
   
   window.addSubject = async (gradeId) => {
@@ -347,37 +394,37 @@
       if (isNaN(order)) order = 0;
       let { data: grade } = await supabase.from('grades').select('subjects').eq('id', gradeId).single();
       let subjects = grade.subjects || [];
-      if (subjects.find(s => s.name === name)) { showToast("هذه المادة موجودة بالفعل", true); return; }
+      if (subjects.find(s => s.name === name)) { showToast("هذه المادة موجودة", true); return; }
       subjects.push({ name, order });
       subjects.sort((a, b) => (a.order || 0) - (b.order || 0));
-      let { error } = await supabase.from('grades').update({ subjects }).eq('id', gradeId);
-      if (error) showToast("خطأ: " + error.message, true);
-      else { showToast(`✅ تم إضافة مادة "${name}"`); loadGrades(); }
+      await supabase.from('grades').update({ subjects }).eq('id', gradeId);
+      showToast(`✅ تم إضافة "${name}"`);
+      loadGrades();
   };
   
   window.editSubject = async (gradeId, idx, oldName, oldOrder) => {
-      let newName = prompt("الاسم الجديد للمادة:", oldName);
-      if (!newName || newName === oldName) return;
+      let newName = prompt("الاسم الجديد:", oldName);
+      if (!newName) return;
       let newOrder = parseInt(prompt("الترتيب الجديد:", oldOrder));
       if (isNaN(newOrder)) newOrder = oldOrder;
       let { data: grade } = await supabase.from('grades').select('subjects').eq('id', gradeId).single();
       let subjects = grade.subjects || [];
       subjects[idx] = { name: newName, order: newOrder };
       subjects.sort((a, b) => (a.order || 0) - (b.order || 0));
-      let { error } = await supabase.from('grades').update({ subjects }).eq('id', gradeId);
-      if (error) showToast("خطأ: " + error.message, true);
-      else { showToast("✅ تم تعديل المادة"); loadGrades(); }
+      await supabase.from('grades').update({ subjects }).eq('id', gradeId);
+      showToast("✅ تم تعديل المادة");
+      loadGrades();
   };
   
   window.deleteSubject = async (gradeId, idx, subjectName) => {
-      if (!confirm(`حذف مادة "${subjectName}"؟`)) return;
+      if (!confirm(`حذف "${subjectName}"؟`)) return;
       let { data: grade } = await supabase.from('grades').select('subjects').eq('id', gradeId).single();
       let subjects = grade.subjects || [];
       subjects.splice(idx, 1);
       subjects.forEach((sub, i) => { sub.order = i + 1; });
-      let { error } = await supabase.from('grades').update({ subjects }).eq('id', gradeId);
-      if (error) showToast("خطأ: " + error.message, true);
-      else { showToast("✅ تم حذف المادة"); loadGrades(); }
+      await supabase.from('grades').update({ subjects }).eq('id', gradeId);
+      showToast("✅ تم حذف المادة");
+      loadGrades();
   };
   
   window.closeModal = (id) => { document.getElementById(id).style.display = 'none'; };
@@ -385,6 +432,7 @@
   
   loadSearchSettings();
   loadGrades();
+  loadSchools();
 </script>
 </body>
 </html>
