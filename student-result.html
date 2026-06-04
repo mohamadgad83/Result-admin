@@ -19,6 +19,29 @@
         .subject-card { background: #f8f9fa; border-radius: 16px; overflow: hidden; border-right: 4px solid #1e3c72; }
         .subject-header { background: #eef2fa; padding: 12px 16px; font-weight: bold; }
         .score-value { padding: 12px 16px; font-size: 18px; font-weight: bold; color: #1e3c72; }
+        
+        /* الخانتين الجديدتين */
+        .extra-info {
+            background: #f0f7ff;
+            border-radius: 16px;
+            padding: 15px;
+            margin-top: 20px;
+            border-right: 4px solid #28a745;
+        }
+        .extra-info h4 {
+            color: #1e3c72;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .extra-info p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .extra-info .label {
+            font-weight: bold;
+            color: #2a5298;
+        }
+        
         .card-footer { background: #f8f9fa; padding: 12px; text-align: center; font-size: 12px; color: #666; }
         .btn { padding: 12px 24px; border: none; border-radius: 30px; font-size: 14px; cursor: pointer; margin-top: 20px; width: 100%; }
         .btn-primary { background: #1e3c72; color: white; }
@@ -32,7 +55,6 @@
     <div id="resultContainer"></div>
     <div class="no-print" style="display: flex; gap: 10px; flex-wrap: wrap;">
         <button class="btn btn-primary" onclick="window.print()">🖨️ طباعة النتيجة</button>
-        <button class="btn btn-info" id="printReportBtn" style="display:none;">📄 طباعة كشف تفصيلي</button>
         <button class="btn btn-success" onclick="history.back()">🔙 رجوع</button>
     </div>
 </div>
@@ -66,6 +88,10 @@
           `;
       }
       
+      // الخانتين الجديدتين
+      let phone = student.phone || '—';
+      let notes = student.general_notes || '—';
+      
       let html = `
           <div class="result-card">
               <div class="card-header">
@@ -80,54 +106,17 @@
               </div>
               <div class="card-body">
                   <div class="subjects-list">${subjectsHtml}</div>
+                  
+                  <div class="extra-info">
+                      <h4>📋 معلومات إضافية</h4>
+                      <p><span class="label">📞 رقم التليفون:</span> ${phone}</p>
+                      <p><span class="label">📝 ملاحظات:</span> ${notes}</p>
+                  </div>
               </div>
               <div class="card-footer">© نظام النتائج المدرسية - مدرسة دشنا الثانوية</div>
           </div>
       `;
       document.getElementById('resultContainer').innerHTML = html;
-      
-      // إظهار زر الطباعة التفصيلية
-      let printBtn = document.getElementById('printReportBtn');
-      printBtn.style.display = 'block';
-      printBtn.onclick = () => printDetailedReport(student);
-  }
-  
-  function printDetailedReport(student) {
-      let printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-          <html dir="rtl">
-          <head><title>كشف درجات ${student.student_name}</title>
-          <style>
-              body { font-family: 'Segoe UI', sans-serif; padding: 30px; }
-              .header { text-align: center; margin-bottom: 30px; }
-              .school { font-size: 24px; font-weight: bold; color: #1e3c72; }
-              .student { font-size: 20px; margin: 10px 0; }
-              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-              th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
-              th { background: #1e3c72; color: white; }
-              .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
-          </style>
-          </head>
-          <body>
-          <div class="header">
-              <div class="school">🏫 مدرسة دشنا الثانوية</div>
-              <div class="student">👨‍🎓 ${student.student_name}</div>
-              <div>📌 رقم الجلوس: ${student.seat_number} | 🔑 الكود: ${student.code || '-'}</div>
-              <div>🆔 الرقم القومي: ${student.national_id || '-'}</div>
-              <div>📅 السنة الدراسية: ${student.academic_year || '2024/2025'}</div>
-          </div>
-          <table>
-              <thead><tr><th>المادة</th><th>الدرجة</th></tr></thead>
-              <tbody>
-                  ${Object.entries(student.scores || {}).map(([subject, score]) => `<tr><td>${subject}</td><td>${score}</td></tr>`).join('')}
-              </tbody>
-          </table>
-          <div class="footer">تم الطباعة من نظام النتائج المدرسية - مدرسة دشنا الثانوية</div>
-          </body>
-          </html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
   }
   
   loadResult();
