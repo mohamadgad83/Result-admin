@@ -8,41 +8,62 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #1e3c72 100%);
+            background: linear-gradient(135deg, #0f2b4f 0%, #1e3c72 50%, #2a5298 100%);
             min-height: 100vh;
             padding: 20px;
             position: relative;
         }
+        /* زخرفة خلفية بسيطة */
         body::before {
-            content: '';
+            content: "🏫";
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" opacity="0.05"><path fill="white" d="M20,20 L30,20 L25,28 Z M50,20 L60,20 L55,28 Z M80,20 L90,20 L85,28 Z M35,40 L45,40 L40,48 Z M65,40 L75,40 L70,48 Z M20,60 L30,60 L25,68 Z M50,60 L60,60 L55,68 Z M80,60 L90,60 L85,68 Z"/></svg>');
-            background-repeat: repeat;
+            bottom: 20px;
+            left: 20px;
+            font-size: 80px;
+            opacity: 0.05;
             pointer-events: none;
         }
+        body::after {
+            content: "📚";
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 80px;
+            opacity: 0.05;
+            pointer-events: none;
+        }
+        
         .container { max-width: 550px; margin: auto; position: relative; z-index: 1; }
         
         /* بطاقة البحث الرئيسية */
         .search-card {
-            background: white;
-            border-radius: 35px;
+            background: rgba(255,255,255,0.98);
+            border-radius: 40px;
             padding: 30px 25px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            box-shadow: 0 25px 45px rgba(0,0,0,0.3);
             text-align: center;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
+            backdrop-filter: blur(5px);
+            transition: transform 0.3s;
+        }
+        .search-card:hover {
+            transform: translateY(-5px);
         }
         
-        /* عنوان المدرسة */
-        .school-header {
-            margin-bottom: 20px;
-            border-bottom: 2px solid #eef2fa;
-            padding-bottom: 15px;
+        /* شعار المدرسة */
+        .school-logo {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: -50px auto 15px auto;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
+        .school-logo span { font-size: 35px; }
+        
+        .school-header { margin-bottom: 20px; }
         .school-name {
             font-size: 26px;
             font-weight: bold;
@@ -50,39 +71,31 @@
             margin-bottom: 5px;
         }
         .school-name small {
-            font-size: 14px;
+            font-size: 13px;
             color: #666;
+            display: block;
         }
         
-        /* بطاقة معلومات الإدارة */
-        .management-card {
-            background: linear-gradient(135deg, #f8f9fa 0%, #eef2fa 100%);
-            border-radius: 20px;
-            padding: 15px;
-            margin: 20px 0;
-            border-right: 4px solid #1e3c72;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        .management-title {
-            font-weight: bold;
-            color: #1e3c72;
-            margin-bottom: 12px;
-            font-size: 16px;
-            border-right: 3px solid #1e3c72;
-            padding-right: 10px;
-        }
+        /* بطاقات الإدارة - تصميم عصري */
         .management-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 12px;
+            margin: 20px 0;
         }
-        .management-item {
-            background: white;
-            padding: 8px 12px;
-            border-radius: 12px;
+        .management-card {
+            background: linear-gradient(135deg, #f8f9fa, #eef2fa);
+            border-radius: 20px;
+            padding: 12px 8px;
             text-align: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: 0.3s;
+            border: 1px solid rgba(30,60,114,0.1);
         }
+        .management-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+        .management-icon { font-size: 24px; margin-bottom: 5px; }
         .management-label {
             font-size: 11px;
             color: #666;
@@ -94,19 +107,20 @@
             color: #1e3c72;
         }
         
-        /* قسم الحاسب والبرمجة */
+        /* قسم الحاسب */
         .it-card {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            border-radius: 20px;
-            padding: 15px;
+            border-radius: 25px;
+            padding: 18px;
             margin: 20px 0;
             color: white;
             text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
         }
         .it-title {
             font-weight: bold;
-            font-size: 15px;
-            margin-bottom: 10px;
+            font-size: 16px;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -117,123 +131,143 @@
             justify-content: center;
             gap: 20px;
             flex-wrap: wrap;
-            font-size: 13px;
         }
         .it-names span {
             background: rgba(255,255,255,0.2);
-            padding: 4px 12px;
-            border-radius: 20px;
+            padding: 6px 15px;
+            border-radius: 30px;
+            font-size: 13px;
         }
         
         /* حقل البحث */
-        .search-input-group {
-            margin: 25px 0 20px;
-            text-align: right;
-        }
-        .search-input-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #1e3c72;
-            font-size: 14px;
-        }
-        .search-input-group input {
-            width: 100%;
-            padding: 15px 20px;
-            border: 2px solid #eef2fa;
-            border-radius: 30px;
-            font-size: 16px;
-            transition: 0.2s;
+        .search-box {
             background: #f8f9fa;
+            border-radius: 60px;
+            padding: 5px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 25px 0 15px;
+            border: 2px solid #eef2fa;
+            transition: 0.2s;
         }
-        .search-input-group input:focus {
-            outline: none;
+        .search-box:focus-within {
             border-color: #1e3c72;
             background: white;
             box-shadow: 0 0 0 3px rgba(30,60,114,0.1);
+        }
+        .search-icon {
+            font-size: 20px;
+            color: #1e3c72;
+        }
+        .search-box input {
+            flex: 1;
+            padding: 16px 0;
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            outline: none;
+        }
+        .search-box input::placeholder {
+            color: #aaa;
         }
         
         /* زر البحث */
         .search-btn {
             width: 100%;
-            padding: 15px;
+            padding: 16px;
             background: linear-gradient(135deg, #1e3c72, #2a5298);
             color: white;
             border: none;
-            border-radius: 35px;
+            border-radius: 60px;
             font-size: 18px;
             font-weight: bold;
             cursor: pointer;
             transition: 0.2s;
-            margin-bottom: 20px;
+            margin: 15px 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
         .search-btn:hover {
             transform: scale(1.02);
-            box-shadow: 0 5px 20px rgba(30,60,114,0.4);
+            box-shadow: 0 8px 25px rgba(30,60,114,0.4);
         }
         
-        /* حقوق الطبع */
+        /* رسائل الحالة */
+        .error {
+            color: #dc3545;
+            margin: 10px 0;
+            font-size: 14px;
+            background: #ffe6e6;
+            padding: 10px;
+            border-radius: 12px;
+        }
+        .loading {
+            margin: 15px 0;
+            color: #1e3c72;
+            display: none;
+            font-size: 14px;
+        }
+        
+        /* تذييل */
         .footer {
             text-align: center;
             padding-top: 20px;
-            margin-top: 10px;
+            margin-top: 15px;
             border-top: 1px solid #eef2fa;
             font-size: 11px;
-            color: #666;
-        }
-        .footer strong {
-            color: #1e3c72;
+            color: #888;
         }
         .signature {
             margin-top: 8px;
             font-size: 10px;
-            color: #888;
+            color: #aaa;
         }
         
-        .error { color: #dc3545; margin-top: 15px; font-size: 14px; }
-        .loading { margin-top: 15px; color: #1e3c72; display: none; font-size: 14px; }
-        
-        @media (max-width: 480px) {
+        @media (max-width: 500px) {
             .search-card { padding: 20px; }
             .school-name { font-size: 22px; }
-            .management-grid { grid-template-columns: 1fr; gap: 8px; }
+            .management-grid { gap: 8px; }
+            .management-name { font-size: 11px; }
             .it-names { flex-direction: column; gap: 8px; align-items: center; }
+            .search-btn { font-size: 16px; padding: 14px; }
         }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="search-card">
-        <!-- رأس المدرسة -->
+        <!-- شعار واسم المدرسة -->
+        <div class="school-logo"><span>🏫</span></div>
         <div class="school-header">
-            <div class="school-name">🏫 مدرسة دشنا الثانوية</div>
+            <div class="school-name">مدرسة دشنا الثانوية</div>
             <div class="school-name"><small>Dishna Secondary School</small></div>
         </div>
         
-        <!-- معلومات الإدارة -->
-        <div class="management-card">
-            <div class="management-title">📋 الإدارة المدرسية</div>
-            <div class="management-grid">
-                <div class="management-item">
-                    <div class="management-label">رئيس الكنترول</div>
-                    <div class="management-name">أ/ محرم فؤاد</div>
-                </div>
-                <div class="management-item">
-                    <div class="management-label">وكيل شئون الطلاب</div>
-                    <div class="management-name">أ/ عاطف أبوالعباس</div>
-                </div>
-                <div class="management-item">
-                    <div class="management-label">مدير المدرسة</div>
-                    <div class="management-name">أ/ عبدالرحمن فهمي</div>
-                </div>
+        <!-- بطاقات الإدارة - 3 أقسام -->
+        <div class="management-grid">
+            <div class="management-card">
+                <div class="management-icon">📊</div>
+                <div class="management-label">رئيس الكنترول</div>
+                <div class="management-name">أ/ محرم فؤاد</div>
+            </div>
+            <div class="management-card">
+                <div class="management-icon">👨‍🎓</div>
+                <div class="management-label">وكيل شئون الطلاب</div>
+                <div class="management-name">أ/ عاطف أبوالعباس</div>
+            </div>
+            <div class="management-card">
+                <div class="management-icon">🏫</div>
+                <div class="management-label">مدير المدرسة</div>
+                <div class="management-name">أ/ عبدالرحمن فهمي</div>
             </div>
         </div>
         
-        <!-- قسم الحاسب والبرمجة -->
+        <!-- قسم الحاسب -->
         <div class="it-card">
-            <div class="it-title">
-                💻 قسم الحاسب الآلي والبرمجة
-            </div>
+            <div class="it-title">💻 قسم الحاسب الآلي والبرمجة</div>
             <div class="it-names">
                 <span>أ/ خالد عبدالسلام محمد</span>
                 <span>أ/ محمد جاد عبداللاه</span>
@@ -241,20 +275,20 @@
         </div>
         
         <!-- حقل البحث -->
-        <div class="search-input-group">
-            <label id="searchLabel">🔍 رقم الجلوس / الكود / الرقم القومي</label>
-            <input type="text" id="searchValue" placeholder="أدخل رقم الجلوس أو الكود أو الرقم القومي">
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchValue" placeholder="رقم الجلوس / الكود / الرقم القومي">
         </div>
         
         <!-- زر البحث -->
         <button class="search-btn" onclick="searchResult()">
-            🔍 عرض النتيجة
+            <span>🔍</span> عرض النتيجة
         </button>
         
         <div id="errorMsg" class="error"></div>
         <div id="loading" class="loading">⏳ جاري البحث...</div>
         
-        <!-- حقوق الطبع والتوقيع -->
+        <!-- تذييل -->
         <div class="footer">
             <div>جميع الحقوق محفوظة ©</div>
             <div>قسم البرمجة - مدرسة دشنا الثانوية</div>
@@ -269,23 +303,20 @@
 <script type="module">
   import { supabase } from './supabase-config.js';
   
-  const schoolId = 1; // مدرسة دشنا الثانوية
+  const schoolId = 1;
   let searchFields = ['code', 'national_id'];
   
   async function loadSearchSettings() {
       let { data: school } = await supabase.from('schools').select('search_fields').eq('id', schoolId).single();
-      if (school?.search_fields && school.search_fields.length > 0) {
-          searchFields = school.search_fields;
-      }
-      let labels = { seat_number: 'رقم الجلوس', code: 'الكود', national_id: 'الرقم القومي' };
-      let labelText = searchFields.map(f => labels[f]).join(' / ');
-      document.getElementById('searchLabel').innerHTML = `🔍 ${labelText}`;
-      document.getElementById('searchValue').placeholder = `أدخل ${labelText}`;
+      if (school?.search_fields && school.search_fields.length > 0) searchFields = school.search_fields;
   }
   
   window.searchResult = async () => {
       let searchValue = document.getElementById('searchValue').value.trim();
-      if (!searchValue) { document.getElementById('errorMsg').innerText = "⚠️ يرجى إدخال البيانات"; return; }
+      if (!searchValue) {
+          document.getElementById('errorMsg').innerText = "⚠️ يرجى إدخال رقم الجلوس أو الكود أو الرقم القومي";
+          return;
+      }
       document.getElementById('errorMsg').innerText = '';
       document.getElementById('loading').style.display = 'block';
       
@@ -299,7 +330,7 @@
       
       document.getElementById('loading').style.display = 'none';
       if (error || !student) {
-          document.getElementById('errorMsg').innerHTML = "⚠️ لا يوجد طالب بهذه البيانات";
+          document.getElementById('errorMsg').innerHTML = "⚠️ لا يوجد طالب بهذه البيانات<br><small>تأكد من صحة البيانات أو تواصل مع إدارة المدرسة</small>";
           return;
       }
       sessionStorage.setItem('viewStudentId', student.id);
