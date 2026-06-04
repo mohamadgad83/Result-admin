@@ -84,7 +84,13 @@
         <button id="viewStudentsBtn" class="btn-info">👁️ عرض قائمة الطلاب</button>
         <button id="printAllBtn" class="btn-warning">📄 طباعة كشف بجميع الطلاب</button>
     </div>
-    
+    <!-- أضف هذا داخل container بعد التبويبات -->
+<div class="danger-zone" style="background:#fff5f5; border:1px solid #dc3545; border-radius:15px; padding:20px; margin-top:20px;">
+    <h3 style="color:#dc3545">⚠️ منطقة الخطر - حذف البيانات</h3>
+    <p style="margin-bottom:15px;">تحذير: هذه العملية لا يمكن التراجع عنها. سيتم حذف جميع الطلاب والنتائج نهائياً.</p>
+    <button id="deleteAllDataBtn" class="btn-danger" style="padding:10px 20px;">🗑️ حذف جميع البيانات (طلاب ونتائج)</button>
+    <div id="deleteStatus" style="margin-top:10px; font-size:12px;"></div>
+</div>
     <div id="studentsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:1000;">
         <div style="background:white; border-radius:20px; padding:20px; width:90%; max-width:800px; max-height:80%; overflow:auto;">
             <div class="flex-between"><h3>📚 قائمة الطلاب</h3><button onclick="closeStudentsModal()" class="btn-danger">✖</button></div>
@@ -249,7 +255,25 @@
   };
   document.getElementById('syncBtn').onclick = window.syncSubjects;
   document.getElementById('academicYear').onchange = () => { currentYear = document.getElementById('academicYear').value; if (currentGradeId) loadStats(); };
-  
+ // دالة حذف جميع البيانات
+document.getElementById('deleteAllDataBtn')?.addEventListener('click', async () => {
+    if (!confirm("⚠️ تحذير نهائي: سيتم حذف جميع الطلاب وجميع النتائج بشكل دائم! هل أنت متأكد 100%؟")) return;
+    
+    document.getElementById('deleteStatus').innerHTML = 'جاري الحذف...';
+    
+    // حذف جميع السجلات من student_results
+    let { error, count } = await supabase
+        .from('student_results')
+        .delete()
+        .neq('id', 0);
+    
+    if (error) {
+        document.getElementById('deleteStatus').innerHTML = `<span style="color:red">❌ خطأ: ${error.message}</span>`;
+    } else {
+        document.getElementById('deleteStatus').innerHTML = `<span style="color:green">✅ تم حذف جميع البيانات بنجاح</span>`;
+        setTimeout(() => { document.getElementById('deleteStatus').innerHTML = ''; }, 3000);
+    }
+}); 
   loadGrades();
 </script>
 </body>
