@@ -3,170 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>نتيجة الطالب - نظام النتائج المدرسية</title>
+    <title>نتيجة الطالب</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 16px;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 16px; }
         .container { max-width: 800px; margin: auto; }
-        
-        /* بطاقة النتيجة */
-        .result-card {
-            background: white;
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-        }
-        
-        /* رأس البطاقة */
-        .card-header {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: white;
-            padding: 24px 20px;
-            text-align: center;
-        }
-        .school-name { font-size: 20px; font-weight: bold; margin-bottom: 8px; }
-        .student-name { font-size: 24px; margin: 8px 0; font-weight: bold; }
-        .student-info {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-top: 12px;
-        }
-        .student-info span {
-            background: rgba(255,255,255,0.2);
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-        }
-        
-        /* محتوى البطاقة */
+        .result-card { background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+        .card-header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 24px 20px; text-align: center; }
+        .school-name { font-size: 20px; font-weight: bold; }
+        .student-name { font-size: 24px; margin: 8px 0; }
+        .student-info { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+        .student-info span { background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px; font-size: 12px; }
         .card-body { padding: 20px; }
-        
-        /* إحصائيات سريعة */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-bottom: 24px;
-        }
-        .stat-item {
-            background: #f0f7ff;
-            padding: 12px;
-            border-radius: 16px;
-            text-align: center;
-        }
-        .stat-value { font-size: 24px; font-weight: bold; color: #1e3c72; }
-        .stat-label { font-size: 11px; color: #666; margin-top: 4px; }
-        
-        /* تصميم المواد - متجاوب */
-        .subjects-list {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-        .subject-card {
-            background: #f8f9fa;
-            border-radius: 16px;
-            overflow: hidden;
-            border-right: 4px solid #1e3c72;
-        }
-        .subject-header {
-            background: #eef2fa;
-            padding: 12px 16px;
-            font-weight: bold;
-            font-size: 16px;
-            color: #1e3c72;
-        }
-        .scores-container {
-            padding: 12px 16px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .score-badge {
-            background: white;
-            padding: 8px 14px;
-            border-radius: 25px;
-            font-size: 13px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            flex: 1;
-            min-width: 100px;
-            text-align: center;
-        }
-        .score-label {
-            font-weight: bold;
-            color: #2a5298;
-        }
-        .score-value {
-            font-weight: bold;
-            color: #1e3c72;
-            margin-right: 5px;
-        }
-        
-        /* تذييل */
-        .card-footer {
-            background: #f8f9fa;
-            padding: 12px 20px;
-            text-align: center;
-            border-top: 1px solid #eef2fa;
-            font-size: 11px;
-            color: #666;
-        }
-        
-        /* أزرار */
-        .action-buttons {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 30px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: 0.2s;
-            font-weight: bold;
-            flex: 1;
-            min-width: 120px;
-        }
+        .subjects-list { display: flex; flex-direction: column; gap: 12px; }
+        .subject-card { background: #f8f9fa; border-radius: 16px; overflow: hidden; border-right: 4px solid #1e3c72; }
+        .subject-header { background: #eef2fa; padding: 12px 16px; font-weight: bold; }
+        .score-value { padding: 12px 16px; font-size: 18px; font-weight: bold; color: #1e3c72; }
+        .card-footer { background: #f8f9fa; padding: 12px; text-align: center; font-size: 12px; color: #666; }
+        .btn { padding: 12px 24px; border: none; border-radius: 30px; font-size: 14px; cursor: pointer; margin-top: 20px; width: 100%; }
         .btn-primary { background: #1e3c72; color: white; }
-        .btn-primary:hover { background: #0f2b4f; transform: scale(1.02); }
         .btn-success { background: #28a745; color: white; }
-        .btn-success:hover { background: #1e6b2f; transform: scale(1.02); }
-        
-        @media print {
-            body { background: white; padding: 0; }
-            .no-print { display: none; }
-            .result-card { box-shadow: none; }
-            .card-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        }
-        
-        /* للشاشات الصغيرة جداً */
-        @media (max-width: 480px) {
-            body { padding: 10px; }
-            .card-header { padding: 16px; }
-            .student-name { font-size: 20px; }
-            .stats-grid { gap: 8px; }
-            .stat-value { font-size: 20px; }
-            .score-badge { min-width: auto; flex: auto; }
-            .btn { padding: 10px 16px; font-size: 13px; }
-        }
+        @media print { body { background: white; } .no-print { display: none; } .card-header { -webkit-print-color-adjust: exact; } }
     </style>
 </head>
 <body>
 <div class="container">
     <div id="resultContainer"></div>
-    <div class="action-buttons no-print">
-        <button class="btn btn-primary" onclick="window.print()">🖨️ طباعة النتيجة</button>
+    <div class="no-print" style="display: flex; gap: 10px;">
+        <button class="btn btn-primary" onclick="window.print()">🖨️ طباعة</button>
         <button class="btn btn-success" onclick="history.back()">🔙 رجوع</button>
     </div>
 </div>
@@ -178,54 +42,24 @@
   if (!studentId) window.location.href = 'student-search.html';
   
   async function loadResult() {
-      let { data: student, error } = await supabase
-          .from('student_results')
-          .select('*, schools(id, name, search_field_label)')
-          .eq('id', studentId)
-          .single();
-      
-      if (error || !student) {
-          document.getElementById('resultContainer').innerHTML = `
-              <div class="result-card">
-                  <div class="card-header"><div class="school-name">⚠️ خطأ</div></div>
-                  <div class="card-body" style="text-align:center; padding:40px">
-                      <p style="color:#dc3545">لا توجد بيانات لهذا الطالب</p>
-                  </div>
-              </div>
-          `;
+      let { data: student } = await supabase.from('student_results').select('*, schools(name)').eq('id', studentId).single();
+      if (!student) {
+          document.getElementById('resultContainer').innerHTML = '<div class="result-card"><div class="card-header">خطأ</div><div class="card-body">لا توجد بيانات</div></div>';
           return;
       }
-      
       let school = student.schools;
       let scores = student.scores || {};
-      let subjectsCount = Object.keys(scores).length;
+      let gradeId = student.grade_id;
+      let { data: grade } = await supabase.from('grades').select('name, subjects').eq('id', gradeId).single();
+      let subjectsList = grade?.subjects?.sort((a,b)=>a.order-b.order) || [];
       
-      // بناء قائمة المواد بشكل متجاوب
       let subjectsHtml = '';
-      
-      for (let [subject, subjectScores] of Object.entries(scores)) {
-          let scoresHtml = '';
-          for (let [fieldName, fieldValue] of Object.entries(subjectScores)) {
-              scoresHtml += `
-                  <div class="score-badge">
-                      <span class="score-label">${fieldName}:</span>
-                      <span class="score-value">${fieldValue}</span>
-                  </div>
-              `;
-          }
-          
+      for (let sub of subjectsList) {
+          let score = scores[sub.name] !== undefined ? scores[sub.name] : '—';
           subjectsHtml += `
               <div class="subject-card">
-                  <div class="subject-header">📖 ${subject}</div>
-                  <div class="scores-container">${scoresHtml}</div>
-              </div>
-          `;
-      }
-      
-      if (subjectsCount === 0) {
-          subjectsHtml = `
-              <div style="text-align:center; padding:30px; color:#dc3545; background:#f8f9fa; border-radius:16px">
-                  ⚠️ لا توجد نتائج مسجلة لهذا الطالب
+                  <div class="subject-header">📖 ${sub.name}</div>
+                  <div class="score-value">الدرجة: ${score}</div>
               </div>
           `;
       }
@@ -233,41 +67,22 @@
       let html = `
           <div class="result-card">
               <div class="card-header">
-                  <div class="school-name">🏫 ${school?.name || 'المدرسة'}</div>
+                  <div class="school-name">🏫 ${school?.name || 'ديشن الثانوية'}</div>
                   <div class="student-name">👨‍🎓 ${student.student_name}</div>
                   <div class="student-info">
-                      <span>📌 ${school?.search_field_label || 'رقم الجلوس'}: ${student.seat_number || '-'}</span>
+                      <span>📌 رقم الجلوس: ${student.seat_number || '-'}</span>
                       <span>🔑 الكود: ${student.code || '-'}</span>
                       <span>🆔 الرقم القومي: ${student.national_id || '-'}</span>
                   </div>
               </div>
-              
               <div class="card-body">
-                  <div class="stats-grid">
-                      <div class="stat-item">
-                          <div class="stat-value">${subjectsCount}</div>
-                          <div class="stat-label">المواد</div>
-                      </div>
-                      <div class="stat-item">
-                          <div class="stat-value">${new Date().toLocaleDateString('ar-EG')}</div>
-                          <div class="stat-label">التاريخ</div>
-                      </div>
-                  </div>
-                  
-                  <div class="subjects-list">
-                      ${subjectsHtml}
-                  </div>
+                  <div class="subjects-list">${subjectsHtml}</div>
               </div>
-              
-              <div class="card-footer">
-                  <div>© نظام إدارة النتائج المدرسية</div>
-              </div>
+              <div class="card-footer">© نظام النتائج المدرسية - تاريخ: ${new Date().toLocaleDateString('ar-EG')}</div>
           </div>
       `;
-      
       document.getElementById('resultContainer').innerHTML = html;
   }
-  
   loadResult();
 </script>
 </body>
