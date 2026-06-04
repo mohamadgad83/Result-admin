@@ -15,7 +15,7 @@
         .student-info { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
         .student-info span { background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px; font-size: 12px; }
         .card-body { padding: 20px; }
-        .subjects-list { display: flex; flex-direction: column; gap: 12px; }
+        .subjects-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
         .subject-card { background: #f8f9fa; border-radius: 16px; overflow: hidden; border-right: 4px solid #1e3c72; }
         .subject-header { background: #eef2fa; padding: 12px 16px; font-weight: bold; }
         .score-value { padding: 12px 16px; font-size: 18px; font-weight: bold; color: #1e3c72; }
@@ -27,26 +27,33 @@
             padding: 15px;
             margin-top: 20px;
             border-right: 4px solid #28a745;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
         }
-        .extra-info h4 {
-            color: #1e3c72;
-            margin-bottom: 10px;
-            font-size: 16px;
+        .extra-item {
+            flex: 1;
+            min-width: 150px;
         }
-        .extra-info p {
-            margin: 5px 0;
-            font-size: 14px;
-        }
-        .extra-info .label {
+        .extra-item .label {
             font-weight: bold;
-            color: #2a5298;
+            color: #1e3c72;
+            font-size: 14px;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .extra-item .value {
+            font-size: 14px;
+            color: #333;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 10px;
         }
         
         .card-footer { background: #f8f9fa; padding: 12px; text-align: center; font-size: 12px; color: #666; }
         .btn { padding: 12px 24px; border: none; border-radius: 30px; font-size: 14px; cursor: pointer; margin-top: 20px; width: 100%; }
         .btn-primary { background: #1e3c72; color: white; }
         .btn-success { background: #28a745; color: white; }
-        .btn-info { background: #17a2b8; color: white; }
         @media print { body { background: white; } .no-print { display: none; } .card-header { -webkit-print-color-adjust: exact; } }
     </style>
 </head>
@@ -88,9 +95,9 @@
           `;
       }
       
-      // الخانتين الجديدتين
-      let phone = student.phone || '—';
-      let notes = student.general_notes || '—';
+      // الخانتين الجديدتين: الحالة والمواد
+      let status = student.status || '—';
+      let materials = student.materials || '—';
       
       let html = `
           <div class="result-card">
@@ -108,9 +115,14 @@
                   <div class="subjects-list">${subjectsHtml}</div>
                   
                   <div class="extra-info">
-                      <h4>📋 معلومات إضافية</h4>
-                      <p><span class="label">📞 رقم التليفون:</span> ${phone}</p>
-                      <p><span class="label">📝 ملاحظات:</span> ${notes}</p>
+                      <div class="extra-item">
+                          <div class="label">📋 الحالة</div>
+                          <div class="value">${status}</div>
+                      </div>
+                      <div class="extra-item">
+                          <div class="label">📚 المواد</div>
+                          <div class="value">${materials}</div>
+                      </div>
                   </div>
               </div>
               <div class="card-footer">© نظام النتائج المدرسية - مدرسة دشنا الثانوية</div>
