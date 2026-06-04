@@ -21,7 +21,6 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.2);
         }
         
-        /* رأس البطاقة */
         .card-header {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
@@ -44,7 +43,6 @@
             font-size: 12px;
         }
         
-        /* قسم الحالة والمواد (في الأعلى تحت بيانات الطالب) */
         .status-materials {
             background: #f0f7ff;
             padding: 15px 20px;
@@ -76,7 +74,6 @@
             color: #333;
         }
         
-        /* المواد الدراسية */
         .subjects-section {
             padding: 20px;
         }
@@ -113,7 +110,6 @@
             color: #1e3c72;
         }
         
-        /* تذييل */
         .card-footer {
             background: #f8f9fa;
             padding: 12px 20px;
@@ -123,7 +119,6 @@
             border-top: 1px solid #eef2fa;
         }
         
-        /* أزرار */
         .action-buttons {
             display: flex;
             gap: 12px;
@@ -176,6 +171,15 @@
   const studentId = sessionStorage.getItem('viewStudentId');
   if (!studentId) window.location.href = 'student-search.html';
   
+  function formatNumber(value) {
+      if (value === undefined || value === null) return '—';
+      if (typeof value === 'number') {
+          // تقريب لرقم عشري واحد
+          return value.toFixed(1);
+      }
+      return value;
+  }
+  
   async function loadResult() {
       let { data: student } = await supabase.from('student_results').select('*, schools(name)').eq('id', studentId).single();
       if (!student) {
@@ -189,14 +193,15 @@
       let { data: grade } = await supabase.from('grades').select('name, subjects').eq('id', gradeId).single();
       let subjectsList = grade?.subjects?.sort((a,b)=>a.order-b.order) || [];
       
-      // بناء قائمة المواد
+      // بناء قائمة المواد مع تنسيق الأرقام
       let subjectsHtml = '';
       for (let sub of subjectsList) {
-          let score = scores[sub.name] !== undefined ? scores[sub.name] : '—';
+          let scoreValue = scores[sub.name];
+          let displayScore = formatNumber(scoreValue);
           subjectsHtml += `
               <div class="subject-card">
                   <div class="subject-header">📖 ${sub.name}</div>
-                  <div class="score-value">الدرجة: ${score}</div>
+                  <div class="score-value">الدرجة: ${displayScore}</div>
               </div>
           `;
       }
@@ -205,7 +210,6 @@
           subjectsHtml = '<div style="text-align:center; padding:30px; color:#dc3545;">⚠️ لا توجد نتائج مسجلة</div>';
       }
       
-      // الحالة والمواد
       let status = student.status || '—';
       let materials = student.materials || '—';
       
@@ -222,7 +226,6 @@
                   </div>
               </div>
               
-              <!-- الحالة والمواد (في الأعلى) -->
               <div class="status-materials">
                   <div class="status-box">
                       <span class="label">📋 الحالة</span>
