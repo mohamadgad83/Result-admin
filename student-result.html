@@ -18,7 +18,6 @@
         }
         .container { max-width: 800px; margin: auto; }
         
-        /* بطاقة النتيجة */
         .result-card {
             background: white;
             border-radius: 24px;
@@ -28,7 +27,6 @@
         }
         .result-card:hover { transform: translateY(-3px); }
         
-        /* رأس البطاقة */
         .card-header {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
@@ -51,7 +49,6 @@
             font-size: 12px;
         }
         
-        /* الحالة والمواد */
         .status-materials {
             background: linear-gradient(135deg, #f8f9fa, #eef2fa);
             padding: 15px 20px;
@@ -82,33 +79,33 @@
         .status-pass { color: #28a745; }
         .status-fail { color: #dc3545; }
         
-        /* إحصائيات سريعة */
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
+        /* المجموع الكلي والنسبة */
+        .total-row {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
             padding: 15px 20px;
-            background: white;
-            border-bottom: 1px solid #eef2fa;
+            background: #f0f7ff;
+            border-bottom: 1px solid #cfe3ff;
+            flex-wrap: wrap;
         }
-        .stat-card {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 12px 8px;
+        .total-card {
             text-align: center;
+            background: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
-        .stat-number {
-            font-size: 24px;
+        .total-number {
+            font-size: 28px;
             font-weight: bold;
             color: #1e3c72;
         }
-        .stat-label {
-            font-size: 11px;
+        .total-label {
+            font-size: 12px;
             color: #666;
             margin-top: 4px;
         }
-        .best-subject { color: #28a745; }
-        .worst-subject { color: #dc3545; }
         
         /* المواد الدراسية */
         .subjects-section { padding: 20px; }
@@ -119,9 +116,6 @@
             margin-bottom: 15px;
             padding-bottom: 8px;
             border-bottom: 2px solid #1e3c72;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
         .subjects-list { display: flex; flex-direction: column; gap: 12px; }
         .subject-card {
@@ -134,8 +128,8 @@
             align-items: center;
             padding: 12px 16px;
         }
-        .subject-name { font-weight: bold; font-size: 16px; color: #1e3c72; }
-        .score-value { font-size: 18px; font-weight: bold; color: #1e3c72; }
+        .subject-name { font-weight: bold; font-size: 15px; color: #1e3c72; }
+        .subject-score { font-size: 18px; font-weight: bold; color: #1e3c72; }
         
         /* توقيع */
         .signature-section {
@@ -150,7 +144,7 @@
         }
         .signature-box { text-align: center; }
         .signature-line {
-            width: 150px;
+            width: 130px;
             border-top: 1px solid #999;
             margin-top: 25px;
             margin-bottom: 5px;
@@ -166,7 +160,6 @@
             border-top: 1px solid #eef2fa;
         }
         
-        /* أزرار */
         .action-buttons {
             display: flex;
             gap: 12px;
@@ -198,16 +191,15 @@
             .no-print { display: none; }
             .result-card { box-shadow: none; margin: 0; border-radius: 0; }
             .card-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .status-materials { background: #f0f7ff; -webkit-print-color-adjust: exact; }
             .btn, .action-buttons { display: none; }
-            .signature-section { border-top: 1px solid #ccc; }
         }
         
         @media (max-width: 550px) {
-            .stats-row { gap: 8px; }
-            .stat-number { font-size: 18px; }
+            .total-row { gap: 15px; }
+            .total-number { font-size: 22px; }
             .subject-card { flex-direction: column; text-align: center; gap: 8px; }
             .signature-section { flex-direction: column; text-align: center; }
+            .signature-line { width: 100px; }
         }
     </style>
 </head>
@@ -236,30 +228,10 @@
       return value;
   }
   
-  // حساب الإحصائيات
-  function calculateStats(scores, subjectsList) {
-      let scoresArray = [];
-      let subjectScores = {};
-      
-      for (let sub of subjectsList) {
-          let score = scores[sub.name];
-          if (score !== undefined && typeof score === 'number') {
-              scoresArray.push(score);
-              subjectScores[sub.name] = score;
-          }
-      }
-      
-      if (scoresArray.length === 0) {
-          return { totalSubjects: 0, bestScore: null, worstScore: null, bestSubject: null, worstSubject: null, average: 0 };
-      }
-      
-      let bestScore = Math.max(...scoresArray);
-      let worstScore = Math.min(...scoresArray);
-      let bestSubject = Object.keys(subjectScores).find(key => subjectScores[key] === bestScore);
-      let worstSubject = Object.keys(subjectScores).find(key => subjectScores[key] === worstScore);
-      let average = scoresArray.reduce((a,b) => a + b, 0) / scoresArray.length;
-      
-      return { totalSubjects: scoresArray.length, bestScore, worstScore, bestSubject, worstSubject, average: average.toFixed(1) };
+  // حساب المجموع الكلي حسب الصف
+  function getMaxTotal(gradeName) {
+      if (gradeName.includes('الأول') || gradeName.includes('أولى')) return 600;
+      return 380;
   }
   
   async function loadResult() {
@@ -274,23 +246,37 @@
       let scores = student.scores || {};
       let gradeId = student.grade_id;
       let { data: grade } = await supabase.from('grades').select('name, subjects').eq('id', gradeId).single();
+      let gradeName = grade?.name || '';
       let subjectsList = grade?.subjects?.sort((a,b)=>a.order-b.order) || [];
       
-      // حساب الإحصائيات
-      let stats = calculateStats(scores, subjectsList);
+      // حساب المجموع الكلي
+      let totalScore = 0;
+      let maxTotal = getMaxTotal(gradeName);
+      let subjectScores = [];
+      
+      for (let sub of subjectsList) {
+          let score = scores[sub.name];
+          if (score !== undefined && typeof score === 'number') {
+              totalScore += score;
+              subjectScores.push({ name: sub.name, score: score });
+          }
+      }
+      
+      let percentage = maxTotal > 0 ? ((totalScore / maxTotal) * 100).toFixed(1) : 0;
       let status = student.status || '—';
       let materials = student.materials || '—';
-      let isPass = status === 'ناجح' || status === 'نجاح' || (stats.average >= 50);
+      let isPass = status === 'ناجح' || status === 'نجاح' || (percentage >= 50);
       
-      // بناء قائمة المواد
+      // بناء قائمة المواد مع عرض المجموع بين قوسين
       let subjectsHtml = '';
       for (let sub of subjectsList) {
           let scoreValue = scores[sub.name];
           let displayScore = formatNumber(scoreValue);
+          let maxScore = 100; // كل مادة من 100
           subjectsHtml += `
               <div class="subject-card">
-                  <span class="subject-name">📖 ${sub.name}</span>
-                  <span class="score-value">${displayScore}</span>
+                  <span class="subject-name">📖 ${sub.name} (من ${maxScore})</span>
+                  <span class="subject-score">${displayScore}</span>
               </div>
           `;
       }
@@ -312,6 +298,7 @@
                       <span>📌 رقم الجلوس: ${student.seat_number || '-'}</span>
                       <span>🔑 الكود: ${student.code || '-'}</span>
                       <span>🆔 الرقم القومي: ${student.national_id || '-'}</span>
+                      <span>📚 الصف: ${gradeName || '-'}</span>
                       <span>📅 السنة: ${student.academic_year || '2024/2025'}</span>
                   </div>
               </div>
@@ -328,28 +315,19 @@
                   </div>
               </div>
               
-              <div class="stats-row">
-                  <div class="stat-card">
-                      <div class="stat-number">${stats.totalSubjects}</div>
-                      <div class="stat-label">المواد</div>
+              <div class="total-row">
+                  <div class="total-card">
+                      <div class="total-number">${totalScore} / ${maxTotal}</div>
+                      <div class="total-label">المجموع الكلي</div>
                   </div>
-                  <div class="stat-card">
-                      <div class="stat-number ${stats.bestScore >= 80 ? 'best-subject' : ''}">${stats.bestScore !== null ? stats.bestScore : '—'}</div>
-                      <div class="stat-label">أعلى درجة</div>
-                      ${stats.bestSubject ? `<div style="font-size:10px; color:#666;">${stats.bestSubject}</div>` : ''}
-                  </div>
-                  <div class="stat-card">
-                      <div class="stat-number ${stats.worstScore < 50 ? 'worst-subject' : ''}">${stats.worstScore !== null ? stats.worstScore : '—'}</div>
-                      <div class="stat-label">أقل درجة</div>
-                      ${stats.worstSubject ? `<div style="font-size:10px; color:#666;">${stats.worstSubject}</div>` : ''}
+                  <div class="total-card">
+                      <div class="total-number">${percentage}%</div>
+                      <div class="total-label">النسبة المئوية</div>
                   </div>
               </div>
               
               <div class="subjects-section">
-                  <div class="subjects-title">
-                      <span>📊 المواد الدراسية</span>
-                      <span style="font-size:12px;">${stats.totalSubjects} مادة</span>
-                  </div>
+                  <div class="subjects-title">📊 المواد الدراسية</div>
                   <div class="subjects-list">${subjectsHtml}</div>
               </div>
               
@@ -400,6 +378,7 @@
   document.getElementById('shareWhatsappBtn')?.addEventListener('click', () => {
       let text = `نتيجة الطالب ${currentStudentData?.student_name || ''}\n`;
       text += `رقم الجلوس: ${currentStudentData?.seat_number || '-'}\n`;
+      text += `المجموع الكلي: ${currentStudentData?.total || '-'}\n`;
       text += `للاطلاع على النتيجة الكاملة: ${window.location.href}`;
       window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   });
