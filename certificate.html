@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شهادة نتيجة الطالب - مدرسة دشنا الثانوية</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #eef2fa;
+            padding: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* شهادة أفقية */
+        .certificate {
+            width: 1100px;
+            max-width: 100%;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            overflow-x: auto;
+            padding: 25px 30px;
+            direction: rtl;
+        }
+
+        /* رأس الشهادة */
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #1e3c72;
+            padding-bottom: 15px;
+        }
+
+        .school-name {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1e3c72;
+        }
+
+        .cert-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-top: 5px;
+            color: #2a5298;
+        }
+
+        /* معلومات الطالب */
+        .student-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            padding: 12px 15px;
+            background: #f0f7ff;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .student-info div {
+            flex: 1;
+        }
+
+        /* جدول النتائج */
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        .results-table th,
+        .results-table td {
+            border: 1px solid #ccc;
+            padding: 10px 8px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .results-table th {
+            background: #1e3c72;
+            color: white;
+            font-weight: bold;
+        }
+
+        .results-table td {
+            background: white;
+        }
+
+        .subject-cell {
+            font-weight: bold;
+            background: #eef2fa !important;
+        }
+
+        /* الحالة والتوقيعات */
+        .status-row {
+            margin: 20px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px dashed #ccc;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+
+        .signature-box {
+            text-align: center;
+            flex: 1;
+        }
+
+        .signature-line {
+            width: 180px;
+            border-top: 1px solid #000;
+            margin: 30px auto 8px auto;
+        }
+
+        .signature-name {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .signature-title {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* زر الطباعة */
+        .print-btn {
+            display: block;
+            width: 200px;
+            margin: 20px auto 0;
+            padding: 10px;
+            background: #1e3c72;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .print-btn:hover {
+            background: #0f2b4f;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
+
+            .print-btn {
+                display: none;
+            }
+
+            .certificate {
+                box-shadow: none;
+                padding: 15px;
+                width: 100%;
+            }
+
+            .results-table th,
+            .results-table td {
+                border: 1px solid #000;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .certificate {
+                padding: 15px;
+            }
+
+            .results-table {
+                font-size: 12px;
+            }
+
+            .results-table th,
+            .results-table td {
+                padding: 6px 4px;
+            }
+
+            .student-info {
+                font-size: 14px;
+                flex-direction: column;
+            }
+
+            .signature-line {
+                width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="certificate" id="certificate">
+    <div class="header">
+        <div class="school-name">🏫 مدرسة دشنا الثانوية</div>
+        <div class="cert-title">شهادة نتيجة الطالب</div>
+        <div style="font-size: 14px; color: #666; margin-top: 5px;">الفصل الدراسي الأول - العام الدراسي 2024/2025</div>
+    </div>
+
+    <div class="student-info" id="studentInfo">
+        <div>👨‍🎓 اسم الطالب: <span id="studentName">...</span></div>
+        <div>📌 رقم الجلوس: <span id="seatNumber">...</span></div>
+    </div>
+
+    <table class="results-table" id="resultsTable">
+        <thead>
+            <tr>
+                <th>المادة</th>
+                <th>اللغة العربية</th>
+                <th>اللغة الإنجليزية</th>
+                <th>الرياضيات</th>
+                <th>الكيمياء</th>
+                <th>التاريخ</th>
+                <th>الفيزياء</th>
+                <th>متوسط الترمين</th>
+                <th>التربية الدينية</th>
+                <th>اللغة الأجنبية الثانية</th>
+                <th>التربية الرياضية</th>
+                <th>التربية الوطنية</th>
+                <th>الأنشطة التربوية والمهنية</th>
+            </tr>
+        </thead>
+        <tbody id="resultsBody">
+            <tr>
+                <td class="subject-cell">متوسط الترمين</td>
+                <td id="arabic">-</td>
+                <td id="english">-</td>
+                <td id="math">-</td>
+                <td id="chemistry">-</td>
+                <td id="history">-</td>
+                <td id="physics">-</td>
+                <td id="avgTerm">-</td>
+                <td id="religion">-</td>
+                <td id="secondLang">-</td>
+                <td id="sports">-</td>
+                <td id="national">-</td>
+                <td id="activities">-</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="status-row" id="statusRow">
+        الحالة: <span id="status">...</span>
+    </div>
+
+    <div class="signatures">
+        <div class="signature-box">
+            <div class="signature-line"></div>
+            <div class="signature-name">محرم فؤاد</div>
+            <div class="signature-title">رئيس لجنة النظام والمراقبة</div>
+        </div>
+        <div class="signature-box">
+            <div class="signature-line"></div>
+            <div class="signature-name">عبدالرحمن فهمي</div>
+            <div class="signature-title">يعتمد : مدير المدرسة</div>
+        </div>
+    </div>
+</div>
+
+<button class="print-btn" onclick="window.print()">🖨️ طباعة الشهادة</button>
+
+<script type="module">
+    import { supabase } from './supabase-config.js';
+
+    // الحصول على ID الطالب من الرابط
+    const urlParams = new URLSearchParams(window.location.search);
+    const studentId = urlParams.get('id');
+
+    if (!studentId) {
+        document.getElementById('studentName').innerText = 'لم يتم تحديد الطالب';
+        return;
+    }
+
+    // دالة تنسيق الأرقام
+    function formatNumber(value) {
+        if (value === undefined || value === null) return '—';
+        if (typeof value === 'number') {
+            if (Number.isInteger(value)) {
+                return value.toString();
+            }
+            return value.toFixed(1);
+        }
+        return value;
+    }
+
+    async function loadCertificate() {
+        // جلب بيانات الطالب
+        let { data: student, error } = await supabase
+            .from('student_results')
+            .select('*, schools(name)')
+            .eq('id', studentId)
+            .single();
+
+        if (error || !student) {
+            document.getElementById('studentName').innerText = 'خطأ في تحميل البيانات';
+            return;
+        }
+
+        // عرض معلومات الطالب
+        document.getElementById('studentName').innerText = student.student_name;
+        document.getElementById('seatNumber').innerText = student.seat_number || '-';
+        document.getElementById('status').innerHTML = `<strong style="color: ${student.status === 'ناجح' ? '#28a745' : '#dc3545'}">${student.status || 'ناجح'}</strong>`;
+
+        // جلب درجات الطالب
+        let scores = student.scores || {};
+
+        // ترتيب المواد حسب المطلوب
+        const subjectsOrder = [
+            'اللغة العربية', 'اللغة الإنجليزية', 'الرياضيات',
+            'الكيمياء', 'التاريخ', 'الفيزياء', 'التربية الدينية',
+            'اللغة الأجنبية الثانية', 'التربية الرياضية',
+            'التربية الوطنية', 'الأنشطة التربوية والمهنية'
+        ];
+
+        // تعبئة الجدول
+        for (let subject of subjectsOrder) {
+            let score = scores[subject];
+            let elementId = getElementId(subject);
+            if (elementId && document.getElementById(elementId)) {
+                document.getElementById(elementId).innerText = formatNumber(score);
+            }
+        }
+
+        // حساب متوسط الترمين (مجموع الدرجات / عدد المواد)
+        let total = 0;
+        let count = 0;
+        for (let subject of subjectsOrder) {
+            let score = scores[subject];
+            if (typeof score === 'number') {
+                total += score;
+                count++;
+            }
+        }
+        let avg = count > 0 ? (total / count).toFixed(1) : 0;
+        document.getElementById('avgTerm').innerText = formatNumber(parseFloat(avg));
+    }
+
+    function getElementId(subject) {
+        const mapping = {
+            'اللغة العربية': 'arabic',
+            'اللغة الإنجليزية': 'english',
+            'الرياضيات': 'math',
+            'الكيمياء': 'chemistry',
+            'التاريخ': 'history',
+            'الفيزياء': 'physics',
+            'التربية الدينية': 'religion',
+            'اللغة الأجنبية الثانية': 'secondLang',
+            'التربية الرياضية': 'sports',
+            'التربية الوطنية': 'national',
+            'الأنشطة التربوية والمهنية': 'activities'
+        };
+        return mapping[subject];
+    }
+
+    loadCertificate();
+</script>
+</body>
+</html>
