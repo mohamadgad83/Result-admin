@@ -82,6 +82,7 @@
     
     <div class="flex-between" style="margin-bottom: 15px;">
         <button id="viewStudentsBtn" class="btn-info">👁️ عرض قائمة الطلاب</button>
+       <button onclick="printCertificate('${s.id}', '${s.student_name}')" class="btn-info btn-sm">📜 شهادة</button>
         <button id="printAllBtn" class="btn-warning">📄 طباعة كشف بجميع الطلاب</button>
     </div>
     <!-- أضف هذا داخل container بعد التبويبات -->
@@ -244,7 +245,11 @@
       printWindow.document.close();
       printWindow.print();
   };
-  
+  // أضف هذه الدالة في school-admin.html
+window.printCertificate = async (studentId, studentName) => {
+    // فتح نافذة جديدة لعرض الشهادة
+    window.open(`certificate.html?id=${studentId}`, '_blank');
+};
   function closeStudentsModal() { document.getElementById('studentsModal').style.display = 'none'; }
   window.closeStudentsModal = closeStudentsModal;
   window.logout = () => { sessionStorage.clear(); window.location.href = 'login.html'; };
