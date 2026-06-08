@@ -20,6 +20,7 @@
             padding: 35px 30px;
             box-shadow: 0 25px 45px rgba(0,0,0,0.3);
             text-align: center;
+            transition: 0.3s;
         }
         
         /* رأس الصفحة */
@@ -28,7 +29,7 @@
         .administration-name { font-size: 20px; font-weight: bold; color: #b21f1f; margin-top: 5px; }
         .direction-name { font-size: 16px; font-weight: bold; color: #1e3c72; background: #f0f7ff; display: inline-block; padding: 6px 20px; border-radius: 30px; margin-top: 10px; }
         
-        /* الصف العلوي - وكيل الوزارة + موجه عام */
+        /* وكيل الوزارة + موجه عام */
         .top-officials {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -120,6 +121,21 @@
         }
         .search-box button:hover { transform: scale(1.02); }
         
+        /* زر بحث آخر */
+        .new-search-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 25px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+        }
+        .new-search-btn:hover { background: #1e6b2f; }
+        
         /* بطاقة النتيجة */
         .result-card {
             background: white;
@@ -154,8 +170,22 @@
             border-radius: 20px;
         }
         .percentage-number { font-size: 48px; font-weight: bold; color: #1e3c72; }
-        .status-pass { color: #28a745; font-weight: bold; }
-        .status-fail { color: #dc3545; font-weight: bold; }
+        .status-pass { 
+            background: #28a745; 
+            color: white; 
+            padding: 8px 20px; 
+            border-radius: 30px; 
+            display: inline-block;
+            font-weight: bold;
+        }
+        .status-fail { 
+            background: #dc3545; 
+            color: white; 
+            padding: 8px 20px; 
+            border-radius: 30px; 
+            display: inline-block;
+            font-weight: bold;
+        }
         
         .footer {
             text-align: center;
@@ -167,6 +197,9 @@
         }
         .error { color: #dc3545; margin-top: 15px; font-size: 14px; }
         .loading { text-align: center; margin-top: 15px; color: #1e3c72; display: none; font-weight: bold; }
+        
+        /* إخفاء محتوى البحث بعد ظهور النتيجة */
+        .hide-after-search { transition: 0.3s; }
         
         @media (max-width: 550px) {
             .search-card { padding: 25px 20px; }
@@ -180,7 +213,7 @@
 </head>
 <body>
 <div class="container">
-    <div class="search-card">
+    <div class="search-card" id="searchCard">
         <!-- مديرية التربية والتعليم -->
         <div class="ministry-header">
             <div class="ministry-name">📚 مديرية التربية والتعليم بقنا</div>
@@ -239,13 +272,14 @@
         </div>
         
         <!-- حقل البحث -->
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="🔍 أدخل كود الطالب">
-            <button onclick="searchResult()">بحث</button>
+        <div id="searchArea">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 أدخل كود الطالب">
+                <button onclick="searchResult()">بحث</button>
+            </div>
+            <div id="errorMsg" class="error"></div>
+            <div id="loading" class="loading">⏳ جاري البحث...</div>
         </div>
-        
-        <div id="errorMsg" class="error"></div>
-        <div id="loading" class="loading">⏳ جاري البحث...</div>
     </div>
     
     <!-- بطاقة النتيجة -->
@@ -254,10 +288,16 @@
         <div class="info-row"><span class="info-label">كود الطالب:</span><span class="info-value" id="resultCode">—</span></div>
         <div class="info-row"><span class="info-label">اسم الطالب:</span><span class="info-value" id="resultName">—</span></div>
         <div class="info-row"><span class="info-label">اسم المدرسة:</span><span class="info-value" id="resultSchool">—</span></div>
-        <div class="percentage-box"><div class="percentage-number" id="resultPercentage">—</div><div>النسبة المئوية</div></div>
-        <div class="info-row"><span class="info-label">الحالة:</span><span class="info-value" id="resultStatus">—</span></div>
+        <div class="percentage-box">
+            <div class="percentage-number" id="resultPercentage">—</div>
+            <div>النسبة المئوية</div>
+        </div>
+        <div class="info-row" style="justify-content: center;">
+            <span class="info-value" id="resultStatus">—</span>
+        </div>
+        <button class="new-search-btn" onclick="resetSearch()">🔍 بحث عن طالب آخر</button>
         <div style="text-align:center; margin-top:15px;">
-            <button onclick="window.print()" style="background:#28a745; color:white; border:none; padding:10px 25px; border-radius:30px; cursor:pointer;">🖨️ طباعة</button>
+            <button onclick="window.print()" style="background:#6c757d; color:white; border:none; padding:8px 20px; border-radius:25px; cursor:pointer;">🖨️ طباعة</button>
         </div>
     </div>
     
@@ -277,7 +317,6 @@
       
       document.getElementById('errorMsg').innerText = '';
       document.getElementById('loading').style.display = 'block';
-      document.getElementById('resultCard').style.display = 'none';
       
       let { data: student, error } = await supabase
           .from('tofas_results')
@@ -286,21 +325,42 @@
           .single();
       
       document.getElementById('loading').style.display = 'none';
+      
       if (error || !student) {
           document.getElementById('errorMsg').innerHTML = "⚠️ لا يوجد طالب بهذا الكود";
           return;
       }
       
-      let percentage = parseFloat(student.percentage).toFixed(1);
-      let isPass = student.status === 'ناجح' || percentage >= 50;
+      // 🔧 معالجة النسبة المئوية - تحويل 0.6 إلى 60
+      let percentage = parseFloat(student.percentage);
+      // لو النسبة أقل من 1 (يعني 0.6) نضربها في 100
+      if (percentage < 1 && percentage > 0) {
+          percentage = percentage * 100;
+      }
+      percentage = percentage.toFixed(1);
       
+      // شرط النجاح: 60% فأكثر
+      let isPass = percentage >= 60;
+      let statusText = isPass ? 'ناجح' : 'راسب';
+      
+      // تحديث بيانات النتيجة
       document.getElementById('resultCode').innerHTML = student.student_code;
       document.getElementById('resultName').innerHTML = student.student_name;
       document.getElementById('resultSchool').innerHTML = student.school_name || '—';
       document.getElementById('resultPercentage').innerHTML = `${percentage}%`;
-      document.getElementById('resultStatus').innerHTML = `<span class="${isPass ? 'status-pass' : 'status-fail'}">${isPass ? 'ناجح' : 'راسب'}</span>`;
+      document.getElementById('resultStatus').innerHTML = `<span class="${isPass ? 'status-pass' : 'status-fail'}">${statusText}</span>`;
       
+      // إخفاء منطقة البحث وإظهار النتيجة
+      document.getElementById('searchArea').style.display = 'none';
       document.getElementById('resultCard').style.display = 'block';
+  }
+  
+  // دالة إعادة البحث (تظهر منطقة البحث مرة أخرى)
+  window.resetSearch = function() {
+      document.getElementById('searchArea').style.display = 'block';
+      document.getElementById('resultCard').style.display = 'none';
+      document.getElementById('searchInput').value = '';
+      document.getElementById('errorMsg').innerText = '';
   }
   
   window.searchResult = searchResult;
