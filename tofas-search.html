@@ -29,22 +29,39 @@
         .administration-name { font-size: 20px; font-weight: bold; color: #b21f1f; margin-top: 5px; }
         .direction-name { font-size: 16px; font-weight: bold; color: #1e3c72; background: #f0f7ff; display: inline-block; padding: 6px 20px; border-radius: 30px; margin-top: 10px; }
         
-        /* وكيل الوزارة + موجه عام */
+        /* كروت عليا - وزير + مدير عام + مستشار */
         .top-officials {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
             margin: 20px 0;
         }
         .official-card {
             background: linear-gradient(135deg, #1a2a6c, #b21f1f);
             color: white;
             border-radius: 20px;
+            padding: 10px;
+            text-align: center;
+        }
+        .official-title { font-size: 11px; opacity: 0.9; margin-bottom: 4px; }
+        .official-name { font-size: 13px; font-weight: bold; }
+        
+        /* وكيل الوزارة + موجه عام */
+        .second-officials {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .second-card {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f);
+            color: white;
+            border-radius: 20px;
             padding: 12px;
             text-align: center;
         }
-        .official-title { font-size: 12px; opacity: 0.9; margin-bottom: 5px; }
-        .official-name { font-size: 15px; font-weight: bold; }
+        .second-title { font-size: 12px; opacity: 0.9; margin-bottom: 5px; }
+        .second-name { font-size: 14px; font-weight: bold; }
         
         /* إدارة الإدارات */
         .depts-grid {
@@ -186,6 +203,16 @@
             display: inline-block;
             font-weight: bold;
         }
+        .note-box {
+            background: #fff3cd;
+            border-right: 4px solid #ffc107;
+            padding: 12px;
+            margin-top: 15px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 13px;
+            color: #856404;
+        }
         
         .footer {
             text-align: center;
@@ -205,7 +232,8 @@
             .search-card { padding: 25px 20px; }
             .ministry-name { font-size: 20px; }
             .administration-name { font-size: 18px; }
-            .top-officials, .depts-grid, .supervisors-grid { grid-template-columns: 1fr; gap: 10px; }
+            .top-officials { grid-template-columns: 1fr; gap: 10px; }
+            .second-officials, .depts-grid, .supervisors-grid { grid-template-columns: 1fr; gap: 10px; }
             .search-box { flex-direction: column; }
             .percentage-number { font-size: 36px; }
         }
@@ -221,15 +249,31 @@
             <div class="direction-name">💻 توجيه البرمجة والذكاء الاصطناعي</div>
         </div>
         
-        <!-- وكيل الوزارة + موجه عام البرمجة -->
+        <!-- الكروت العلوية: وزير + مدير عام + مستشار -->
         <div class="top-officials">
             <div class="official-card">
-                <div class="official-title">وكيل وزارة التربية والتعليم بقنا</div>
-                <div class="official-name">أ/ هاني عنتر</div>
+                <div class="official-title">وزير التربية والتعليم</div>
+                <div class="official-name">أ/ محمد عبداللطيف</div>
             </div>
             <div class="official-card">
-                <div class="official-title">موجه عام البرمجة والذكاء الاصطناعي</div>
-                <div class="official-name">أ/ مينا عادل</div>
+                <div class="official-title">مدير مديرية التربية والتعليم بقنا</div>
+                <div class="official-name">أ/ محمد محمد</div>
+            </div>
+            <div class="official-card">
+                <div class="official-title">مستشار مادة البرمجة</div>
+                <div class="official-name">أ/ أحمد عبدالسلام</div>
+            </div>
+        </div>
+        
+        <!-- وكيل الوزارة + موجه عام البرمجة -->
+        <div class="second-officials">
+            <div class="second-card">
+                <div class="second-title">وكيل وزارة التربية والتعليم بقنا</div>
+                <div class="second-name">أ/ هاني عنتر</div>
+            </div>
+            <div class="second-card">
+                <div class="second-title">موجه عام البرمجة والذكاء الاصطناعي</div>
+                <div class="second-name">أ/ مينا عادل</div>
             </div>
         </div>
         
@@ -295,6 +339,12 @@
         <div class="info-row" style="justify-content: center;">
             <span class="info-value" id="resultStatus">—</span>
         </div>
+        
+        <!-- ملاحظة شرط النجاح -->
+        <div class="note-box">
+            📌 ملاحظة: درجة النجاح هي <strong>60%</strong> فأكثر
+        </div>
+        
         <button class="new-search-btn" onclick="resetSearch()">🔍 بحث عن طالب آخر</button>
         <div style="text-align:center; margin-top:15px;">
             <button onclick="window.print()" style="background:#6c757d; color:white; border:none; padding:8px 20px; border-radius:25px; cursor:pointer;">🖨️ طباعة</button>
@@ -331,9 +381,8 @@
           return;
       }
       
-      // 🔧 معالجة النسبة المئوية - تحويل 0.6 إلى 60
+      // معالجة النسبة المئوية
       let percentage = parseFloat(student.percentage);
-      // لو النسبة أقل من 1 (يعني 0.6) نضربها في 100
       if (percentage < 1 && percentage > 0) {
           percentage = percentage * 100;
       }
@@ -350,14 +399,14 @@
       document.getElementById('resultPercentage').innerHTML = `${percentage}%`;
       document.getElementById('resultStatus').innerHTML = `<span class="${isPass ? 'status-pass' : 'status-fail'}">${statusText}</span>`;
       
-      // إخفاء منطقة البحث وإظهار النتيجة
-      document.getElementById('searchArea').style.display = 'none';
+      // إخفاء منطقة البحث بالكامل (كل الكروت وحقل البحث)
+      document.getElementById('searchCard').style.display = 'none';
       document.getElementById('resultCard').style.display = 'block';
   }
   
-  // دالة إعادة البحث (تظهر منطقة البحث مرة أخرى)
+  // دالة إعادة البحث (تظهر كل الكروت مرة أخرى)
   window.resetSearch = function() {
-      document.getElementById('searchArea').style.display = 'block';
+      document.getElementById('searchCard').style.display = 'block';
       document.getElementById('resultCard').style.display = 'none';
       document.getElementById('searchInput').value = '';
       document.getElementById('errorMsg').innerText = '';
