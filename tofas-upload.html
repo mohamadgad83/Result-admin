@@ -7,43 +7,101 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f7ff; padding: 20px; }
-        .container { max-width: 600px; margin: auto; background: white; border-radius: 20px; padding: 30px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
-        h1 { color: #1e3c72; text-align: center; margin-bottom: 10px; }
-        .subtitle { text-align: center; color: #666; margin-bottom: 25px; }
-        .format-box { background: #eef2fa; padding: 15px; border-radius: 12px; margin: 15px 0; font-size: 13px; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 600px; margin: auto; }
+        .upload-card {
+            background: white;
+            border-radius: 30px;
+            padding: 35px;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        .logo { font-size: 55px; margin-bottom: 10px; }
+        h1 { color: #1a2a6c; margin-bottom: 10px; font-size: 28px; }
+        .subtitle { color: #666; margin-bottom: 25px; font-size: 14px; }
+        .format-box {
+            background: #f0f7ff;
+            padding: 15px;
+            border-radius: 15px;
+            margin: 15px 0;
+            text-align: right;
+            font-size: 13px;
+        }
         .format-box table { width: 100%; border-collapse: collapse; }
-        .format-box td, .format-box th { padding: 6px; border-bottom: 1px solid #ccc; text-align: center; }
-        input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #ccc; }
-        button { background: #1e3c72; color: white; border: none; cursor: pointer; font-weight: bold; }
-        button:hover { background: #0f2b4f; }
-        .toast { position: fixed; bottom: 20px; left: 20px; right: 20px; background: #28a745; color: white; padding: 12px; border-radius: 10px; text-align: center; z-index: 1000; animation: fadeOut 3s ease forwards; }
+        .format-box td, .format-box th { padding: 6px; border-bottom: 1px solid #ddd; text-align: center; }
+        input, button {
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            border-radius: 15px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+        button {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        button:hover { transform: scale(1.02); opacity: 0.95; }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            z-index: 1000;
+            animation: fadeOut 3s ease forwards;
+        }
         .toast.error { background: #dc3545; }
-        @keyframes fadeOut { 0% { opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+        @keyframes fadeOut {
+            0% { opacity: 0; transform: translateY(20px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; }
+            100% { opacity: 0; visibility: hidden; }
+        }
+        .back-btn { background: #6c757d; margin-top: 10px; }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>📊 رفع نتائج اختبار توفاس</h1>
-    <p class="subtitle">إدارة دشنا التعليمية - إدارة التعليم الثانوي</p>
-    <div class="format-box">
-        <strong>📋 تنسيق ملف Excel:</strong>
-        <table>
-            <tr><th>العمود</th><th>البيانات</th></tr>
-            <tr><td>A</td><td>كود الطالب</td></tr>
-            <tr><td>B</td><td>الإجابات الصحيحة</td></tr>
-            <tr><td>C</td><td>إجمالي الأسئلة</td></tr>
-            <tr><td>D</td><td>النسبة المئوية</td></tr>
-            <tr><td>E</td><td>النتيجة النهائية</td></tr>
-            <tr><td>F</td><td>اسم المدرسة</td></tr>
-            <tr><td>G</td><td>اسم الطالب</td></tr>
-        </table>
+    <div class="upload-card">
+        <div class="logo">📊</div>
+        <h1>رفع نتائج اختبار توفاس</h1>
+        <p class="subtitle">إدارة دشنا التعليمية - إدارة التعليم الثانوي</p>
+        
+        <div class="format-box">
+            <strong>📋 تنسيق ملف Excel المطلوب:</strong>
+            <table dir="ltr" style="margin-top:10px;">
+                <tr><th>العمود</th><th>المحتوى</th></tr>
+                <tr><td>A</td><td>كود الطالب</td></tr>
+                <tr><td>B</td><td>الإجابات الصحيحة</td></tr>
+                <tr><td>C</td><td>إجمالي الأسئلة</td></tr>
+                <tr><td>D</td><td>النسبة المئوية</td></tr>
+                <tr><td>E</td><td>النتيجة النهائية (ناجح/راسب)</td></tr>
+                <tr><td>F</td><td>اسم المدرسة</td></tr>
+                <tr><td>G</td><td>اسم الطالب</td></tr>
+            </table>
+            <p style="margin-top:10px; font-size:12px; color:#666;">⚠️ يتم أخذ النسبة والحالة من ملف Excel كما هما بدون أي تعديل</p>
+        </div>
+        
+        <input type="file" id="excelFile" accept=".xlsx,.xls,.csv">
+        <button id="uploadBtn">📤 استيراد البيانات</button>
+        <div id="result" style="margin-top:10px; font-size:13px;"></div>
+        <button onclick="window.location.href='tofas-search.html'" class="back-btn" style="background:#28a745;">🔍 صفحة البحث عن النتيجة</button>
+        <button onclick="window.location.href='index.html'" style="background:#6c757d; margin-top:10px;">🏠 الرئيسية</button>
     </div>
-    <input type="file" id="excelFile" accept=".xlsx,.xls,.csv">
-    <button id="uploadBtn">📤 استيراد البيانات</button>
-    <div id="result" style="margin-top:10px; text-align:center;"></div>
-    <button onclick="window.location.href='tofas-search.html'" style="background:#28a745;">🔍 صفحة البحث</button>
-    <button onclick="window.location.href='index.html'" style="background:#6c757d; margin-top:10px;">🏠 العودة للرئيسية</button>
 </div>
 <script type="module">
   import { supabase } from './supabase-config.js';
@@ -67,23 +125,40 @@
       if (!rows || rows.length < 2) { showToast("الملف فارغ", true); return; }
 
       let success = 0, error = 0;
+      let errorsList = [];
 
       for (let i = 1; i < rows.length; i++) {
           let row = rows[i];
           if (!row || row.length < 7) continue;
 
           let code = row[0]?.toString().trim();
-          let correct = row[1]?.toString().trim();
-          let total = row[2]?.toString().trim();
-          let percentage = parseFloat(row[3]);
+          let correctAnswers = row[1]?.toString().trim();
+          let totalQuestions = row[2]?.toString().trim();
+          let percentageRaw = row[3];
           let finalResult = row[4]?.toString().trim();
           let schoolName = row[5]?.toString().trim();
           let studentName = row[6]?.toString().trim();
 
-          if (!code || !studentName) { error++; continue; }
-          if (isNaN(percentage)) percentage = 0;
-
-          let status = (finalResult === 'ناجح' || finalResult === 'نجاح' || percentage >= 50) ? 'ناجح' : 'راسب';
+          if (!code || !studentName) { 
+              error++; 
+              errorsList.push(`الصف ${i+1}: كود أو اسم الطالب مفقود`);
+              continue; 
+          }
+          
+          // تحويل النسبة المئوية إلى رقم (بدون تعديل)
+          let percentage = 0;
+          if (percentageRaw !== undefined && percentageRaw !== null) {
+              if (typeof percentageRaw === 'number') {
+                  percentage = percentageRaw;
+              } else {
+                  let cleaned = percentageRaw.toString().replace('%', '').trim();
+                  percentage = parseFloat(cleaned);
+                  if (isNaN(percentage)) percentage = 0;
+              }
+          }
+          
+          // تحديد الحالة من الملف
+          let status = finalResult === 'ناجح' || finalResult === 'نجاح' ? 'ناجح' : 'راسب';
 
           let { error: upsertError } = await supabase
               .from('tofas_results')
@@ -96,12 +171,19 @@
               })
               .eq('student_code', code);
 
-          if (upsertError) error++;
-          else success++;
+          if (upsertError) {
+              error++;
+              errorsList.push(`${code}: ${upsertError.message}`);
+          } else {
+              success++;
+          }
       }
 
-      showToast(`✅ تم استيراد ${success} طالب${error ? `, ❌ فشل ${error}` : ''}`);
-      document.getElementById('result').innerHTML = `<span style="color:green;">✅ استوردت ${success} طالب</span>`;
+      if (error > 0) {
+          console.log("أخطاء الاستيراد:", errorsList);
+      }
+      showToast(`✅ تم استيراد ${success} طالب${error ? `, ❌ فشل ${error}` : ''}`, error > 0);
+      document.getElementById('result').innerHTML = `<span style="color:green;">✅ استوردت ${success} طالب${error ? ` - ❌ فشل ${error}` : ''}</span>`;
       document.getElementById('excelFile').value = '';
   };
 </script>
