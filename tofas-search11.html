@@ -23,13 +23,11 @@
             transition: 0.3s;
         }
         
-        /* رأس الصفحة */
         .ministry-header { margin-bottom: 15px; }
         .ministry-name { font-size: 24px; font-weight: bold; color: #1a2a6c; }
         .administration-name { font-size: 20px; font-weight: bold; color: #b21f1f; margin-top: 5px; }
         .direction-name { font-size: 16px; font-weight: bold; color: #1e3c72; background: #f0f7ff; display: inline-block; padding: 6px 20px; border-radius: 30px; margin-top: 10px; }
         
-        /* كروت عليا */
         .top-officials {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -46,7 +44,6 @@
         .official-title { font-size: 11px; opacity: 0.9; margin-bottom: 4px; }
         .official-name { font-size: 13px; font-weight: bold; }
         
-        /* وكيل الوزارة + موجه عام */
         .second-officials {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -61,9 +58,8 @@
             text-align: center;
         }
         .second-title { font-size: 12px; opacity: 0.9; margin-bottom: 5px; }
-        .second-name { font-size: 14px; font-weight; bold; }
+        .second-name { font-size: 14px; font-weight: bold; }
         
-        /* إدارة الإدارات */
         .depts-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -80,7 +76,6 @@
         .dept-title { font-size: 12px; color: #666; margin-bottom: 5px; }
         .dept-name { font-size: 14px; font-weight: bold; color: #1e3c72; }
         
-        /* موجه أول البرمجة */
         .mentor-section {
             background: linear-gradient(135deg, #1e3c72, #2a5298);
             color: white;
@@ -92,7 +87,6 @@
         .mentor-title { font-size: 13px; opacity: 0.9; margin-bottom: 5px; }
         .mentor-name { font-size: 16px; font-weight: bold; }
         
-        /* موجهي التعليم الثانوي */
         .supervisors-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -108,7 +102,6 @@
         .supervisor-title { font-size: 11px; color: #666; }
         .supervisor-name { font-size: 13px; font-weight: bold; color: #1e3c72; }
         
-        /* حقل البحث */
         .search-box {
             display: flex;
             gap: 10px;
@@ -138,7 +131,6 @@
         }
         .search-box button:hover { transform: scale(1.02); }
         
-        /* زر بحث آخر */
         .new-search-btn {
             background: #28a745;
             color: white;
@@ -153,7 +145,6 @@
         }
         .new-search-btn:hover { background: #1e6b2f; }
         
-        /* بطاقة النتيجة */
         .result-card {
             background: white;
             border-radius: 25px;
@@ -180,7 +171,6 @@
         .info-label { font-weight: bold; color: #666; }
         .info-value { font-weight: bold; color: #1e3c72; }
         
-        /* الشكل الدائري */
         .progress-circle {
             width: 180px;
             height: 180px;
@@ -415,6 +405,19 @@
       }
   }
   
+  // دالة تحويل النسبة المخزنة إلى النسبة الصحيحة للعرض
+  function getDisplayPercentage(storedPercentage) {
+      let p = parseFloat(storedPercentage);
+      if (isNaN(p)) return 0;
+      // إذا كانت النسبة أقل من 2 (يعني 1 أو 1.5 أو 0.6) نعتبرها نسبة عشرية ونضرب في 100
+      // شرط إضافي: لو كانت النسبة 1 بالضبط وواضح إنها 100% من سياق البيانات
+      if (p <= 2) {
+          // لو هي 1 او اقل من 2، نضرب في 100
+          return p * 100;
+      }
+      return p;
+  }
+  
   async function searchResult() {
       let code = document.getElementById('searchInput').value.trim();
       if (!code) { 
@@ -438,22 +441,16 @@
           return;
       }
       
-      // معالجة النسبة المئوية بشكل صحيح
-      let percentage = parseFloat(student.percentage);
+      // استخدام دالة التحويل للحصول على النسبة الصحيحة للعرض
+      let storedPercentage = student.percentage;
+      let displayPercentage = getDisplayPercentage(storedPercentage);
+      let percentageValue = displayPercentage.toFixed(1);
       
-      // إذا كانت النسبة أقل من 2 وليست 0، نعتبرها نسبة عشرية (0.6 = 60%)
-      if (percentage < 2 && percentage > 0 && student.percentage.toString().includes('.')) {
-          percentage = percentage * 100;
-      }
-      // إذا كانت النسبة 1 بالضبط، قد تكون 100% أو 1% - نفحص القيمة الأصلية
-      if (percentage === 1 && student.percentage.toString().includes('.')) {
-          percentage = 100;
-      }
-      
-      let percentageValue = percentage.toFixed(1);
-      let isPass = percentage >= 60;
+      // تحديد الحالة بناءً على النسبة المعروضة
+      let isPass = displayPercentage >= 60;
       let statusText = isPass ? 'ناجح' : 'راسب';
       
+      // تحديث واجهة العرض
       document.getElementById('resultCode').innerHTML = student.student_code;
       document.getElementById('resultName').innerHTML = student.student_name;
       document.getElementById('resultSchool').innerHTML = student.school_name || '—';
