@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>رفع نتائج توفاس</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f7ff; padding: 20px; }
+        .container { max-width: 600px; margin: auto; background: white; border-radius: 20px; padding: 30px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        h1 { color: #1e3c72; text-align: center; margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 25px; }
+        .format-box { background: #eef2fa; padding: 15px; border-radius: 12px; margin: 15px 0; font-size: 13px; }
+        .format-box table { width: 100%; border-collapse: collapse; }
+        .format-box td, .format-box th { padding: 6px; border-bottom: 1px solid #ccc; text-align: center; }
+        input, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1px solid #ccc; }
+        button { background: #1e3c72; color: white; border: none; cursor: pointer; font-weight: bold; }
+        button:hover { background: #0f2b4f; }
+        .toast { position: fixed; bottom: 20px; left: 20px; right: 20px; background: #28a745; color: white; padding: 12px; border-radius: 10px; text-align: center; z-index: 1000; animation: fadeOut 3s ease forwards; }
+        .toast.error { background: #dc3545; }
+        @keyframes fadeOut { 0% { opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📊 رفع نتائج اختبار توفاس</h1>
+    <p class="subtitle">إدارة دشنا التعليمية - إدارة التعليم الثانوي</p>
+    <div class="format-box">
+        <strong>📋 تنسيق ملف Excel:</strong>
+        <table>
+            <tr><th>العمود</th><th>البيانات</th></tr>
+            <tr><td>A</td><td>كود الطالب</td></tr>
+            <tr><td>B</td><td>الإجابات الصحيحة</td></tr>
+            <tr><td>C</td><td>إجمالي الأسئلة</td></tr>
+            <tr><td>D</td><td>النسبة المئوية</td></tr>
+            <tr><td>E</td><td>النتيجة النهائية</td></tr>
+            <tr><td>F</td><td>اسم المدرسة</td></tr>
+            <tr><td>G</td><td>اسم الطالب</td></tr>
+        </table>
+    </div>
+    <input type="file" id="excelFile" accept=".xlsx,.xls,.csv">
+    <button id="uploadBtn">📤 استيراد البيانات</button>
+    <div id="result" style="margin-top:10px; text-align:center;"></div>
+    <button onclick="window.location.href='tofas-search.html'" style="background:#28a745;">🔍 صفحة البحث</button>
+    <button onclick="window.location.href='index.html'" style="background:#6c757d; margin-top:10px;">🏠 العودة للرئيسية</button>
+</div>
+<script type="module">
+  import { supabase } from './supabase-config.js';
+
+  function showToast(msg, isErr = false) {
+      let t = document.createElement('div');
+      t.className = `toast ${isErr ? 'error' : ''}`;
+      t.innerText = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3000);
+  }
+
+  document.getElementById('uploadBtn').onclick = async () => {
+      let file = document.getElementById('excelFile').files[0];
+      if (!file) { showToast("اختر ملف Excel أولاً", true); return; }
+
+      let data = await file.arrayBuffer();
+      let workbook = XLSX.read(data);
+      let rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, defval: "" });
+
+      if (!rows || rows.length < 2) { showToast("الملف فارغ", true); return; }
+
+      let success = 0, error = 0;
+
+      for (let i = 1; i < rows.length; i++) {
+          let row = rows[i];
+          if (!row || row.length < 7) continue;
+
+          let code = row[0]?.toString().trim();
+          let correct = row[1]?.toString().trim();
+          let total = row[2]?.toString().trim();
+          let percentage = parseFloat(row[3]);
+          let finalResult = row[4]?.toString().trim();
+          let schoolName = row[5]?.toString().trim();
+          let studentName = row[6]?.toString().trim();
+
+          if (!code || !studentName) { error++; continue; }
+          if (isNaN(percentage)) percentage = 0;
+
+          let status = (finalResult === 'ناجح' || finalResult === 'نجاح' || percentage >= 50) ? 'ناجح' : 'راسب';
+
+          let { error: upsertError } = await supabase
+              .from('tofas_results')
+              .upsert({ 
+                  student_code: code, 
+                  student_name: studentName, 
+                  percentage: percentage, 
+                  status: status,
+                  school_name: schoolName
+              })
+              .eq('student_code', code);
+
+          if (upsertError) error++;
+          else success++;
+      }
+
+      showToast(`✅ تم استيراد ${success} طالب${error ? `, ❌ فشل ${error}` : ''}`);
+      document.getElementById('result').innerHTML = `<span style="color:green;">✅ استوردت ${success} طالب</span>`;
+      document.getElementById('excelFile').value = '';
+  };
+</script>
+</body>
+</html>

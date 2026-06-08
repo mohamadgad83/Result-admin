@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نتائج توفاس - مديرية التربية والتعليم بقنا</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f2b4f 0%, #1e3c72 50%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 650px; margin: auto; }
+        
+        .search-card {
+            background: white;
+            border-radius: 35px;
+            padding: 35px 30px;
+            box-shadow: 0 25px 45px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        
+        /* رأس الصفحة */
+        .ministry-header { margin-bottom: 15px; }
+        .ministry-name { font-size: 24px; font-weight: bold; color: #1a2a6c; }
+        .administration-name { font-size: 20px; font-weight: bold; color: #b21f1f; margin-top: 5px; }
+        .direction-name { font-size: 16px; font-weight: bold; color: #1e3c72; background: #f0f7ff; display: inline-block; padding: 6px 20px; border-radius: 30px; margin-top: 10px; }
+        
+        /* الصف العلوي - وكيل الوزارة + موجه عام */
+        .top-officials {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .official-card {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f);
+            color: white;
+            border-radius: 20px;
+            padding: 12px;
+            text-align: center;
+        }
+        .official-title { font-size: 12px; opacity: 0.9; margin-bottom: 5px; }
+        .official-name { font-size: 15px; font-weight: bold; }
+        
+        /* إدارة الإدارات */
+        .depts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .dept-card {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 12px;
+            text-align: center;
+            border-right: 3px solid #1e3c72;
+        }
+        .dept-title { font-size: 12px; color: #666; margin-bottom: 5px; }
+        .dept-name { font-size: 14px; font-weight: bold; color: #1e3c72; }
+        
+        /* موجه أول البرمجة */
+        .mentor-section {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            border-radius: 20px;
+            padding: 12px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .mentor-title { font-size: 13px; opacity: 0.9; margin-bottom: 5px; }
+        .mentor-name { font-size: 16px; font-weight: bold; }
+        
+        /* موجهي التعليم الثانوي */
+        .supervisors-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin: 15px 0;
+        }
+        .supervisor-card {
+            background: #eef2fa;
+            border-radius: 15px;
+            padding: 10px;
+            text-align: center;
+        }
+        .supervisor-title { font-size: 11px; color: #666; }
+        .supervisor-name { font-size: 13px; font-weight: bold; color: #1e3c72; }
+        
+        /* حقل البحث */
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin: 25px 0 20px;
+            flex-wrap: wrap;
+        }
+        .search-box input {
+            flex: 3;
+            padding: 15px 20px;
+            border: 2px solid #eef2fa;
+            border-radius: 60px;
+            font-size: 16px;
+            outline: none;
+            text-align: center;
+        }
+        .search-box input:focus { border-color: #1e3c72; }
+        .search-box button {
+            flex: 1;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            border: none;
+            border-radius: 60px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .search-box button:hover { transform: scale(1.02); }
+        
+        /* بطاقة النتيجة */
+        .result-card {
+            background: white;
+            border-radius: 25px;
+            padding: 25px;
+            margin-top: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .result-header {
+            text-align: center;
+            border-bottom: 2px solid #eef2fa;
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+        }
+        .result-header h3 { color: #1e3c72; }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eef2fa;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .info-label { font-weight: bold; color: #666; }
+        .info-value { font-weight: bold; color: #1e3c72; }
+        .percentage-box {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f0f7ff;
+            border-radius: 20px;
+        }
+        .percentage-number { font-size: 48px; font-weight: bold; color: #1e3c72; }
+        .status-pass { color: #28a745; font-weight: bold; }
+        .status-fail { color: #dc3545; font-weight: bold; }
+        
+        .footer {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            font-size: 11px;
+        }
+        .error { color: #dc3545; margin-top: 15px; font-size: 14px; }
+        .loading { text-align: center; margin-top: 15px; color: #1e3c72; display: none; font-weight: bold; }
+        
+        @media (max-width: 550px) {
+            .search-card { padding: 25px 20px; }
+            .ministry-name { font-size: 20px; }
+            .administration-name { font-size: 18px; }
+            .top-officials, .depts-grid, .supervisors-grid { grid-template-columns: 1fr; gap: 10px; }
+            .search-box { flex-direction: column; }
+            .percentage-number { font-size: 36px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="search-card">
+        <!-- مديرية التربية والتعليم -->
+        <div class="ministry-header">
+            <div class="ministry-name">📚 مديرية التربية والتعليم بقنا</div>
+            <div class="administration-name">إدارة دشنا التعليمية</div>
+            <div class="direction-name">💻 توجيه البرمجة والذكاء الاصطناعي</div>
+        </div>
+        
+        <!-- وكيل الوزارة + موجه عام البرمجة -->
+        <div class="top-officials">
+            <div class="official-card">
+                <div class="official-title">وكيل وزارة التربية والتعليم بقنا</div>
+                <div class="official-name">أ/ هاني عنتر</div>
+            </div>
+            <div class="official-card">
+                <div class="official-title">موجه عام البرمجة والذكاء الاصطناعي</div>
+                <div class="official-name">أ/ مينا عادل</div>
+            </div>
+        </div>
+        
+        <!-- إدارة الإدارات -->
+        <div class="depts-grid">
+            <div class="dept-card">
+                <div class="dept-title">مدير الإدارة</div>
+                <div class="dept-name">أ/ محمد عبداللطيف</div>
+            </div>
+            <div class="dept-card">
+                <div class="dept-title">وكيل الإدارة</div>
+                <div class="dept-name">أ/ خالد يوسف</div>
+            </div>
+            <div class="dept-card">
+                <div class="dept-title">مدير التعليم الثانوي</div>
+                <div class="dept-name">أ/ أحمد السيد</div>
+            </div>
+            <div class="dept-card">
+                <div class="dept-title">رئيس التعليم الثانوي</div>
+                <div class="dept-name">أ/ وائل رمضان</div>
+            </div>
+        </div>
+        
+        <!-- موجه أول البرمجة -->
+        <div class="mentor-section">
+            <div class="mentor-title">🇪🇬 موجه أول البرمجة والذكاء الاصطناعي</div>
+            <div class="mentor-name">أ/ محمد جاد عبداللاه</div>
+        </div>
+        
+        <!-- موجهي التعليم الثانوي -->
+        <div class="supervisors-grid">
+            <div class="supervisor-card">
+                <div class="supervisor-title">موجه التعليم الثانوي</div>
+                <div class="supervisor-name">أ/ أحمد محمود</div>
+            </div>
+            <div class="supervisor-card">
+                <div class="supervisor-title">موجه التعليم الثانوي</div>
+                <div class="supervisor-name">أ/ خالد محمد</div>
+            </div>
+        </div>
+        
+        <!-- حقل البحث -->
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 أدخل كود الطالب">
+            <button onclick="searchResult()">بحث</button>
+        </div>
+        
+        <div id="errorMsg" class="error"></div>
+        <div id="loading" class="loading">⏳ جاري البحث...</div>
+    </div>
+    
+    <!-- بطاقة النتيجة -->
+    <div id="resultCard" class="result-card">
+        <div class="result-header"><h3>📄 نتيجة اختبار توفاس</h3></div>
+        <div class="info-row"><span class="info-label">كود الطالب:</span><span class="info-value" id="resultCode">—</span></div>
+        <div class="info-row"><span class="info-label">اسم الطالب:</span><span class="info-value" id="resultName">—</span></div>
+        <div class="info-row"><span class="info-label">اسم المدرسة:</span><span class="info-value" id="resultSchool">—</span></div>
+        <div class="percentage-box"><div class="percentage-number" id="resultPercentage">—</div><div>النسبة المئوية</div></div>
+        <div class="info-row"><span class="info-label">الحالة:</span><span class="info-value" id="resultStatus">—</span></div>
+        <div style="text-align:center; margin-top:15px;">
+            <button onclick="window.print()" style="background:#28a745; color:white; border:none; padding:10px 25px; border-radius:30px; cursor:pointer;">🖨️ طباعة</button>
+        </div>
+    </div>
+    
+    <!-- حقوق الطبع -->
+    <div class="footer">
+        <div>جميع الحقوق محفوظة © | قسم البرمجة - مدرسة دشنا الثانوية</div>
+        <div style="margin-top:5px;">أ/ محمد جاد عبداللاه | مسئول IT وسفير مادة البرمجة بوزارة التربية والتعليم</div>
+    </div>
+</div>
+
+<script type="module">
+  import { supabase } from './supabase-config.js';
+  
+  async function searchResult() {
+      let code = document.getElementById('searchInput').value.trim();
+      if (!code) { document.getElementById('errorMsg').innerText = "⚠️ يرجى إدخال كود الطالب"; return; }
+      
+      document.getElementById('errorMsg').innerText = '';
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('resultCard').style.display = 'none';
+      
+      let { data: student, error } = await supabase
+          .from('tofas_results')
+          .select('*')
+          .eq('student_code', code)
+          .single();
+      
+      document.getElementById('loading').style.display = 'none';
+      if (error || !student) {
+          document.getElementById('errorMsg').innerHTML = "⚠️ لا يوجد طالب بهذا الكود";
+          return;
+      }
+      
+      let percentage = parseFloat(student.percentage).toFixed(1);
+      let isPass = student.status === 'ناجح' || percentage >= 50;
+      
+      document.getElementById('resultCode').innerHTML = student.student_code;
+      document.getElementById('resultName').innerHTML = student.student_name;
+      document.getElementById('resultSchool').innerHTML = student.school_name || '—';
+      document.getElementById('resultPercentage').innerHTML = `${percentage}%`;
+      document.getElementById('resultStatus').innerHTML = `<span class="${isPass ? 'status-pass' : 'status-fail'}">${isPass ? 'ناجح' : 'راسب'}</span>`;
+      
+      document.getElementById('resultCard').style.display = 'block';
+  }
+  
+  window.searchResult = searchResult;
+</script>
+</body>
+</html>
