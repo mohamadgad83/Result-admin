@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نتائج اختبار توفاس للصف الاول  الثانوي - ادارة دشنا التعليمية  - مديرية التربية والتعليم بقنا</title>
+    <title>نتائج اختبار توفاس للصف الاول الثانوي - ادارة دشنا التعليمية - مديرية التربية والتعليم بقنا</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -29,7 +29,7 @@
         .administration-name { font-size: 20px; font-weight: bold; color: #b21f1f; margin-top: 5px; }
         .direction-name { font-size: 16px; font-weight: bold; color: #1e3c72; background: #f0f7ff; display: inline-block; padding: 6px 20px; border-radius: 30px; margin-top: 10px; }
         
-        /* كروت عليا - وزير + مدير عام + مستشار */
+        /* كروت عليا */
         .top-officials {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -61,7 +61,7 @@
             text-align: center;
         }
         .second-title { font-size: 12px; opacity: 0.9; margin-bottom: 5px; }
-        .second-name { font-size: 14px; font-weight: bold; }
+        .second-name { font-size: 14px; font-weight; bold; }
         
         /* إدارة الإدارات */
         .depts-grid {
@@ -180,7 +180,7 @@
         .info-label { font-weight: bold; color: #666; }
         .info-value { font-weight: bold; color: #1e3c72; }
         
-        /* الشكل الدائري للنسبة المئوية */
+        /* الشكل الدائري */
         .progress-circle {
             width: 180px;
             height: 180px;
@@ -220,14 +220,6 @@
             color: #666;
         }
         
-        .percentage-box {
-            text-align: center;
-            margin: 20px 0;
-            padding: 10px;
-            background: #f0f7ff;
-            border-radius: 20px;
-        }
-        .percentage-number { font-size: 48px; font-weight: bold; color: #1e3c72; }
         .status-pass { 
             background: #28a745; 
             color: white; 
@@ -266,6 +258,13 @@
         .error { color: #dc3545; margin-top: 15px; font-size: 14px; }
         .loading { text-align: center; margin-top: 15px; color: #1e3c72; display: none; font-weight: bold; }
         
+        @media print {
+            body { background: white; padding: 0; }
+            .search-card, .new-search-btn, .search-box, .error, .loading, .footer, .note-box { display: none; }
+            .result-card { display: block !important; box-shadow: none; margin-top: 0; }
+            .circle-progress { stroke-width: 8; }
+        }
+        
         @media (max-width: 550px) {
             .search-card { padding: 25px 20px; }
             .ministry-name { font-size: 20px; }
@@ -281,14 +280,12 @@
 <body>
 <div class="container">
     <div class="search-card" id="searchCard">
-        <!-- مديرية التربية والتعليم -->
         <div class="ministry-header">
             <div class="ministry-name">📚 مديرية التربية والتعليم بقنا</div>
             <div class="administration-name">إدارة دشنا التعليمية</div>
             <div class="direction-name">💻 توجيه البرمجة والذكاء الاصطناعي</div>
         </div>
         
-        <!-- الكروت العلوية: وزير + مدير عام + مستشار -->
         <div class="top-officials">
             <div class="official-card">
                 <div class="official-title">وزير التربية والتعليم</div>
@@ -304,11 +301,10 @@
             </div>
         </div>
         
-        <!-- وكيل الوزارة + موجه عام البرمجة -->
         <div class="second-officials">
             <div class="second-card">
                 <div class="second-title">وكيل وزارة التربية والتعليم بقنا</div>
-                <div class="second-name">أ/ طارق محمد سعدالدين </div>
+                <div class="second-name">أ/ طارق محمد سعدالدين</div>
             </div>
             <div class="second-card">
                 <div class="second-title">موجه عام البرمجة والذكاء الاصطناعي بقنا</div>
@@ -316,7 +312,6 @@
             </div>
         </div>
         
-        <!-- إدارة الإدارات -->
         <div class="depts-grid">
             <div class="dept-card">
                 <div class="dept-title">مدير الإدارة</div>
@@ -336,25 +331,22 @@
             </div>
         </div>
         
-        <!-- موجه أول البرمجة -->
         <div class="mentor-section">
             <div class="mentor-title">🇪🇬 موجه أول البرمجة والذكاء الاصطناعي</div>
             <div class="mentor-name">أ/ احمد حسن زيدان</div>
         </div>
         
-        <!-- موجهي التعليم الثانوي -->
         <div class="supervisors-grid">
             <div class="supervisor-card">
                 <div class="supervisor-title">موجه التعليم الثانوي</div>
-                <div class="supervisor-name">أ/ امجد احمد عبدالمنطلب </div>
+                <div class="supervisor-name">أ/ امجد احمد عبدالمنطلب</div>
             </div>
             <div class="supervisor-card">
                 <div class="supervisor-title">موجه التعليم الثانوي</div>
-                <div class="supervisor-name">أ/ عبدالهادي محمد  التهامي</div>
+                <div class="supervisor-name">أ/ عبدالهادي محمد التهامي</div>
             </div>
         </div>
         
-        <!-- حقل البحث -->
         <div id="searchArea">
             <div class="search-box">
                 <input type="text" id="searchInput" placeholder="🔍 أدخل كود الطالب">
@@ -365,7 +357,6 @@
         </div>
     </div>
     
-    <!-- بطاقة النتيجة -->
     <div id="resultCard" class="result-card">
         <div class="result-header">
             <h3>📄 2025 / 2026 نتيجة اختبار توفاس - الصف الأول الثانوي - الفصل الدراسي الثاني</h3>
@@ -374,8 +365,7 @@
         <div class="info-row"><span class="info-label">اسم الطالب:</span><span class="info-value" id="resultName">—</span></div>
         <div class="info-row"><span class="info-label">اسم المدرسة:</span><span class="info-value" id="resultSchool">—</span></div>
         
-        <!-- الشكل الدائري للنسبة المئوية -->
-        <div class="progress-circle" id="progressCircle">
+        <div class="progress-circle">
             <svg viewBox="0 0 200 200">
                 <circle class="circle-bg" cx="100" cy="100" r="88"></circle>
                 <circle class="circle-progress" id="progressCircleSvg" cx="100" cy="100" r="88" stroke="#1e3c72"></circle>
@@ -389,7 +379,6 @@
             <span class="info-value" id="resultStatus">—</span>
         </div>
         
-        <!-- ملاحظة شرط النجاح -->
         <div class="note-box">
             📌 ملاحظة: درجة النجاح هي <strong>60%</strong> فأكثر
         </div>
@@ -400,7 +389,6 @@
         </div>
     </div>
     
-    <!-- حقوق الطبع -->
     <div class="footer">
         <div>جميع الحقوق محفوظة © | قسم البرمجة - مدرسة دشنا الثانوية</div>
         <div style="margin-top:5px;">أ/ محمد جاد عبداللاه | مسئول IT وسفير مادة البرمجة والذكاء الاصطناعي بمحافظة قنا</div>
@@ -418,7 +406,6 @@
       circle.style.strokeDasharray = `${circumference} ${circumference}`;
       circle.style.strokeDashoffset = offset;
       
-      // تغيير لون الدائرة حسب النسبة
       if (percentage >= 80) {
           circle.setAttribute('stroke', '#28a745');
       } else if (percentage >= 60) {
@@ -430,7 +417,10 @@
   
   async function searchResult() {
       let code = document.getElementById('searchInput').value.trim();
-      if (!code) { document.getElementById('errorMsg').innerText = "⚠️ يرجى إدخال كود الطالب"; return; }
+      if (!code) { 
+          document.getElementById('errorMsg').innerText = "⚠️ يرجى إدخال كود الطالب"; 
+          return; 
+      }
       
       document.getElementById('errorMsg').innerText = '';
       document.getElementById('loading').style.display = 'block';
@@ -448,33 +438,34 @@
           return;
       }
       
-      // معالجة النسبة المئوية
+      // معالجة النسبة المئوية بشكل صحيح
       let percentage = parseFloat(student.percentage);
-      if (percentage < 1 && percentage > 0) {
+      
+      // إذا كانت النسبة أقل من 2 وليست 0، نعتبرها نسبة عشرية (0.6 = 60%)
+      if (percentage < 2 && percentage > 0 && student.percentage.toString().includes('.')) {
           percentage = percentage * 100;
       }
-      let percentageValue = percentage.toFixed(1);
+      // إذا كانت النسبة 1 بالضبط، قد تكون 100% أو 1% - نفحص القيمة الأصلية
+      if (percentage === 1 && student.percentage.toString().includes('.')) {
+          percentage = 100;
+      }
       
-      // شرط النجاح: 60% فأكثر
+      let percentageValue = percentage.toFixed(1);
       let isPass = percentage >= 60;
       let statusText = isPass ? 'ناجح' : 'راسب';
       
-      // تحديث بيانات النتيجة
       document.getElementById('resultCode').innerHTML = student.student_code;
       document.getElementById('resultName').innerHTML = student.student_name;
       document.getElementById('resultSchool').innerHTML = student.school_name || '—';
       document.getElementById('circlePercentage').innerHTML = percentageValue;
       document.getElementById('resultStatus').innerHTML = `<span class="${isPass ? 'status-pass' : 'status-fail'}">${statusText}</span>`;
       
-      // تحديث الشكل الدائري
       updateProgressCircle(parseFloat(percentageValue));
       
-      // إخفاء منطقة البحث بالكامل (كل الكروت وحقل البحث)
       document.getElementById('searchCard').style.display = 'none';
       document.getElementById('resultCard').style.display = 'block';
   }
   
-  // دالة إعادة البحث (تظهر كل الكروت مرة أخرى)
   window.resetSearch = function() {
       document.getElementById('searchCard').style.display = 'block';
       document.getElementById('resultCard').style.display = 'none';
