@@ -6,7 +6,20 @@ const path = require('path')
 const SUPABASE_URL = process.env.SUPABASE_URL
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY
 
-console.log('🔐 Building with Supabase URL:', SUPABASE_URL)
+// 🔍 تشخيص: نعرض معلومات مفيدة من غير ما نكشف القيم السرية بالكامل
+console.log('🔍 VERCEL_ENV:', process.env.VERCEL_ENV)
+console.log('🔍 VERCEL_GIT_COMMIT_REF (البرانش):', process.env.VERCEL_GIT_COMMIT_REF)
+console.log('🔍 كل الـ Environment Variables اللي فيها كلمة SUPABASE:')
+Object.keys(process.env)
+    .filter(k => k.toUpperCase().includes('SUPABASE'))
+    .forEach(k => console.log('   -', k, '=', process.env[k] ? `موجود (${process.env[k].length} حرف)` : 'فاضي'))
+
+console.log('🔐 Building with Supabase URL:', SUPABASE_URL ? 'موجود ✅' : 'مفقود ❌ (undefined)')
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    console.error('❌❌❌ خطأ فادح: المتغيرات دي مش وصلة للـ Build. راجع Environment Variables في Vercel.')
+    process.exit(1)
+}
 
 // قائمة الملفات التي تحتاج إلى تعويض المفاتيح
 const files = [
