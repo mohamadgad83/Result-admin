@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام تسجيل الرغبات - مدرسة دشنا الثانوية</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card login-card">
+            <div class="text-center">
+                <div class="logo">🎓</div>
+                <h1>نظام تسجيل الرغبات</h1>
+                <p class="subtitle">مدرسة دشنا الثانوية - الصف الثاني الثانوي</p>
+            </div>
+
+            <form id="loginForm" class="form">
+                <div class="form-group">
+                    <label>كود الطالب</label>
+                    <input type="text" id="studentCode" placeholder="أدخل كود الطالب" required dir="ltr">
+                </div>
+
+                <div class="form-group">
+                    <label>الرقم القومي</label>
+                    <input type="text" id="nationalId" placeholder="أدخل الرقم القومي" required dir="ltr">
+                </div>
+
+                <div id="errorMsg" class="error-msg" style="display:none;"></div>
+
+                <button type="submit" class="btn-primary">🚪 دخول</button>
+            </form>
+
+            <div class="text-center mt-3">
+                <p class="text-sm text-gray-500">
+                    للأدمن: <a href="admin-login.html" class="link">تسجيل الدخول</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="supabase-config.js"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault()
+            
+            const studentCode = document.getElementById('studentCode').value.trim()
+            const nationalId = document.getElementById('nationalId').value.trim()
+            const errorMsg = document.getElementById('errorMsg')
+            
+            errorMsg.style.display = 'none'
+
+            try {
+                const { data, error } = await supabase
+                    .from('students')
+                    .select('*')
+                    .eq('student_code', studentCode)
+                    .eq('national_id', nationalId)
+                    .single()
+
+                if (error || !data) {
+                    errorMsg.textContent = '❌ كود الطالب أو الرقم القومي غير صحيح'
+                    errorMsg.style.display = 'block'
+                    return
+                }
+
+                sessionStorage.setItem('studentId', data.id)
+                sessionStorage.setItem('studentName', data.full_name)
+                window.location.href = 'student-form.html'
+            } catch (err) {
+                errorMsg.textContent = '❌ حدث خطأ أثناء محاولة الدخول'
+                errorMsg.style.display = 'block'
+            }
+        })
+    </script>
+</body>
+</html>

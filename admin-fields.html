@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الحقول الديناميكية</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .form-row .full-width {
+            grid-column: 1 / -1;
+        }
+        .checkbox-group {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            padding: 10px 0;
+        }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-weight: normal;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 20px;
+        }
+        .btn-back {
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-back:hover { background: #5a6268; }
+        .btn-add {
+            padding: 10px 25px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .btn-add:hover { background: #1e7e34; }
+        .btn-delete {
+            padding: 5px 15px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .btn-delete:hover { background: #a71d2a; }
+        .btn-edit {
+            padding: 5px 15px;
+            background: #ffc107;
+            color: #333;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .btn-edit:hover { background: #e0a800; }
+        .field-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .field-form.show { display: block; }
+        .btn-cancel {
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-cancel:hover { background: #5a6268; }
+        .btn-save {
+            padding: 10px 25px;
+            background: #1e3c72;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .btn-save:hover { background: #0f2b4f; }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        table th { background: #1e3c72; color: white; padding: 12px 15px; text-align: right; }
+        table td { padding: 10px 15px; border-bottom: 1px solid #eee; }
+        table tr:hover { background: #f8f9fa; }
+        @media (max-width: 600px) {
+            .form-row { grid-template-columns: 1fr; }
+            .checkbox-group { flex-direction: column; gap: 10px; }
+            .admin-header { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" style="max-width:1000px;">
+        <div class="card">
+            <!-- Header -->
+            <div class="admin-header">
+                <div>
+                    <h1 style="margin:0;">📝 إدارة الحقول الديناميكية</h1>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <a href="admin-dashboard.html" class="btn-back">📊 لوحة التحكم</a>
+                    <button onclick="logout()" style="padding:10px 20px;background:#dc3545;color:white;border:none;border-radius:8px;cursor:pointer;">🚪 خروج</button>
+                </div>
+            </div>
+
+            <!-- زر إضافة -->
+            <button onclick="toggleForm()" class="btn-add" id="addBtn">➕ إضافة حقل جديد</button>
+
+            <!-- نموذج الإضافة/التعديل -->
+            <div class="field-form" id="fieldForm">
+                <h3 id="formTitle">➕ إضافة حقل جديد</h3>
+                <form id="fieldFormElement">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>اسم الحقل *</label>
+                            <input type="text" id="fieldName" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>مفتاح الحقل *</label>
+                            <input type="text" id="fieldKey" class="form-control" placeholder="field_key_english" required dir="ltr">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>النوع</label>
+                            <select id="fieldType" class="form-control" onchange="toggleOptions()">
+                                <option value="text">نص قصير</option>
+                                <option value="select">قائمة منسدلة</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>ترتيب العرض</label>
+                            <input type="number" id="fieldOrder" class="form-control" value="1" min="1">
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="optionsGroup" style="display:none;">
+                        <label>الخيارات (مفصولة بفاصلة)</label>
+                        <input type="text" id="fieldOptions" class="form-control" placeholder="خيار 1, خيار 2, خيار 3">
+                    </div>
+
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" id="fieldRequired"> مطلوب</label>
+                        <label><input type="checkbox" id="fieldReadonly"> للقراءة فقط</label>
+                        <label><input type="checkbox" id="fieldVisible" checked> ظاهر للطالب</label>
+                    </div>
+
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
+                        <button type="submit" class="btn-save">💾 حفظ</button>
+                        <button type="button" onclick="cancelForm()" class="btn-cancel">إلغاء</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- قائمة الحقول -->
+            <div style="margin-top:20px;">
+                <h3>📋 الحقول الحالية</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>الاسم</th>
+                                <th>المفتاح</th>
+                                <th>النوع</th>
+                                <th>مطلوب</th>
+                                <th>للطالب</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fieldsTableBody">
+                            <tr><td colspan="7" class="text-center" style="padding:30px;color:#999;">⏳ جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="supabase-config.js"></script>
+    <script>
+        let fields = []
+        let editingId = null
+
+        // التحقق من وجود أدمن
+        if (!sessionStorage.getItem('adminId')) {
+            window.location.href = 'admin-login.html'
+        }
+
+        function toggleOptions() {
+            const type = document.getElementById('fieldType').value
+            document.getElementById('optionsGroup').style.display = type === 'select' ? 'block' : 'none'
+        }
+
+        function toggleForm() {
+            const form = document.getElementById('fieldForm')
+            form.classList.toggle('show')
+            if (!form.classList.contains('show')) {
+                cancelForm()
+            }
+        }
+
+        function cancelForm() {
+            document.getElementById('fieldForm').classList.remove('show')
+            document.getElementById('fieldFormElement').reset()
+            document.getElementById('formTitle').textContent = '➕ إضافة حقل جديد'
+            editingId = null
+            document.getElementById('addBtn').textContent = '➕ إضافة حقل جديد'
+        }
+
+        async function loadFields() {
+            try {
+                const { data, error } = await supabase
+                    .from('dynamic_fields')
+                    .select('*')
+                    .order('display_order', { ascending: true })
+
+                if (error) throw error
+                fields = data || []
+                renderTable()
+            } catch (err) {
+                console.error('Error loading fields:', err)
+                document.getElementById('fieldsTableBody').innerHTML = 
+                    '<tr><td colspan="7" class="text-center" style="padding:30px;color:#dc3545;">❌ خطأ في تحميل البيانات</td></tr>'
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('fieldsTableBody')
+
+            if (fields.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="padding:30px;color:#999;">📭 لا توجد حقول</td></tr>'
+                return
+            }
+
+            tbody.innerHTML = fields.map((field, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td><strong>${field.name}</strong></td>
+                    <td dir="ltr">${field.field_key}</td>
+                    <td>${field.type === 'text' ? 'نص' : 'قائمة'}</td>
+                    <td>${field.is_required ? '✅' : '❌'}</td>
+                    <td>${field.visible_for_student ? '✅' : '❌'}</td>
+                    <td>
+                        <button onclick="editField('${field.id}')" class="btn-edit">✏️ تعديل</button>
+                        <button onclick="deleteField('${field.id}')" class="btn-delete">🗑️ حذف</button>
+                    </td>
+                </tr>
+            `).join('')
+        }
+
+        function editField(id) {
+            const field = fields.find(f => f.id === id)
+            if (!field) return
+
+            editingId = id
+            document.getElementById('formTitle').textContent = '✏️ تعديل حقل'
+            document.getElementById('fieldName').value = field.name
+            document.getElementById('fieldKey').value = field.field_key
+            document.getElementById('fieldType').value = field.type
+            document.getElementById('fieldOrder').value = field.display_order
+            document.getElementById('fieldOptions').value = field.options ? field.options.join(', ') : ''
+            document.getElementById('fieldRequired').checked = field.is_required
+            document.getElementById('fieldReadonly').checked = field.is_readonly
+            document.getElementById('fieldVisible').checked = field.visible_for_student
+
+            toggleOptions()
+            document.getElementById('fieldForm').classList.add('show')
+            document.getElementById('addBtn').textContent = '✏️ تعديل حقل'
+        }
+
+        async function deleteField(id) {
+            if (!confirm('هل أنت متأكد من حذف هذا الحقل؟')) return
+
+            try {
+                const { error } = await supabase
+                    .from('dynamic_fields')
+                    .delete()
+                    .eq('id', id)
+
+                if (error) throw error
+                loadFields()
+            } catch (err) {
+                console.error('Error deleting field:', err)
+                alert('حدث خطأ أثناء حذف الحقل')
+            }
+        }
+
+        // حفظ الحقل
+        document.getElementById('fieldFormElement').addEventListener('submit', async (e) => {
+            e.preventDefault()
+
+            const name = document.getElementById('fieldName').value.trim()
+            const fieldKey = document.getElementById('fieldKey').value.trim()
+            const type = document.getElementById('fieldType').value
+            const displayOrder = parseInt(document.getElementById('fieldOrder').value) || 0
+            const optionsText = document.getElementById('fieldOptions').value.trim()
+            const isRequired = document.getElementById('fieldRequired').checked
+            const isReadonly = document.getElementById('fieldReadonly').checked
+            const visibleForStudent = document.getElementById('fieldVisible').checked
+
+            if (!name || !fieldKey) {
+                alert('يرجى تعبئة جميع الحقول المطلوبة')
+                return
+            }
+
+            const data = {
+                name,
+                field_key: fieldKey,
+                type,
+                options: type === 'select' ? optionsText.split(',').map(o => o.trim()).filter(o => o) : null,
+                is_required: isRequired,
+                is_readonly: isReadonly,
+                visible_for_student: visibleForStudent,
+                display_order: displayOrder
+            }
+
+            try {
+                if (editingId) {
+                    // تحديث
+                    const { error } = await supabase
+                        .from('dynamic_fields')
+                        .update(data)
+                        .eq('id', editingId)
+
+                    if (error) throw error
+                } else {
+                    // إضافة جديدة
+                    const { error } = await supabase
+                        .from('dynamic_fields')
+                        .insert(data)
+
+                    if (error) throw error
+                }
+
+                cancelForm()
+                loadFields()
+            } catch (err) {
+                console.error('Error saving field:', err)
+                alert('حدث خطأ أثناء حفظ الحقل')
+            }
+        })
+
+        function logout() {
+            sessionStorage.clear()
+            window.location.href = 'admin-login.html'
+        }
+
+        // تحميل البيانات
+        loadFields()
+    </script>
+</body>
+</html>
