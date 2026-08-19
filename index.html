@@ -324,8 +324,7 @@
                     <div class="input-group">
                         <span class="input-icon">🪪</span>
                         <input type="text" id="nationalId" class="form-control" 
-                               placeholder="الرقم القومي (14 رقم)" required dir="ltr" 
-                               maxlength="14" pattern="[0-9]{14}">
+                               placeholder="الرقم القومي" required dir="ltr">
                     </div>
 
                     <div id="errorMsg" class="error-msg"></div>
@@ -377,11 +376,6 @@
 
         document.getElementById('yearDisplay').textContent = new Date().getFullYear()
 
-        // ===== منع إدخال غير أرقام في الرقم القومي =====
-        document.getElementById('nationalId').addEventListener('input', function(e) {
-            this.value = this.value.replace(/[^0-9]/g, '')
-        })
-
         // ===== نموذج الدخول =====
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault()
@@ -398,14 +392,9 @@
             infoMsg.classList.remove('show')
             infoMsg.textContent = ''
 
+            // ===== فقط التحقق من وجود القيم =====
             if (!studentCode || !nationalId) {
                 errorMsg.textContent = '❌ يرجى إدخال كود الطالب والرقم القومي'
-                errorMsg.classList.add('show')
-                return
-            }
-
-            if (nationalId.length !== 14) {
-                errorMsg.textContent = '❌ الرقم القومي يجب أن يكون 14 رقم'
                 errorMsg.classList.add('show')
                 return
             }
