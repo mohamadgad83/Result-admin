@@ -253,63 +253,7 @@
             75% { transform: translateX(10px); }
         }
 
-        /* ===== رسالة خطأ الاتصال ===== */
-        .connection-error {
-            background: #f8d7da;
-            border: 2px solid #dc3545;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 15px 0;
-            text-align: center;
-        }
-        .connection-error .icon {
-            font-size: 40px;
-            display: block;
-        }
-        .connection-error h4 {
-            color: #721c24;
-            margin: 10px 0;
-        }
-        .connection-error p {
-            color: #721c24;
-            font-size: 14px;
-        }
-        .connection-error .btn-retry {
-            padding: 10px 30px;
-            background: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 10px;
-        }
-        .connection-error .btn-retry:hover {
-            background: #a71d2a;
-        }
-
-        @media (max-width: 600px) {
-            .admin-info {
-                grid-template-columns: 1fr;
-            }
-            .declaration-footer .signature-area {
-                flex-direction: column;
-                gap: 15px;
-            }
-            .declaration-footer .signature-item .line {
-                width: 100px;
-            }
-            .declaration-section .declaration-text {
-                font-size: 14px;
-                padding: 15px;
-            }
-            .btn-approve {
-                padding: 12px 25px;
-                font-size: 16px;
-                width: 100%;
-                justify-content: center;
-            }
-        }
+       
     </style>
 </head>
 <body>
@@ -318,19 +262,11 @@
             <!-- ===== الهيدر ===== -->
             <div style="text-align:center;border-bottom:3px solid #1e3c72;padding-bottom:15px;margin-bottom:20px;">
                 <h1 style="color:#1e3c72;font-size:24px;margin:0;">🏫 مدرسة دشنا الثانوية</h1>
-                <p style="color:#666;font-size:14px;margin:5px 0;">نظام تسجيل رغبات الصف الثاني الثانوي - العام الدراسي 2025/2026</p>
-                <p style="color:#999;font-size:12px;">مديرية التربية والتعليم بقنا</p>
+                <p style="color:#666;font-size:22px;margin:5px 0;">نظام تسجيل رغبات الصف الثاني الثانوي - العام الدراسي 2025/2026</p>
+              
             </div>
 
-            <!-- ===== رسالة خطأ الاتصال ===== -->
-            <div id="connectionError" style="display:none;">
-                <div class="connection-error">
-                    <span class="icon">📡</span>
-                    <h4>خطأ في الاتصال</h4>
-                    <p>حدثت مشكلة في الاتصال بقاعدة البيانات. يرجى التحقق من اتصالك بالإنترنت.</p>
-                    <button class="btn-retry" onclick="retryConnection()">🔄 إعادة المحاولة</button>
-                </div>
-            </div>
+           
 
             <!-- ===== بيانات الطالب ===== -->
             <div class="student-info" id="studentInfo"></div>
@@ -477,10 +413,6 @@
                             </div>
                             <div class="signature-item">
                                 <div class="line"></div>
-                                <div class="label">ختم المدرسة</div>
-                            </div>
-                            <div class="signature-item">
-                                <div class="line"></div>
                                 <div class="label">وكيل شئون الطلاب</div>
                                 <div class="signature-name">عاطف أبوالعباس</div>
                             </div>
@@ -494,11 +426,11 @@
                         <!-- حقوق النشر -->
                         <div class="copyright-text">
                             <p style="margin:0;">
-                                <span style="font-size:14px;">©</span> 
+                                <span style="font-size:18px;">©</span> 
                                 <span class="school-name">مدرسة دشنا الثانوية</span> - جميع الحقوق محفوظة 
                                 <span id="yearDisplay"></span>
                             </p>
-                            <p style="margin:0;font-size:10px;color:#bbb;">
+                            <p style="margin:0;font-size:16px;color:#bbb;">
                                 Developed by: <span class="developer-name">محمد جاد</span> - 
                                 مسئول IT وسفير مادة البرمجة محافظة قنا
                             </p>
