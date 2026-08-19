@@ -40,9 +40,11 @@
 
     <script>
         // 🔐 جلب المفاتيح من Vercel Environment Variables
+        // دي القيم اللي هتتضاف في Vercel Settings
         const SUPABASE_URL = '{{SUPABASE_URL}}'
         const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
         
+        // إنشاء عميل Supabase
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
         window.supabase = supabaseClient
 
