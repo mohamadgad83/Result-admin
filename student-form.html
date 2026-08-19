@@ -3,22 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل الرغبات</title>
+    <title>تسجيل الرغبات - مدرسة دشنا الثانوية</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="style.css">
+    
+    <!-- حقوق النشر والأمان -->
+    <meta name="copyright" content="مدرسة دشنا الثانوية - جميع الحقوق محفوظة">
+    <meta name="author" content="محمد جاد - مسئول IT وسفير مادة البرمجة محافظة قنا">
+    <meta name="developer" content="محمد جاد">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    
+    <style>
+        /* ===== ستايل الإقرار ===== */
+        .declaration-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 25px;
+            border-radius: 16px;
+            margin: 25px 0;
+            border-right: 6px solid #1e3c72;
+            position: relative;
+        }
+        .declaration-section::before {
+            content: "⚖️";
+            position: absolute;
+            top: -12px;
+            right: 20px;
+            font-size: 28px;
+            background: white;
+            padding: 0 10px;
+            border-radius: 50%;
+        }
+        .declaration-section h3 {
+            color: #1e3c72;
+            font-size: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .declaration-section .declaration-text {
+            font-size: 15px;
+            line-height: 2.2;
+            color: #333;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 10px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .declaration-section .declaration-text strong {
+            color: #1e3c72;
+        }
+        .declaration-section .declaration-text .highlight {
+            color: #dc3545;
+            font-weight: 700;
+        }
+        .declaration-section .declaration-text .student-name-field {
+            display: inline-block;
+            min-width: 150px;
+            border-bottom: 2px dashed #1e3c72;
+            color: #1e3c72;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        .declaration-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px;
+            background: #d4edda;
+            border-radius: 12px;
+            margin-top: 15px;
+            border: 2px solid #28a745;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .declaration-checkbox:hover {
+            background: #c3e6cb;
+            transform: scale(1.01);
+        }
+        .declaration-checkbox input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            accent-color: #1e3c72;
+        }
+        .declaration-checkbox label {
+            font-size: 16px;
+            font-weight: 600;
+            color: #155724;
+            cursor: pointer;
+            margin: 0;
+        }
+        .declaration-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #dee2e6;
+            font-size: 13px;
+            color: #6c757d;
+        }
+        .declaration-footer .signature-area {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        .declaration-footer .signature-item {
+            text-align: center;
+        }
+        .declaration-footer .signature-item .line {
+            width: 120px;
+            border-top: 2px solid #999;
+            margin: 5px auto;
+        }
+        .declaration-footer .signature-item .label {
+            font-size: 12px;
+            color: #666;
+        }
+        .declaration-footer .copyright-text {
+            font-size: 11px;
+            color: #999;
+            text-align: center;
+            width: 100%;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        /* ===== ستايل رسالة القفل ===== */
+        .locked-message {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .locked-message .icon {
+            font-size: 40px;
+            display: block;
+        }
+        .locked-message h4 {
+            color: #856404;
+            margin: 10px 0;
+        }
+        .locked-message p {
+            color: #856404;
+            font-size: 14px;
+        }
+
+        @media (max-width: 600px) {
+            .declaration-footer .signature-area {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .declaration-footer .signature-item .line {
+                width: 100px;
+            }
+            .declaration-section .declaration-text {
+                font-size: 14px;
+                padding: 15px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <div class="card">
-            <h1 class="text-center">📝 تسجيل رغبات الطالب</h1>
+            <!-- ===== الهيدر ===== -->
+            <div style="text-align:center;border-bottom:3px solid #1e3c72;padding-bottom:15px;margin-bottom:20px;">
+                <h1 style="color:#1e3c72;font-size:24px;margin:0;">🏫 مدرسة دشنا الثانوية</h1>
+                <p style="color:#666;font-size:14px;margin:5px 0;">نظام تسجيل رغبات الصف الثاني الثانوي - العام الدراسي 2025/2026</p>
+            </div>
 
-            <!-- بيانات الطالب -->
+            <!-- ===== بيانات الطالب ===== -->
             <div class="student-info" id="studentInfo"></div>
 
-            <!-- رسالة الحالة -->
+            <!-- ===== رسالة الحالة (مقفل) ===== -->
             <div id="statusMsg"></div>
 
-            <!-- النموذج -->
+            <!-- ===== النموذج ===== -->
             <form id="studentForm" class="form">
                 <!-- التشعيب -->
                 <div class="form-group">
@@ -74,11 +242,94 @@
                 <!-- الحقول الديناميكية -->
                 <div id="dynamicFields"></div>
 
+                <!-- ===== إقرار الطالب ===== -->
+                <div class="declaration-section" id="declarationSection">
+                    <h3>📋 إقرار وتعهد</h3>
+                    
+                    <div class="declaration-text">
+                        <p style="margin-bottom:10px;">
+                            <strong>أنا الطالب/ة:</strong> 
+                            <span class="student-name-field" id="declarationStudentName">__________</span>
+                        </p>
+                        
+                        <p style="margin-bottom:10px;">
+                            <strong>أقر وأتعهد بما يلي:</strong>
+                        </p>
+                        
+                        <ol style="padding-right:25px;margin:10px 0;">
+                            <li>
+                                بأن جميع البيانات المدخلة في هذا النموذج 
+                                <strong>صحيحة ودقيقة</strong>، وأتحمل <span class="highlight">المسؤولية الكاملة</span> 
+                                عن أي معلومات غير صحيحة.
+                            </li>
+                            <li>
+                                بأن اختياراتي للتشعيب والتخصص <strong>تخضع لشروط القبول</strong> 
+                                بالمدرسة واللوائح المنظمة بوزارة التربية والتعليم.
+                            </li>
+                            <li>
+                                أوافق على <strong>تخزين ومعالجة</strong> بياناتي في نظام المدرسة 
+                                الإلكتروني، وعلى استخدامها للأغراض الأكاديمية فقط.
+                            </li>
+                            <li>
+                                أقر بأنني <strong>اطلعت على سياسة الخصوصية</strong> وشروط الاستخدام 
+                                الخاصة بنظام التسجيل.
+                            </li>
+                            <li>
+                                أتعهد بعدم <strong>مشاركة بيانات الدخول</strong> (الكود والرقم القومي) 
+                                مع أي شخص آخر.
+                            </li>
+                        </ol>
+                        
+                        <p style="margin-top:10px;font-size:13px;color:#dc3545;background:#f8d7da;padding:10px;border-radius:8px;">
+                            ⚠️ <strong>تنبيه:</strong> تقديم بيانات غير صحيحة يعرضك للمساءلة القانونية 
+                            وفقاً للقوانين واللوائح المنظمة للعملية التعليمية.
+                        </p>
+                    </div>
+
+                    <!-- موافقة الطالب -->
+                    <div class="declaration-checkbox" onclick="toggleDeclaration()">
+                        <input type="checkbox" id="declarationCheck" required>
+                        <label for="declarationCheck">
+                            ✅ أوافق على جميع البنود المذكورة أعلاه وأتعهد بصحة البيانات
+                        </label>
+                    </div>
+
+                    <!-- التواقيع -->
+                    <div class="declaration-footer">
+                        <div class="signature-area">
+                            <div class="signature-item">
+                                <div class="line"></div>
+                                <div class="label">توقيع الطالب</div>
+                            </div>
+                            <div class="signature-item">
+                                <div class="line"></div>
+                                <div class="label">توقيع ولي الأمر</div>
+                            </div>
+                            <div class="signature-item">
+                                <div class="line"></div>
+                                <div class="label">ختم المدرسة</div>
+                            </div>
+                        </div>
+                        
+                        <!-- حقوق النشر -->
+                        <div class="copyright-text">
+                            <p style="margin:0;">
+                                © 2025 <strong>مدرسة دشنا الثانوية</strong> - جميع الحقوق محفوظة
+                            </p>
+                            <p style="margin:0;font-size:10px;color:#bbb;">
+                                Developed by: <strong>محمد جاد</strong> - مسئول IT وسفير مادة البرمجة محافظة قنا
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- رسائل الخطأ والنجاح -->
                 <div id="formError" class="error-msg" style="display:none;"></div>
                 <div id="formSuccess" class="success-msg" style="display:none;">✅ تم حفظ البيانات بنجاح!</div>
 
+                <!-- الأزرار -->
                 <div id="formActions">
-                    <button type="submit" class="btn-success" id="saveBtn">💾 حفظ الرغبات</button>
+                    <button type="submit" class="btn-success" id="saveBtn">💾 حفظ وتقديم الطلب</button>
                     <a href="student-pdf.html" class="btn-primary" id="pdfBtn" style="display:none;">📄 طباعة PDF</a>
                 </div>
             </form>
@@ -86,11 +337,12 @@
     </div>
 
     <script>
-        // 🔐 جلب المفاتيح من Vercel Environment Variables
-const SUPABASE_URL = '{{SUPABASE_URL}}'
-const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-window.supabase = supabaseClient
+        // ===== تهيئة Supabase =====
+        const SUPABASE_URL = '{{SUPABASE_URL}}'
+        const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        window.supabase = supabaseClient
+
         let studentData = null
         let fieldsData = []
         let isLocked = false
@@ -98,7 +350,7 @@ window.supabase = supabaseClient
         let selectedSpecialization = ''
         let dynamicValues = {}
 
-        // خيارات المسارات
+        // ===== خيارات المسارات =====
         const tracks = {
             'مسار الطب وعلوم الحياة': ['فيزياء', 'رياضيات'],
             'مسار الهندسة وعلوم الحاسب': ['كيمياء', 'برمجة'],
@@ -106,7 +358,13 @@ window.supabase = supabaseClient
             'مسار الآداب والفنون': ['لغة ثانية فرنسي', 'لغة ثانية ألماني', 'علم نفس']
         }
 
-        // تحميل بيانات الطالب
+        // ===== دالة تبديل الإقرار =====
+        function toggleDeclaration() {
+            const checkbox = document.getElementById('declarationCheck')
+            checkbox.checked = !checkbox.checked
+        }
+
+        // ===== تحميل بيانات الطالب =====
         async function loadStudentData() {
             const studentId = sessionStorage.getItem('studentId')
             if (!studentId) {
@@ -115,7 +373,6 @@ window.supabase = supabaseClient
             }
 
             try {
-                // جلب بيانات الطالب
                 const { data: student, error: studentError } = await supabase
                     .from('students')
                     .select('*')
@@ -138,6 +395,9 @@ window.supabase = supabaseClient
                         <div><span class="label">الرقم القومي</span><span class="value" dir="ltr">${student.national_id}</span></div>
                     </div>
                 `
+
+                // تعبئة اسم الطالب في الإقرار
+                document.getElementById('declarationStudentName').textContent = student.full_name
 
                 // جلب الحقول الديناميكية
                 const { data: fields, error: fieldsError } = await supabase
@@ -162,7 +422,6 @@ window.supabase = supabaseClient
                     })
                 }
 
-                // عرض الحقول الديناميكية
                 renderDynamicFields()
 
                 // تعبئة البيانات الموجودة
@@ -195,9 +454,14 @@ window.supabase = supabaseClient
                 // عرض رسالة الحالة
                 if (isLocked) {
                     document.getElementById('statusMsg').innerHTML = `
-                        <div class="warning-msg">
-                            ⚠️ تم تسجيل الرغبات مسبقاً ولا يمكن التعديل.
-                            <br><small>تاريخ التقديم: ${new Date(student.submitted_at).toLocaleDateString('ar-EG')}</small>
+                        <div class="locked-message">
+                            <span class="icon">🔒</span>
+                            <h4>تم تقديم الطلب بنجاح</h4>
+                            <p>
+                                ✅ تم تسجيل رغباتك مسبقاً ولا يمكن التعديل.
+                                <br>
+                                <small>📅 تاريخ التقديم: ${new Date(student.submitted_at).toLocaleDateString('ar-EG')}</small>
+                            </p>
                         </div>
                     `
                     document.getElementById('saveBtn').style.display = 'none'
@@ -211,6 +475,7 @@ window.supabase = supabaseClient
             }
         }
 
+        // ===== عرض الحقول الديناميكية =====
         function renderDynamicFields() {
             const container = document.getElementById('dynamicFields')
             container.innerHTML = ''
@@ -269,6 +534,7 @@ window.supabase = supabaseClient
             })
         }
 
+        // ===== دوال الاختيار =====
         function selectStream(value) {
             if (isLocked) return
             selectedStream = value
@@ -320,7 +586,7 @@ window.supabase = supabaseClient
             })
         }
 
-        // حفظ البيانات
+        // ===== حفظ البيانات =====
         document.getElementById('studentForm').addEventListener('submit', async (e) => {
             e.preventDefault()
 
@@ -335,6 +601,21 @@ window.supabase = supabaseClient
             errorMsg.style.display = 'none'
             successMsg.style.display = 'none'
 
+            // ===== التحقق من الإقرار =====
+            const declarationCheck = document.getElementById('declarationCheck')
+            if (!declarationCheck || !declarationCheck.checked) {
+                errorMsg.textContent = '❌ يجب الموافقة على الإقرار والتعهد قبل تقديم الطلب'
+                errorMsg.style.display = 'block'
+                // تمرير إلى الإقرار
+                document.getElementById('declarationSection').scrollIntoView({ behavior: 'smooth', block: 'center' })
+                document.getElementById('declarationSection').style.borderRightColor = '#dc3545'
+                setTimeout(() => {
+                    document.getElementById('declarationSection').style.borderRightColor = '#1e3c72'
+                }, 3000)
+                return
+            }
+
+            // ===== التحقق من الحقول =====
             if (!stream) {
                 errorMsg.textContent = '❌ يرجى اختيار التشعيب'
                 errorMsg.style.display = 'block'
@@ -361,6 +642,10 @@ window.supabase = supabaseClient
             }
 
             try {
+                const saveBtn = document.getElementById('saveBtn')
+                saveBtn.disabled = true
+                saveBtn.textContent = '⏳ جاري الحفظ...'
+
                 const updateData = {
                     stream: stream,
                     submitted_at: studentData?.submitted_at || new Date().toISOString()
@@ -388,6 +673,8 @@ window.supabase = supabaseClient
                 if (updateError) {
                     errorMsg.textContent = '❌ خطأ في حفظ البيانات: ' + updateError.message
                     errorMsg.style.display = 'block'
+                    saveBtn.disabled = false
+                    saveBtn.textContent = '💾 حفظ وتقديم الطلب'
                     return
                 }
 
@@ -423,13 +710,18 @@ window.supabase = supabaseClient
                     isLocked = true
                 }
 
+                // تمرير إلى أعلى الصفحة
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+
             } catch (err) {
                 errorMsg.textContent = '❌ حدث خطأ أثناء حفظ البيانات'
                 errorMsg.style.display = 'block'
+                document.getElementById('saveBtn').disabled = false
+                document.getElementById('saveBtn').textContent = '💾 حفظ وتقديم الطلب'
             }
         })
 
-        // تحميل البيانات عند فتح الصفحة
+        // ===== تحميل البيانات =====
         loadStudentData()
     </script>
 </body>
