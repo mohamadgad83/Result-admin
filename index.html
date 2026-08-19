@@ -40,8 +40,15 @@
         </div>
     </div>
 
-    <script src="supabase-config.js"></script>
     <script>
+        // 🔐 جلب المفاتيح من Vercel Environment Variables
+        // المفاتيح هتتضاف في Vercel Settings → Environment Variables
+        const SUPABASE_URL = '{{SUPABASE_URL}}'
+        const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        window.supabase = supabaseClient
+
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault()
             
@@ -52,7 +59,7 @@
             errorMsg.style.display = 'none'
 
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('students')
                     .select('*')
                     .eq('student_code', studentCode)
