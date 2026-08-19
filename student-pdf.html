@@ -3,32 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>طباعة PDF - تسجيل الرغبات</title>
+    <title>طباعة PDF - تسجيل الرغبات - مدرسة دشنا الثانوية</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="style.css">
+    
+    <!-- حقوق النشر والأمان -->
+    <meta name="copyright" content="مدرسة دشنا الثانوية - جميع الحقوق محفوظة">
+    <meta name="author" content="محمد جاد - مسئول IT وسفير مادة البرمجة محافظة قنا">
+    <meta name="developer" content="محمد جاد">
+    
     <style>
+        /* ===== ستايل المعاينة ===== */
         .pdf-preview {
             background: white;
             border-radius: 16px;
             padding: 30px;
             margin: 20px 0;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
         }
         .pdf-preview .header {
             text-align: center;
-            border-bottom: 2px solid #1e3c72;
+            border-bottom: 3px solid #1e3c72;
             padding-bottom: 15px;
             margin-bottom: 20px;
         }
         .pdf-preview .school-name {
-            font-size: 22px;
+            font-size: 24px;
             font-weight: bold;
             color: #1e3c72;
         }
+        .pdf-preview .school-sub {
+            font-size: 14px;
+            color: #666;
+        }
         .pdf-preview .student-name {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: bold;
             color: #1e3c72;
             margin: 10px 0;
@@ -40,71 +52,125 @@
             margin: 15px 0;
         }
         .pdf-preview .info-item {
-            padding: 8px 12px;
+            padding: 10px 15px;
             background: #f8f9fa;
             border-radius: 8px;
+            border-right: 3px solid #1e3c72;
         }
         .pdf-preview .info-item .label {
             font-size: 12px;
             color: #666;
+            display: block;
         }
         .pdf-preview .info-item .value {
             font-weight: 600;
             color: #1e3c72;
+            font-size: 16px;
         }
-        .pdf-preview .signatures {
+
+        /* ===== الإقرار في PDF ===== */
+        .pdf-declaration {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-right: 4px solid #dc3545;
+        }
+        .pdf-declaration h4 {
+            color: #1e3c72;
+            margin-bottom: 10px;
+        }
+        .pdf-declaration p {
+            font-size: 14px;
+            line-height: 2;
+            color: #333;
+        }
+        .pdf-declaration .signatures {
             display: flex;
             justify-content: space-around;
-            margin-top: 30px;
+            margin-top: 25px;
             padding-top: 20px;
-            border-top: 1px solid #eee;
+            border-top: 1px solid #dee2e6;
+            flex-wrap: wrap;
+            gap: 15px;
         }
-        .pdf-preview .signature-box {
+        .pdf-declaration .signature-box {
             text-align: center;
+            min-width: 120px;
         }
-        .pdf-preview .signature-line {
-            width: 120px;
-            border-top: 1px solid #999;
-            margin: 20px auto 5px;
+        .pdf-declaration .signature-line {
+            width: 130px;
+            border-top: 2px solid #999;
+            margin: 15px auto 5px;
         }
-        .pdf-preview .signature-name {
+        .pdf-declaration .signature-name {
             font-size: 12px;
             color: #666;
         }
+
+        /* ===== حقوق الطبع ===== */
+        .pdf-copyright {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 2px solid #1e3c72;
+            font-size: 12px;
+            color: #666;
+        }
+        .pdf-copyright .developer {
+            color: #1e3c72;
+            font-weight: 600;
+        }
+        .pdf-copyright .school {
+            color: #dc3545;
+            font-weight: 700;
+        }
+
+        /* ===== الأزرار ===== */
         .btn-group-actions {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+            margin-top: 15px;
         }
         .btn-group-actions .btn-primary,
         .btn-group-actions .btn-success {
             flex: 1;
             min-width: 150px;
+            text-decoration: none;
+            text-align: center;
         }
+
         @media print {
             .no-print { display: none !important; }
             .container { max-width: 100% !important; padding: 0 !important; }
             .card { box-shadow: none !important; border: 1px solid #ddd; }
+            .pdf-preview { border: none !important; box-shadow: none !important; }
         }
         @media (max-width: 600px) {
             .pdf-preview .info-grid {
                 grid-template-columns: 1fr;
             }
-            .pdf-preview .signatures {
+            .pdf-declaration .signatures {
                 flex-direction: column;
                 gap: 20px;
             }
             .btn-group-actions {
                 flex-direction: column;
             }
+            .pdf-preview { padding: 15px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="card">
-            <h1 class="text-center">📄 طباعة تسجيل الرغبات</h1>
-            <p class="text-center text-gray-500">مراجعة البيانات قبل الطباعة</p>
+            <!-- ===== الهيدر ===== -->
+            <div style="text-align:center;border-bottom:3px solid #1e3c72;padding-bottom:15px;margin-bottom:20px;">
+                <h1 style="color:#1e3c72;font-size:24px;margin:0;">🏫 مدرسة دشنا الثانوية</h1>
+                <p style="color:#666;font-size:14px;margin:5px 0;">نظام تسجيل رغبات الصف الثاني الثانوي</p>
+                <p style="color:#999;font-size:13px;">📄 نموذج تسجيل الرغبات - طباعة</p>
+            </div>
 
             <div id="loadingMsg" class="text-center" style="padding:40px;">
                 <div style="font-size:40px;">⏳</div>
@@ -112,33 +178,68 @@
             </div>
 
             <div id="pdfContent" style="display:none;">
-                <!-- معاينة PDF -->
+                <!-- ===== معاينة PDF ===== -->
                 <div class="pdf-preview" id="previewCard">
+                    <!-- الهيدر -->
                     <div class="header">
-                        <div class="school-name">🏫 مدرسة دشنا الثانوية</div>
-                        <div class="student-name" id="studentNameDisplay">👨‍🎓 </div>
+                        <div class="school-name">🎓 مدرسة دشنا الثانوية</div>
+                        <div class="school-sub">وزارة التربية والتعليم - مديرية التربية والتعليم بقنا</div>
+                        <div class="student-name" id="studentNameDisplay">👨‍🎓</div>
                         <div style="font-size:14px;color:#666;" id="studentInfoDisplay"></div>
                     </div>
 
+                    <!-- البيانات -->
                     <div id="dataDisplay"></div>
 
-                    <div class="signatures">
-                        <div class="signature-box">
-                            <div class="signature-line"></div>
-                            <div class="signature-name">توقيع الطالب</div>
-                        </div>
-                        <div class="signature-box">
-                            <div class="signature-line"></div>
-                            <div class="signature-name">توقيع ولي الأمر</div>
+                    <!-- ===== الإقرار ===== -->
+                    <div class="pdf-declaration">
+                        <h4>📋 إقرار وتعهد</h4>
+                        <p id="declarationText">
+                            أنا الطالب/ة <strong id="declNameInPDF"></strong>، أقر بأن جميع البيانات المدخلة 
+                            في هذا النموذج صحيحة ودقيقة، وأتحمل المسؤولية الكاملة عن أي معلومات غير صحيحة. 
+                            كما أوافق على أن اختياراتي للتشعيب والتخصص تخضع لشروط القبول بالمدرسة 
+                            واللوائح المنظمة بوزارة التربية والتعليم.
+                        </p>
+                        
+                        <div class="signatures">
+                            <div class="signature-box">
+                                <div class="signature-line"></div>
+                                <div class="signature-name">توقيع الطالب</div>
+                            </div>
+                            <div class="signature-box">
+                                <div class="signature-line"></div>
+                                <div class="signature-name">توقيع ولي الأمر</div>
+                            </div>
+                            <div class="signature-box">
+                                <div class="signature-line"></div>
+                                <div class="signature-name">ختم المدرسة</div>
+                            </div>
                         </div>
                     </div>
 
-                    <div style="text-align:center;margin-top:20px;font-size:11px;color:#999;">
-                        تم الطباعة في: <span id="printDate"></span>
+                    <!-- ===== تاريخ الطباعة ===== -->
+                    <div style="text-align:center;font-size:12px;color:#999;margin:10px 0;">
+                        📅 تاريخ الطباعة: <span id="printDate"></span>
+                    </div>
+
+                    <!-- ===== حقوق الطبع والنشر ===== -->
+                    <div class="pdf-copyright">
+                        <p style="margin:0;">
+                            <span style="font-size:16px;">©</span> 
+                            <span class="school">مدرسة دشنا الثانوية</span> - جميع الحقوق محفوظة 
+                            <span id="yearDisplay"></span>
+                        </p>
+                        <p style="margin:5px 0 0;font-size:11px;color:#999;">
+                            Developed by: <span class="developer">محمد جاد</span> - 
+                            مسئول IT وسفير مادة البرمجة محافظة قنا
+                        </p>
+                        <p style="margin:0;font-size:10px;color:#bbb;">
+                            هذا المستند إلكتروني ويمكن التحقق من صحته عبر نظام المدرسة
+                        </p>
                     </div>
                 </div>
 
-                <!-- أزرار التحكم -->
+                <!-- ===== الأزرار ===== -->
                 <div class="btn-group-actions no-print">
                     <button onclick="generatePDF()" class="btn-success">📄 تحميل PDF</button>
                     <button onclick="window.print()" class="btn-primary">🖨️ طباعة</button>
@@ -149,19 +250,19 @@
     </div>
 
     <script>
-        // 🔐 جلب المفاتيح من Vercel Environment Variables
-const SUPABASE_URL = '{{SUPABASE_URL}}'
-const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-window.supabase = supabaseClient
+        // ===== تهيئة Supabase =====
+        const SUPABASE_URL = '{{SUPABASE_URL}}'
+        const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        window.supabase = supabaseClient
+
         let studentData = null
         let fieldsData = []
         let dynamicResponses = {}
         let isAdminView = false
 
+        // ===== تحميل البيانات =====
         async function loadData() {
-            // لو الرابط جاي من الأدمن (?print=ID) استخدم كود الطالب من الرابط
-            // غير كده استخدم جلسة الطالب العادية
             const urlParams = new URLSearchParams(window.location.search)
             const printId = urlParams.get('print')
             const studentId = printId || sessionStorage.getItem('studentId')
@@ -176,7 +277,6 @@ window.supabase = supabaseClient
             }
 
             try {
-                // جلب بيانات الطالب
                 const { data: student, error: studentError } = await supabase
                     .from('students')
                     .select('*')
@@ -190,7 +290,6 @@ window.supabase = supabaseClient
 
                 studentData = student
 
-                // جلب الحقول الديناميكية
                 const { data: fields, error: fieldsError } = await supabase
                     .from('dynamic_fields')
                     .select('*')
@@ -201,7 +300,6 @@ window.supabase = supabaseClient
                     fieldsData = fields
                 }
 
-                // جلب قيم الحقول
                 const { data: responses, error: responsesError } = await supabase
                     .from('student_dynamic_responses')
                     .select('field_id, value')
@@ -229,40 +327,43 @@ window.supabase = supabaseClient
             }
         }
 
+        // ===== عرض البيانات =====
         function displayData() {
-            // عرض اسم الطالب
+            // اسم الطالب
             document.getElementById('studentNameDisplay').textContent = '👨‍🎓 ' + studentData.full_name
             document.getElementById('studentInfoDisplay').textContent = 
                 'كود: ' + studentData.student_code + ' | الرقم القومي: ' + studentData.national_id
 
+            // اسم الطالب في الإقرار
+            document.getElementById('declNameInPDF').textContent = studentData.full_name
+
             // بناء البيانات
             let html = ''
 
-            // التشعيب
             html += `
                 <div class="info-grid">
                     <div class="info-item">
-                        <div class="label">التشعيب</div>
-                        <div class="value">${studentData.stream || '-'}</div>
+                        <span class="label">التشعيب</span>
+                        <span class="value">${studentData.stream || '-'}</span>
                     </div>
             `
 
             if (studentData.stream === 'ثانوي') {
                 html += `
                     <div class="info-item">
-                        <div class="label">التخصص</div>
-                        <div class="value">${studentData.specialization || '-'}</div>
+                        <span class="label">التخصص</span>
+                        <span class="value">${studentData.specialization || '-'}</span>
                     </div>
                 `
             } else if (studentData.stream === 'بكالوريا') {
                 html += `
                     <div class="info-item">
-                        <div class="label">المسار</div>
-                        <div class="value">${studentData.track || '-'}</div>
+                        <span class="label">المسار</span>
+                        <span class="value">${studentData.track || '-'}</span>
                     </div>
                     <div class="info-item">
-                        <div class="label">المادة الاختيارية</div>
-                        <div class="value">${studentData.optional_subject || '-'}</div>
+                        <span class="label">المادة الاختيارية</span>
+                        <span class="value">${studentData.optional_subject || '-'}</span>
                     </div>
                 `
             }
@@ -272,8 +373,8 @@ window.supabase = supabaseClient
                 const value = dynamicResponses[field.id] || ''
                 html += `
                     <div class="info-item">
-                        <div class="label">${field.name}</div>
-                        <div class="value">${value || '—'}</div>
+                        <span class="label">${field.name}</span>
+                        <span class="value">${value || '—'}</span>
                     </div>
                 `
             })
@@ -290,9 +391,13 @@ window.supabase = supabaseClient
             }
 
             document.getElementById('dataDisplay').innerHTML = html
+            
+            // التواريخ
             document.getElementById('printDate').textContent = new Date().toLocaleDateString('ar-EG')
+            document.getElementById('yearDisplay').textContent = new Date().getFullYear()
         }
 
+        // ===== إنشاء PDF =====
         async function generatePDF() {
             if (!studentData) return
 
@@ -304,14 +409,13 @@ window.supabase = supabaseClient
             }
 
             try {
-                // نلتقط بطاقة المعاينة كصورة عشان نضمن ظهور العربي صح
-                // (خطوط jsPDF الجاهزة مش بتدعم العربي، فالحل الأدق تصويري بدل نصي)
                 const previewEl = document.getElementById('previewCard')
 
                 const canvas = await html2canvas(previewEl, {
                     scale: 2,
                     useCORS: true,
-                    backgroundColor: '#ffffff'
+                    backgroundColor: '#ffffff',
+                    logging: false
                 })
 
                 const imgData = canvas.toDataURL('image/png')
@@ -321,7 +425,6 @@ window.supabase = supabaseClient
                 const pageWidth = doc.internal.pageSize.getWidth()
                 const pageHeight = doc.internal.pageSize.getHeight()
 
-                // حساب الأبعاد بحيث تتناسب الصورة مع عرض الصفحة مع هامش 10مم من كل جانب
                 const margin = 10
                 const imgWidth = pageWidth - margin * 2
                 const imgHeight = (canvas.height * imgWidth) / canvas.width
@@ -332,7 +435,6 @@ window.supabase = supabaseClient
                 doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight)
                 heightLeft -= (pageHeight - margin * 2)
 
-                // لو المحتوى أطول من صفحة واحدة، نكمل على صفحات إضافية
                 while (heightLeft > 0) {
                     position = heightLeft - imgHeight + margin
                     doc.addPage()
@@ -340,7 +442,9 @@ window.supabase = supabaseClient
                     heightLeft -= (pageHeight - margin * 2)
                 }
 
-                doc.save(`تسجيل_رغبات_${studentData.full_name}.pdf`)
+                const fileName = `تسجيل_رغبات_${studentData.full_name}_${new Date().toISOString().split('T')[0]}.pdf`
+                doc.save(fileName)
+
             } catch (err) {
                 console.error('Error generating PDF:', err)
                 alert('حدث خطأ أثناء إنشاء ملف PDF، جرّب زر الطباعة العادي بدلاً منه')
@@ -352,7 +456,7 @@ window.supabase = supabaseClient
             }
         }
 
-        // تحميل البيانات
+        // ===== تحميل البيانات =====
         loadData()
     </script>
 </body>
