@@ -278,15 +278,6 @@ export default function StudentForm() {
           <p className="text-red-600">{error}</p>
           <button onClick={() => router.push('/')} className="btn-primary mt-4">
             العودة للصفحة الرئيسية
-          // أضف هذا الكود في جزء الأزرار
-{isLocked && (
-  <a
-    href="/student/pdf"
-    className="btn-success w-full text-center block"
-  >
-    📄 طباعة PDF
-  </a>
-)}
           </button>
         </div>
       </div>
@@ -534,24 +525,35 @@ export default function StudentForm() {
               </div>
             )}
 
-            {!isLocked && (
-              <button
-                type="submit"
-                disabled={saving}
-                className="btn-success w-full"
-              >
-                {saving ? 'جاري الحفظ...' : '💾 حفظ الرغبات'}
-              </button>
-            )}
-
-            {isLocked && (
-              <div className="text-center text-gray-500">
-                <p>✅ تم تسجيل الرغبات بنجاح</p>
-                <p className="text-sm mt-2">
-                  تاريخ التقديم: {student?.submitted_at && new Date(student.submitted_at).toLocaleDateString('ar-EG')}
-                </p>
-              </div>
-            )}
+            {/* ✅ الأزرار - الجزء المهم */}
+            <div className="flex flex-col gap-3">
+              {!isLocked ? (
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="btn-success w-full"
+                >
+                  {saving ? 'جاري الحفظ...' : '💾 حفظ الرغبات'}
+                </button>
+              ) : (
+                <>
+                  <div className="text-center text-gray-500 bg-gray-50 p-4 rounded-xl">
+                    <p>✅ تم تسجيل الرغبات بنجاح</p>
+                    <p className="text-sm mt-2">
+                      تاريخ التقديم: {student?.submitted_at && new Date(student.submitted_at).toLocaleDateString('ar-EG')}
+                    </p>
+                  </div>
+                  
+                  {/* 🔥 زر طباعة PDF - يظهر فقط عندما يكون الطالب مقفلاً (تم التقديم) */}
+                  <a
+                    href="/student/pdf"
+                    className="btn-success w-full text-center block"
+                  >
+                    📄 طباعة PDF
+                  </a>
+                </>
+              )}
+            </div>
           </form>
         </div>
       </div>
