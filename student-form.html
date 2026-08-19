@@ -65,7 +65,6 @@
             font-size: 18px;
         }
 
-        /* ===== معلومات المسؤولين ===== */
         .admin-info {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -214,25 +213,143 @@
             font-weight: 700;
         }
 
+        /* ===== رسالة القفل ===== */
         .locked-message {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 15px 0;
+            background: #d4edda;
+            border: 2px solid #28a745;
+            border-radius: 16px;
+            padding: 30px;
+            margin: 20px 0;
             text-align: center;
         }
         .locked-message .icon {
-            font-size: 40px;
+            font-size: 60px;
             display: block;
+            margin-bottom: 10px;
         }
-        .locked-message h4 {
-            color: #856404;
+        .locked-message h3 {
+            color: #155724;
+            font-size: 24px;
             margin: 10px 0;
         }
         .locked-message p {
+            color: #155724;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+        .locked-message .info-grid-locked {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin: 20px auto;
+            max-width: 600px;
+        }
+        .locked-message .info-grid-locked .info-item {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .locked-message .info-grid-locked .info-item .label {
+            font-size: 12px;
+            color: #666;
+            display: block;
+        }
+        .locked-message .info-grid-locked .info-item .value {
+            font-weight: 700;
+            color: #1e3c72;
+            font-size: 16px;
+            margin-top: 5px;
+            display: block;
+        }
+        .locked-message .btn-print-only {
+            display: inline-block;
+            padding: 15px 40px;
+            background: #1e3c72;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+        .locked-message .btn-print-only:hover {
+            background: #0f2b4f;
+            transform: scale(1.05);
+        }
+        .locked-message .btn-print-only .icon {
+            font-size: 24px;
+            display: inline;
+        }
+
+        /* ===== رسالة التحذير قبل الحفظ ===== */
+        .warning-confirm-box {
+            display: none;
+            background: #fff3cd;
+            border: 3px solid #ffc107;
+            border-radius: 16px;
+            padding: 25px;
+            margin: 20px 0;
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+        .warning-confirm-box.show {
+            display: block;
+        }
+        .warning-confirm-box .icon {
+            font-size: 50px;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .warning-confirm-box h3 {
             color: #856404;
-            font-size: 14px;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        .warning-confirm-box p {
+            color: #856404;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+        .warning-confirm-box .warning-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        .warning-confirm-box .btn-confirm {
+            padding: 12px 35px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .warning-confirm-box .btn-confirm:hover {
+            background: #a71d2a;
+            transform: scale(1.05);
+        }
+        .warning-confirm-box .btn-cancel-warning {
+            padding: 12px 35px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .warning-confirm-box .btn-cancel-warning:hover {
+            background: #5a6268;
+            transform: scale(1.05);
         }
 
         .declaration-warning {
@@ -262,6 +379,19 @@
             animation: fadeIn 0.3s ease;
         }
 
+        /* ===== تعطيل النموذج بعد الحفظ ===== */
+        .form-disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .form-disabled .btn-option,
+        .form-disabled .form-control,
+        .form-disabled .btn-approve,
+        .form-disabled .btn-option.active {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         @media (max-width: 600px) {
             .admin-info {
                 grid-template-columns: 1fr;
@@ -282,6 +412,17 @@
                 font-size: 16px;
                 width: 100%;
                 justify-content: center;
+            }
+            .warning-confirm-box .warning-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+            .warning-confirm-box .btn-confirm,
+            .warning-confirm-box .btn-cancel-warning {
+                width: 100%;
+            }
+            .locked-message .info-grid-locked {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -304,146 +445,180 @@
                 🎯 التشعيب المختار: <span id="selectedStreamText">لا يوجد</span>
             </div>
 
-            <!-- رسالة الحالة (مقفل) -->
+            <!-- ===== رسالة القفل (عند دخول الطالب مرة أخرى) ===== -->
             <div id="statusMsg"></div>
 
             <!-- النموذج -->
             <form id="studentForm" class="form">
-                <!-- التشعيب -->
-                <div class="form-group">
-                    <label>التشعيب *</label>
-                    <div class="btn-group">
-                        <button type="button" class="btn-option" data-value="ثانوي" onclick="selectStream('ثانوي')">
-                            🎓 ثانوي
-                        </button>
-                        <button type="button" class="btn-option" data-value="بكالوريا" onclick="selectStream('بكالوريا')">
-                            📚 بكالوريا
-                        </button>
-                    </div>
-                    <input type="hidden" id="stream" name="stream" required>
-                </div>
-
-                <!-- التخصص (ثانوي) -->
-                <div id="specializationGroup" style="display:none;">
+                <div id="formContent">
+                    <!-- التشعيب -->
                     <div class="form-group">
-                        <label>التخصص *</label>
+                        <label>التشعيب *</label>
                         <div class="btn-group">
-                            <button type="button" class="btn-option" data-value="علمي" onclick="selectSpecialization('علمي')">
-                                🔬 علمي
+                            <button type="button" class="btn-option" data-value="ثانوي" onclick="selectStream('ثانوي')">
+                                🎓 ثانوي
                             </button>
-                            <button type="button" class="btn-option" data-value="أدبي" onclick="selectSpecialization('أدبي')">
-                                📝 أدبي
+                            <button type="button" class="btn-option" data-value="بكالوريا" onclick="selectStream('بكالوريا')">
+                                📚 بكالوريا
                             </button>
                         </div>
-                        <input type="hidden" id="specialization" name="specialization">
-                    </div>
-                </div>
-
-                <!-- المسار والمادة (بكالوريا) -->
-                <div id="trackGroup" style="display:none;">
-                    <div class="form-group">
-                        <label>المسار *</label>
-                        <select id="track" name="track" class="form-control" onchange="updateSubjects()">
-                            <option value="">اختر المسار</option>
-                            <option value="مسار الطب وعلوم الحياة">مسار الطب وعلوم الحياة</option>
-                            <option value="مسار الهندسة وعلوم الحاسب">مسار الهندسة وعلوم الحاسب</option>
-                            <option value="مسار الأعمال">مسار الأعمال</option>
-                            <option value="مسار الآداب والفنون">مسار الآداب والفنون</option>
-                        </select>
+                        <input type="hidden" id="stream" name="stream" required>
                     </div>
 
-                    <div class="form-group">
-                        <label>المادة الاختيارية *</label>
-                        <select id="optionalSubject" name="optionalSubject" class="form-control">
-                            <option value="">اختر المادة</option>
-                        </select>
+                    <!-- التخصص (ثانوي) -->
+                    <div id="specializationGroup" style="display:none;">
+                        <div class="form-group">
+                            <label>التخصص *</label>
+                            <div class="btn-group">
+                                <button type="button" class="btn-option" data-value="علمي" onclick="selectSpecialization('علمي')">
+                                    🔬 علمي
+                                </button>
+                                <button type="button" class="btn-option" data-value="أدبي" onclick="selectSpecialization('أدبي')">
+                                    📝 أدبي
+                                </button>
+                            </div>
+                            <input type="hidden" id="specialization" name="specialization">
+                        </div>
                     </div>
-                </div>
 
-                <!-- الحقول الديناميكية -->
-                <div id="dynamicFields"></div>
+                    <!-- المسار والمادة (بكالوريا) -->
+                    <div id="trackGroup" style="display:none;">
+                        <div class="form-group">
+                            <label>المسار *</label>
+                            <select id="track" name="track" class="form-control" onchange="updateSubjects()">
+                                <option value="">اختر المسار</option>
+                                <option value="مسار الطب وعلوم الحياة">مسار الطب وعلوم الحياة</option>
+                                <option value="مسار الهندسة وعلوم الحاسب">مسار الهندسة وعلوم الحاسب</option>
+                                <option value="مسار الأعمال">مسار الأعمال</option>
+                                <option value="مسار الآداب والفنون">مسار الآداب والفنون</option>
+                            </select>
+                        </div>
 
-                <!-- ===== الإقرار ===== -->
-                <div class="declaration-section" id="declarationSection">
-                    <h3>📋 إقرار وتعهد</h3>
-                    
-                    <div class="declaration-text">
-                        <p style="margin-bottom:10px;">
-                            <strong>أنا الطالب/ة:</strong> 
-                            <span class="student-name-field" id="declarationStudentName">__________</span>
-                        </p>
+                        <div class="form-group">
+                            <label>المادة الاختيارية *</label>
+                            <select id="optionalSubject" name="optionalSubject" class="form-control">
+                                <option value="">اختر المادة</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- الحقول الديناميكية -->
+                    <div id="dynamicFields"></div>
+
+                    <!-- ===== الإقرار ===== -->
+                    <div class="declaration-section" id="declarationSection">
+                        <h3>📋 إقرار وتعهد</h3>
                         
-                        <p style="margin-bottom:10px;">
-                            <strong>أقر وأتعهد بما يلي:</strong>
-                        </p>
-                        
-                        <ol style="padding-right:25px;margin:10px 0;">
-                            <li>جميع البيانات المدخلة <strong>صحيحة ودقيقة</strong>، وأتحمل <span class="highlight">المسؤولية الكاملة</span> عن أي معلومات غير صحيحة.</li>
-                            <li>اختياراتي للتشعيب والتخصص <strong>تخضع لشروط القبول</strong> بالمدرسة.</li>
-                            <li>أقر بأنني <strong>اطلعت على سياسة الخصوصية</strong> وشروط الاستخدام.</li>
-                        </ol>
+                        <div class="declaration-text">
+                            <p style="margin-bottom:10px;">
+                                <strong>أنا الطالب/ة:</strong> 
+                                <span class="student-name-field" id="declarationStudentName">__________</span>
+                            </p>
+                            
+                            <p style="margin-bottom:10px;">
+                                <strong>أقر وأتعهد بما يلي:</strong>
+                            </p>
+                            
+                            <ol style="padding-right:25px;margin:10px 0;">
+                                <li>جميع البيانات المدخلة <strong>صحيحة ودقيقة</strong>، وأتحمل <span class="highlight">المسؤولية الكاملة</span> عن أي معلومات غير صحيحة.</li>
+                                <li>اختياراتي للتشعيب والتخصص <strong>تخضع لشروط القبول</strong> بالمدرسة.</li>
+                                <li>أوافق على <strong>تخزين ومعالجة</strong> بياناتي في نظام المدرسة.</li>
+                                <li>أقر بأنني <strong>اطلعت على سياسة الخصوصية</strong> وشروط الاستخدام.</li>
+                            </ol>
+                        </div>
+
+                        <!-- معلومات المسؤولين -->
+                        <div class="admin-info">
+                            <div class="admin-item">
+                                <span class="title">👤 وكيل شئون الطلاب</span>
+                                <span class="name"><span class="highlight-name">عاطف أبوالعباس</span></span>
+                            </div>
+                            <div class="admin-item">
+                                <span class="title">👨‍🏫 مدير المدرسة</span>
+                                <span class="name"><span class="highlight-name">عبدالرحمن فهمي</span></span>
+                            </div>
+                        </div>
+
+                        <!-- زر الموافقة -->
+                        <div class="declaration-approval">
+                            <p>👆 اضغط على الزر للموافقة على الإقرار والتعهد</p>
+                            <button type="button" class="btn-approve" id="approveBtn" onclick="approveDeclaration()">
+                                <span class="icon">✅</span> 
+                                <span id="approveText">أوافق على الإقرار والتعهد</span>
+                            </button>
+                            <div class="approval-confirm" id="approvalConfirm">
+                                ✅ تمت الموافقة على الإقرار
+                            </div>
+                        </div>
+
+                        <!-- التواقيع -->
+                        <div class="declaration-footer">
+                            <div class="signature-area">
+                                <div class="signature-item">
+                                    <div class="line"></div>
+                                    <div class="label">توقيع الطالب</div>
+                                </div>
+                                <div class="signature-item">
+                                    <div class="line"></div>
+                                    <div class="label">توقيع ولي الأمر</div>
+                                </div>
+                                <div class="signature-item">
+                                    <div class="line"></div>
+                                    <div class="label">وكيل شئون الطلاب</div>
+                                    <div class="signature-name">عاطف أبوالعباس</div>
+                                </div>
+                                <div class="signature-item">
+                                    <div class="line"></div>
+                                    <div class="label">مدير المدرسة</div>
+                                    <div class="signature-name">عبدالرحمن فهمي</div>
+                                </div>
+                            </div>
+                            
+                            <!-- حقوق النشر -->
+                            <div class="copyright-text">
+                                <p>
+                                    <span style="font-size:14px;">©</span> 
+                                    <span class="school-name">مدرسة دشنا الثانوية</span> - جميع الحقوق محفوظة 
+                                    <span id="yearDisplay"></span>
+                                </p>
+                                <p style="font-size:10px;color:#bbb;">
+                                    Developed by: <span class="developer-name">محمد جاد</span> - 
+                                    مسئول IT وسفير مادة البرمجة محافظة قنا
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
-                   
+                    <!-- ===== رسالة التحذير قبل الحفظ النهائي ===== -->
+                    <div class="warning-confirm-box" id="warningConfirmBox">
+                        <span class="icon">⚠️</span>
+                        <h3>تنبيه هام!</h3>
+                        <p>
+                            <strong>بعد الضغط على "تأكيد الحفظ" لن تتمكن من تعديل أو تغيير أي بيانات.</strong>
+                            <br>
+                            يرجى التأكد من صحة جميع البيانات قبل المتابعة.
+                        </p>
+                        <div class="warning-actions">
+                            <button type="button" class="btn-cancel-warning" onclick="cancelWarning()">
+                                🔙 العودة للمراجعة
+                            </button>
+                            <button type="button" class="btn-confirm" onclick="confirmSave()">
+                                ✅ تأكيد الحفظ النهائي
+                            </button>
+                        </div>
+                    </div>
 
-                    <!-- زر الموافقة -->
-                    <div class="declaration-approval">
-                        <p>👆 اضغط على الزر للموافقة على الإقرار والتعهد</p>
-                        <button type="button" class="btn-approve" id="approveBtn" onclick="approveDeclaration()">
-                            <span class="icon">✅</span> 
-                            <span id="approveText">أوافق على الإقرار والتعهد</span>
+                    <!-- رسائل الخطأ والنجاح -->
+                    <div id="formError" class="error-msg" style="display:none;"></div>
+                    <div id="formSuccess" class="success-msg" style="display:none;">✅ تم حفظ البيانات بنجاح!</div>
+
+                    <!-- الأزرار -->
+                    <div id="formActions">
+                        <button type="button" class="btn-success" id="saveBtn" onclick="showWarning()">
+                            💾 حفظ وتقديم الطلب
                         </button>
-                        <div class="approval-confirm" id="approvalConfirm">
-                            ✅ تمت الموافقة على الإقرار
-                        </div>
+                        <a href="student-pdf.html" class="btn-primary" id="pdfBtn" style="display:none;">📄 طباعة PDF</a>
                     </div>
-
-                    <!-- ===== التواقيع ===== -->
-                    <div class="declaration-footer">
-                        <div class="signature-area">
-                            <div class="signature-item">
-                                <div class="line"></div>
-                                <div class="label">توقيع الطالب</div>
-                            </div>
-                            <div class="signature-item">
-                                <div class="line"></div>
-                                <div class="label">توقيع ولي الأمر</div>
-                            </div>
-                            <div class="signature-item">
-                                <div class="line"></div>
-                                <div class="label">وكيل شئون الطلاب</div>
-                                <div class="signature-name">عاطف أبوالعباس</div>
-                            </div>
-                            <div class="signature-item">
-                                <div class="line"></div>
-                                <div class="label">مدير المدرسة</div>
-                                <div class="signature-name">عبدالرحمن فهمي</div>
-                            </div>
-                        </div>
-                        
-                        <!-- حقوق النشر -->
-                        <div class="copyright-text">
-                            <p>
-                                <span style="font-size:18px;">©</span> 
-                                <span class="school-name">مدرسة دشنا الثانوية</span> - جميع الحقوق محفوظة 
-                                <span id="yearDisplay"></span>
-                            </p>
-                            <p style="font-size:18px;color:#bbb;">
-                                Developed by: <span class="developer-name">محمد جاد</span> - 
-                                مسئول IT وسفير مادة البرمجة محافظة قنا
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- رسائل الخطأ والنجاح -->
-                <div id="formError" class="error-msg" style="display:none;"></div>
-                <div id="formSuccess" class="success-msg" style="display:none;">✅ تم حفظ البيانات بنجاح!</div>
-
-                <!-- الأزرار -->
-                <div id="formActions">
-                    <button type="submit" class="btn-success" id="saveBtn">💾 حفظ وتقديم الطلب</button>
-                    <a href="student-pdf.html" class="btn-primary" id="pdfBtn" style="display:none;">📄 طباعة PDF</a>
                 </div>
             </form>
         </div>
@@ -463,6 +638,7 @@
         let selectedSpecialization = ''
         let dynamicValues = {}
         let isDeclarationApproved = false
+        let isSaving = false
 
         const tracks = {
             'مسار الطب وعلوم الحياة': ['فيزياء', 'رياضيات'],
@@ -524,6 +700,8 @@
 
         // ===== دالة الموافقة =====
         function approveDeclaration() {
+            if (isLocked) return
+            
             const btn = document.getElementById('approveBtn')
             const confirmMsg = document.getElementById('approvalConfirm')
             
@@ -533,10 +711,6 @@
                 document.getElementById('approveText').textContent = '✅ تمت الموافقة'
                 confirmMsg.classList.add('show')
                 document.getElementById('declarationSection').style.borderRightColor = '#28a745'
-                
-                setTimeout(() => {
-                    document.getElementById('saveBtn').scrollIntoView({ behavior: 'smooth', block: 'center' })
-                }, 300)
             } else {
                 isDeclarationApproved = false
                 btn.classList.remove('approved')
@@ -544,6 +718,220 @@
                 confirmMsg.classList.remove('show')
                 document.getElementById('declarationSection').style.borderRightColor = '#1e3c72'
             }
+        }
+
+        // ===== عرض رسالة التحذير =====
+        function showWarning() {
+            // التحقق من الموافقة على الإقرار
+            if (!isDeclarationApproved) {
+                document.getElementById('formError').textContent = '❌ يجب الموافقة على الإقرار والتعهد أولاً'
+                document.getElementById('formError').style.display = 'block'
+                document.getElementById('declarationSection').scrollIntoView({ behavior: 'smooth' })
+                return
+            }
+
+            // التحقق من التشعيب
+            const stream = document.getElementById('stream').value
+            if (!stream) {
+                document.getElementById('formError').textContent = '❌ يرجى اختيار التشعيب'
+                document.getElementById('formError').style.display = 'block'
+                return
+            }
+
+            // التحقق من التخصص
+            if (stream === 'ثانوي') {
+                const specialization = document.getElementById('specialization').value
+                if (!specialization) {
+                    document.getElementById('formError').textContent = '❌ يرجى اختيار التخصص'
+                    document.getElementById('formError').style.display = 'block'
+                    return
+                }
+            }
+
+            // التحقق من المسار والمادة
+            if (stream === 'بكالوريا') {
+                const track = document.getElementById('track').value
+                const optionalSubject = document.getElementById('optionalSubject').value
+                if (!track) {
+                    document.getElementById('formError').textContent = '❌ يرجى اختيار المسار'
+                    document.getElementById('formError').style.display = 'block'
+                    return
+                }
+                if (!optionalSubject) {
+                    document.getElementById('formError').textContent = '❌ يرجى اختيار المادة الاختيارية'
+                    document.getElementById('formError').style.display = 'block'
+                    return
+                }
+            }
+
+            // إخفاء أي رسائل خطأ
+            document.getElementById('formError').style.display = 'none'
+
+            // عرض رسالة التحذير
+            document.getElementById('warningConfirmBox').classList.add('show')
+            document.getElementById('warningConfirmBox').scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+
+        // ===== إلغاء التحذير =====
+        function cancelWarning() {
+            document.getElementById('warningConfirmBox').classList.remove('show')
+        }
+
+        // ===== تأكيد الحفظ =====
+        async function confirmSave() {
+            if (isSaving) return
+            isSaving = true
+
+            const studentId = sessionStorage.getItem('studentId')
+            const stream = document.getElementById('stream').value
+            const specialization = document.getElementById('specialization').value
+            const track = document.getElementById('track').value
+            const optionalSubject = document.getElementById('optionalSubject').value
+
+            const errorMsg = document.getElementById('formError')
+            const successMsg = document.getElementById('formSuccess')
+            errorMsg.style.display = 'none'
+            successMsg.style.display = 'none'
+
+            try {
+                const saveBtn = document.getElementById('saveBtn')
+                saveBtn.disabled = true
+                saveBtn.textContent = '⏳ جاري الحفظ...'
+
+                const updateData = {
+                    stream: stream,
+                    submitted_at: new Date().toISOString(),
+                    is_locked: true
+                }
+
+                if (stream === 'ثانوي') {
+                    updateData.specialization = specialization
+                    updateData.track = null
+                    updateData.optional_subject = null
+                } else {
+                    updateData.specialization = null
+                    updateData.track = track
+                    updateData.optional_subject = optionalSubject
+                }
+
+                const { error: updateError } = await supabase
+                    .from('students')
+                    .update(updateData)
+                    .eq('id', studentId)
+
+                if (updateError) throw updateError
+
+                // حفظ الحقول الديناميكية
+                for (const [fieldId, value] of Object.entries(dynamicValues)) {
+                    if (value) {
+                        await supabase
+                            .from('student_dynamic_responses')
+                            .upsert({
+                                student_id: studentId,
+                                field_id: fieldId,
+                                value: value
+                            }, {
+                                onConflict: 'student_id,field_id'
+                            })
+                    }
+                }
+
+                // إخفاء رسالة التحذير
+                document.getElementById('warningConfirmBox').classList.remove('show')
+
+                // عرض رسالة النجاح
+                successMsg.style.display = 'block'
+
+                // إخفاء زر الحفظ وإظهار زر PDF
+                document.getElementById('saveBtn').style.display = 'none'
+                document.getElementById('pdfBtn').style.display = 'block'
+
+                // تعطيل النموذج بالكامل
+                isLocked = true
+                document.getElementById('formContent').classList.add('form-disabled')
+
+                // عرض رسالة القفل
+                showLockedMessage(studentData, true)
+
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+
+            } catch (err) {
+                console.error('Error:', err)
+                errorMsg.textContent = '❌ حدث خطأ أثناء الحفظ: ' + (err.message || '')
+                errorMsg.style.display = 'block'
+                document.getElementById('saveBtn').disabled = false
+                document.getElementById('saveBtn').textContent = '💾 حفظ وتقديم الطلب'
+            } finally {
+                isSaving = false
+                document.getElementById('warningConfirmBox').classList.remove('show')
+            }
+        }
+
+        // ===== عرض رسالة القفل (عند دخول الطالب مرة أخرى) =====
+        function showLockedMessage(student, isJustSaved = false) {
+            const statusDiv = document.getElementById('statusMsg')
+            
+            // جلب الحقول الديناميكية للعرض
+            let fieldsHtml = ''
+            fieldsData.forEach(field => {
+                const value = dynamicValues[field.id] || ''
+                if (value) {
+                    fieldsHtml += `
+                        <div class="info-item">
+                            <span class="label">${field.name}</span>
+                            <span class="value">${value}</span>
+                        </div>
+                    `
+                }
+            })
+
+            statusDiv.innerHTML = `
+                <div class="locked-message">
+                    <span class="icon">${isJustSaved ? '✅' : '🔒'}</span>
+                    <h3>${isJustSaved ? 'تم تقديم الطلب بنجاح!' : 'تم تسجيل الرغبات مسبقاً'}</h3>
+                    <p>
+                        ${isJustSaved 
+                            ? 'تم تسجيل رغباتك بشكل نهائي ولا يمكن التعديل.' 
+                            : 'لقد قمت بتسجيل رغباتك مسبقاً ولا يمكن التعديل.'}
+                        <br>
+                        <small>📅 تاريخ التقديم: ${new Date(student.submitted_at).toLocaleDateString('ar-EG')}</small>
+                        <br>
+                        <small>🕐 وقت التقديم: ${new Date(student.submitted_at).toLocaleTimeString('ar-EG')}</small>
+                    </p>
+
+                    <!-- عرض البيانات المسجلة -->
+                    <div style="margin: 20px 0; text-align: right;">
+                        <h4 style="color: #155724; margin-bottom: 10px;">📋 بياناتك المسجلة:</h4>
+                        <div class="info-grid-locked">
+                            <div class="info-item">
+                                <span class="label">التشعيب</span>
+                                <span class="value">${student.stream || '-'}</span>
+                            </div>
+                            ${student.stream === 'ثانوي' ? `
+                                <div class="info-item">
+                                    <span class="label">التخصص</span>
+                                    <span class="value">${student.specialization || '-'}</span>
+                                </div>
+                            ` : ''}
+                            ${student.stream === 'بكالوريا' ? `
+                                <div class="info-item">
+                                    <span class="label">المسار</span>
+                                    <span class="value">${student.track || '-'}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="label">المادة الاختيارية</span>
+                                    <span class="value">${student.optional_subject || '-'}</span>
+                                </div>
+                            ` : ''}
+                            ${fieldsHtml}
+                        </div>
+                    </div>
+
+                    <a href="student-pdf.html" class="btn-print-only">
+                        <span class="icon">📄</span> طباعة PDF
+                    </a>
+                </div>
+            `
         }
 
         // ===== تحميل بيانات الطالب =====
@@ -579,7 +967,19 @@
 
                 document.getElementById('declarationStudentName').textContent = student.full_name || ''
 
-                // تعبئة التشعيب
+                // ===== إذا كان الطالب مقفل =====
+                if (isLocked) {
+                    // إخفاء زر الحفظ
+                    document.getElementById('saveBtn').style.display = 'none'
+                    document.getElementById('pdfBtn').style.display = 'block'
+                    document.getElementById('formContent').classList.add('form-disabled')
+                    
+                    // عرض رسالة القفل مع البيانات المسجلة
+                    showLockedMessage(student, false)
+                    return
+                }
+
+                // ===== تعبئة التشعيب =====
                 if (student.stream) {
                     selectedStream = student.stream
                     document.getElementById('stream').value = student.stream
@@ -642,19 +1042,6 @@
                 }
 
                 renderDynamicFields()
-
-                if (isLocked) {
-                    document.getElementById('statusMsg').innerHTML = `
-                        <div class="locked-message">
-                            <span class="icon">🔒</span>
-                            <h4>تم تقديم الطلب بنجاح</h4>
-                            <p>✅ تم تسجيل رغباتك مسبقاً ولا يمكن التعديل.</p>
-                        </div>
-                    `
-                    document.getElementById('saveBtn').style.display = 'none'
-                    document.getElementById('pdfBtn').style.display = 'block'
-                    disableForm(true)
-                }
 
             } catch (err) {
                 console.error('Error:', err)
@@ -720,122 +1107,6 @@
                 container.appendChild(div)
             })
         }
-
-        function disableForm(disabled) {
-            document.querySelectorAll('#studentForm input, #studentForm select, #studentForm button').forEach(el => {
-                if (el.id !== 'pdfBtn') {
-                    el.disabled = disabled
-                }
-            })
-        }
-
-        // ===== حفظ البيانات =====
-        document.getElementById('studentForm').addEventListener('submit', async (e) => {
-            e.preventDefault()
-
-            const studentId = sessionStorage.getItem('studentId')
-            const stream = document.getElementById('stream').value
-            const specialization = document.getElementById('specialization').value
-            const track = document.getElementById('track').value
-            const optionalSubject = document.getElementById('optionalSubject').value
-
-            const errorMsg = document.getElementById('formError')
-            const successMsg = document.getElementById('formSuccess')
-            errorMsg.style.display = 'none'
-            successMsg.style.display = 'none'
-
-            // التحقق من الموافقة
-            if (!isDeclarationApproved) {
-                errorMsg.textContent = '❌ يجب الموافقة على الإقرار والتعهد'
-                errorMsg.style.display = 'block'
-                document.getElementById('declarationSection').scrollIntoView({ behavior: 'smooth' })
-                return
-            }
-
-            if (!stream) {
-                errorMsg.textContent = '❌ يرجى اختيار التشعيب'
-                errorMsg.style.display = 'block'
-                return
-            }
-
-            if (stream === 'ثانوي' && !specialization) {
-                errorMsg.textContent = '❌ يرجى اختيار التخصص'
-                errorMsg.style.display = 'block'
-                return
-            }
-
-            if (stream === 'بكالوريا') {
-                if (!track) {
-                    errorMsg.textContent = '❌ يرجى اختيار المسار'
-                    errorMsg.style.display = 'block'
-                    return
-                }
-                if (!optionalSubject) {
-                    errorMsg.textContent = '❌ يرجى اختيار المادة الاختيارية'
-                    errorMsg.style.display = 'block'
-                    return
-                }
-            }
-
-            try {
-                const saveBtn = document.getElementById('saveBtn')
-                saveBtn.disabled = true
-                saveBtn.textContent = '⏳ جاري الحفظ...'
-
-                const updateData = {
-                    stream: stream,
-                    submitted_at: studentData?.submitted_at || new Date().toISOString()
-                }
-
-                if (stream === 'ثانوي') {
-                    updateData.specialization = specialization
-                    updateData.track = null
-                    updateData.optional_subject = null
-                } else {
-                    updateData.specialization = null
-                    updateData.track = track
-                    updateData.optional_subject = optionalSubject
-                }
-
-                if (!studentData?.submitted_at) {
-                    updateData.is_locked = true
-                }
-
-                const { error: updateError } = await supabase
-                    .from('students')
-                    .update(updateData)
-                    .eq('id', studentId)
-
-                if (updateError) throw updateError
-
-                // حفظ الحقول الديناميكية
-                for (const [fieldId, value] of Object.entries(dynamicValues)) {
-                    if (value) {
-                        await supabase
-                            .from('student_dynamic_responses')
-                            .upsert({
-                                student_id: studentId,
-                                field_id: fieldId,
-                                value: value
-                            }, {
-                                onConflict: 'student_id,field_id'
-                            })
-                    }
-                }
-
-                successMsg.style.display = 'block'
-                document.getElementById('saveBtn').style.display = 'none'
-                document.getElementById('pdfBtn').style.display = 'block'
-                disableForm(true)
-                window.scrollTo({ top: 0, behavior: 'smooth' })
-
-            } catch (err) {
-                errorMsg.textContent = '❌ حدث خطأ أثناء الحفظ'
-                errorMsg.style.display = 'block'
-                document.getElementById('saveBtn').disabled = false
-                document.getElementById('saveBtn').textContent = '💾 حفظ وتقديم الطلب'
-            }
-        })
 
         loadStudentData()
     </script>
