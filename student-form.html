@@ -7,12 +7,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="style.css">
     
-    <!-- حقوق النشر والأمان -->
+    <!-- حقوق النشر والأمان (تم إزالة X-Frame-Options) -->
     <meta name="copyright" content="مدرسة دشنا الثانوية - جميع الحقوق محفوظة">
     <meta name="author" content="محمد جاد - مسئول IT وسفير مادة البرمجة محافظة قنا">
     <meta name="developer" content="محمد جاد">
-    <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="X-Frame-Options" content="DENY">
     
     <style>
         /* ===== ستايل الإقرار ===== */
@@ -215,6 +213,41 @@
             75% { transform: translateX(10px); }
         }
 
+        /* ===== رسالة خطأ الاتصال ===== */
+        .connection-error {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .connection-error .icon {
+            font-size: 40px;
+            display: block;
+        }
+        .connection-error h4 {
+            color: #721c24;
+            margin: 10px 0;
+        }
+        .connection-error p {
+            color: #721c24;
+            font-size: 14px;
+        }
+        .connection-error .btn-retry {
+            padding: 10px 30px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        .connection-error .btn-retry:hover {
+            background: #a71d2a;
+        }
+
         @media (max-width: 600px) {
             .declaration-footer .signature-area {
                 flex-direction: column;
@@ -242,8 +275,18 @@
             <!-- ===== الهيدر ===== -->
             <div style="text-align:center;border-bottom:3px solid #1e3c72;padding-bottom:15px;margin-bottom:20px;">
                 <h1 style="color:#1e3c72;font-size:24px;margin:0;">🏫 مدرسة دشنا الثانوية</h1>
-                <p style="color:#666;font-size:30px;margin:5px 0;">نظام تسجيل رغبات الصف الثاني الثانوي - العام الدراسي 2025/2026</p>
-                
+                <p style="color:#666;font-size:14px;margin:5px 0;">نظام تسجيل رغبات الصف الثاني الثانوي - العام الدراسي 2025/2026</p>
+                <p style="color:#999;font-size:12px;">مديرية التربية والتعليم بقنا</p>
+            </div>
+
+            <!-- ===== رسالة خطأ الاتصال ===== -->
+            <div id="connectionError" style="display:none;">
+                <div class="connection-error">
+                    <span class="icon">📡</span>
+                    <h4>خطأ في الاتصال</h4>
+                    <p>حدثت مشكلة في الاتصال بقاعدة البيانات. يرجى التحقق من اتصالك بالإنترنت.</p>
+                    <button class="btn-retry" onclick="retryConnection()">🔄 إعادة المحاولة</button>
+                </div>
             </div>
 
             <!-- ===== بيانات الطالب ===== -->
@@ -308,7 +351,7 @@
                 <!-- الحقول الديناميكية -->
                 <div id="dynamicFields"></div>
 
-                <!-- ===== إقرار الطالب (بدون Checkbox) ===== -->
+                <!-- ===== إقرار الطالب ===== -->
                 <div class="declaration-section" id="declarationSection">
                     <h3>📋 إقرار وتعهد</h3>
                     
@@ -352,7 +395,7 @@
                         </p>
                     </div>
 
-                    <!-- ===== زر الموافقة بدلاً من Checkbox ===== -->
+                    <!-- ===== زر الموافقة ===== -->
                     <div class="declaration-approval">
                         <p style="margin:0 0 10px 0;font-size:15px;">
                             👆 اضغط على الزر أدناه للموافقة على الإقرار والتعهد
@@ -415,7 +458,20 @@
         // ===== تهيئة Supabase =====
         const SUPABASE_URL = '{{SUPABASE_URL}}'
         const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        
+        // التحقق من وجود المتغيرات
+        if (!SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_URL === '{{SUPABASE_URL}}') {
+            document.getElementById('connectionError').style.display = 'block'
+            document.getElementById('connectionError').querySelector('p').textContent = 
+                '⚠️ لم يتم تهيئة اتصال قاعدة البيانات بشكل صحيح. يرجى التحقق من إعدادات النظام.'
+        }
+
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+            }
+        })
         window.supabase = supabaseClient
 
         let studentData = null
@@ -436,6 +492,12 @@
 
         // ===== تحديث السنة =====
         document.getElementById('yearDisplay').textContent = new Date().getFullYear()
+
+        // ===== دالة إعادة المحاولة =====
+        function retryConnection() {
+            document.getElementById('connectionError').style.display = 'none'
+            location.reload()
+        }
 
         // ===== دالة الموافقة على الإقرار =====
         function approveDeclaration() {
@@ -474,15 +536,21 @@
             }
 
             try {
-                const { data: student, error: studentError } = await supabase
+                // محاولة الاتصال مع timeout
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error('Connection timeout')), 10000)
+                })
+
+                const studentPromise = supabase
                     .from('students')
                     .select('*')
                     .eq('id', studentId)
                     .single()
 
+                const { data: student, error: studentError } = await Promise.race([studentPromise, timeoutPromise])
+
                 if (studentError || !student) {
-                    alert('خطأ في جلب بيانات الطالب')
-                    return
+                    throw new Error(studentError?.message || 'Student not found')
                 }
 
                 studentData = student
@@ -572,7 +640,9 @@
 
             } catch (err) {
                 console.error('Error loading data:', err)
-                alert('حدث خطأ أثناء تحميل البيانات')
+                document.getElementById('connectionError').style.display = 'block'
+                document.getElementById('connectionError').querySelector('p').textContent = 
+                    '❌ ' + (err.message || 'حدث خطأ في الاتصال بقاعدة البيانات')
             }
         }
 
@@ -707,7 +777,6 @@
                 errorMsg.textContent = '❌ يجب الموافقة على الإقرار والتعهد قبل تقديم الطلب'
                 errorMsg.style.display = 'block'
                 
-                // تمرير إلى الإقرار مع تأثير تحذيري
                 const section = document.getElementById('declarationSection')
                 section.scrollIntoView({ behavior: 'smooth', block: 'center' })
                 section.classList.add('declaration-warning')
@@ -813,11 +882,10 @@
                     isLocked = true
                 }
 
-                // تمرير إلى أعلى الصفحة
                 window.scrollTo({ top: 0, behavior: 'smooth' })
 
             } catch (err) {
-                errorMsg.textContent = '❌ حدث خطأ أثناء حفظ البيانات'
+                errorMsg.textContent = '❌ حدث خطأ أثناء حفظ البيانات: ' + (err.message || '')
                 errorMsg.style.display = 'block'
                 document.getElementById('saveBtn').disabled = false
                 document.getElementById('saveBtn').textContent = '💾 حفظ وتقديم الطلب'
