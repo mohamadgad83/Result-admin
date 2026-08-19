@@ -6,56 +6,418 @@
     <title>نظام تسجيل الرغبات - مدرسة دشنا الثانوية</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="style.css">
+    
+    <meta name="copyright" content="مدرسة دشنا الثانوية - جميع الحقوق محفوظة">
+    <meta name="author" content="محمد جاد - مسئول IT وسفير مادة البرمجة محافظة قنا">
+    
+    <style>
+        /* ===== تنسيق الهيدر ===== */
+        .hero-section {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            border-radius: 24px;
+            padding: 30px 20px;
+            margin-bottom: 25px;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-section::before {
+            content: "🎓";
+            position: absolute;
+            font-size: 200px;
+            right: -30px;
+            bottom: -50px;
+            opacity: 0.1;
+        }
+        .hero-section .school-logo {
+            font-size: 60px;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .hero-section h1 {
+            color: white;
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        .hero-section .subtitle {
+            color: rgba(255,255,255,0.85);
+            font-size: 16px;
+        }
+        .hero-section .school-name {
+            color: #ffc107;
+            font-weight: 700;
+        }
+        .hero-section .ministry {
+            font-size: 13px;
+            color: rgba(255,255,255,0.7);
+            margin-top: 5px;
+        }
+
+        /* ===== بطاقات التعليمات ===== */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .feature-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        .feature-card:hover {
+            border-color: #1e3c72;
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(30, 60, 114, 0.15);
+        }
+        .feature-card .icon {
+            font-size: 35px;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .feature-card h4 {
+            color: #1e3c72;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+        .feature-card p {
+            color: #666;
+            font-size: 13px;
+            margin: 0;
+        }
+
+        /* ===== تنسيق نموذج الدخول ===== */
+        .login-wrapper {
+            max-width: 450px;
+            margin: 0 auto;
+        }
+        .login-card {
+            background: white;
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+        .login-card .login-header {
+            text-align: center;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .login-card .login-header .icon {
+            font-size: 40px;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .login-card .login-header h2 {
+            color: #1e3c72;
+            font-size: 20px;
+            margin: 0;
+        }
+        .login-card .login-header p {
+            color: #999;
+            font-size: 13px;
+            margin: 5px 0 0;
+        }
+        .input-group {
+            position: relative;
+            margin-bottom: 18px;
+        }
+        .input-group .input-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            color: #ccc;
+        }
+        .input-group .form-control {
+            padding-right: 50px;
+        }
+        .login-card .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 5px;
+        }
+        .login-card .btn-login:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(30, 60, 114, 0.4);
+        }
+        .login-card .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .login-card .help-links {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        .login-card .help-links a {
+            color: #1e3c72;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .login-card .help-links a:hover {
+            text-decoration: underline;
+        }
+        .login-card .help-links .admin-link {
+            color: #dc3545;
+        }
+
+        /* ===== الفوتر ===== */
+        .footer {
+            text-align: center;
+            padding: 25px 20px 10px;
+            margin-top: 30px;
+            border-top: 1px solid rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.6);
+            font-size: 13px;
+        }
+        .footer .developer {
+            color: #ffc107;
+            font-weight: 600;
+        }
+        .footer .school {
+            color: white;
+            font-weight: 600;
+        }
+
+        /* ===== رسائل ===== */
+        .error-msg {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px 18px;
+            border-radius: 12px;
+            margin: 10px 0;
+            text-align: center;
+            border-right: 4px solid #dc3545;
+            display: none;
+        }
+        .error-msg.show {
+            display: block;
+            animation: shake 0.4s ease;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        .info-msg {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 12px 18px;
+            border-radius: 12px;
+            margin: 10px 0;
+            text-align: center;
+            border-right: 4px solid #17a2b8;
+            display: none;
+        }
+        .info-msg.show {
+            display: block;
+        }
+
+        /* ===== تحميل ===== */
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 10px;
+        }
+        .loading-spinner.show {
+            display: block;
+        }
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 4px solid #f0f0f0;
+            border-top-color: #1e3c72;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ===== توافق الجوال ===== */
+        @media (max-width: 600px) {
+            .hero-section h1 { font-size: 22px; }
+            .hero-section::before { font-size: 120px; }
+            .features-grid { grid-template-columns: 1fr 1fr; }
+            .login-card { padding: 20px; }
+            .login-card .help-links { flex-direction: column; align-items: center; }
+        }
+        @media (max-width: 400px) {
+            .features-grid { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <div class="card login-card">
-            <div class="text-center">
-                <div class="logo">🎓</div>
-                <h1>نظام تسجيل الرغبات</h1>
-                <p class="subtitle">مدرسة دشنا الثانوية - الصف الثاني الثانوي</p>
-            </div>
+        <!-- ===== الهيدر ===== -->
+        <div class="hero-section">
+            <span class="school-logo">🏫</span>
+            <h1>نظام تسجيل الرغبات</h1>
+            <p class="subtitle">
+                للصف الثاني الثانوي - <span class="school-name">مدرسة دشنا الثانوية</span>
+            </p>
+            <p class="ministry">وزارة التربية والتعليم - مديرية التربية والتعليم بقنا</p>
+        </div>
 
-            <form id="loginForm" class="form">
-                <div class="form-group">
-                    <label>كود الطالب</label>
-                    <input type="text" id="studentCode" placeholder="أدخل كود الطالب" required dir="ltr">
+        <!-- ===== بطاقات المميزات ===== -->
+        <div class="features-grid">
+            <div class="feature-card">
+                <span class="icon">📝</span>
+                <h4>تسجيل الرغبات</h4>
+                <p>اختر تشعيبك وتخصصك بسهولة</p>
+            </div>
+            <div class="feature-card">
+                <span class="icon">🔒</span>
+                <h4>بيانات آمنة</h4>
+                <p>معلوماتك محمية بالكامل</p>
+            </div>
+            <div class="feature-card">
+                <span class="icon">📄</span>
+                <h4>طباعة PDF</h4>
+                <p>احصل على إقرار التسجيل</p>
+            </div>
+            <div class="feature-card">
+                <span class="icon">📊</span>
+                <h4>متابعة</h4>
+                <p>تابع حالة طلبك</p>
+            </div>
+        </div>
+
+        <!-- ===== نموذج الدخول ===== -->
+        <div class="login-wrapper">
+            <div class="login-card">
+                <div class="login-header">
+                    <span class="icon">🔑</span>
+                    <h2>دخول الطالب</h2>
+                    <p>أدخل بياناتك للدخول إلى نظام التسجيل</p>
                 </div>
 
-                <div class="form-group">
-                    <label>الرقم القومي</label>
-                    <input type="text" id="nationalId" placeholder="أدخل الرقم القومي" required dir="ltr">
+                <form id="loginForm" class="form">
+                    <div class="input-group">
+                        <span class="input-icon">👤</span>
+                        <input type="text" id="studentCode" class="form-control" 
+                               placeholder="كود الطالب" required dir="ltr">
+                    </div>
+
+                    <div class="input-group">
+                        <span class="input-icon">🪪</span>
+                        <input type="text" id="nationalId" class="form-control" 
+                               placeholder="الرقم القومي (14 رقم)" required dir="ltr" 
+                               maxlength="14" pattern="[0-9]{14}">
+                    </div>
+
+                    <div id="errorMsg" class="error-msg"></div>
+                    <div id="infoMsg" class="info-msg"></div>
+
+                    <div class="loading-spinner" id="loadingSpinner">
+                        <div class="spinner"></div>
+                        <p style="color:#666;font-size:13px;margin-top:8px;">جاري التحقق...</p>
+                    </div>
+
+                    <button type="submit" class="btn-login" id="loginBtn">
+                        🚪 دخول إلى النظام
+                    </button>
+                </form>
+
+                <div class="help-links">
+                    <a href="help.html">❓ تعليمات المساعدة</a>
+                    <a href="admin-login.html" class="admin-link">👑 دخول الأدمن</a>
                 </div>
 
-                <div id="errorMsg" class="error-msg" style="display:none;"></div>
-
-                <button type="submit" class="btn-primary">🚪 دخول</button>
-            </form>
-
-            <div class="text-center mt-3">
-                <p class="text-sm text-gray-500">
-                    للأدمن: <a href="admin-login.html" class="link">تسجيل الدخول</a>
-                </p>
+                <!-- ===== معلومات إضافية ===== -->
+                <div style="margin-top:15px;padding:12px;background:#f8f9fa;border-radius:12px;font-size:12px;color:#999;text-align:center;">
+                    <p style="margin:0;">
+                        ⚠️ بعد تسجيل الرغبات، <strong style="color:#dc3545;">لا يمكن التعديل</strong> 
+                        إلا بإذن من إدارة المدرسة
+                    </p>
+                </div>
             </div>
+        </div>
+
+        <!-- ===== الفوتر ===== -->
+        <div class="footer">
+            <p style="margin:0;">
+                <span style="font-size:14px;">©</span> 
+                <span class="school">مدرسة دشنا الثانوية</span> - جميع الحقوق محفوظة 
+                <span id="yearDisplay"></span>
+            </p>
+            <p style="margin:5px 0 0;font-size:11px;opacity:0.7;">
+                Developed by: <span class="developer">محمد جاد</span> - 
+                مسئول IT وسفير مادة البرمجة محافظة قنا
+            </p>
         </div>
     </div>
 
     <script>
-        // 🔐 جلب المفاتيح من Vercel Environment Variables
+        // ===== تهيئة Supabase =====
         const SUPABASE_URL = '{{SUPABASE_URL}}'
         const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
-        
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
         window.supabase = supabaseClient
 
+        // ===== تحديث السنة =====
+        document.getElementById('yearDisplay').textContent = new Date().getFullYear()
+
+        // ===== التحقق من الرقم القومي =====
+        document.getElementById('nationalId').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '')
+        })
+
+        // ===== نموذج الدخول =====
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault()
             
             const studentCode = document.getElementById('studentCode').value.trim()
             const nationalId = document.getElementById('nationalId').value.trim()
             const errorMsg = document.getElementById('errorMsg')
+            const infoMsg = document.getElementById('infoMsg')
+            const loginBtn = document.getElementById('loginBtn')
+            const spinner = document.getElementById('loadingSpinner')
             
-            errorMsg.style.display = 'none'
+            errorMsg.classList.remove('show')
+            errorMsg.textContent = ''
+            infoMsg.classList.remove('show')
+            infoMsg.textContent = ''
+
+            // التحقق من الحقول
+            if (!studentCode || !nationalId) {
+                errorMsg.textContent = '❌ يرجى إدخال كود الطالب والرقم القومي'
+                errorMsg.classList.add('show')
+                return
+            }
+
+            if (nationalId.length !== 14) {
+                errorMsg.textContent = '❌ الرقم القومي يجب أن يكون 14 رقم'
+                errorMsg.classList.add('show')
+                return
+            }
+
+            // تفعيل حالة التحميل
+            loginBtn.disabled = true
+            loginBtn.textContent = '⏳ جاري التحقق...'
+            spinner.classList.add('show')
 
             try {
                 const { data, error } = await supabaseClient
@@ -67,17 +429,57 @@
 
                 if (error || !data) {
                     errorMsg.textContent = '❌ كود الطالب أو الرقم القومي غير صحيح'
-                    errorMsg.style.display = 'block'
+                    errorMsg.classList.add('show')
+                    loginBtn.disabled = false
+                    loginBtn.textContent = '🚪 دخول إلى النظام'
+                    spinner.classList.remove('show')
                     return
                 }
 
+                // التحقق من حالة القفل
+                if (data.is_locked && data.submitted_at) {
+                    infoMsg.innerHTML = `
+                        🔒 <strong>تم تسجيل الرغبات مسبقاً</strong>
+                        <br>
+                        <small>📅 تاريخ التقديم: ${new Date(data.submitted_at).toLocaleDateString('ar-EG')}</small>
+                        <br>
+                        <small style="color:#999;">يمكنك طباعة PDF فقط</small>
+                    `
+                    infoMsg.classList.add('show')
+                }
+
+                // حفظ بيانات الجلسة
                 sessionStorage.setItem('studentId', data.id)
                 sessionStorage.setItem('studentName', data.full_name)
-                window.location.href = 'student-form.html'
+                
+                // تأخير بسيط قبل الانتقال
+                setTimeout(() => {
+                    window.location.href = 'student-form.html'
+                }, 500)
+
             } catch (err) {
+                console.error('Error:', err)
                 errorMsg.textContent = '❌ حدث خطأ أثناء محاولة الدخول'
-                errorMsg.style.display = 'block'
+                errorMsg.classList.add('show')
+                loginBtn.disabled = false
+                loginBtn.textContent = '🚪 دخول إلى النظام'
+                spinner.classList.remove('show')
             }
+        })
+
+        // ===== تأثيرات =====
+        // إضافة تأثير عند تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.feature-card')
+            cards.forEach((card, i) => {
+                card.style.opacity = '0'
+                card.style.transform = 'translateY(20px)'
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s ease'
+                    card.style.opacity = '1'
+                    card.style.transform = 'translateY(0)'
+                }, 200 + (i * 150))
+            })
         })
     </script>
 </body>
