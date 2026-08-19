@@ -157,8 +157,14 @@
         </div>
     </div>
 
-    <script src="supabase-config.js"></script>
     <script>
+        // 🔐 جلب المفاتيح من Vercel Environment Variables
+        const SUPABASE_URL = '{{SUPABASE_URL}}'
+        const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        window.supabase = supabaseClient
+
         let allStudents = []
         let filteredStudents = []
 
@@ -170,7 +176,7 @@
         // تحميل الطلاب
         async function loadStudents() {
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('students')
                     .select('*')
                     .order('created_at', { ascending: false })
@@ -250,14 +256,13 @@
             if (!confirm(`هل أنت متأكد من ${currentLock ? 'فتح' : 'قفل'} هذا الطالب؟`)) return
 
             try {
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('students')
                     .update({ is_locked: !currentLock })
                     .eq('id', studentId)
 
                 if (error) throw error
 
-                // تحديث القائمة
                 allStudents = allStudents.map(s =>
                     s.id === studentId ? { ...s, is_locked: !currentLock } : s
                 )
@@ -273,7 +278,6 @@
             window.location.href = 'admin-login.html'
         }
 
-        // تحميل البيانات
         loadStudents()
     </script>
 </body>
