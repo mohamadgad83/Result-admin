@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الطلاب</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .table-container {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        table th {
+            background: #1e3c72;
+            color: white;
+            padding: 12px 15px;
+            text-align: right;
+        }
+        table td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        table tr:hover {
+            background: #f8f9fa;
+        }
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .search-bar input, .search-bar select {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            flex: 1;
+            min-width: 150px;
+        }
+        .search-bar input:focus, .search-bar select:focus {
+            outline: none;
+            border-color: #1e3c72;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-locked { background: #d4edda; color: #155724; }
+        .status-unlocked { background: #fff3cd; color: #856404; }
+        .action-link {
+            color: #1e3c72;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 0 5px;
+        }
+        .action-link:hover { text-decoration: underline; }
+        .action-link.danger { color: #dc3545; }
+        .action-link.success { color: #28a745; }
+        .empty-msg {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 20px;
+        }
+        .btn-back {
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-back:hover {
+            background: #5a6268;
+        }
+        @media (max-width: 600px) {
+            table { font-size: 12px; }
+            table th, table td { padding: 8px 10px; }
+            .search-bar input, .search-bar select { min-width: 100px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" style="max-width:1100px;">
+        <div class="card">
+            <!-- Header -->
+            <div class="admin-header">
+                <div>
+                    <h1 style="margin:0;">👨‍🎓 إدارة الطلاب</h1>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <a href="admin-dashboard.html" class="btn-back">📊 لوحة التحكم</a>
+                    <button onclick="logout()" class="btn-logout" style="padding:10px 20px;background:#dc3545;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;">🚪 خروج</button>
+                </div>
+            </div>
+
+            <!-- البحث والفلترة -->
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="🔍 بحث بالاسم، الكود، أو الرقم القومي..." onkeyup="filterStudents()">
+                <select id="filterStream" onchange="filterStudents()">
+                    <option value="">كل التشعيبات</option>
+                    <option value="ثانوي">ثانوي</option>
+                    <option value="بكالوريا">بكالوريا</option>
+                </select>
+                <select id="filterStatus" onchange="filterStudents()">
+                    <option value="">كل الحالات</option>
+                    <option value="locked">مقفل</option>
+                    <option value="unlocked">مفتوح</option>
+                </select>
+                <button onclick="resetFilters()" style="padding:10px 20px;background:#6c757d;color:white;border:none;border-radius:10px;cursor:pointer;">مسح</button>
+            </div>
+
+            <!-- عدد الطلاب -->
+            <div style="margin-bottom:10px;color:#666;font-size:14px;">
+                عدد الطلاب: <span id="studentsCount">0</span>
+            </div>
+
+            <!-- جدول الطلاب -->
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>الاسم</th>
+                            <th>الكود</th>
+                            <th>التشعيب</th>
+                            <th>التخصص/المسار</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsTableBody">
+                        <tr><td colspan="7" class="empty-msg">⏳ جاري التحميل...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 🔐 جلب المفاتيح من Vercel Environment Variables
+        const SUPABASE_URL = '{{SUPABASE_URL}}'
+        const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        window.supabase = supabaseClient
+
+        let allStudents = []
+        let filteredStudents = []
+
+        // التحقق من وجود أدمن
+        if (!sessionStorage.getItem('adminId')) {
+            window.location.href = 'admin-login.html'
+        }
+
+        // تحميل الطلاب
+        async function loadStudents() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('students')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+
+                if (error) throw error
+                allStudents = data || []
+                filteredStudents = [...allStudents]
+                renderTable()
+            } catch (err) {
+                console.error('Error loading students:', err)
+                document.getElementById('studentsTableBody').innerHTML = 
+                    '<tr><td colspan="7" class="empty-msg">❌ خطأ في تحميل البيانات</td></tr>'
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('studentsTableBody')
+            document.getElementById('studentsCount').textContent = filteredStudents.length
+
+            if (filteredStudents.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-msg">📭 لا يوجد طلاب</td></tr>'
+                return
+            }
+
+            tbody.innerHTML = filteredStudents.map((student, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td><strong>${student.full_name}</strong></td>
+                    <td dir="ltr">${student.student_code}</td>
+                    <td>${student.stream || '-'}</td>
+                    <td>${student.specialization || student.track || '-'}</td>
+                    <td>
+                        <span class="status-badge ${student.is_locked ? 'status-locked' : 'status-unlocked'}">
+                            ${student.is_locked ? '✅ مقفل' : '🔓 مفتوح'}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="admin-student-detail.html?id=${student.id}" class="action-link">👁️ عرض</a>
+                        <a href="#" onclick="toggleLock('${student.id}', ${student.is_locked})" class="action-link ${student.is_locked ? 'success' : 'danger'}">
+                            ${student.is_locked ? '🔓 فتح' : '🔒 قفل'}
+                        </a>
+                    </td>
+                </tr>
+            `).join('')
+        }
+
+        function filterStudents() {
+            const search = document.getElementById('searchInput').value.toLowerCase()
+            const stream = document.getElementById('filterStream').value
+            const status = document.getElementById('filterStatus').value
+
+            filteredStudents = allStudents.filter(student => {
+                const matchSearch = 
+                    student.full_name.toLowerCase().includes(search) ||
+                    student.student_code.toLowerCase().includes(search) ||
+                    student.national_id.toLowerCase().includes(search)
+                
+                const matchStream = stream ? student.stream === stream : true
+                const matchStatus = status ? 
+                    (status === 'locked' ? student.is_locked : !student.is_locked) : true
+
+                return matchSearch && matchStream && matchStatus
+            })
+
+            renderTable()
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = ''
+            document.getElementById('filterStream').value = ''
+            document.getElementById('filterStatus').value = ''
+            filteredStudents = [...allStudents]
+            renderTable()
+        }
+
+        async function toggleLock(studentId, currentLock) {
+            if (!confirm(`هل أنت متأكد من ${currentLock ? 'فتح' : 'قفل'} هذا الطالب؟`)) return
+
+            try {
+                const { error } = await supabaseClient
+                    .from('students')
+                    .update({ is_locked: !currentLock })
+                    .eq('id', studentId)
+
+                if (error) throw error
+
+                allStudents = allStudents.map(s =>
+                    s.id === studentId ? { ...s, is_locked: !currentLock } : s
+                )
+                filterStudents()
+            } catch (err) {
+                console.error('Error toggling lock:', err)
+                alert('حدث خطأ أثناء تغيير حالة القفل')
+            }
+        }
+
+        function logout() {
+            sessionStorage.clear()
+            window.location.href = 'admin-login.html'
+        }
+
+        loadStudents()
+    </script>
+</body>
+</html>

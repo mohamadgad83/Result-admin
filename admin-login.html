@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دخول الأدمن</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card login-card">
+            <div class="text-center">
+                <div class="logo">👑</div>
+                <h1>لوحة التحكم</h1>
+                <p class="subtitle">مدرسة دشنا الثانوية</p>
+            </div>
+
+            <form id="loginForm" class="form">
+                <div class="form-group">
+                    <label>البريد الإلكتروني</label>
+                    <input type="email" id="email" class="form-control" placeholder="admin@school.com" required dir="ltr">
+                </div>
+
+                <div class="form-group">
+                    <label>كلمة المرور</label>
+                    <input type="password" id="password" class="form-control" placeholder="********" required dir="ltr">
+                </div>
+
+                <div id="errorMsg" class="error-msg" style="display:none;"></div>
+
+                <button type="submit" class="btn-primary">🚪 دخول</button>
+            </form>
+
+            <div class="text-center mt-3">
+                <a href="index.html" class="link">العودة للصفحة الرئيسية</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 🔐 جلب المفاتيح من Vercel Environment Variables
+        // دي القيم اللي هتتضاف في Vercel Settings
+        const SUPABASE_URL = '{{SUPABASE_URL}}'
+        const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
+        
+        // إنشاء عميل Supabase
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        window.supabase = supabaseClient
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault()
+            
+            const email = document.getElementById('email').value.trim()
+            const password = document.getElementById('password').value
+            const errorMsg = document.getElementById('errorMsg')
+            
+            errorMsg.style.display = 'none'
+
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email,
+                    password
+                })
+
+                if (error || !data.user) {
+                    errorMsg.textContent = '❌ البريد الإلكتروني أو كلمة المرور غير صحيحة'
+                    errorMsg.style.display = 'block'
+                    return
+                }
+
+                const { data: adminData, error: adminError } = await supabaseClient
+                    .from('admins')
+                    .select('id')
+                    .eq('id', data.user.id)
+                    .single()
+
+                if (adminError || !adminData) {
+                    await supabaseClient.auth.signOut()
+                    errorMsg.textContent = '❌ ليس لديك صلاحية الدخول كأدمن'
+                    errorMsg.style.display = 'block'
+                    return
+                }
+
+                sessionStorage.setItem('adminId', data.user.id)
+                sessionStorage.setItem('adminEmail', data.user.email)
+                window.location.href = 'admin-dashboard.html'
+            } catch (err) {
+                errorMsg.textContent = '❌ حدث خطأ أثناء محاولة الدخول'
+                errorMsg.style.display = 'block'
+            }
+        })
+    </script>
+</body>
+</html>

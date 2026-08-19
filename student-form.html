@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الرغبات</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1 class="text-center">📝 تسجيل رغبات الطالب</h1>
+
+            <!-- بيانات الطالب -->
+            <div class="student-info" id="studentInfo"></div>
+
+            <!-- رسالة الحالة -->
+            <div id="statusMsg"></div>
+
+            <!-- النموذج -->
+            <form id="studentForm" class="form">
+                <!-- التشعيب -->
+                <div class="form-group">
+                    <label>التشعيب *</label>
+                    <div class="btn-group">
+                        <button type="button" class="btn-option" data-value="ثانوي" onclick="selectStream('ثانوي')">
+                            🎓 ثانوي
+                        </button>
+                        <button type="button" class="btn-option" data-value="بكالوريا" onclick="selectStream('بكالوريا')">
+                            📚 بكالوريا
+                        </button>
+                    </div>
+                    <input type="hidden" id="stream" name="stream" required>
+                </div>
+
+                <!-- التخصص (ثانوي) -->
+                <div id="specializationGroup" style="display:none;">
+                    <div class="form-group">
+                        <label>التخصص *</label>
+                        <div class="btn-group">
+                            <button type="button" class="btn-option" data-value="علمي" onclick="selectSpecialization('علمي')">
+                                🔬 علمي
+                            </button>
+                            <button type="button" class="btn-option" data-value="أدبي" onclick="selectSpecialization('أدبي')">
+                                📝 أدبي
+                            </button>
+                        </div>
+                        <input type="hidden" id="specialization" name="specialization">
+                    </div>
+                </div>
+
+                <!-- المسار والمادة (بكالوريا) -->
+                <div id="trackGroup" style="display:none;">
+                    <div class="form-group">
+                        <label>المسار *</label>
+                        <select id="track" name="track" class="form-control" onchange="updateSubjects()">
+                            <option value="">اختر المسار</option>
+                            <option value="مسار الطب وعلوم الحياة">مسار الطب وعلوم الحياة</option>
+                            <option value="مسار الهندسة وعلوم الحاسب">مسار الهندسة وعلوم الحاسب</option>
+                            <option value="مسار الأعمال">مسار الأعمال</option>
+                            <option value="مسار الآداب والفنون">مسار الآداب والفنون</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>المادة الاختيارية *</label>
+                        <select id="optionalSubject" name="optionalSubject" class="form-control">
+                            <option value="">اختر المادة</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- الحقول الديناميكية -->
+                <div id="dynamicFields"></div>
+
+                <div id="formError" class="error-msg" style="display:none;"></div>
+                <div id="formSuccess" class="success-msg" style="display:none;">✅ تم حفظ البيانات بنجاح!</div>
+
+                <div id="formActions">
+                    <button type="submit" class="btn-success" id="saveBtn">💾 حفظ الرغبات</button>
+                    <a href="student-pdf.html" class="btn-primary" id="pdfBtn" style="display:none;">📄 طباعة PDF</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 🔐 جلب المفاتيح من Vercel Environment Variables
+const SUPABASE_URL = '{{SUPABASE_URL}}'
+const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+window.supabase = supabaseClient
+        let studentData = null
+        let fieldsData = []
+        let isLocked = false
+        let selectedStream = ''
+        let selectedSpecialization = ''
+        let dynamicValues = {}
+
+        // خيارات المسارات
+        const tracks = {
+            'مسار الطب وعلوم الحياة': ['فيزياء', 'رياضيات'],
+            'مسار الهندسة وعلوم الحاسب': ['كيمياء', 'برمجة'],
+            'مسار الأعمال': ['إدارة أعمال', 'محاسبة'],
+            'مسار الآداب والفنون': ['لغة ثانية فرنسي', 'لغة ثانية ألماني', 'علم نفس']
+        }
+
+        // تحميل بيانات الطالب
+        async function loadStudentData() {
+            const studentId = sessionStorage.getItem('studentId')
+            if (!studentId) {
+                window.location.href = 'index.html'
+                return
+            }
+
+            try {
+                // جلب بيانات الطالب
+                const { data: student, error: studentError } = await supabase
+                    .from('students')
+                    .select('*')
+                    .eq('id', studentId)
+                    .single()
+
+                if (studentError || !student) {
+                    alert('خطأ في جلب بيانات الطالب')
+                    return
+                }
+
+                studentData = student
+                isLocked = student.is_locked && student.submitted_at
+
+                // عرض بيانات الطالب
+                document.getElementById('studentInfo').innerHTML = `
+                    <div class="grid-3">
+                        <div><span class="label">الاسم</span><span class="value">${student.full_name}</span></div>
+                        <div><span class="label">كود الطالب</span><span class="value" dir="ltr">${student.student_code}</span></div>
+                        <div><span class="label">الرقم القومي</span><span class="value" dir="ltr">${student.national_id}</span></div>
+                    </div>
+                `
+
+                // جلب الحقول الديناميكية
+                const { data: fields, error: fieldsError } = await supabase
+                    .from('dynamic_fields')
+                    .select('*')
+                    .eq('visible_for_student', true)
+                    .order('display_order', { ascending: true })
+
+                if (!fieldsError) {
+                    fieldsData = fields
+                }
+
+                // جلب قيم الحقول الديناميكية
+                const { data: responses, error: responsesError } = await supabase
+                    .from('student_dynamic_responses')
+                    .select('field_id, value')
+                    .eq('student_id', studentId)
+
+                if (!responsesError && responses) {
+                    responses.forEach(r => {
+                        dynamicValues[r.field_id] = r.value
+                    })
+                }
+
+                // عرض الحقول الديناميكية
+                renderDynamicFields()
+
+                // تعبئة البيانات الموجودة
+                if (student.stream) {
+                    selectedStream = student.stream
+                    document.getElementById('stream').value = student.stream
+                    document.querySelectorAll('.btn-option[data-value="' + student.stream + '"]').forEach(el => {
+                        el.classList.add('active')
+                    })
+
+                    if (student.stream === 'ثانوي' && student.specialization) {
+                        selectedSpecialization = student.specialization
+                        document.getElementById('specialization').value = student.specialization
+                        document.querySelectorAll('.btn-option[data-value="' + student.specialization + '"]').forEach(el => {
+                            el.classList.add('active')
+                        })
+                        document.getElementById('specializationGroup').style.display = 'block'
+                    } else if (student.stream === 'بكالوريا') {
+                        document.getElementById('trackGroup').style.display = 'block'
+                        if (student.track) {
+                            document.getElementById('track').value = student.track
+                            updateSubjects()
+                            if (student.optional_subject) {
+                                document.getElementById('optionalSubject').value = student.optional_subject
+                            }
+                        }
+                    }
+                }
+
+                // عرض رسالة الحالة
+                if (isLocked) {
+                    document.getElementById('statusMsg').innerHTML = `
+                        <div class="warning-msg">
+                            ⚠️ تم تسجيل الرغبات مسبقاً ولا يمكن التعديل.
+                            <br><small>تاريخ التقديم: ${new Date(student.submitted_at).toLocaleDateString('ar-EG')}</small>
+                        </div>
+                    `
+                    document.getElementById('saveBtn').style.display = 'none'
+                    document.getElementById('pdfBtn').style.display = 'block'
+                    disableForm(true)
+                }
+
+            } catch (err) {
+                console.error('Error loading data:', err)
+                alert('حدث خطأ أثناء تحميل البيانات')
+            }
+        }
+
+        function renderDynamicFields() {
+            const container = document.getElementById('dynamicFields')
+            container.innerHTML = ''
+
+            fieldsData.forEach(field => {
+                const div = document.createElement('div')
+                div.className = 'form-group'
+
+                const label = document.createElement('label')
+                label.textContent = field.name + (field.is_required ? ' *' : '')
+                div.appendChild(label)
+
+                if (field.type === 'text') {
+                    const input = document.createElement('input')
+                    input.type = 'text'
+                    input.className = 'form-control'
+                    input.id = 'field_' + field.id
+                    input.value = dynamicValues[field.id] || ''
+                    input.disabled = isLocked || field.is_readonly
+                    if (field.is_required) input.required = true
+                    input.addEventListener('change', (e) => {
+                        dynamicValues[field.id] = e.target.value
+                    })
+                    div.appendChild(input)
+                } else if (field.type === 'select') {
+                    const select = document.createElement('select')
+                    select.className = 'form-control'
+                    select.id = 'field_' + field.id
+                    select.disabled = isLocked || field.is_readonly
+                    if (field.is_required) select.required = true
+
+                    const defaultOption = document.createElement('option')
+                    defaultOption.value = ''
+                    defaultOption.textContent = 'اختر'
+                    select.appendChild(defaultOption)
+
+                    if (field.options) {
+                        field.options.forEach(opt => {
+                            const option = document.createElement('option')
+                            option.value = opt
+                            option.textContent = opt
+                            if (dynamicValues[field.id] === opt) {
+                                option.selected = true
+                            }
+                            select.appendChild(option)
+                        })
+                    }
+
+                    select.addEventListener('change', (e) => {
+                        dynamicValues[field.id] = e.target.value
+                    })
+                    div.appendChild(select)
+                }
+
+                container.appendChild(div)
+            })
+        }
+
+        function selectStream(value) {
+            if (isLocked) return
+            selectedStream = value
+            document.getElementById('stream').value = value
+
+            document.querySelectorAll('.btn-option[data-value="ثانوي"], .btn-option[data-value="بكالوريا"]').forEach(el => {
+                el.classList.toggle('active', el.dataset.value === value)
+            })
+
+            document.getElementById('specializationGroup').style.display = value === 'ثانوي' ? 'block' : 'none'
+            document.getElementById('trackGroup').style.display = value === 'بكالوريا' ? 'block' : 'none'
+
+            if (value === 'بكالوريا') {
+                document.getElementById('track').value = ''
+                document.getElementById('optionalSubject').innerHTML = '<option value="">اختر المادة</option>'
+            }
+        }
+
+        function selectSpecialization(value) {
+            if (isLocked) return
+            selectedSpecialization = value
+            document.getElementById('specialization').value = value
+
+            document.querySelectorAll('.btn-option[data-value="علمي"], .btn-option[data-value="أدبي"]').forEach(el => {
+                el.classList.toggle('active', el.dataset.value === value)
+            })
+        }
+
+        function updateSubjects() {
+            const track = document.getElementById('track').value
+            const subjectSelect = document.getElementById('optionalSubject')
+            subjectSelect.innerHTML = '<option value="">اختر المادة</option>'
+
+            if (track && tracks[track]) {
+                tracks[track].forEach(subject => {
+                    const option = document.createElement('option')
+                    option.value = subject
+                    option.textContent = subject
+                    subjectSelect.appendChild(option)
+                })
+            }
+        }
+
+        function disableForm(disabled) {
+            document.querySelectorAll('#studentForm input, #studentForm select, #studentForm button').forEach(el => {
+                if (el.id !== 'pdfBtn') {
+                    el.disabled = disabled
+                }
+            })
+        }
+
+        // حفظ البيانات
+        document.getElementById('studentForm').addEventListener('submit', async (e) => {
+            e.preventDefault()
+
+            const studentId = sessionStorage.getItem('studentId')
+            const stream = document.getElementById('stream').value
+            const specialization = document.getElementById('specialization').value
+            const track = document.getElementById('track').value
+            const optionalSubject = document.getElementById('optionalSubject').value
+
+            const errorMsg = document.getElementById('formError')
+            const successMsg = document.getElementById('formSuccess')
+            errorMsg.style.display = 'none'
+            successMsg.style.display = 'none'
+
+            if (!stream) {
+                errorMsg.textContent = '❌ يرجى اختيار التشعيب'
+                errorMsg.style.display = 'block'
+                return
+            }
+
+            if (stream === 'ثانوي' && !specialization) {
+                errorMsg.textContent = '❌ يرجى اختيار التخصص'
+                errorMsg.style.display = 'block'
+                return
+            }
+
+            if (stream === 'بكالوريا') {
+                if (!track) {
+                    errorMsg.textContent = '❌ يرجى اختيار المسار'
+                    errorMsg.style.display = 'block'
+                    return
+                }
+                if (!optionalSubject) {
+                    errorMsg.textContent = '❌ يرجى اختيار المادة الاختيارية'
+                    errorMsg.style.display = 'block'
+                    return
+                }
+            }
+
+            try {
+                const updateData = {
+                    stream: stream,
+                    submitted_at: studentData?.submitted_at || new Date().toISOString()
+                }
+
+                if (stream === 'ثانوي') {
+                    updateData.specialization = specialization
+                    updateData.track = null
+                    updateData.optional_subject = null
+                } else {
+                    updateData.specialization = null
+                    updateData.track = track
+                    updateData.optional_subject = optionalSubject
+                }
+
+                if (!studentData?.submitted_at) {
+                    updateData.is_locked = true
+                }
+
+                const { error: updateError } = await supabase
+                    .from('students')
+                    .update(updateData)
+                    .eq('id', studentId)
+
+                if (updateError) {
+                    errorMsg.textContent = '❌ خطأ في حفظ البيانات: ' + updateError.message
+                    errorMsg.style.display = 'block'
+                    return
+                }
+
+                // حفظ الحقول الديناميكية
+                for (const [fieldId, value] of Object.entries(dynamicValues)) {
+                    if (value) {
+                        await supabase
+                            .from('student_dynamic_responses')
+                            .upsert({
+                                student_id: studentId,
+                                field_id: fieldId,
+                                value: value
+                            }, {
+                                onConflict: 'student_id,field_id'
+                            })
+                    }
+                }
+
+                successMsg.style.display = 'block'
+                document.getElementById('saveBtn').style.display = 'none'
+                document.getElementById('pdfBtn').style.display = 'block'
+                disableForm(true)
+
+                // تحديث البيانات
+                const { data: updatedStudent } = await supabase
+                    .from('students')
+                    .select('*')
+                    .eq('id', studentId)
+                    .single()
+
+                if (updatedStudent) {
+                    studentData = updatedStudent
+                    isLocked = true
+                }
+
+            } catch (err) {
+                errorMsg.textContent = '❌ حدث خطأ أثناء حفظ البيانات'
+                errorMsg.style.display = 'block'
+            }
+        })
+
+        // تحميل البيانات عند فتح الصفحة
+        loadStudentData()
+    </script>
+</body>
+</html>

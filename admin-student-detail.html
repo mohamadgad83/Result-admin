@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تفاصيل الطالب</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .detail-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+        }
+        .detail-card h3 {
+            color: #1e3c72;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #1e3c72;
+            padding-bottom: 8px;
+        }
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .detail-item .label {
+            color: #666;
+            font-size: 14px;
+        }
+        .detail-item .value {
+            font-weight: 600;
+            color: #1e3c72;
+        }
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 20px;
+        }
+        .btn-back {
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-back:hover { background: #5a6268; }
+        .btn-toggle {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+        }
+        .btn-toggle.locked { background: #28a745; }
+        .btn-toggle.locked:hover { background: #1e7e34; }
+        .btn-toggle.unlocked { background: #ffc107; color: #333; }
+        .btn-toggle.unlocked:hover { background: #e0a800; }
+        .btn-danger-small {
+            padding: 10px 20px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-danger-small:hover { background: #a71d2a; }
+        @media (max-width: 600px) {
+            .detail-grid { grid-template-columns: 1fr; }
+            .admin-header { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" style="max-width:900px;">
+        <div class="card">
+            <!-- Header -->
+            <div class="admin-header">
+                <div>
+                    <h1 style="margin:0;">👨‍🎓 تفاصيل الطالب</h1>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <a href="admin-students.html" class="btn-back">🔙 العودة للقائمة</a>
+                    <a href="admin-dashboard.html" class="btn-back">📊 لوحة التحكم</a>
+                    <button onclick="logout()" class="btn-danger-small">🚪 خروج</button>
+                </div>
+            </div>
+
+            <div id="loadingMsg" class="text-center" style="padding:40px;">
+                <div style="font-size:40px;">⏳</div>
+                <p>جاري تحميل البيانات...</p>
+            </div>
+
+            <div id="studentDetail" style="display:none;">
+                <!-- معلومات الطالب -->
+                <div class="detail-grid">
+                    <div class="detail-card">
+                        <h3>📋 المعلومات الأساسية</h3>
+                        <div id="basicInfo"></div>
+                    </div>
+                    <div class="detail-card">
+                        <h3>⚙️ الحالة والإجراءات</h3>
+                        <div id="statusInfo"></div>
+                    </div>
+                </div>
+
+                <!-- الحقول الديناميكية -->
+                <div id="dynamicFieldsCard" class="detail-card" style="margin-top:20px;display:none;">
+                    <h3>📝 الحقول الديناميكية</h3>
+                    <div id="dynamicFieldsContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 🔐 جلب المفاتيح من Vercel Environment Variables
+const SUPABASE_URL = '{{SUPABASE_URL}}'
+const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+window.supabase = supabaseClient
+        // التحقق من وجود أدمن
+        if (!sessionStorage.getItem('adminId')) {
+            window.location.href = 'admin-login.html'
+        }
+
+        // الحصول على ID الطالب من URL
+        const urlParams = new URLSearchParams(window.location.search)
+        const studentId = urlParams.get('id')
+
+        if (!studentId) {
+            window.location.href = 'admin-students.html'
+        }
+
+        let studentData = null
+        let fieldsData = []
+        let dynamicResponses = {}
+
+        async function loadStudentDetail() {
+            try {
+                // جلب بيانات الطالب
+                const { data: student, error: studentError } = await supabase
+                    .from('students')
+                    .select('*')
+                    .eq('id', studentId)
+                    .single()
+
+                if (studentError || !student) {
+                    alert('خطأ في جلب بيانات الطالب')
+                    return
+                }
+
+                studentData = student
+
+                // جلب الحقول الديناميكية
+                const { data: fields, error: fieldsError } = await supabase
+                    .from('dynamic_fields')
+                    .select('*')
+                    .eq('visible_for_student', true)
+                    .order('display_order', { ascending: true })
+
+                if (!fieldsError) {
+                    fieldsData = fields
+                }
+
+                // جلب قيم الحقول
+                const { data: responses, error: responsesError } = await supabase
+                    .from('student_dynamic_responses')
+                    .select('field_id, value')
+                    .eq('student_id', studentId)
+
+                if (!responsesError && responses) {
+                    responses.forEach(r => {
+                        dynamicResponses[r.field_id] = r.value
+                    })
+                }
+
+                displayData()
+                document.getElementById('loadingMsg').style.display = 'none'
+                document.getElementById('studentDetail').style.display = 'block'
+
+            } catch (err) {
+                console.error('Error:', err)
+                alert('حدث خطأ أثناء تحميل البيانات')
+            }
+        }
+
+        function displayData() {
+            // المعلومات الأساسية
+            let basicHtml = `
+                <div class="detail-item"><span class="label">الاسم</span><span class="value">${studentData.full_name}</span></div>
+                <div class="detail-item"><span class="label">كود الطالب</span><span class="value" dir="ltr">${studentData.student_code}</span></div>
+                <div class="detail-item"><span class="label">الرقم القومي</span><span class="value" dir="ltr">${studentData.national_id}</span></div>
+                <div class="detail-item"><span class="label">التشعيب</span><span class="value">${studentData.stream || '-'}</span></div>
+            `
+
+            if (studentData.stream === 'ثانوي') {
+                basicHtml += `<div class="detail-item"><span class="label">التخصص</span><span class="value">${studentData.specialization || '-'}</span></div>`
+            } else if (studentData.stream === 'بكالوريا') {
+                basicHtml += `<div class="detail-item"><span class="label">المسار</span><span class="value">${studentData.track || '-'}</span></div>`
+                basicHtml += `<div class="detail-item"><span class="label">المادة الاختيارية</span><span class="value">${studentData.optional_subject || '-'}</span></div>`
+            }
+
+            if (studentData.submitted_at) {
+                basicHtml += `<div class="detail-item"><span class="label">تاريخ التقديم</span><span class="value">${new Date(studentData.submitted_at).toLocaleDateString('ar-EG')}</span></div>`
+            }
+            basicHtml += `<div class="detail-item"><span class="label">آخر تحديث</span><span class="value">${new Date(studentData.updated_at).toLocaleDateString('ar-EG')}</span></div>`
+
+            document.getElementById('basicInfo').innerHTML = basicHtml
+
+            // الحالة والإجراءات
+            const isLocked = studentData.is_locked
+            document.getElementById('statusInfo').innerHTML = `
+                <div class="detail-item">
+                    <span class="label">حالة الطلب</span>
+                    <span class="value">
+                        <span class="status-badge ${isLocked ? 'status-locked' : 'status-unlocked'}">
+                            ${isLocked ? '✅ مقفل' : '🔓 مفتوح للتعديل'}
+                        </span>
+                    </span>
+                </div>
+                <div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">
+                    <button onclick="toggleLock()" class="btn-toggle ${isLocked ? 'locked' : 'unlocked'}">
+                        ${isLocked ? '🔓 فتح التعديل' : '🔒 قفل التعديل'}
+                    </button>
+                    <a href="student-pdf.html?print=${studentData.id}" target="_blank" class="btn-back" style="background:#17a2b8;">📄 طباعة PDF</a>
+                </div>
+            `
+
+            // الحقول الديناميكية
+            if (fieldsData.length > 0) {
+                document.getElementById('dynamicFieldsCard').style.display = 'block'
+                let fieldsHtml = ''
+                fieldsData.forEach(field => {
+                    const value = dynamicResponses[field.id] || ''
+                    fieldsHtml += `
+                        <div class="detail-item">
+                            <span class="label">${field.name}</span>
+                            <span class="value">${value || '—'}</span>
+                        </div>
+                    `
+                })
+                document.getElementById('dynamicFieldsContent').innerHTML = fieldsHtml
+            }
+        }
+
+        async function toggleLock() {
+            if (!studentData) return
+            const newLock = !studentData.is_locked
+            const action = newLock ? 'قفل' : 'فتح'
+            if (!confirm(`هل أنت متأكد من ${action} هذا الطالب؟`)) return
+
+            try {
+                const { error } = await supabase
+                    .from('students')
+                    .update({ is_locked: newLock })
+                    .eq('id', studentData.id)
+
+                if (error) throw error
+
+                studentData.is_locked = newLock
+                displayData()
+            } catch (err) {
+                console.error('Error:', err)
+                alert('حدث خطأ أثناء تغيير حالة القفل')
+            }
+        }
+
+        function logout() {
+            sessionStorage.clear()
+            window.location.href = 'admin-login.html'
+        }
+
+        loadStudentDetail()
+    </script>
+</body>
+</html>
