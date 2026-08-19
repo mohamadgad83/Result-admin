@@ -11,7 +11,6 @@
     <meta name="author" content="محمد جاد - مسئول IT وسفير مادة البرمجة محافظة قنا">
     
     <style>
-        /* ===== تنسيق الهيدر ===== */
         .hero-section {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             border-radius: 24px;
@@ -54,7 +53,6 @@
             margin-top: 5px;
         }
 
-        /* ===== بطاقات التعليمات ===== */
         .features-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -90,7 +88,6 @@
             margin: 0;
         }
 
-        /* ===== تنسيق نموذج الدخول ===== */
         .login-wrapper {
             max-width: 450px;
             margin: 0 auto;
@@ -136,6 +133,16 @@
         }
         .input-group .form-control {
             padding-right: 50px;
+            width: 100%;
+            padding: 12px 50px 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        .input-group .form-control:focus {
+            outline: none;
+            border-color: #1e3c72;
         }
         .login-card .btn-login {
             width: 100%;
@@ -181,7 +188,6 @@
             color: #dc3545;
         }
 
-        /* ===== الفوتر ===== */
         .footer {
             text-align: center;
             padding: 25px 20px 10px;
@@ -199,7 +205,6 @@
             font-weight: 600;
         }
 
-        /* ===== رسائل ===== */
         .error-msg {
             background: #f8d7da;
             color: #721c24;
@@ -234,7 +239,6 @@
             display: block;
         }
 
-        /* ===== تحميل ===== */
         .loading-spinner {
             display: none;
             text-align: center;
@@ -256,7 +260,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* ===== توافق الجوال ===== */
         @media (max-width: 600px) {
             .hero-section h1 { font-size: 22px; }
             .hero-section::before { font-size: 120px; }
@@ -271,7 +274,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- ===== الهيدر ===== -->
         <div class="hero-section">
             <span class="school-logo">🏫</span>
             <h1>نظام تسجيل الرغبات</h1>
@@ -281,7 +283,6 @@
             <p class="ministry">وزارة التربية والتعليم - مديرية التربية والتعليم بقنا</p>
         </div>
 
-        <!-- ===== بطاقات المميزات ===== -->
         <div class="features-grid">
             <div class="feature-card">
                 <span class="icon">📝</span>
@@ -305,7 +306,6 @@
             </div>
         </div>
 
-        <!-- ===== نموذج الدخول ===== -->
         <div class="login-wrapper">
             <div class="login-card">
                 <div class="login-header">
@@ -346,7 +346,6 @@
                     <a href="admin-login.html" class="admin-link">👑 دخول الأدمن</a>
                 </div>
 
-                <!-- ===== معلومات إضافية ===== -->
                 <div style="margin-top:15px;padding:12px;background:#f8f9fa;border-radius:12px;font-size:12px;color:#999;text-align:center;">
                     <p style="margin:0;">
                         ⚠️ بعد تسجيل الرغبات، <strong style="color:#dc3545;">لا يمكن التعديل</strong> 
@@ -356,7 +355,6 @@
             </div>
         </div>
 
-        <!-- ===== الفوتر ===== -->
         <div class="footer">
             <p style="margin:0;">
                 <span style="font-size:14px;">©</span> 
@@ -377,10 +375,9 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
         window.supabase = supabaseClient
 
-        // ===== تحديث السنة =====
         document.getElementById('yearDisplay').textContent = new Date().getFullYear()
 
-        // ===== التحقق من الرقم القومي =====
+        // ===== منع إدخال غير أرقام في الرقم القومي =====
         document.getElementById('nationalId').addEventListener('input', function(e) {
             this.value = this.value.replace(/[^0-9]/g, '')
         })
@@ -401,7 +398,6 @@
             infoMsg.classList.remove('show')
             infoMsg.textContent = ''
 
-            // التحقق من الحقول
             if (!studentCode || !nationalId) {
                 errorMsg.textContent = '❌ يرجى إدخال كود الطالب والرقم القومي'
                 errorMsg.classList.add('show')
@@ -414,20 +410,30 @@
                 return
             }
 
-            // تفعيل حالة التحميل
             loginBtn.disabled = true
             loginBtn.textContent = '⏳ جاري التحقق...'
             spinner.classList.add('show')
 
             try {
+                // ===== تحويل القيم إلى String لأن الحقول من نوع text =====
                 const { data, error } = await supabaseClient
                     .from('students')
                     .select('*')
-                    .eq('student_code', studentCode)
-                    .eq('national_id', nationalId)
-                    .single()
+                    .eq('student_code', String(studentCode))
+                    .eq('national_id', String(nationalId))
+                    .maybeSingle()
 
-                if (error || !data) {
+                if (error) {
+                    console.error('Supabase error:', error)
+                    errorMsg.textContent = '❌ حدث خطأ في قاعدة البيانات'
+                    errorMsg.classList.add('show')
+                    loginBtn.disabled = false
+                    loginBtn.textContent = '🚪 دخول إلى النظام'
+                    spinner.classList.remove('show')
+                    return
+                }
+
+                if (!data) {
                     errorMsg.textContent = '❌ كود الطالب أو الرقم القومي غير صحيح'
                     errorMsg.classList.add('show')
                     loginBtn.disabled = false
@@ -436,7 +442,6 @@
                     return
                 }
 
-                // التحقق من حالة القفل
                 if (data.is_locked && data.submitted_at) {
                     infoMsg.innerHTML = `
                         🔒 <strong>تم تسجيل الرغبات مسبقاً</strong>
@@ -448,18 +453,16 @@
                     infoMsg.classList.add('show')
                 }
 
-                // حفظ بيانات الجلسة
                 sessionStorage.setItem('studentId', data.id)
                 sessionStorage.setItem('studentName', data.full_name)
                 
-                // تأخير بسيط قبل الانتقال
                 setTimeout(() => {
                     window.location.href = 'student-form.html'
                 }, 500)
 
             } catch (err) {
                 console.error('Error:', err)
-                errorMsg.textContent = '❌ حدث خطأ أثناء محاولة الدخول'
+                errorMsg.textContent = '❌ حدث خطأ أثناء محاولة الدخول: ' + (err.message || '')
                 errorMsg.classList.add('show')
                 loginBtn.disabled = false
                 loginBtn.textContent = '🚪 دخول إلى النظام'
@@ -467,8 +470,6 @@
             }
         })
 
-        // ===== تأثيرات =====
-        // إضافة تأثير عند تحميل الصفحة
         document.addEventListener('DOMContentLoaded', function() {
             const cards = document.querySelectorAll('.feature-card')
             cards.forEach((card, i) => {
