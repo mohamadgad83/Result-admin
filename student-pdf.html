@@ -85,6 +85,38 @@
             line-height: 2;
             color: #333;
         }
+
+        /* ===== معلومات المسؤولين في PDF ===== */
+        .pdf-admin-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 15px 0;
+            padding: 15px;
+            background: #e8f4fd;
+            border-radius: 12px;
+            border: 1px solid #b8d4e8;
+        }
+        .pdf-admin-info .admin-item {
+            text-align: center;
+            padding: 5px;
+        }
+        .pdf-admin-info .admin-item .title {
+            font-size: 12px;
+            color: #666;
+            display: block;
+        }
+        .pdf-admin-info .admin-item .name {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e3c72;
+            display: block;
+            margin-top: 3px;
+        }
+        .pdf-admin-info .admin-item .name .highlight-name {
+            color: #dc3545;
+        }
+
         .pdf-declaration .signatures {
             display: flex;
             justify-content: space-around;
@@ -92,20 +124,25 @@
             padding-top: 20px;
             border-top: 1px solid #dee2e6;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 10px;
         }
         .pdf-declaration .signature-box {
             text-align: center;
-            min-width: 120px;
+            min-width: 100px;
         }
         .pdf-declaration .signature-line {
-            width: 130px;
+            width: 120px;
             border-top: 2px solid #999;
             margin: 15px auto 5px;
         }
         .pdf-declaration .signature-name {
             font-size: 12px;
             color: #666;
+        }
+        .pdf-declaration .signature-name .person-name {
+            font-weight: 700;
+            color: #1e3c72;
+            font-size: 13px;
         }
 
         /* ===== حقوق الطبع ===== */
@@ -151,9 +188,12 @@
             .pdf-preview .info-grid {
                 grid-template-columns: 1fr;
             }
+            .pdf-admin-info {
+                grid-template-columns: 1fr;
+            }
             .pdf-declaration .signatures {
                 flex-direction: column;
-                gap: 20px;
+                gap: 15px;
             }
             .btn-group-actions {
                 flex-direction: column;
@@ -200,6 +240,18 @@
                             كما أوافق على أن اختياراتي للتشعيب والتخصص تخضع لشروط القبول بالمدرسة 
                             واللوائح المنظمة بوزارة التربية والتعليم.
                         </p>
+
+                        <!-- معلومات المسؤولين في PDF -->
+                        <div class="pdf-admin-info">
+                            <div class="admin-item">
+                                <span class="title">👤 وكيل شئون الطلاب</span>
+                                <span class="name"><span class="highlight-name">عاطف أبوالعباس</span></span>
+                            </div>
+                            <div class="admin-item">
+                                <span class="title">👨‍🏫 مدير المدرسة</span>
+                                <span class="name"><span class="highlight-name">عبدالرحمن فهمي</span></span>
+                            </div>
+                        </div>
                         
                         <div class="signatures">
                             <div class="signature-box">
@@ -213,6 +265,20 @@
                             <div class="signature-box">
                                 <div class="signature-line"></div>
                                 <div class="signature-name">ختم المدرسة</div>
+                            </div>
+                            <div class="signature-box">
+                                <div class="signature-line"></div>
+                                <div class="signature-name">
+                                    وكيل شئون الطلاب<br>
+                                    <span class="person-name">عاطف أبوالعباس</span>
+                                </div>
+                            </div>
+                            <div class="signature-box">
+                                <div class="signature-line"></div>
+                                <div class="signature-name">
+                                    مدير المدرسة<br>
+                                    <span class="person-name">عبدالرحمن فهمي</span>
+                                </div>
                             </div>
                         </div>
                     </div>
