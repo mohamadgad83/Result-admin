@@ -68,46 +68,53 @@
             font-weight: 700;
             font-size: 18px;
         }
-        .declaration-checkbox {
-            display: flex;
-            align-items: center;
-            padding: 15px 20px;
-            background: #d4edda;
-            border-radius: 12px;
+
+        /* ===== زر الموافقة ===== */
+        .declaration-approval {
             margin-top: 15px;
-            border: 2px solid #28a745;
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 12px;
+            border: 2px solid #ffc107;
+            text-align: center;
+        }
+        .declaration-approval p {
+            margin-bottom: 12px;
+            color: #856404;
+            font-size: 14px;
+        }
+        .btn-approve {
+            padding: 15px 40px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
-        }
-        .declaration-checkbox:hover {
-            background: #c3e6cb;
-            transform: scale(1.01);
-        }
-        .declaration-checkbox label {
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            width: 100%;
-            margin: 0;
+            gap: 10px;
         }
-        .declaration-checkbox input[type="checkbox"] {
-            width: 22px;
-            height: 22px;
-            cursor: pointer;
-            accent-color: #1e3c72;
-            flex-shrink: 0;
+        .btn-approve:hover {
+            background: #1e7e34;
+            transform: scale(1.03);
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
         }
-        .declaration-checkbox .label-text {
-            font-size: 16px;
-            font-weight: 600;
-            color: #155724;
-            cursor: pointer;
+        .btn-approve:active {
+            transform: scale(0.97);
         }
-        .declaration-checkbox.checked {
-            background: #a3d1b0;
-            border-color: #1e7e34;
+        .btn-approve.approved {
+            background: #1e3c72;
         }
+        .btn-approve.approved:hover {
+            background: #0f2b4f;
+        }
+        .btn-approve .icon {
+            font-size: 22px;
+        }
+
         .declaration-footer {
             display: flex;
             justify-content: space-between;
@@ -176,9 +183,31 @@
             font-size: 14px;
         }
 
-        /* ===== ستايل رسالة التحذير عند عدم الموافقة ===== */
+        /* ===== رسالة التأكيد ===== */
+        .approval-confirm {
+            display: none;
+            background: #d4edda;
+            padding: 15px;
+            border-radius: 12px;
+            border: 2px solid #28a745;
+            margin-top: 10px;
+            text-align: center;
+            color: #155724;
+            font-weight: 600;
+        }
+        .approval-confirm.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== تأثير تحذيري ===== */
         .declaration-warning {
             animation: shakeWarning 0.5s ease;
+            border-right-color: #dc3545 !important;
         }
         @keyframes shakeWarning {
             0%, 100% { transform: translateX(0); }
@@ -198,11 +227,11 @@
                 font-size: 14px;
                 padding: 15px;
             }
-            .declaration-checkbox {
-                padding: 12px 15px;
-            }
-            .declaration-checkbox .label-text {
-                font-size: 14px;
+            .btn-approve {
+                padding: 12px 25px;
+                font-size: 16px;
+                width: 100%;
+                justify-content: center;
             }
         }
     </style>
@@ -213,8 +242,8 @@
             <!-- ===== الهيدر ===== -->
             <div style="text-align:center;border-bottom:3px solid #1e3c72;padding-bottom:15px;margin-bottom:20px;">
                 <h1 style="color:#1e3c72;font-size:24px;margin:0;">🏫 مدرسة دشنا الثانوية</h1>
-                <p style="color:#666;font-size:14px;margin:5px 0;">نظام تسجيل رغبات الصف الثاني الثانوي - العام الدراسي 2025/2026</p>
-                <p style="color:#999;font-size:12px;">مديرية التربية والتعليم بقنا</p>
+                <p style="color:#666;font-size:30px;margin:5px 0;">نظام تسجيل رغبات الصف الثاني الثانوي - العام الدراسي 2025/2026</p>
+                
             </div>
 
             <!-- ===== بيانات الطالب ===== -->
@@ -279,7 +308,7 @@
                 <!-- الحقول الديناميكية -->
                 <div id="dynamicFields"></div>
 
-                <!-- ===== إقرار الطالب ===== -->
+                <!-- ===== إقرار الطالب (بدون Checkbox) ===== -->
                 <div class="declaration-section" id="declarationSection">
                     <h3>📋 إقرار وتعهد</h3>
                     
@@ -323,12 +352,18 @@
                         </p>
                     </div>
 
-                    <!-- ===== موافقة الطالب (شغال 100%) ===== -->
-                    <div class="declaration-checkbox" id="declarationBox" onclick="toggleDeclaration()">
-                        <label>
-                            <input type="checkbox" id="declarationCheck" required>
-                            <span class="label-text">✅ أوافق على جميع البنود المذكورة أعلاه وأتعهد بصحة البيانات</span>
-                        </label>
+                    <!-- ===== زر الموافقة بدلاً من Checkbox ===== -->
+                    <div class="declaration-approval">
+                        <p style="margin:0 0 10px 0;font-size:15px;">
+                            👆 اضغط على الزر أدناه للموافقة على الإقرار والتعهد
+                        </p>
+                        <button type="button" class="btn-approve" id="approveBtn" onclick="approveDeclaration()">
+                            <span class="icon">✅</span> 
+                            <span id="approveText">أوافق على الإقرار والتعهد</span>
+                        </button>
+                        <div class="approval-confirm" id="approvalConfirm">
+                            ✅ تمت الموافقة على الإقرار
+                        </div>
                     </div>
 
                     <!-- التواقيع -->
@@ -389,6 +424,7 @@
         let selectedStream = ''
         let selectedSpecialization = ''
         let dynamicValues = {}
+        let isDeclarationApproved = false
 
         // ===== خيارات المسارات =====
         const tracks = {
@@ -401,43 +437,33 @@
         // ===== تحديث السنة =====
         document.getElementById('yearDisplay').textContent = new Date().getFullYear()
 
-        // ===== دالة تبديل الإقرار (شغال 100%) =====
-        function toggleDeclaration() {
-            const checkbox = document.getElementById('declarationCheck')
-            const box = document.getElementById('declarationBox')
+        // ===== دالة الموافقة على الإقرار =====
+        function approveDeclaration() {
+            const btn = document.getElementById('approveBtn')
+            const confirmMsg = document.getElementById('approvalConfirm')
             
-            // عكس حالة الـ checkbox
-            checkbox.checked = !checkbox.checked
-            
-            // تحديث شكل الـ box
-            if (checkbox.checked) {
-                box.classList.add('checked')
-                box.style.background = '#a3d1b0'
-                box.style.borderColor = '#1e7e34'
+            if (!isDeclarationApproved) {
+                isDeclarationApproved = true
+                btn.classList.add('approved')
+                document.getElementById('approveText').textContent = '✅ تمت الموافقة'
+                confirmMsg.classList.add('show')
+                
+                // تغيير لون الإقرار
+                document.getElementById('declarationSection').style.borderRightColor = '#28a745'
+                
+                // تمرير إلى زر الحفظ
+                setTimeout(() => {
+                    document.getElementById('saveBtn').scrollIntoView({ behavior: 'smooth', block: 'center' })
+                }, 300)
             } else {
-                box.classList.remove('checked')
-                box.style.background = '#d4edda'
-                box.style.borderColor = '#28a745'
+                // إلغاء الموافقة (في حالة الضغط مرة أخرى)
+                isDeclarationApproved = false
+                btn.classList.remove('approved')
+                document.getElementById('approveText').textContent = 'أوافق على الإقرار والتعهد'
+                confirmMsg.classList.remove('show')
+                document.getElementById('declarationSection').style.borderRightColor = '#1e3c72'
             }
         }
-
-        // ===== إضافة مستمع للـ checkbox للتحديث اليدوي =====
-        document.addEventListener('DOMContentLoaded', function() {
-            const checkbox = document.getElementById('declarationCheck')
-            const box = document.getElementById('declarationBox')
-            
-            checkbox.addEventListener('change', function() {
-                if (this.checked) {
-                    box.classList.add('checked')
-                    box.style.background = '#a3d1b0'
-                    box.style.borderColor = '#1e7e34'
-                } else {
-                    box.classList.remove('checked')
-                    box.style.background = '#d4edda'
-                    box.style.borderColor = '#28a745'
-                }
-            })
-        })
 
         // ===== تحميل بيانات الطالب =====
         async function loadStudentData() {
@@ -676,20 +702,17 @@
             errorMsg.style.display = 'none'
             successMsg.style.display = 'none'
 
-            // ===== التحقق من الإقرار =====
-            const declarationCheck = document.getElementById('declarationCheck')
-            if (!declarationCheck || !declarationCheck.checked) {
+            // ===== التحقق من الموافقة على الإقرار =====
+            if (!isDeclarationApproved) {
                 errorMsg.textContent = '❌ يجب الموافقة على الإقرار والتعهد قبل تقديم الطلب'
                 errorMsg.style.display = 'block'
                 
                 // تمرير إلى الإقرار مع تأثير تحذيري
                 const section = document.getElementById('declarationSection')
                 section.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                section.style.borderRightColor = '#dc3545'
                 section.classList.add('declaration-warning')
                 
                 setTimeout(() => {
-                    section.style.borderRightColor = '#1e3c72'
                     section.classList.remove('declaration-warning')
                 }, 3000)
                 return
