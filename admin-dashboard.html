@@ -155,8 +155,14 @@
         </div>
     </div>
 
-    <script src="supabase-config.js"></script>
     <script>
+        // 🔐 جلب المفاتيح من Vercel Environment Variables
+        const SUPABASE_URL = '{{SUPABASE_URL}}'
+        const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        window.supabase = supabaseClient
+
         // التحقق من وجود أدمن
         const adminId = sessionStorage.getItem('adminId')
         if (!adminId) {
@@ -171,25 +177,25 @@
         async function loadStats() {
             try {
                 // إجمالي الطلاب
-                const { count: total } = await supabase
+                const { count: total } = await supabaseClient
                     .from('students')
                     .select('*', { count: 'exact', head: true })
 
                 // الطلاب المقفلين (المسجلين)
-                const { count: locked } = await supabase
+                const { count: locked } = await supabaseClient
                     .from('students')
                     .select('*', { count: 'exact', head: true })
                     .eq('is_locked', true)
 
                 // الحقول الديناميكية
-                const { count: fields } = await supabase
+                const { count: fields } = await supabaseClient
                     .from('dynamic_fields')
                     .select('*', { count: 'exact', head: true })
 
                 // الطلاب المسجلين اليوم
                 const today = new Date()
                 today.setHours(0, 0, 0, 0)
-                const { count: todayCount } = await supabase
+                const { count: todayCount } = await supabaseClient
                     .from('students')
                     .select('*', { count: 'exact', head: true })
                     .gte('submitted_at', today.toISOString())
