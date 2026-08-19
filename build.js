@@ -3,8 +3,9 @@ const fs = require('fs')
 const path = require('path')
 
 // قراءة المفاتيح من البيئة
-const SUPABASE_URL = process.env.SUPABASE_URL
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY
+// بندعم الاسمين عشان يشتغل مهما كان اسم المتغير في Vercel
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 // 🔍 تشخيص: نعرض معلومات مفيدة من غير ما نكشف القيم السرية بالكامل
 console.log('🔍 VERCEL_ENV:', process.env.VERCEL_ENV)
