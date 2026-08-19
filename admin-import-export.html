@@ -169,8 +169,12 @@
         </div>
     </div>
 
-    <script src="supabase-config.js"></script>
-    <script>
+   <script>
+        // 🔐 جلب المفاتيح من Vercel Environment Variables
+const SUPABASE_URL = '{{SUPABASE_URL}}'
+const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+window.supabase = supabaseClient
         // التحقق من وجود أدمن
         if (!sessionStorage.getItem('adminId')) {
             window.location.href = 'admin-login.html'
