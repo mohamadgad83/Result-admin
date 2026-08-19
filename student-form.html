@@ -23,6 +23,7 @@
             margin: 25px 0;
             border-right: 6px solid #1e3c72;
             position: relative;
+            transition: border-color 0.3s ease;
         }
         .declaration-section::before {
             content: "⚖️";
@@ -70,31 +71,42 @@
         .declaration-checkbox {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 15px;
+            padding: 15px 20px;
             background: #d4edda;
             border-radius: 12px;
             margin-top: 15px;
             border: 2px solid #28a745;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
         }
         .declaration-checkbox:hover {
             background: #c3e6cb;
             transform: scale(1.01);
+        }
+        .declaration-checkbox label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            width: 100%;
+            margin: 0;
         }
         .declaration-checkbox input[type="checkbox"] {
             width: 22px;
             height: 22px;
             cursor: pointer;
             accent-color: #1e3c72;
+            flex-shrink: 0;
         }
-        .declaration-checkbox label {
+        .declaration-checkbox .label-text {
             font-size: 16px;
             font-weight: 600;
             color: #155724;
             cursor: pointer;
-            margin: 0;
+        }
+        .declaration-checkbox.checked {
+            background: #a3d1b0;
+            border-color: #1e7e34;
         }
         .declaration-footer {
             display: flex;
@@ -133,6 +145,14 @@
             padding-top: 10px;
             border-top: 1px solid #eee;
         }
+        .declaration-footer .copyright-text .developer-name {
+            color: #1e3c72;
+            font-weight: 700;
+        }
+        .declaration-footer .copyright-text .school-name {
+            color: #dc3545;
+            font-weight: 700;
+        }
 
         /* ===== ستايل رسالة القفل ===== */
         .locked-message {
@@ -156,6 +176,16 @@
             font-size: 14px;
         }
 
+        /* ===== ستايل رسالة التحذير عند عدم الموافقة ===== */
+        .declaration-warning {
+            animation: shakeWarning 0.5s ease;
+        }
+        @keyframes shakeWarning {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
         @media (max-width: 600px) {
             .declaration-footer .signature-area {
                 flex-direction: column;
@@ -168,6 +198,12 @@
                 font-size: 14px;
                 padding: 15px;
             }
+            .declaration-checkbox {
+                padding: 12px 15px;
+            }
+            .declaration-checkbox .label-text {
+                font-size: 14px;
+            }
         }
     </style>
 </head>
@@ -178,6 +214,7 @@
             <div style="text-align:center;border-bottom:3px solid #1e3c72;padding-bottom:15px;margin-bottom:20px;">
                 <h1 style="color:#1e3c72;font-size:24px;margin:0;">🏫 مدرسة دشنا الثانوية</h1>
                 <p style="color:#666;font-size:14px;margin:5px 0;">نظام تسجيل رغبات الصف الثاني الثانوي - العام الدراسي 2025/2026</p>
+                <p style="color:#999;font-size:12px;">مديرية التربية والتعليم بقنا</p>
             </div>
 
             <!-- ===== بيانات الطالب ===== -->
@@ -286,11 +323,11 @@
                         </p>
                     </div>
 
-                    <!-- موافقة الطالب -->
-                    <div class="declaration-checkbox" onclick="toggleDeclaration()">
-                        <input type="checkbox" id="declarationCheck" required>
-                        <label for="declarationCheck">
-                            ✅ أوافق على جميع البنود المذكورة أعلاه وأتعهد بصحة البيانات
+                    <!-- ===== موافقة الطالب (شغال 100%) ===== -->
+                    <div class="declaration-checkbox" id="declarationBox" onclick="toggleDeclaration()">
+                        <label>
+                            <input type="checkbox" id="declarationCheck" required>
+                            <span class="label-text">✅ أوافق على جميع البنود المذكورة أعلاه وأتعهد بصحة البيانات</span>
                         </label>
                     </div>
 
@@ -314,10 +351,13 @@
                         <!-- حقوق النشر -->
                         <div class="copyright-text">
                             <p style="margin:0;">
-                                © 2025 <strong>مدرسة دشنا الثانوية</strong> - جميع الحقوق محفوظة
+                                <span style="font-size:14px;">©</span> 
+                                <span class="school-name">مدرسة دشنا الثانوية</span> - جميع الحقوق محفوظة 
+                                <span id="yearDisplay"></span>
                             </p>
                             <p style="margin:0;font-size:10px;color:#bbb;">
-                                Developed by: <strong>محمد جاد</strong> - مسئول IT وسفير مادة البرمجة محافظة قنا
+                                Developed by: <span class="developer-name">محمد جاد</span> - 
+                                مسئول IT وسفير مادة البرمجة محافظة قنا
                             </p>
                         </div>
                     </div>
@@ -358,11 +398,46 @@
             'مسار الآداب والفنون': ['لغة ثانية فرنسي', 'لغة ثانية ألماني', 'علم نفس']
         }
 
-        // ===== دالة تبديل الإقرار =====
+        // ===== تحديث السنة =====
+        document.getElementById('yearDisplay').textContent = new Date().getFullYear()
+
+        // ===== دالة تبديل الإقرار (شغال 100%) =====
         function toggleDeclaration() {
             const checkbox = document.getElementById('declarationCheck')
+            const box = document.getElementById('declarationBox')
+            
+            // عكس حالة الـ checkbox
             checkbox.checked = !checkbox.checked
+            
+            // تحديث شكل الـ box
+            if (checkbox.checked) {
+                box.classList.add('checked')
+                box.style.background = '#a3d1b0'
+                box.style.borderColor = '#1e7e34'
+            } else {
+                box.classList.remove('checked')
+                box.style.background = '#d4edda'
+                box.style.borderColor = '#28a745'
+            }
         }
+
+        // ===== إضافة مستمع للـ checkbox للتحديث اليدوي =====
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkbox = document.getElementById('declarationCheck')
+            const box = document.getElementById('declarationBox')
+            
+            checkbox.addEventListener('change', function() {
+                if (this.checked) {
+                    box.classList.add('checked')
+                    box.style.background = '#a3d1b0'
+                    box.style.borderColor = '#1e7e34'
+                } else {
+                    box.classList.remove('checked')
+                    box.style.background = '#d4edda'
+                    box.style.borderColor = '#28a745'
+                }
+            })
+        })
 
         // ===== تحميل بيانات الطالب =====
         async function loadStudentData() {
@@ -606,11 +681,16 @@
             if (!declarationCheck || !declarationCheck.checked) {
                 errorMsg.textContent = '❌ يجب الموافقة على الإقرار والتعهد قبل تقديم الطلب'
                 errorMsg.style.display = 'block'
-                // تمرير إلى الإقرار
-                document.getElementById('declarationSection').scrollIntoView({ behavior: 'smooth', block: 'center' })
-                document.getElementById('declarationSection').style.borderRightColor = '#dc3545'
+                
+                // تمرير إلى الإقرار مع تأثير تحذيري
+                const section = document.getElementById('declarationSection')
+                section.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                section.style.borderRightColor = '#dc3545'
+                section.classList.add('declaration-warning')
+                
                 setTimeout(() => {
-                    document.getElementById('declarationSection').style.borderRightColor = '#1e3c72'
+                    section.style.borderRightColor = '#1e3c72'
+                    section.classList.remove('declaration-warning')
                 }, 3000)
                 return
             }
