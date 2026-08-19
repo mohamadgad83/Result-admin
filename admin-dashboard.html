@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لوحة التحكم - الأدمن</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
+        /* ===== تنسيق البطاقات ===== */
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -19,6 +21,12 @@
             padding: 20px;
             border-radius: 16px;
             text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: default;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
         .stat-card .number {
             font-size: 32px;
@@ -26,21 +34,31 @@
         }
         .stat-card .label {
             font-size: 14px;
-            opacity: 0.8;
+            opacity: 0.85;
             margin-top: 5px;
+        }
+        .stat-card .sub-info {
+            font-size: 11px;
+            opacity: 0.6;
+            margin-top: 5px;
+            display: block;
         }
         .stat-card.green { background: linear-gradient(135deg, #28a745, #20c997); }
         .stat-card.purple { background: linear-gradient(135deg, #6f42c1, #a855f7); }
         .stat-card.orange { background: linear-gradient(135deg, #fd7e14, #ffc107); }
-        
+        .stat-card.red { background: linear-gradient(135deg, #dc3545, #e83e8c); }
+        .stat-card.teal { background: linear-gradient(135deg, #20c997, #0dcaf0); }
+        .stat-card.info { background: linear-gradient(135deg, #17a2b8, #5bc0de); }
+
+        /* ===== الإجراءات السريعة ===== */
         .quick-actions {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 15px;
             margin: 20px 0;
         }
         .quick-action {
-            padding: 20px;
+            padding: 20px 15px;
             background: #f8f9fa;
             border-radius: 12px;
             text-align: center;
@@ -48,15 +66,45 @@
             color: #1e3c72;
             border: 2px solid transparent;
             transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .quick-action::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 0;
+            height: 3px;
+            background: #1e3c72;
+            transition: width 0.3s;
+        }
+        .quick-action:hover::after {
+            width: 100%;
         }
         .quick-action:hover {
             border-color: #1e3c72;
             background: #f0f7ff;
-            transform: scale(1.02);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(30, 60, 114, 0.12);
         }
-        .quick-action .icon { font-size: 30px; display: block; margin-bottom: 8px; }
-        .quick-action .title { font-weight: 600; }
-        
+        .quick-action .icon { font-size: 28px; display: block; margin-bottom: 6px; }
+        .quick-action .title { font-weight: 600; font-size: 14px; }
+        .quick-action .desc { font-size: 11px; color: #999; display: block; margin-top: 3px; }
+        .quick-action.purple { border-color: #6f42c1; background: #f8f0ff; }
+        .quick-action.purple:hover { background: #f0e6ff; border-color: #6f42c1; }
+        .quick-action.purple .title { color: #6f42c1; }
+        .quick-action.orange { border-color: #fd7e14; background: #fff8f0; }
+        .quick-action.orange:hover { background: #fff0e0; border-color: #fd7e14; }
+        .quick-action.orange .title { color: #fd7e14; }
+        .quick-action.green { border-color: #28a745; background: #f0fff4; }
+        .quick-action.green:hover { background: #e0f5e8; border-color: #28a745; }
+        .quick-action.green .title { color: #28a745; }
+        .quick-action.red { border-color: #dc3545; background: #fff5f5; }
+        .quick-action.red:hover { background: #ffe8e8; border-color: #dc3545; }
+        .quick-action.red .title { color: #dc3545; }
+
+        /* ===== الهيدر ===== */
         .admin-header {
             display: flex;
             justify-content: space-between;
@@ -71,6 +119,18 @@
             color: #666;
             font-size: 14px;
         }
+        .admin-header .admin-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .admin-header .admin-title .badge {
+            background: #28a745;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+        }
         .btn-logout {
             padding: 10px 20px;
             background: #dc3545;
@@ -80,130 +140,351 @@
             cursor: pointer;
             font-size: 14px;
             font-weight: 600;
+            transition: all 0.3s;
         }
         .btn-logout:hover {
             background: #a71d2a;
+            transform: scale(1.02);
         }
+
+        /* ===== قسم الاستيراد ===== */
+        .import-section {
+            background: #f8f9fa;
+            border-radius: 16px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 2px dashed #ccc;
+            transition: all 0.3s;
+        }
+        .import-section:hover {
+            border-color: #1e3c72;
+            background: #f0f7ff;
+        }
+        .import-section .import-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .import-section .import-header h4 {
+            color: #1e3c72;
+            margin: 0;
+        }
+        .import-section .import-header .badge-info {
+            background: #17a2b8;
+            color: white;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+        }
+        .import-section .file-upload-area {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-top: 15px;
+        }
+        .import-section .file-upload-area input[type="file"] {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .import-section .file-upload-area input[type="file"]:hover {
+            border-color: #1e3c72;
+        }
+        .import-section .file-upload-area .btn-import {
+            padding: 12px 30px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .import-section .file-upload-area .btn-import:hover {
+            background: #1e7e34;
+            transform: scale(1.02);
+        }
+        .import-section .file-upload-area .btn-import:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .import-section .file-upload-area .btn-template {
+            padding: 12px 25px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .import-section .file-upload-area .btn-template:hover {
+            background: #5a6268;
+        }
+        .import-section .import-result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 12px;
+            display: none;
+        }
+        .import-section .import-result.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        .import-section .import-result.success {
+            background: #d4edda;
+            border: 1px solid #28a745;
+            color: #155724;
+        }
+        .import-section .import-result.error {
+            background: #f8d7da;
+            border: 1px solid #dc3545;
+            color: #721c24;
+        }
+        .import-section .import-result .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .import-section .import-result .stats .stat-item {
+            text-align: center;
+            padding: 8px;
+            background: white;
+            border-radius: 8px;
+        }
+        .import-section .import-result .stats .stat-item .num {
+            font-size: 22px;
+            font-weight: 700;
+        }
+        .import-section .import-result .stats .stat-item .lbl {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* ===== إشعارات ===== */
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            font-size: 24px;
+            background: none;
+            border: none;
+            padding: 5px;
+        }
+        .notification-bell .badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 7px;
+            font-size: 11px;
+            font-weight: 700;
+            min-width: 18px;
+            text-align: center;
+            display: none;
+        }
+        .notification-bell .badge.show {
+            display: inline-block;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== التوافق ===== */
         @media (max-width: 600px) {
             .dashboard-grid { grid-template-columns: 1fr 1fr; }
             .quick-actions { grid-template-columns: 1fr; }
+            .import-section .file-upload-area {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .import-section .file-upload-area input[type="file"] {
+                min-width: unset;
+            }
+            .admin-header .admin-title { flex-direction: column; align-items: flex-start; }
+        }
+        @media (max-width: 400px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-    <div class="container" style="max-width:1000px;">
+    <div class="container" style="max-width:1100px;">
         <div class="card">
-            <!-- Header -->
+            <!-- ===== الهيدر ===== -->
             <div class="admin-header">
-                <div>
+                <div class="admin-title">
                     <h1 style="margin:0;">📊 لوحة التحكم</h1>
+                    <span class="badge">مدير النظام</span>
                     <div class="user-info" id="adminInfo">مرحباً بك في لوحة الإدارة</div>
                 </div>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
                     <a href="index.html" class="btn-primary" style="padding:10px 20px;font-size:14px;width:auto;">🏠 الرئيسية</a>
                     <button onclick="logout()" class="btn-logout">🚪 خروج</button>
                 </div>
             </div>
 
-            <!-- الإحصائيات -->
+            <!-- ===== الإحصائيات ===== -->
             <div class="dashboard-grid" id="statsGrid">
                 <div class="stat-card">
                     <div class="number" id="totalStudents">0</div>
                     <div class="label">👨‍🎓 إجمالي الطلاب</div>
+                    <span class="sub-info" id="totalSubInfo">في النظام</span>
                 </div>
                 <div class="stat-card green">
                     <div class="number" id="lockedStudents">0</div>
                     <div class="label">✅ الطلاب المسجلين</div>
-                </div>
-                <div class="stat-card purple">
-                    <div class="number" id="totalFields">0</div>
-                    <div class="label">📝 الحقول الديناميكية</div>
+                    <span class="sub-info">تم تسجيل رغباتهم</span>
                 </div>
                 <div class="stat-card orange">
+                    <div class="number" id="unlockedStudents">0</div>
+                    <div class="label">🔓 مفتوح للتعديل</div>
+                    <span class="sub-info">لم يسجلوا بعد</span>
+                </div>
+                <div class="stat-card purple">
                     <div class="number" id="todayStudents">0</div>
                     <div class="label">📅 سجلوا اليوم</div>
+                    <span class="sub-info">آخر 24 ساعة</span>
+                </div>
+                <div class="stat-card teal">
+                    <div class="number" id="totalFields">0</div>
+                    <div class="label">📝 الحقول الديناميكية</div>
+                    <span class="sub-info">قابلة للتخصيص</span>
+                </div>
+                <div class="stat-card info">
+                    <div class="number" id="baccalaureateCount">0</div>
+                    <div class="label">📚 بكالوريا</div>
+                    <span class="sub-info">نظام المسارات</span>
                 </div>
             </div>
 
-            <!-- الإجراءات السريعة -->
+            <!-- ===== الإجراءات السريعة ===== -->
             <h3>⚡ إجراءات سريعة</h3>
             <div class="quick-actions">
                 <a href="admin-students.html" class="quick-action">
                     <span class="icon">👨‍🎓</span>
                     <span class="title">إدارة الطلاب</span>
+                    <span class="desc">عرض وتعديل الطلاب</span>
                 </a>
                 <a href="admin-fields.html" class="quick-action">
                     <span class="icon">📝</span>
                     <span class="title">إدارة الحقول</span>
+                    <span class="desc">إضافة حقول ديناميكية</span>
                 </a>
-                <a href="admin-import-export.html" class="quick-action">
+                <a href="admin-import-export.html" class="quick-action green">
                     <span class="icon">📤</span>
                     <span class="title">استيراد/تصدير</span>
+                    <span class="desc">Excel - CSV</span>
+                </a>
+                <!-- ===== تبويب التقارير المتقدمة ===== -->
+                <a href="admin-reports.html" class="quick-action purple">
+                    <span class="icon">📊</span>
+                    <span class="title">تقارير متقدمة</span>
+                    <span class="desc">تحليلات وإحصائيات</span>
+                </a>
+                <!-- ===== سجل النشاطات ===== -->
+                <a href="admin-logs.html" class="quick-action orange">
+                    <span class="icon">📋</span>
+                    <span class="title">سجل النشاطات</span>
+                    <span class="desc">تتبع العمليات</span>
                 </a>
             </div>
 
-            <!-- معلومات النظام -->
+            <!-- ===== قسم استيراد ملف الطلاب ===== -->
+            <div class="import-section" id="importSection">
+                <div class="import-header">
+                    <h4>📤 استيراد بيانات الطلاب</h4>
+                    <span class="badge-info">Excel - CSV</span>
+                </div>
+                <p style="color:#666;font-size:13px;margin:10px 0 0;">
+                    قم برفع ملف Excel أو CSV يحتوي على بيانات الطلاب الأساسية
+                </p>
+                <div class="file-upload-area">
+                    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+                    <button onclick="downloadTemplate()" class="btn-template">📋 تحميل نموذج</button>
+                    <button onclick="importData()" class="btn-import" id="importBtn">📊 استيراد البيانات</button>
+                </div>
+                <div class="import-result" id="importResult">
+                    <div id="importResultContent"></div>
+                </div>
+            </div>
+
+            <!-- ===== معلومات النظام ===== -->
             <div style="margin-top:20px;padding:15px;background:#f8f9fa;border-radius:12px;">
                 <h4 style="color:#1e3c72;">ℹ️ معلومات النظام</h4>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:14px;color:#666;">
-                    <span>نظام: تسجيل رغبات طلاب الصف الثاني الثانوي</span>
-                    <span>المدرسة: دشنا الثانوية</span>
-                    <span>الحالة: <span style="color:#28a745;">🟢 يعمل</span></span>
-                    <span>آخر تحديث: <span id="lastUpdate"></span></span>
+                    <span>🏫 نظام: تسجيل رغبات طلاب الصف الثاني الثانوي</span>
+                    <span>📍 المدرسة: دشنا الثانوية</span>
+                    <span>🟢 الحالة: <span style="color:#28a745;">يعمل</span></span>
+                    <span>🕐 آخر تحديث: <span id="lastUpdate"></span></span>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // 🔐 جلب المفاتيح من Vercel Environment Variables
+        // ===== تهيئة Supabase =====
         const SUPABASE_URL = '{{SUPABASE_URL}}'
         const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
-        
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
         window.supabase = supabaseClient
 
-        // التحقق من وجود أدمن
+        // ===== التحقق من الأدمن =====
         const adminId = sessionStorage.getItem('adminId')
         if (!adminId) {
             window.location.href = 'admin-login.html'
         }
 
-        // عرض معلومات الأدمن
         const adminEmail = sessionStorage.getItem('adminEmail') || ''
-        document.getElementById('adminInfo').textContent = '👑 مرحباً بك في لوحة الإدارة | ' + adminEmail
+        document.getElementById('adminInfo').textContent = '👑 ' + adminEmail
 
-        // تحميل الإحصائيات
+        // ===== تحميل الإحصائيات =====
         async function loadStats() {
             try {
-                // إجمالي الطلاب
-                const { count: total } = await supabaseClient
+                const [totalRes, lockedRes, fieldsRes, todayRes] = await Promise.all([
+                    supabaseClient.from('students').select('*', { count: 'exact', head: true }),
+                    supabaseClient.from('students').select('*', { count: 'exact', head: true }).eq('is_locked', true),
+                    supabaseClient.from('dynamic_fields').select('*', { count: 'exact', head: true }),
+                    supabaseClient.from('students').select('*', { count: 'exact', head: true })
+                        .gte('created_at', new Date(new Date().setHours(0,0,0,0)).toISOString())
+                ])
+
+                const total = totalRes.count || 0
+                const locked = lockedRes.count || 0
+
+                document.getElementById('totalStudents').textContent = total
+                document.getElementById('lockedStudents').textContent = locked
+                document.getElementById('unlockedStudents').textContent = total - locked
+                document.getElementById('totalFields').textContent = fieldsRes.count || 0
+                document.getElementById('todayStudents').textContent = todayRes.count || 0
+
+                // إحصائيات بكالوريا
+                const { count: bacCount } = await supabaseClient
                     .from('students')
                     .select('*', { count: 'exact', head: true })
+                    .eq('stream', 'بكالوريا')
+                document.getElementById('baccalaureateCount').textContent = bacCount || 0
 
-                // الطلاب المقفلين (المسجلين)
-                const { count: locked } = await supabaseClient
-                    .from('students')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('is_locked', true)
-
-                // الحقول الديناميكية
-                const { count: fields } = await supabaseClient
-                    .from('dynamic_fields')
-                    .select('*', { count: 'exact', head: true })
-
-                // الطلاب المسجلين اليوم
-                const today = new Date()
-                today.setHours(0, 0, 0, 0)
-                const { count: todayCount } = await supabaseClient
-                    .from('students')
-                    .select('*', { count: 'exact', head: true })
-                    .gte('submitted_at', today.toISOString())
-
-                document.getElementById('totalStudents').textContent = total || 0
-                document.getElementById('lockedStudents').textContent = locked || 0
-                document.getElementById('totalFields').textContent = fields || 0
-                document.getElementById('todayStudents').textContent = todayCount || 0
                 document.getElementById('lastUpdate').textContent = new Date().toLocaleDateString('ar-EG')
 
             } catch (err) {
@@ -211,11 +492,213 @@
             }
         }
 
+        // ===== استيراد البيانات =====
+        async function importData() {
+            const fileInput = document.getElementById('fileInput')
+            const file = fileInput.files[0]
+            const resultDiv = document.getElementById('importResult')
+            const contentDiv = document.getElementById('importResultContent')
+            const importBtn = document.getElementById('importBtn')
+
+            if (!file) {
+                resultDiv.className = 'import-result show error'
+                contentDiv.innerHTML = '⚠️ يرجى اختيار ملف أولاً'
+                return
+            }
+
+            importBtn.disabled = true
+            importBtn.textContent = '⏳ جاري الاستيراد...'
+            resultDiv.className = ''
+
+            try {
+                const data = await file.arrayBuffer()
+                const workbook = XLSX.read(data)
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]]
+                const rows = XLSX.utils.sheet_to_json(worksheet)
+
+                let successCount = 0
+                let errorCount = 0
+                const errors = []
+
+                // الحقول المطلوبة
+                const requiredFields = ['الكود', 'الرقم القومي', 'الاسم', 'التشعيب']
+
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i]
+                    const rowNum = i + 2
+
+                    try {
+                        // التحقق من الحقول المطلوبة
+                        const missing = requiredFields.filter(f => !row[f])
+                        if (missing.length > 0) {
+                            errorCount++
+                            errors.push(`صف ${rowNum}: الحقول المطلوبة غير مكتملة (${missing.join(', ')})`)
+                            continue
+                        }
+
+                        // التحقق من التكرار
+                        const { data: existing } = await supabaseClient
+                            .from('students')
+                            .select('id')
+                            .or(`student_code.eq.${String(row['الكود'])},national_id.eq.${String(row['الرقم القومي'])}`)
+                            .maybeSingle()
+
+                        if (existing) {
+                            errorCount++
+                            errors.push(`صف ${rowNum}: الكود أو الرقم القومي موجود مسبقاً`)
+                            continue
+                        }
+
+                        // إعداد بيانات الطالب
+                        const studentData = {
+                            student_code: String(row['الكود']).trim(),
+                            national_id: String(row['الرقم القومي']).trim(),
+                            full_name: String(row['الاسم']).trim(),
+                            stream: row['التشعيب'],
+                            is_locked: true,
+                            submitted_at: new Date().toISOString()
+                        }
+
+                        // معالجة التخصص أو المسار
+                        if (row['التشعيب'] === 'ثانوي') {
+                            studentData.specialization = row['التخصص/المسار'] || null
+                            studentData.track = null
+                            studentData.optional_subject = null
+                        } else if (row['التشعيب'] === 'بكالوريا') {
+                            studentData.specialization = null
+                            studentData.track = row['التخصص/المسار'] || null
+                            studentData.optional_subject = row['المادة الاختيارية'] || null
+                        }
+
+                        const { error } = await supabaseClient
+                            .from('students')
+                            .insert(studentData)
+
+                        if (error) {
+                            errorCount++
+                            errors.push(`صف ${rowNum}: ${error.message}`)
+                            continue
+                        }
+
+                        successCount++
+
+                    } catch (err) {
+                        errorCount++
+                        errors.push(`صف ${rowNum}: خطأ غير متوقع`)
+                    }
+                }
+
+                // عرض النتيجة
+                let resultHtml = `
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="num" style="color:#28a745;">${successCount}</div>
+                            <div class="lbl">✅ تمت الإضافة</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="num" style="color:#dc3545;">${errorCount}</div>
+                            <div class="lbl">❌ فشل</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="num" style="color:#1e3c72;">${rows.length}</div>
+                            <div class="lbl">📊 إجمالي</div>
+                        </div>
+                    </div>
+                `
+
+                if (errors.length > 0) {
+                    resultHtml += `
+                        <div style="max-height:150px;overflow-y:auto;margin-top:10px;padding:10px;background:white;border-radius:8px;font-size:13px;">
+                            <strong>الأخطاء:</strong>
+                            <ul style="margin:5px 0;padding-right:20px;">
+                                ${errors.slice(0, 20).map(e => `<li style="color:#dc3545;">${e}</li>`).join('')}
+                                ${errors.length > 20 ? `<li style="color:#999;">... و ${errors.length - 20} خطأ إضافي</li>` : ''}
+                            </ul>
+                        </div>
+                    `
+                }
+
+                contentDiv.innerHTML = resultHtml
+                resultDiv.className = `import-result show ${errorCount === 0 ? 'success' : errorCount < successCount ? 'success' : 'error'}`
+
+                // تحديث الإحصائيات
+                loadStats()
+
+                // تسجيل النشاط
+                await logActivity('استيراد طلاب', `تم استيراد ${successCount} طالب من ملف Excel`)
+
+            } catch (err) {
+                console.error('Error importing:', err)
+                resultDiv.className = 'import-result show error'
+                contentDiv.innerHTML = `❌ حدث خطأ أثناء الاستيراد: ${err.message}`
+            } finally {
+                importBtn.disabled = false
+                importBtn.textContent = '📊 استيراد البيانات'
+                fileInput.value = ''
+            }
+        }
+
+        // ===== تحميل نموذج Excel =====
+        function downloadTemplate() {
+            const template = [
+                ['الكود', 'الرقم القومي', 'الاسم', 'التشعيب', 'التخصص/المسار', 'المادة الاختيارية'],
+                ['101', '12345678901234', 'أحمد محمد', 'ثانوي', 'علمي', ''],
+                ['102', '12345678901235', 'سارة علي', 'بكالوريا', 'مسار الطب', 'فيزياء'],
+                ['103', '12345678901236', 'محمد خالد', 'ثانوي', 'أدبي', ''],
+                ['104', '12345678901237', 'نورا أحمد', 'بكالوريا', 'مسار الهندسة', 'برمجة']
+            ]
+
+            const wb = XLSX.utils.book_new()
+            const ws = XLSX.utils.aoa_to_sheet(template)
+            
+            // تعيين عرض الأعمدة
+            ws['!cols'] = [
+                { wch: 10 }, // الكود
+                { wch: 16 }, // الرقم القومي
+                { wch: 20 }, // الاسم
+                { wch: 12 }, // التشعيب
+                { wch: 20 }, // التخصص/المسار
+                { wch: 18 }  // المادة الاختيارية
+            ]
+
+            XLSX.utils.book_append_sheet(wb, ws, 'الطلاب')
+            XLSX.writeFile(wb, 'نموذج_استيراد_طلاب.xlsx')
+        }
+
+        // ===== تسجيل النشاطات =====
+        async function logActivity(action, details) {
+            try {
+                const adminId = sessionStorage.getItem('adminId')
+                const adminEmail = sessionStorage.getItem('adminEmail') || 'unknown'
+                
+                let ipAddress = 'unknown'
+                try {
+                    const ipRes = await fetch('https://api.ipify.org?format=json')
+                    const ipData = await ipRes.json()
+                    ipAddress = ipData.ip
+                } catch (e) {}
+
+                await supabaseClient
+                    .from('admin_logs')
+                    .insert({
+                        admin_id: adminId,
+                        admin_email: adminEmail,
+                        action: action,
+                        details: details,
+                        ip_address: ipAddress
+                    })
+            } catch (err) {
+                console.error('Error logging activity:', err)
+            }
+        }
+
+        // ===== تسجيل الخروج =====
         function logout() {
             sessionStorage.clear()
             window.location.href = 'admin-login.html'
         }
 
+        // ===== تحميل البيانات =====
         loadStats()
     </script>
 </body>
