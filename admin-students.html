@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة الطلاب</title>
+    <title>إدارة الطلاب - مدرسة دشنا الثانوية</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="style.css">
     <style>
@@ -19,21 +19,29 @@
         table th {
             background: #1e3c72;
             color: white;
-            padding: 12px 15px;
-            text-align: right;
+            padding: 12px 10px;
+            text-align: center;
+            white-space: nowrap;
         }
         table td {
-            padding: 10px 15px;
+            padding: 10px 10px;
             border-bottom: 1px solid #eee;
+            text-align: center;
+            vertical-align: middle;
         }
         table tr:hover {
             background: #f8f9fa;
         }
+        table tr.selected {
+            background: #d4edda;
+        }
+
         .search-bar {
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
             margin-bottom: 20px;
+            align-items: center;
         }
         .search-bar input, .search-bar select {
             padding: 10px 15px;
@@ -52,23 +60,39 @@
             border-radius: 20px;
             font-size: 12px;
             font-weight: 600;
+            display: inline-block;
         }
-        .status-locked { background: #d4edda; color: #155724; }
-        .status-unlocked { background: #fff3cd; color: #856404; }
+        .status-locked {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-unlocked {
+            background: #fff3cd;
+            color: #856404;
+        }
         .action-link {
             color: #1e3c72;
             text-decoration: none;
             font-weight: 600;
             margin: 0 5px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
         }
-        .action-link:hover { text-decoration: underline; }
-        .action-link.danger { color: #dc3545; }
-        .action-link.success { color: #28a745; }
+        .action-link:hover {
+            text-decoration: underline;
+        }
+        .action-link.view { color: #1e3c72; }
+        .action-link.unlock { color: #28a745; }
+        .action-link.lock { color: #dc3545; }
+        .action-link.pdf { color: #17a2b8; }
+
         .empty-msg {
             text-align: center;
             padding: 40px;
             color: #999;
         }
+
         .admin-header {
             display: flex;
             justify-content: space-between;
@@ -93,10 +117,167 @@
         .btn-back:hover {
             background: #5a6268;
         }
+        .btn-logout {
+            padding: 10px 20px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-logout:hover {
+            background: #a71d2a;
+        }
+
+        /* ===== أدوات التحكم الجماعي ===== */
+        .bulk-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin: 15px 0;
+            border: 1px solid #e9ecef;
+        }
+        .bulk-actions .info {
+            font-size: 14px;
+            color: #555;
+            flex: 1;
+        }
+        .bulk-actions .info strong {
+            color: #1e3c72;
+        }
+        .bulk-actions .btn-bulk {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .bulk-actions .btn-bulk:hover {
+            transform: scale(1.02);
+        }
+        .bulk-actions .btn-bulk.unlock {
+            background: #28a745;
+            color: white;
+        }
+        .bulk-actions .btn-bulk.unlock:hover {
+            background: #1e7e34;
+        }
+        .bulk-actions .btn-bulk.lock {
+            background: #dc3545;
+            color: white;
+        }
+        .bulk-actions .btn-bulk.lock:hover {
+            background: #a71d2a;
+        }
+        .bulk-actions .btn-bulk.select-all {
+            background: #6c757d;
+            color: white;
+        }
+        .bulk-actions .btn-bulk.select-all:hover {
+            background: #5a6268;
+        }
+        .bulk-actions .btn-bulk.deselect-all {
+            background: #6c757d;
+            color: white;
+        }
+        .bulk-actions .btn-bulk.deselect-all:hover {
+            background: #5a6268;
+        }
+        .bulk-actions .btn-bulk:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ===== Checkbox ===== */
+        .row-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #1e3c72;
+        }
+        .select-all-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #1e3c72;
+        }
+
+        /* ===== Toast ===== */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            padding: 15px 25px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease;
+            min-width: 250px;
+            max-width: 450px;
+        }
+        .toast.success { background: #28a745; }
+        .toast.error { background: #dc3545; }
+        .toast.info { background: #17a2b8; }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .stats-mini {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+        .stats-mini .stat {
+            font-size: 14px;
+            color: #555;
+        }
+        .stats-mini .stat strong {
+            color: #1e3c72;
+            font-size: 18px;
+        }
+        .stats-mini .stat .dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 5px;
+        }
+        .stats-mini .stat .dot.green { background: #28a745; }
+        .stats-mini .stat .dot.yellow { background: #ffc107; }
+
+        .bulk-actions .selected-count {
+            font-weight: 700;
+            color: #1e3c72;
+            font-size: 16px;
+        }
+
         @media (max-width: 600px) {
             table { font-size: 12px; }
-            table th, table td { padding: 8px 10px; }
+            table th, table td { padding: 6px 5px; }
             .search-bar input, .search-bar select { min-width: 100px; }
+            .stats-mini { flex-direction: column; gap: 5px; }
+            .bulk-actions { flex-direction: column; align-items: stretch; }
+            .bulk-actions .info { text-align: center; }
+            .bulk-actions .btn-bulk { width: 100%; text-align: center; }
         }
     </style>
 </head>
@@ -107,11 +288,22 @@
             <div class="admin-header">
                 <div>
                     <h1 style="margin:0;">👨‍🎓 إدارة الطلاب</h1>
+                    <p style="color:#666;font-size:13px;margin-top:5px;">
+                        عرض الطلاب، فتح/قفل التعديل، وإدارة جماعية
+                    </p>
                 </div>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;">
                     <a href="admin-dashboard.html" class="btn-back">📊 لوحة التحكم</a>
-                    <button onclick="logout()" class="btn-logout" style="padding:10px 20px;background:#dc3545;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;">🚪 خروج</button>
+                    <button onclick="logout()" class="btn-logout">🚪 خروج</button>
                 </div>
+            </div>
+
+            <!-- إحصائيات سريعة -->
+            <div class="stats-mini" id="statsMini">
+                <div class="stat">📊 الإجمالي: <strong id="totalCount">0</strong></div>
+                <div class="stat"><span class="dot green"></span> مقفل: <strong id="lockedCount">0</strong></div>
+                <div class="stat"><span class="dot yellow"></span> مفتوح: <strong id="unlockedCount">0</strong></div>
+                <div class="stat">✅ المحدد: <strong id="selectedCount">0</strong></div>
             </div>
 
             <!-- البحث والفلترة -->
@@ -124,10 +316,24 @@
                 </select>
                 <select id="filterStatus" onchange="filterStudents()">
                     <option value="">كل الحالات</option>
-                    <option value="locked">مقفل</option>
-                    <option value="unlocked">مفتوح</option>
+                    <option value="locked">🔒 مقفل</option>
+                    <option value="unlocked">🔓 مفتوح</option>
                 </select>
                 <button onclick="resetFilters()" style="padding:10px 20px;background:#6c757d;color:white;border:none;border-radius:10px;cursor:pointer;">مسح</button>
+            </div>
+
+            <!-- ===== أدوات التحكم الجماعي ===== -->
+            <div class="bulk-actions" id="bulkActions">
+                <div class="info">
+                    <span>✅ المحدد: <span class="selected-count" id="selectedCountDisplay">0</span> طالب</span>
+                    &nbsp;|&nbsp;
+                    <button onclick="selectAll()" class="btn-bulk select-all">✔️ تحديد الكل</button>
+                    <button onclick="deselectAll()" class="btn-bulk deselect-all">✖️ إلغاء الكل</button>
+                </div>
+                <div>
+                    <button onclick="bulkUnlock()" class="btn-bulk unlock" id="bulkUnlockBtn">🔓 فتح التسجيل</button>
+                    <button onclick="bulkLock()" class="btn-bulk lock" id="bulkLockBtn">🔒 غلق التسجيل</button>
+                </div>
             </div>
 
             <!-- عدد الطلاب -->
@@ -140,6 +346,9 @@
                 <table>
                     <thead>
                         <tr>
+                            <th style="width:40px;">
+                                <input type="checkbox" class="select-all-checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                            </th>
                             <th>#</th>
                             <th>الاسم</th>
                             <th>الكود</th>
@@ -150,30 +359,44 @@
                         </tr>
                     </thead>
                     <tbody id="studentsTableBody">
-                        <tr><td colspan="7" class="empty-msg">⏳ جاري التحميل...</td></tr>
+                        <tr><td colspan="8" class="empty-msg">⏳ جاري التحميل...</td></tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- تعليمات -->
+            <div style="margin-top:15px;padding:15px;background:#f0f7ff;border-radius:12px;font-size:13px;color:#555;">
+                <strong>💡 تعليمات الإدارة الجماعية:</strong>
+                <ul style="margin:5px 0 0 20px;padding-right:20px;">
+                    <li>✔️ حدد الطلاب المطلوبين باستخدام الـ Checkbox</li>
+                    <li>🔓 <strong>فتح التسجيل</strong> - يسمح للطلاب المحددين بتعديل رغباتهم</li>
+                    <li>🔒 <strong>غلق التسجيل</strong> - يمنع الطلاب المحددين من التعديل</li>
+                    <li>📄 يمكنك أيضاً فتح/غلق طالب فردي من عمود الإجراءات</li>
+                </ul>
             </div>
         </div>
     </div>
 
+    <!-- حاوية الإشعارات -->
+    <div class="toast-container" id="toastContainer"></div>
+
     <script>
-        // 🔐 جلب المفاتيح من Vercel Environment Variables
+        // ===== تهيئة Supabase =====
         const SUPABASE_URL = '{{SUPABASE_URL}}'
         const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
-        
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
         window.supabase = supabaseClient
 
         let allStudents = []
         let filteredStudents = []
+        let selectedStudents = new Set() // لتخزين IDs المحددين
 
         // التحقق من وجود أدمن
         if (!sessionStorage.getItem('adminId')) {
             window.location.href = 'admin-login.html'
         }
 
-        // تحميل الطلاب
+        // ===== تحميل الطلاب =====
         async function loadStudents() {
             try {
                 const { data, error } = await supabaseClient
@@ -184,45 +407,88 @@
                 if (error) throw error
                 allStudents = data || []
                 filteredStudents = [...allStudents]
+                selectedStudents.clear()
                 renderTable()
+                updateStats()
             } catch (err) {
                 console.error('Error loading students:', err)
                 document.getElementById('studentsTableBody').innerHTML = 
-                    '<tr><td colspan="7" class="empty-msg">❌ خطأ في تحميل البيانات</td></tr>'
+                    '<tr><td colspan="8" class="empty-msg">❌ خطأ في تحميل البيانات</td></tr>'
             }
         }
 
+        // ===== تحديث الإحصائيات =====
+        function updateStats() {
+            const total = allStudents.length
+            const locked = allStudents.filter(s => s.is_locked).length
+            const unlocked = total - locked
+            const selected = selectedStudents.size
+
+            document.getElementById('totalCount').textContent = total
+            document.getElementById('lockedCount').textContent = locked
+            document.getElementById('unlockedCount').textContent = unlocked
+            document.getElementById('selectedCount').textContent = selected
+            document.getElementById('selectedCountDisplay').textContent = selected
+        }
+
+        // ===== عرض الجدول =====
         function renderTable() {
             const tbody = document.getElementById('studentsTableBody')
             document.getElementById('studentsCount').textContent = filteredStudents.length
 
             if (filteredStudents.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="empty-msg">📭 لا يوجد طلاب</td></tr>'
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-msg">📭 لا يوجد طلاب</td></tr>'
                 return
             }
 
-            tbody.innerHTML = filteredStudents.map((student, index) => `
-                <tr>
+            // تحديث حالة الـ select all
+            const allChecked = filteredStudents.every(s => selectedStudents.has(s.id))
+            document.getElementById('selectAllCheckbox').checked = allChecked
+
+            tbody.innerHTML = filteredStudents.map((student, index) => {
+                const isLocked = student.is_locked
+                const isSelected = selectedStudents.has(student.id)
+                const streamDisplay = student.stream || '-'
+                const specializationDisplay = student.specialization || student.track || '-'
+                
+                return `
+                <tr class="${isSelected ? 'selected' : ''}">
+                    <td>
+                        <input type="checkbox" class="row-checkbox" 
+                               data-id="${student.id}" 
+                               ${isSelected ? 'checked' : ''} 
+                               onchange="toggleStudent('${student.id}')">
+                    </td>
                     <td>${index + 1}</td>
                     <td><strong>${student.full_name}</strong></td>
                     <td dir="ltr">${student.student_code}</td>
-                    <td>${student.stream || '-'}</td>
-                    <td>${student.specialization || student.track || '-'}</td>
+                    <td>${streamDisplay}</td>
+                    <td>${specializationDisplay}</td>
                     <td>
-                        <span class="status-badge ${student.is_locked ? 'status-locked' : 'status-unlocked'}">
-                            ${student.is_locked ? '✅ مقفل' : '🔓 مفتوح'}
+                        <span class="status-badge ${isLocked ? 'status-locked' : 'status-unlocked'}">
+                            ${isLocked ? '🔒 مقفل' : '🔓 مفتوح'}
                         </span>
+                        ${student.submitted_at ? `
+                            <br><small style="font-size:10px;color:#999;">
+                                ${new Date(student.submitted_at).toLocaleDateString('ar-EG')}
+                            </small>
+                        ` : ''}
                     </td>
-                    <td>
-                        <a href="admin-student-detail.html?id=${student.id}" class="action-link">👁️ عرض</a>
-                        <a href="#" onclick="toggleLock('${student.id}', ${student.is_locked})" class="action-link ${student.is_locked ? 'success' : 'danger'}">
-                            ${student.is_locked ? '🔓 فتح' : '🔒 قفل'}
+                    <td style="white-space:nowrap;">
+                        <a href="admin-student-detail.html?id=${student.id}" class="action-link view" title="عرض التفاصيل">👁️</a>
+                        <a href="#" onclick="toggleLock('${student.id}', ${isLocked})" 
+                           class="action-link ${isLocked ? 'unlock' : 'lock'}" 
+                           title="${isLocked ? '🔓 فتح التعديل' : '🔒 قفل التعديل'}">
+                            ${isLocked ? '🔓' : '🔒'}
                         </a>
+                        <a href="student-pdf.html?print=${student.id}" target="_blank" 
+                           class="action-link pdf" title="طباعة PDF">📄</a>
                     </td>
                 </tr>
-            `).join('')
+            `}).join('')
         }
 
+        // ===== فلترة الطلاب =====
         function filterStudents() {
             const search = document.getElementById('searchInput').value.toLowerCase()
             const stream = document.getElementById('filterStream').value
@@ -231,8 +497,8 @@
             filteredStudents = allStudents.filter(student => {
                 const matchSearch = 
                     student.full_name.toLowerCase().includes(search) ||
-                    student.student_code.toLowerCase().includes(search) ||
-                    student.national_id.toLowerCase().includes(search)
+                    String(student.student_code).toLowerCase().includes(search) ||
+                    String(student.national_id).toLowerCase().includes(search)
                 
                 const matchStream = stream ? student.stream === stream : true
                 const matchStatus = status ? 
@@ -242,42 +508,238 @@
             })
 
             renderTable()
+            updateStats()
         }
 
+        // ===== إعادة تعيين الفلترة =====
         function resetFilters() {
             document.getElementById('searchInput').value = ''
             document.getElementById('filterStream').value = ''
             document.getElementById('filterStatus').value = ''
             filteredStudents = [...allStudents]
             renderTable()
+            updateStats()
         }
 
-        async function toggleLock(studentId, currentLock) {
-            if (!confirm(`هل أنت متأكد من ${currentLock ? 'فتح' : 'قفل'} هذا الطالب؟`)) return
+        // ===== إدارة التحديد الفردي =====
+        function toggleStudent(id) {
+            if (selectedStudents.has(id)) {
+                selectedStudents.delete(id)
+            } else {
+                selectedStudents.add(id)
+            }
+            updateStats()
+            renderTable()
+        }
+
+        // ===== تحديد الكل =====
+        function selectAll() {
+            filteredStudents.forEach(s => selectedStudents.add(s.id))
+            updateStats()
+            renderTable()
+        }
+
+        // ===== إلغاء تحديد الكل =====
+        function deselectAll() {
+            selectedStudents.clear()
+            updateStats()
+            renderTable()
+        }
+
+        // ===== تبديل تحديد الكل من الـ checkbox الرئيسي =====
+        function toggleSelectAll() {
+            const checked = document.getElementById('selectAllCheckbox').checked
+            if (checked) {
+                selectAll()
+            } else {
+                deselectAll()
+            }
+        }
+
+        // ===== الإجراءات الجماعية =====
+        async function bulkUnlock() {
+            const ids = Array.from(selectedStudents)
+            if (ids.length === 0) {
+                showToast('⚠️ يرجى تحديد طالب واحد على الأقل', 'error')
+                return
+            }
+            if (!confirm(`⚠️ هل أنت متأكد من فتح التسجيل لـ ${ids.length} طالب؟\n\nسيتمكنون من تعديل رغباتهم.`)) return
+
+            await bulkUpdateLock(ids, false, 'فتح')
+        }
+
+        async function bulkLock() {
+            const ids = Array.from(selectedStudents)
+            if (ids.length === 0) {
+                showToast('⚠️ يرجى تحديد طالب واحد على الأقل', 'error')
+                return
+            }
+            if (!confirm(`⚠️ هل أنت متأكد من غلق التسجيل لـ ${ids.length} طالب؟\n\nلن يتمكنوا من التعديل بعد الآن.`)) return
+
+            await bulkUpdateLock(ids, true, 'غلق')
+        }
+
+        async function bulkUpdateLock(ids, newLockState, actionName) {
+            const btn = newLockState ? document.getElementById('bulkLockBtn') : document.getElementById('bulkUnlockBtn')
+            btn.disabled = true
+            btn.textContent = '⏳ جاري...'
 
             try {
+                // تحديث is_locked لكل الطلاب المحددين
                 const { error } = await supabaseClient
                     .from('students')
-                    .update({ is_locked: !currentLock })
+                    .update({ 
+                        is_locked: newLockState,
+                        // إذا كان فتح، نزيل submitted_at
+                        ...(newLockState === false ? { submitted_at: null } : {})
+                    })
+                    .in('id', ids)
+
+                if (error) throw error
+
+                // تحديث البيانات محلياً
+                allStudents = allStudents.map(s => {
+                    if (ids.includes(s.id)) {
+                        return { 
+                            ...s, 
+                            is_locked: newLockState,
+                            ...(newLockState === false ? { submitted_at: null } : {})
+                        }
+                    }
+                    return s
+                })
+
+                // تحديث الفلترة وعرض الجدول
+                filterStudents()
+                updateStats()
+
+                // إلغاء التحديد بعد العملية
+                selectedStudents.clear()
+                updateStats()
+                renderTable()
+
+                // رسالة نجاح
+                showToast(`✅ تم ${actionName} التسجيل لـ ${ids.length} طالب بنجاح`, 'success')
+
+                // تسجيل النشاط
+                await logActivity(
+                    `${actionName} جماعي`,
+                    `تم ${actionName} التسجيل لـ ${ids.length} طالب`
+                )
+
+            } catch (err) {
+                console.error('Error bulk update:', err)
+                showToast(`❌ حدث خطأ أثناء ${actionName} التسجيل: ${err.message}`, 'error')
+            } finally {
+                btn.disabled = false
+                btn.textContent = newLockState ? '🔒 غلق التسجيل' : '🔓 فتح التسجيل'
+            }
+        }
+
+        // ===== تبديل حالة القفل (فردي) =====
+        async function toggleLock(studentId, currentLock) {
+            const action = currentLock ? 'فتح' : 'قفل'
+            const message = currentLock 
+                ? `⚠️ هل أنت متأكد من فتح هذا الطالب للتعديل؟\n\nسيمكنه من تغيير رغباته مرة أخرى.`
+                : `⚠️ هل أنت متأكد من قفل هذا الطالب؟\n\nلن يتمكن من التعديل بعد القفل.`
+
+            if (!confirm(message)) return
+
+            try {
+                const newLockState = !currentLock
+                const { error } = await supabaseClient
+                    .from('students')
+                    .update({ 
+                        is_locked: newLockState,
+                        ...(newLockState === false ? { submitted_at: null } : {})
+                    })
                     .eq('id', studentId)
 
                 if (error) throw error
 
+                // تحديث البيانات محلياً
                 allStudents = allStudents.map(s =>
-                    s.id === studentId ? { ...s, is_locked: !currentLock } : s
+                    s.id === studentId ? { 
+                        ...s, 
+                        is_locked: newLockState,
+                        ...(newLockState === false ? { submitted_at: null } : {})
+                    } : s
                 )
+                
                 filterStudents()
+                updateStats()
+
+                showToast(
+                    currentLock ? '✅ تم فتح الطالب للتعديل' : '✅ تم قفل الطالب بنجاح',
+                    'success'
+                )
+
+                // تسجيل النشاط
+                const studentName = allStudents.find(s => s.id === studentId)?.full_name || studentId
+                await logActivity(
+                    `${action} طالب`,
+                    `تم ${action} الطالب ${studentName}`,
+                    studentId,
+                    studentName
+                )
+
             } catch (err) {
                 console.error('Error toggling lock:', err)
-                alert('حدث خطأ أثناء تغيير حالة القفل')
+                showToast('❌ حدث خطأ أثناء تغيير حالة القفل', 'error')
             }
         }
 
+        // ===== إشعارات Toast =====
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer')
+            const toast = document.createElement('div')
+            toast.className = `toast ${type}`
+            toast.textContent = message
+            container.appendChild(toast)
+            
+            setTimeout(() => {
+                toast.style.opacity = '0'
+                toast.style.transition = 'opacity 0.3s'
+                setTimeout(() => toast.remove(), 300)
+            }, 3500)
+        }
+
+        // ===== تسجيل النشاطات =====
+        async function logActivity(action, details, studentId = null, studentName = null) {
+            try {
+                const adminId = sessionStorage.getItem('adminId')
+                const adminEmail = sessionStorage.getItem('adminEmail') || 'unknown'
+                
+                let ipAddress = 'unknown'
+                try {
+                    const ipRes = await fetch('https://api.ipify.org?format=json')
+                    const ipData = await ipRes.json()
+                    ipAddress = ipData.ip
+                } catch (e) {}
+
+                await supabaseClient
+                    .from('admin_logs')
+                    .insert({
+                        admin_id: adminId,
+                        admin_email: adminEmail,
+                        action: action,
+                        details: details,
+                        student_id: studentId,
+                        student_name: studentName,
+                        ip_address: ipAddress
+                    })
+            } catch (err) {
+                console.error('Error logging activity:', err)
+            }
+        }
+
+        // ===== تسجيل الخروج =====
         function logout() {
             sessionStorage.clear()
             window.location.href = 'admin-login.html'
         }
 
+        // ===== تحميل البيانات =====
         loadStudents()
     </script>
 </body>
