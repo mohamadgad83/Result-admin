@@ -12,13 +12,13 @@
     <style>
         .reports-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 20px;
             margin: 20px 0;
         }
         .report-card {
             background: #f8f9fa;
-            padding: 25px;
+            padding: 20px;
             border-radius: 16px;
             border: 2px solid #e9ecef;
             transition: all 0.3s;
@@ -30,28 +30,34 @@
         }
         .report-card h3 {
             color: #1e3c72;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
+            font-size: 16px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
-        .report-card p {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 15px;
+        .report-card .subtitle {
+            color: #888;
+            font-size: 12px;
+            margin-bottom: 12px;
+        }
+        .report-card .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
         }
         .report-card .btn-report {
-            padding: 10px 25px;
+            padding: 8px 18px;
             color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             transition: all 0.3s;
         }
         .report-card .btn-report:hover {
-            transform: scale(1.02);
+            transform: scale(1.03);
         }
         .report-card .btn-report.blue { background: #1e3c72; }
         .report-card .btn-report.blue:hover { background: #0f2b4f; }
@@ -65,9 +71,8 @@
         .report-card .btn-report.red:hover { background: #a71d2a; }
         .report-card .btn-report.teal { background: #20c997; }
         .report-card .btn-report.teal:hover { background: #1ba87e; }
-        
         .report-card .btn-preview {
-            padding: 10px 20px;
+            padding: 8px 16px;
             background: #6c757d;
             color: white;
             border: none;
@@ -75,7 +80,6 @@
             cursor: pointer;
             font-size: 13px;
             transition: all 0.3s;
-            margin-right: 8px;
         }
         .report-card .btn-preview:hover {
             background: #5a6268;
@@ -92,25 +96,25 @@
             margin-bottom: 20px;
         }
         .btn-back {
-            padding: 10px 20px;
+            padding: 8px 18px;
             background: #6c757d;
             color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             text-decoration: none;
             display: inline-block;
         }
         .btn-back:hover { background: #5a6268; }
         .btn-logout {
-            padding: 10px 20px;
+            padding: 8px 18px;
             background: #dc3545;
             color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
         }
         .btn-logout:hover { background: #a71d2a; }
 
@@ -119,14 +123,15 @@
             padding: 20px;
             background: white;
             border-radius: 12px;
-            border: 1px solid #eee;
-            max-height: 450px;
+            border: 1px solid #ddd;
+            max-height: 550px;
             overflow-y: auto;
             display: none;
+            position: relative;
         }
         .report-preview.show { 
             display: block;
-            animation: fadeIn 0.4s ease;
+            animation: fadeIn 0.3s ease;
         }
         .report-preview .preview-header {
             display: flex;
@@ -135,20 +140,40 @@
             margin-bottom: 15px;
             padding-bottom: 10px;
             border-bottom: 2px solid #eee;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         .report-preview .preview-header h4 {
             color: #1e3c72;
             margin: 0;
         }
-        .report-preview .preview-header button {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #999;
+        .report-preview .preview-header .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
         }
-        .report-preview .preview-header button:hover {
-            color: #dc3545;
+        .report-preview .preview-header .actions button {
+            padding: 6px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .report-preview .preview-header .actions .btn-print {
+            background: #17a2b8;
+            color: white;
+        }
+        .report-preview .preview-header .actions .btn-print:hover {
+            background: #138496;
+        }
+        .report-preview .preview-header .actions .btn-close {
+            background: #dc3545;
+            color: white;
+        }
+        .report-preview .preview-header .actions .btn-close:hover {
+            background: #a71d2a;
         }
         .report-preview table {
             width: 100%;
@@ -162,6 +187,7 @@
             text-align: right;
             position: sticky;
             top: 0;
+            z-index: 10;
         }
         .report-preview table td {
             padding: 8px 12px;
@@ -175,30 +201,56 @@
             padding: 40px;
             color: #999;
         }
+        .report-preview .summary-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            padding: 12px;
+            background: #f0f7ff;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        .report-preview .summary-stats .stat {
+            font-size: 14px;
+            color: #333;
+        }
+        .report-preview .summary-stats .stat strong {
+            color: #1e3c72;
+            font-size: 18px;
+        }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
+        @media (max-width: 900px) {
+            .reports-grid { grid-template-columns: 1fr 1fr; }
+        }
         @media (max-width: 600px) {
             .reports-grid { grid-template-columns: 1fr; }
-            .report-card .btn-report, .report-card .btn-preview {
-                width: 100%;
-                margin: 5px 0;
-            }
+            .report-card .btn-group { flex-direction: column; }
+            .report-card .btn-group .btn-report, 
+            .report-card .btn-group .btn-preview { width: 100%; text-align: center; }
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            .report-preview { border: none !important; padding: 0 !important; max-height: none !important; overflow: visible !important; }
+            .report-preview .preview-header .actions { display: none !important; }
+            .report-preview table th { background: #1e3c72 !important; color: white !important; }
         }
     </style>
 </head>
 <body>
-    <div class="container" style="max-width:1000px;">
+    <div class="container" style="max-width:1100px;">
         <div class="card">
             <!-- ===== الهيدر ===== -->
             <div class="admin-header">
                 <div>
-                    <h1 style="margin:0;">📊 التقارير المتقدمة</h1>
+                    <h1 style="margin:0;font-size:22px;">📊 التقارير المتقدمة</h1>
                     <p style="color:#666;font-size:13px;margin-top:5px;">
-                        تصدير وتحليل بيانات الطلاب بتنسيقات متعددة (Excel - PDF)
+                        تصدير وتحليل بيانات الطلاب (Excel - PDF - طباعة)
                     </p>
                 </div>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -213,50 +265,65 @@
                 <!-- 1. تقرير التشعيبات -->
                 <div class="report-card">
                     <h3>📊 توزيع التشعيبات</h3>
-                    <p>إحصائية بعدد الطلاب في كل تشعيب (ثانوي / بكالوريا)</p>
-                    <div>
+                    <div class="subtitle">إحصائية بعدد الطلاب في كل تشعيب</div>
+                    <div class="btn-group">
                         <button onclick="generateReport('stream')" class="btn-report blue">📥 Excel</button>
+                        <button onclick="generateReport('stream_pdf')" class="btn-report red">📄 PDF</button>
                         <button onclick="previewReport('stream')" class="btn-preview">👁️ معاينة</button>
                     </div>
                 </div>
 
-                <!-- 2. تقرير التخصصات -->
+                <!-- 2. تقرير التخصصات (مع الأسماء) -->
                 <div class="report-card">
                     <h3>🔬 توزيع التخصصات</h3>
-                    <p>إحصائية بعدد طلاب الثانوي حسب التخصص (علمي / أدبي)</p>
-                    <div>
+                    <div class="subtitle">طلاب الثانوي حسب التخصص مع الأسماء</div>
+                    <div class="btn-group">
                         <button onclick="generateReport('specialization')" class="btn-report green">📥 Excel</button>
+                        <button onclick="generateReport('specialization_pdf')" class="btn-report red">📄 PDF</button>
                         <button onclick="previewReport('specialization')" class="btn-preview">👁️ معاينة</button>
                     </div>
                 </div>
 
-                <!-- 3. تقرير المسارات -->
+                <!-- 3. تقرير المسارات (مع الأسماء) -->
                 <div class="report-card">
                     <h3>📚 توزيع المسارات</h3>
-                    <p>إحصائية بعدد طلاب البكالوريا حسب المسار</p>
-                    <div>
+                    <div class="subtitle">طلاب البكالوريا حسب المسار مع الأسماء</div>
+                    <div class="btn-group">
                         <button onclick="generateReport('tracks')" class="btn-report purple">📥 Excel</button>
+                        <button onclick="generateReport('tracks_pdf')" class="btn-report red">📄 PDF</button>
                         <button onclick="previewReport('tracks')" class="btn-preview">👁️ معاينة</button>
                     </div>
                 </div>
 
-                <!-- 4. تقرير التسجيل اليومي -->
+                <!-- 4. تقرير المواد الاختيارية (مع الأسماء) -->
+                <div class="report-card">
+                    <h3>📖 المواد الاختيارية</h3>
+                    <div class="subtitle">طلاب البكالوريا حسب المادة الاختيارية</div>
+                    <div class="btn-group">
+                        <button onclick="generateReport('optional')" class="btn-report orange">📥 Excel</button>
+                        <button onclick="generateReport('optional_pdf')" class="btn-report red">📄 PDF</button>
+                        <button onclick="previewReport('optional')" class="btn-preview">👁️ معاينة</button>
+                    </div>
+                </div>
+
+                <!-- 5. تقرير التسجيل اليومي -->
                 <div class="report-card">
                     <h3>📅 التسجيل اليومي</h3>
-                    <p>عدد الطلاب المسجلين خلال الأيام الماضية</p>
-                    <div>
-                        <button onclick="generateReport('daily')" class="btn-report orange">📥 Excel</button>
+                    <div class="subtitle">عدد الطلاب المسجلين خلال الأيام الماضية</div>
+                    <div class="btn-group">
+                        <button onclick="generateReport('daily')" class="btn-report teal">📥 Excel</button>
+                        <button onclick="generateReport('daily_pdf')" class="btn-report red">📄 PDF</button>
                         <button onclick="previewReport('daily')" class="btn-preview">👁️ معاينة</button>
                     </div>
                 </div>
 
-                <!-- 5. تقرير شامل (كامل) -->
-                <div class="report-card" style="grid-column: 1 / -1;">
+                <!-- 6. تقرير شامل -->
+                <div class="report-card">
                     <h3>📋 تقرير شامل</h3>
-                    <p>جميع بيانات الطلاب مع الحقول الديناميكية</p>
-                    <div>
-                        <button onclick="generateReport('full')" class="btn-report red">📥 Excel</button>
-                        <button onclick="generateReport('full_pdf')" class="btn-report teal">📄 PDF</button>
+                    <div class="subtitle">جميع بيانات الطلاب مع الحقول الديناميكية</div>
+                    <div class="btn-group">
+                        <button onclick="generateReport('full')" class="btn-report blue">📥 Excel</button>
+                        <button onclick="generateReport('full_pdf')" class="btn-report red">📄 PDF</button>
                         <button onclick="previewReport('full')" class="btn-preview">👁️ معاينة</button>
                     </div>
                 </div>
@@ -266,7 +333,10 @@
             <div class="report-preview" id="reportPreview">
                 <div class="preview-header">
                     <h4 id="previewTitle">📊 معاينة التقرير</h4>
-                    <button onclick="closePreview()" title="إغلاق">✕</button>
+                    <div class="actions">
+                        <button onclick="printPreview()" class="btn-print">🖨️ طباعة</button>
+                        <button onclick="closePreview()" class="btn-close">✕ إغلاق</button>
+                    </div>
                 </div>
                 <div id="previewContent">
                     <div class="no-data">⏳ جاري التحميل...</div>
@@ -282,7 +352,6 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
         window.supabase = supabaseClient
 
-        // ===== التحقق من الأدمن =====
         if (!sessionStorage.getItem('adminId')) {
             window.location.href = 'admin-login.html'
         }
@@ -298,6 +367,7 @@
                 .from('dynamic_fields')
                 .select('id, name')
                 .eq('visible_for_student', true)
+                .order('display_order', { ascending: true })
             return data || []
         }
 
@@ -310,151 +380,206 @@
             return data || []
         }
 
-        // ===== إنشاء التقرير =====
-        async function generateReport(type) {
-            const students = await getStudents()
-            
-            let reportData = []
-            let fileName = ''
+        // ===== دالة مساعدة لتوليد التقارير =====
+        function buildReportData(students, type) {
+            let headers = []
+            let rows = []
+            let title = ''
 
             switch(type) {
                 case 'stream': {
+                    title = 'توزيع التشعيبات'
                     const ثانوي = students.filter(s => s.stream === 'ثانوي').length
                     const بكالوريا = students.filter(s => s.stream === 'بكالوريا').length
-                    reportData = [
-                        ['التشعيب', 'العدد', 'النسبة المئوية'],
-                        ['ثانوي', ثانوي, students.length ? `${((ثانوي / students.length) * 100).toFixed(1)}%` : '0%'],
-                        ['بكالوريا', بكالوريا, students.length ? `${((بكالوريا / students.length) * 100).toFixed(1)}%` : '0%'],
-                        ['الإجمالي', students.length, '100%']
+                    const بدون = students.filter(s => !s.stream).length
+                    headers = ['التشعيب', 'العدد', 'النسبة المئوية']
+                    rows = [
+                        ['🎓 ثانوي', ثانوي, students.length ? `${((ثانوي / students.length) * 100).toFixed(1)}%` : '0%'],
+                        ['📚 بكالوريا', بكالوريا, students.length ? `${((بكالوريا / students.length) * 100).toFixed(1)}%` : '0%'],
+                        ['❌ غير محدد', بدون, students.length ? `${((بدون / students.length) * 100).toFixed(1)}%` : '0%'],
+                        ['📊 الإجمالي', students.length, '100%']
                     ]
-                    fileName = 'تقرير_التشعيبات'
                     break
                 }
                 case 'specialization': {
+                    title = 'توزيع التخصصات (مع الأسماء)'
                     const ثانويطلاب = students.filter(s => s.stream === 'ثانوي')
-                    const علمي = ثانويطلاب.filter(s => s.specialization === 'علمي').length
-                    const أدبي = ثانويطلاب.filter(s => s.specialization === 'أدبي').length
-                    reportData = [
-                        ['التخصص', 'العدد', 'النسبة المئوية'],
-                        ['علمي', علمي, ثانويطلاب.length ? `${((علمي / ثانويطلاب.length) * 100).toFixed(1)}%` : '0%'],
-                        ['أدبي', أدبي, ثانويطلاب.length ? `${((أدبي / ثانويطلاب.length) * 100).toFixed(1)}%` : '0%'],
-                        ['إجمالي الثانوي', ثانويطلاب.length, '100%']
-                    ]
-                    fileName = 'تقرير_التخصصات'
+                    const علمي = ثانويطلاب.filter(s => s.specialization === 'علمي')
+                    const أدبي = ثانويطلاب.filter(s => s.specialization === 'أدبي')
+                    const بدون = ثانويطلاب.filter(s => !s.specialization)
+                    
+                    headers = ['التخصص', 'العدد', 'أسماء الطلاب']
+                    rows = []
+                    
+                    if (علمي.length) {
+                        rows.push(['🔬 علمي', علمي.length, علمي.map(s => s.full_name).join('، ')])
+                    } else {
+                        rows.push(['🔬 علمي', 0, 'لا يوجد'])
+                    }
+                    if (أدبي.length) {
+                        rows.push(['📝 أدبي', أدبي.length, أدبي.map(s => s.full_name).join('، ')])
+                    } else {
+                        rows.push(['📝 أدبي', 0, 'لا يوجد'])
+                    }
+                    if (بدون.length) {
+                        rows.push(['❌ غير محدد', بدون.length, بدون.map(s => s.full_name).join('، ')])
+                    }
+                    rows.push(['📊 الإجمالي', ثانويطلاب.length, ''])
                     break
                 }
                 case 'tracks': {
+                    title = 'توزيع المسارات (مع الأسماء)'
                     const بكالورياطلاب = students.filter(s => s.stream === 'بكالوريا')
-                    const trackCounts = {}
+                    const trackGroups = {}
                     بكالورياطلاب.forEach(s => {
-                        if (s.track) {
-                            trackCounts[s.track] = (trackCounts[s.track] || 0) + 1
-                        }
+                        const key = s.track || 'غير محدد'
+                        if (!trackGroups[key]) trackGroups[key] = []
+                        trackGroups[key].push(s)
                     })
-                    reportData = [['المسار', 'العدد', 'النسبة المئوية']]
-                    Object.entries(trackCounts).forEach(([track, count]) => {
-                        reportData.push([track, count, بكالورياطلاب.length ? `${((count / بكالورياطلاب.length) * 100).toFixed(1)}%` : '0%'])
+                    
+                    headers = ['المسار', 'العدد', 'أسماء الطلاب']
+                    rows = []
+                    Object.entries(trackGroups).forEach(([track, list]) => {
+                        rows.push([track, list.length, list.map(s => s.full_name).join('، ')])
                     })
-                    reportData.push(['إجمالي البكالوريا', بكالورياطلاب.length, '100%'])
-                    fileName = 'تقرير_المسارات'
+                    rows.push(['📊 الإجمالي', بكالورياطلاب.length, ''])
+                    break
+                }
+                case 'optional': {
+                    title = 'توزيع المواد الاختيارية (مع الأسماء)'
+                    const بكالورياطلاب = students.filter(s => s.stream === 'بكالوريا' && s.optional_subject)
+                    const optGroups = {}
+                    بكالورياطلاب.forEach(s => {
+                        const key = s.optional_subject || 'غير محدد'
+                        if (!optGroups[key]) optGroups[key] = []
+                        optGroups[key].push(s)
+                    })
+                    
+                    headers = ['المادة الاختيارية', 'العدد', 'أسماء الطلاب']
+                    rows = []
+                    Object.entries(optGroups).forEach(([opt, list]) => {
+                        rows.push([opt, list.length, list.map(s => s.full_name).join('، ')])
+                    })
+                    if (rows.length === 0) {
+                        rows.push(['لا توجد مواد اختيارية', 0, ''])
+                    }
+                    rows.push(['📊 الإجمالي', بكالورياطلاب.length, ''])
                     break
                 }
                 case 'daily': {
+                    title = 'التسجيل اليومي (آخر 7 أيام)'
                     const last7Days = []
                     for (let i = 6; i >= 0; i--) {
                         const date = new Date()
                         date.setDate(date.getDate() - i)
                         last7Days.push(date.toISOString().split('T')[0])
                     }
-                    reportData = [['التاريخ', 'عدد الطلاب المسجلين']]
-                    last7Days.forEach(date => {
+                    headers = ['التاريخ', 'عدد الطلاب المسجلين']
+                    rows = last7Days.map(date => {
                         const count = students.filter(s => {
                             const sDate = new Date(s.created_at).toISOString().split('T')[0]
                             return sDate === date
                         }).length
-                        reportData.push([new Date(date).toLocaleDateString('ar-EG'), count])
+                        return [new Date(date).toLocaleDateString('ar-EG'), count]
                     })
-                    fileName = 'تقرير_التسجيل_اليومي'
+                    rows.push(['📊 الإجمالي', students.length])
                     break
                 }
-                case 'full':
-                case 'full_pdf': {
-                    const fields = await getFields()
-                    const studentIds = students.map(s => s.id)
-                    const responses = await getResponses(studentIds)
-                    
-                    reportData = [['#', 'الكود', 'الرقم القومي', 'الاسم', 'التشعيب', 'التخصص/المسار', 'المادة الاختيارية', 'الحالة', 'تاريخ التقديم']]
-                    
+                case 'full': {
+                    title = 'تقرير شامل لجميع الطلاب'
+                    headers = ['#', 'الكود', 'الرقم القومي', 'الاسم', 'التشعيب', 'التخصص/المسار', 'المادة الاختيارية', 'الحالة', 'تاريخ التقديم']
+                    rows = students.map((s, i) => [
+                        i + 1,
+                        s.student_code || '-',
+                        s.national_id || '-',
+                        s.full_name || '-',
+                        s.stream || 'غير محدد',
+                        s.specialization || s.track || '-',
+                        s.optional_subject || '-',
+                        s.is_locked ? '🔒 مقفل' : '🔓 مفتوح',
+                        s.submitted_at ? new Date(s.submitted_at).toLocaleDateString('ar-EG') : '-'
+                    ])
+                    break
+                }
+                default: return { headers: [], rows: [], title: 'غير معروف' }
+            }
+            return { headers, rows, title }
+        }
+
+        // ===== إنشاء التقرير (Excel / PDF) =====
+        async function generateReport(type) {
+            const students = await getStudents()
+            const isPdf = type.includes('_pdf')
+            const cleanType = type.replace('_pdf', '')
+            
+            let report = buildReportData(students, cleanType)
+            
+            // إضافة الحقول الديناميكية للتقرير الشامل
+            if (cleanType === 'full') {
+                const fields = await getFields()
+                const studentIds = students.map(s => s.id)
+                const responses = await getResponses(studentIds)
+                
+                // إضافة أسماء الحقول كأعمدة إضافية
+                fields.forEach(f => {
+                    report.headers.push(f.name)
+                })
+                
+                // إضافة القيم لكل طالب
+                report.rows = report.rows.map((row, idx) => {
+                    const student = students[idx]
                     fields.forEach(f => {
-                        reportData[0].push(f.name)
+                        const resp = responses.find(r => r.student_id === student.id && r.field_id === f.id)
+                        row.push(resp?.value || '-')
                     })
-                    
-                    students.forEach((s, index) => {
-                        const row = [
-                            index + 1,
-                            s.student_code || '-',
-                            s.national_id || '-',
-                            s.full_name || '-',
-                            s.stream || '-',
-                            s.specialization || s.track || '-',
-                            s.optional_subject || '-',
-                            s.is_locked ? 'مقفل' : 'مفتوح',
-                            s.submitted_at ? new Date(s.submitted_at).toLocaleDateString('ar-EG') : '-'
-                        ]
-                        fields.forEach(f => {
-                            const resp = responses.find(r => r.student_id === s.id && r.field_id === f.id)
-                            row.push(resp?.value || '-')
-                        })
-                        reportData.push(row)
-                    })
-                    fileName = 'تقرير_شامل'
-                    break
-                }
-                default: {
-                    alert('نوع التقرير غير معروف')
-                    return
-                }
+                    return row
+                })
             }
 
-            // تصدير Excel
-            if (type !== 'full_pdf') {
-                const wb = XLSX.utils.book_new()
-                const ws = XLSX.utils.aoa_to_sheet(reportData)
-                XLSX.utils.book_append_sheet(wb, ws, 'تقرير')
-                XLSX.writeFile(wb, `${fileName}_${new Date().toISOString().split('T')[0]}.xlsx`)
-                showToast('✅ تم تصدير التقرير بنجاح', 'success')
+            const fileName = `تقرير_${report.title}_${new Date().toISOString().split('T')[0]}`
+
+            if (isPdf) {
+                generatePDFReport(report.headers, report.rows, report.title, fileName)
             } else {
-                // تصدير PDF
-                generatePDFReport(reportData, fileName)
+                generateExcelReport(report.headers, report.rows, fileName)
             }
 
-            // تسجيل النشاط
-            await logActivity('تصدير تقرير', `تم تصدير تقرير ${fileName}`)
+            await logActivity('تصدير تقرير', `تم تصدير تقرير ${report.title} (${isPdf ? 'PDF' : 'Excel'})`)
+        }
+
+        // ===== تصدير Excel =====
+        function generateExcelReport(headers, rows, fileName) {
+            const wsData = [headers, ...rows]
+            const wb = XLSX.utils.book_new()
+            const ws = XLSX.utils.aoa_to_sheet(wsData)
+            XLSX.utils.book_append_sheet(wb, ws, 'تقرير')
+            XLSX.writeFile(wb, `${fileName}.xlsx`)
+            showToast('✅ تم تصدير Excel بنجاح', 'success')
         }
 
         // ===== تصدير PDF =====
-        function generatePDFReport(data, fileName) {
+        function generatePDFReport(headers, rows, title, fileName) {
             try {
                 const { jsPDF } = window.jspdf
                 const doc = new jsPDF('l', 'mm', 'a4')
                 
                 doc.setFontSize(16)
-                doc.text(`📊 ${fileName}`, 14, 15)
+                doc.text(`📊 ${title}`, 14, 15)
                 doc.setFontSize(10)
                 doc.text(`تاريخ التصدير: ${new Date().toLocaleDateString('ar-EG')}`, 14, 22)
+                doc.text(`إجمالي الطلاب: ${rows.length}`, 14, 28)
                 
-                const headers = data[0].map(h => String(h))
-                const tableData = data.slice(1).map(row => row.map(cell => String(cell)))
+                const tableData = rows.map(row => row.map(cell => String(cell)))
                 
                 doc.autoTable({
-                    head: [headers],
+                    head: [headers.map(h => String(h))],
                     body: tableData,
-                    startY: 30,
+                    startY: 35,
                     styles: { fontSize: 7, cellPadding: 2 },
                     headStyles: { fillColor: [30, 60, 114], fontSize: 8 }
                 })
                 
-                doc.save(`${fileName}_${new Date().toISOString().split('T')[0]}.pdf`)
+                doc.save(`${fileName}.pdf`)
                 showToast('✅ تم تصدير PDF بنجاح', 'success')
             } catch (err) {
                 console.error('PDF Error:', err)
@@ -469,128 +594,82 @@
             const contentDiv = document.getElementById('previewContent')
             const titleDiv = document.getElementById('previewTitle')
 
-            let html = ''
-            let title = ''
+            let report = buildReportData(students, type)
+            
+            // إضافة الحقول الديناميكية للتقرير الشامل
+            if (type === 'full') {
+                const fields = await getFields()
+                const studentIds = students.map(s => s.id)
+                const responses = await getResponses(studentIds)
+                
+                fields.forEach(f => {
+                    report.headers.push(f.name)
+                })
+                
+                report.rows = report.rows.map((row, idx) => {
+                    const student = students[idx]
+                    fields.forEach(f => {
+                        const resp = responses.find(r => r.student_id === student.id && r.field_id === f.id)
+                        row.push(resp?.value || '-')
+                    })
+                    return row
+                })
+            }
 
-            if (students.length === 0) {
+            titleDiv.textContent = `📊 ${report.title}`
+
+            if (students.length === 0 || report.rows.length === 0) {
                 contentDiv.innerHTML = `<div class="no-data">📭 لا توجد بيانات لعرضها</div>`
-                titleDiv.textContent = '📊 معاينة التقرير'
                 previewDiv.classList.add('show')
                 return
             }
 
-            switch(type) {
-                case 'stream': {
-                    title = '📊 توزيع الطلاب حسب التشعيب'
-                    const ثانوي = students.filter(s => s.stream === 'ثانوي').length
-                    const بكالوريا = students.filter(s => s.stream === 'بكالوريا').length
-                    html = `
-                        <table>
-                            <thead><tr><th>التشعيب</th><th>العدد</th><th>النسبة</th></tr></thead>
-                            <tbody>
-                                <tr><td>🎓 ثانوي</td><td>${ثانوي}</td><td>${students.length ? `${((ثانوي / students.length) * 100).toFixed(1)}%` : '0%'}</td></tr>
-                                <tr><td>📚 بكالوريا</td><td>${بكالوريا}</td><td>${students.length ? `${((بكالوريا / students.length) * 100).toFixed(1)}%` : '0%'}</td></tr>
-                                <tr style="font-weight:700;background:#f0f7ff;"><td>الإجمالي</td><td>${students.length}</td><td>100%</td></tr>
-                            </tbody>
-                        </table>
-                    `
-                    break
-                }
-                case 'specialization': {
-                    title = '🔬 توزيع طلاب الثانوي حسب التخصص'
-                    const ثانويطلاب = students.filter(s => s.stream === 'ثانوي')
-                    const علمي = ثانويطلاب.filter(s => s.specialization === 'علمي').length
-                    const أدبي = ثانويطلاب.filter(s => s.specialization === 'أدبي').length
-                    html = `
-                        <table>
-                            <thead><tr><th>التخصص</th><th>العدد</th><th>النسبة</th></tr></thead>
-                            <tbody>
-                                <tr><td>🔬 علمي</td><td>${علمي}</td><td>${ثانويطلاب.length ? `${((علمي / ثانويطلاب.length) * 100).toFixed(1)}%` : '0%'}</td></tr>
-                                <tr><td>📝 أدبي</td><td>${أدبي}</td><td>${ثانويطلاب.length ? `${((أدبي / ثانويطلاب.length) * 100).toFixed(1)}%` : '0%'}</td></tr>
-                                <tr style="font-weight:700;background:#f0f7ff;"><td>الإجمالي</td><td>${ثانويطلاب.length}</td><td>100%</td></tr>
-                            </tbody>
-                        </table>
-                    `
-                    break
-                }
-                case 'tracks': {
-                    title = '📚 توزيع طلاب البكالوريا حسب المسار'
-                    const بكالورياطلاب = students.filter(s => s.stream === 'بكالوريا')
-                    const trackCounts = {}
-                    بكالورياطلاب.forEach(s => {
-                        if (s.track) {
-                            trackCounts[s.track] = (trackCounts[s.track] || 0) + 1
-                        }
-                    })
-                    html = `<table><thead><tr><th>المسار</th><th>العدد</th><th>النسبة</th></tr></thead><tbody>`
-                    Object.entries(trackCounts).forEach(([track, count]) => {
-                        html += `<tr><td>${track}</td><td>${count}</td><td>${بكالورياطلاب.length ? `${((count / بكالورياطلاب.length) * 100).toFixed(1)}%` : '0%'}</td></tr>`
-                    })
-                    html += `<tr style="font-weight:700;background:#f0f7ff;"><td>الإجمالي</td><td>${بكالورياطلاب.length}</td><td>100%</td></tr>`
-                    html += `</tbody></table>`
-                    break
-                }
-                case 'daily': {
-                    title = '📅 تسجيل الطلاب خلال الأيام الماضية'
-                    const last7Days = []
-                    const dayCounts = []
-                    for (let i = 6; i >= 0; i--) {
-                        const date = new Date()
-                        date.setDate(date.getDate() - i)
-                        const dateStr = date.toISOString().split('T')[0]
-                        last7Days.push(dateStr)
-                        const count = students.filter(s => {
-                            const sDate = new Date(s.created_at).toISOString().split('T')[0]
-                            return sDate === dateStr
-                        }).length
-                        dayCounts.push(count)
-                    }
-                    html = `<table><thead><tr><th>التاريخ</th><th>عدد الطلاب</th></tr></thead><tbody>`
-                    last7Days.forEach((date, i) => {
-                        html += `<tr><td>${new Date(date).toLocaleDateString('ar-EG')}</td><td>${dayCounts[i]}</td></tr>`
-                    })
-                    html += `</tbody></table>`
-                    break
-                }
-                case 'full': {
-                    title = '📋 جميع بيانات الطلاب'
-                    const fields = await getFields()
-                    const studentIds = students.map(s => s.id)
-                    const responses = await getResponses(studentIds)
-                    
-                    html = `<table><thead><tr><th>#</th><th>الاسم</th><th>الكود</th><th>التشعيب</th>`
-                    fields.forEach(f => { html += `<th>${f.name}</th>` })
-                    html += `<th>الحالة</th></tr></thead><tbody>`
-                    
-                    const displayStudents = students.slice(0, 20)
-                    displayStudents.forEach((s, i) => {
-                        html += `<tr><td>${i + 1}</td><td>${s.full_name || '-'}</td><td>${s.student_code || '-'}</td><td>${s.stream || '-'}</td>`
-                        fields.forEach(f => {
-                            const resp = responses.find(r => r.student_id === s.id && r.field_id === f.id)
-                            html += `<td>${resp?.value || '-'}</td>`
-                        })
-                        html += `<td>${s.is_locked ? '🔒 مقفل' : '🔓 مفتوح'}</td>`
-                        html += `</tr>`
-                    })
-                    if (students.length > 20) {
-                        html += `<tr><td colspan="${4 + fields.length + 1}" style="text-align:center;color:#999;padding:15px;">... وعرض ${students.length - 20} طالب إضافي في التقرير الكامل</td></tr>`
-                    }
-                    html += `</tbody></table>`
-                    break
-                }
-                default: {
-                    contentDiv.innerHTML = `<div class="no-data">❌ نوع التقرير غير معروف</div>`
-                    previewDiv.classList.add('show')
-                    return
-                }
+            // عرض إحصائيات
+            let statsHtml = `<div class="summary-stats">`
+            statsHtml += `<div class="stat">📊 إجمالي الطلاب: <strong>${students.length}</strong></div>`
+            if (type === 'stream') {
+                const ثانوي = students.filter(s => s.stream === 'ثانوي').length
+                const بكالوريا = students.filter(s => s.stream === 'بكالوريا').length
+                statsHtml += `<div class="stat">🎓 ثانوي: <strong>${ثانوي}</strong></div>`
+                statsHtml += `<div class="stat">📚 بكالوريا: <strong>${بكالوريا}</strong></div>`
             }
+            statsHtml += `</div>`
 
-            titleDiv.textContent = title
-            contentDiv.innerHTML = html || `<div class="no-data">📭 لا توجد بيانات لعرضها</div>`
+            // عرض الجدول
+            let tableHtml = `<table><thead><tr>`
+            report.headers.forEach(h => {
+                tableHtml += `<th>${h}</th>`
+            })
+            tableHtml += `</tr></thead><tbody>`
+            
+            const displayRows = report.rows.slice(0, 100) // عرض 100 صف كحد أقصى
+            displayRows.forEach(row => {
+                tableHtml += `<tr>`
+                row.forEach(cell => {
+                    tableHtml += `<td>${cell || '—'}</td>`
+                })
+                tableHtml += `</tr>`
+            })
+            
+            if (report.rows.length > 100) {
+                tableHtml += `<tr><td colspan="${report.headers.length}" style="text-align:center;color:#999;padding:15px;">
+                    ... وعرض ${report.rows.length - 100} صف إضافي في التقرير الكامل
+                </td></tr>`
+            }
+            
+            tableHtml += `</tbody></table>`
+
+            contentDiv.innerHTML = statsHtml + tableHtml
             previewDiv.classList.add('show')
             previewDiv.scrollIntoView({ behavior: 'smooth', block: 'start' })
         }
 
+        // ===== طباعة المعاينة =====
+        function printPreview() {
+            window.print()
+        }
+
+        // ===== إغلاق المعاينة =====
         function closePreview() {
             document.getElementById('reportPreview').classList.remove('show')
         }
@@ -627,14 +706,12 @@
             try {
                 const adminId = sessionStorage.getItem('adminId')
                 const adminEmail = sessionStorage.getItem('adminEmail') || 'unknown'
-                
                 let ipAddress = 'unknown'
                 try {
                     const ipRes = await fetch('https://api.ipify.org?format=json')
                     const ipData = await ipRes.json()
                     ipAddress = ipData.ip
                 } catch (e) {}
-
                 await supabaseClient
                     .from('admin_logs')
                     .insert({
