@@ -7,7 +7,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* ===== نفس الستايل السابق ===== */
         .requests-container { margin: 20px 0; }
         .request-card {
             background: #f8f9fa;
@@ -300,19 +299,35 @@
     </div>
 
     <script>
+        // =============================================
+        // ===== 1. تعريف SUPABASE_URL و SUPABASE_ANON_KEY =====
+        // =============================================
+        // 🔐 يجب استبدال هذه القيم بقيمتك الفعلية من Supabase
         const SUPABASE_URL = '{{SUPABASE_URL}}'
         const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
+
+        // =============================================
+        // ===== 2. تعريف supabaseClient =====
+        // =============================================
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
         window.supabase = supabaseClient
 
+        // =============================================
+        // ===== 3. التحقق من الأدمن =====
+        // =============================================
         if (!sessionStorage.getItem('adminId')) {
             window.location.href = 'admin-login.html'
         }
 
+        // =============================================
+        // ===== 4. المتغيرات العامة =====
+        // =============================================
         let currentRequestId = null
-        let allRequests = []   // لتخزين جميع الطلبات مع بيانات الطالب
+        let allRequests = []
 
-        // ===== تحميل الطلبات =====
+        // =============================================
+        // ===== 5. دوال تحميل الطلبات =====
+        // =============================================
         async function loadRequests() {
             const container = document.getElementById('requestsContainer')
             const status = document.getElementById('filterStatus').value
@@ -391,7 +406,9 @@
             }
         }
 
-        // ===== تحديث الإحصائيات =====
+        // =============================================
+        // ===== 6. تحديث الإحصائيات =====
+        // =============================================
         function updateStats(requests) {
             const pending = requests.filter(r => r.status === 'pending').length
             const approved = requests.filter(r => r.status === 'approved').length
@@ -403,7 +420,9 @@
             document.getElementById('totalCount').textContent = requests.length
         }
 
-        // ===== عرض الطلبات =====
+        // =============================================
+        // ===== 7. عرض الطلبات =====
+        // =============================================
         function renderRequests(requests) {
             const container = document.getElementById('requestsContainer')
             const search = document.getElementById('searchInput').value.toLowerCase()
@@ -474,7 +493,9 @@
             }).join('')
         }
 
-        // ===== نافذة الرد =====
+        // =============================================
+        // ===== 8. نافذة الرد =====
+        // =============================================
         function openResponseModal(requestId, studentName, reason) {
             currentRequestId = requestId
             document.getElementById('responseStudent').textContent = `الطالب: ${studentName}`
@@ -488,7 +509,9 @@
             currentRequestId = null
         }
 
-        // ===== إرسال الرد =====
+        // =============================================
+        // ===== 9. إرسال الرد =====
+        // =============================================
         async function submitResponse(action) {
             if (!currentRequestId) return
 
@@ -542,7 +565,9 @@
             }
         }
 
-        // ===== تسجيل النشاطات =====
+        // =============================================
+        // ===== 10. تسجيل النشاطات =====
+        // =============================================
         async function logActivity(action, details) {
             try {
                 const adminId = sessionStorage.getItem('adminId')
@@ -567,14 +592,26 @@
             }
         }
 
-        // ===== تسجيل الخروج =====
+        // =============================================
+        // ===== 11. تسجيل الخروج =====
+        // =============================================
         function logout() {
             sessionStorage.clear()
             window.location.href = 'admin-login.html'
         }
 
-        // ===== تحميل البيانات =====
-        loadRequests()
+        // =============================================
+        // ===== 12. بدء تحميل البيانات =====
+        // =============================================
+        // تأكد من أن الصفحة جاهزة قبل تحميل البيانات
+        document.addEventListener('DOMContentLoaded', function() {
+            loadRequests()
+        })
+
+        // في حال لم يعمل DOMContentLoaded، نستخدم setTimeout
+        setTimeout(function() {
+            loadRequests()
+        }, 500)
     </script>
 </body>
 </html>
