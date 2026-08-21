@@ -7,9 +7,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="style.css">
     <style>
-        .requests-container {
-            margin: 20px 0;
-        }
+        /* ===== نفس الستايل السابق ===== */
+        .requests-container { margin: 20px 0; }
         .request-card {
             background: #f8f9fa;
             border-radius: 16px;
@@ -22,14 +21,8 @@
             transform: translateX(-3px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
-        .request-card.approved {
-            border-right-color: #28a745;
-            background: #f0fff4;
-        }
-        .request-card.rejected {
-            border-right-color: #dc3545;
-            background: #fff5f5;
-        }
+        .request-card.approved { border-right-color: #28a745; background: #f0fff4; }
+        .request-card.rejected { border-right-color: #dc3545; background: #fff5f5; }
         .request-card .request-header {
             display: flex;
             justify-content: space-between;
@@ -61,10 +54,7 @@
             font-size: 14px;
             color: #555;
         }
-        .request-card .request-details .label {
-            color: #999;
-            font-size: 12px;
-        }
+        .request-card .request-details .label { color: #999; font-size: 12px; }
         .request-card .request-reason {
             background: white;
             padding: 15px;
@@ -89,36 +79,12 @@
             font-weight: 600;
             transition: all 0.3s;
         }
-        .request-card .request-actions .btn-approve {
-            background: #28a745;
-            color: white;
-        }
-        .request-card .request-actions .btn-approve:hover {
-            background: #1e7e34;
-            transform: scale(1.02);
-        }
-        .request-card .request-actions .btn-reject {
-            background: #dc3545;
-            color: white;
-        }
-        .request-card .request-actions .btn-reject:hover {
-            background: #a71d2a;
-            transform: scale(1.02);
-        }
-        .request-card .request-actions .btn-view {
-            background: #17a2b8;
-            color: white;
-        }
-        .request-card .request-actions .btn-view:hover {
-            background: #138496;
-            transform: scale(1.02);
-        }
-        .request-card .request-actions .btn-approve:disabled,
-        .request-card .request-actions .btn-reject:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
+        .request-card .request-actions .btn-approve { background: #28a745; color: white; }
+        .request-card .request-actions .btn-approve:hover { background: #1e7e34; transform: scale(1.02); }
+        .request-card .request-actions .btn-reject { background: #dc3545; color: white; }
+        .request-card .request-actions .btn-reject:hover { background: #a71d2a; transform: scale(1.02); }
+        .request-card .request-actions .btn-view { background: #17a2b8; color: white; }
+        .request-card .request-actions .btn-view:hover { background: #138496; transform: scale(1.02); }
 
         .admin-header {
             display: flex;
@@ -175,11 +141,7 @@
             padding: 40px;
             color: #999;
         }
-        .empty-msg .icon {
-            font-size: 50px;
-            display: block;
-            margin-bottom: 10px;
-        }
+        .empty-msg .icon { font-size: 50px; display: block; margin-bottom: 10px; }
 
         .stats-bar {
             display: flex;
@@ -190,14 +152,8 @@
             border-radius: 12px;
             margin-bottom: 20px;
         }
-        .stats-bar .stat {
-            font-size: 14px;
-            color: #555;
-        }
-        .stats-bar .stat strong {
-            color: #1e3c72;
-            font-size: 18px;
-        }
+        .stats-bar .stat { font-size: 14px; color: #555; }
+        .stats-bar .stat strong { color: #1e3c72; font-size: 18px; }
         .stats-bar .stat .dot {
             display: inline-block;
             width: 10px;
@@ -209,7 +165,6 @@
         .stats-bar .stat .dot.green { background: #28a745; }
         .stats-bar .stat .dot.red { background: #dc3545; }
 
-        /* نافذة الرد */
         .response-modal {
             display: none;
             position: fixed;
@@ -219,10 +174,7 @@
             align-items: center;
             justify-content: center;
         }
-        .response-modal.show {
-            display: flex;
-            animation: fadeIn 0.3s ease;
-        }
+        .response-modal.show { display: flex; animation: fadeIn 0.3s ease; }
         .response-modal .modal-content {
             background: white;
             max-width: 450px;
@@ -231,10 +183,7 @@
             border-radius: 20px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.3);
         }
-        .response-modal .modal-content h3 {
-            color: #1e3c72;
-            margin-bottom: 10px;
-        }
+        .response-modal .modal-content h3 { color: #1e3c72; margin-bottom: 10px; }
         .response-modal .modal-content textarea {
             width: 100%;
             padding: 12px;
@@ -266,20 +215,12 @@
             transition: all 0.3s;
             min-width: 100px;
         }
-        .response-modal .modal-content .actions .btn-confirm {
-            background: #28a745;
-            color: white;
-        }
-        .response-modal .modal-content .actions .btn-confirm:hover {
-            background: #1e7e34;
-        }
-        .response-modal .modal-content .actions .btn-cancel {
-            background: #6c757d;
-            color: white;
-        }
-        .response-modal .modal-content .actions .btn-cancel:hover {
-            background: #5a6268;
-        }
+        .response-modal .modal-content .actions .btn-confirm { background: #28a745; color: white; }
+        .response-modal .modal-content .actions .btn-confirm:hover { background: #1e7e34; }
+        .response-modal .modal-content .actions .btn-cancel { background: #6c757d; color: white; }
+        .response-modal .modal-content .actions .btn-cancel:hover { background: #5a6268; }
+        .response-modal .modal-content .actions .btn-reject { background: #dc3545; color: white; }
+        .response-modal .modal-content .actions .btn-reject:hover { background: #a71d2a; }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: scale(0.95); }
@@ -287,29 +228,18 @@
         }
 
         @media (max-width: 600px) {
-            .request-card .request-details {
-                grid-template-columns: 1fr;
-            }
-            .stats-bar {
-                flex-direction: column;
-                gap: 5px;
-            }
-            .filters {
-                flex-direction: column;
-            }
-            .request-card .request-actions {
-                flex-direction: column;
-            }
-            .request-card .request-actions button {
-                width: 100%;
-            }
+            .request-card .request-details { grid-template-columns: 1fr; }
+            .stats-bar { flex-direction: column; gap: 5px; }
+            .filters { flex-direction: column; }
+            .request-card .request-actions { flex-direction: column; }
+            .request-card .request-actions button { width: 100%; }
         }
     </style>
 </head>
 <body>
     <div class="container" style="max-width:900px;">
         <div class="card">
-            <!-- ===== الهيدر ===== -->
+            <!-- الهيدر -->
             <div class="admin-header">
                 <div>
                     <h1 style="margin:0;">📩 طلبات فتح التعديل</h1>
@@ -324,7 +254,7 @@
                 </div>
             </div>
 
-            <!-- ===== إحصائيات ===== -->
+            <!-- الإحصائيات -->
             <div class="stats-bar" id="statsBar">
                 <div class="stat"><span class="dot yellow"></span> قيد الانتظار: <strong id="pendingCount">0</strong></div>
                 <div class="stat"><span class="dot green"></span> تمت الموافقة: <strong id="approvedCount">0</strong></div>
@@ -332,7 +262,7 @@
                 <div class="stat">📊 الإجمالي: <strong id="totalCount">0</strong></div>
             </div>
 
-            <!-- ===== فلاتر ===== -->
+            <!-- فلاتر -->
             <div class="filters">
                 <select id="filterStatus" onchange="loadRequests()">
                     <option value="">كل الطلبات</option>
@@ -344,7 +274,7 @@
                 <button onclick="loadRequests()" style="padding:8px 20px;background:#1e3c72;color:white;border:none;border-radius:8px;cursor:pointer;">🔄 تحديث</button>
             </div>
 
-            <!-- ===== قائمة الطلبات ===== -->
+            <!-- قائمة الطلبات -->
             <div class="requests-container" id="requestsContainer">
                 <div class="empty-msg">
                     <span class="icon">⏳</span>
@@ -354,7 +284,7 @@
         </div>
     </div>
 
-    <!-- ===== نافذة الرد على الطلب ===== -->
+    <!-- نافذة الرد -->
     <div class="response-modal" id="responseModal">
         <div class="modal-content">
             <h3 id="responseTitle">📩 الرد على الطلب</h3>
@@ -363,7 +293,7 @@
             <textarea id="responseText" placeholder="اكتب ردك على الطالب (اختياري)..."></textarea>
             <div class="actions">
                 <button onclick="submitResponse('approved')" class="btn-confirm">✅ موافقة</button>
-                <button onclick="submitResponse('rejected')" class="btn-confirm" style="background:#dc3545;">❌ رفض</button>
+                <button onclick="submitResponse('rejected')" class="btn-reject">❌ رفض</button>
                 <button onclick="closeResponseModal()" class="btn-cancel">إلغاء</button>
             </div>
         </div>
@@ -380,6 +310,7 @@
         }
 
         let currentRequestId = null
+        let allRequests = []   // لتخزين جميع الطلبات مع بيانات الطالب
 
         // ===== تحميل الطلبات =====
         async function loadRequests() {
@@ -387,39 +318,72 @@
             const status = document.getElementById('filterStatus').value
             const search = document.getElementById('searchInput').value.toLowerCase()
 
+            container.innerHTML = `<div class="empty-msg"><span class="icon">⏳</span> جاري التحميل...</div>`
+
             try {
+                // 1. جلب الطلبات من جدول reopen_requests
                 let query = supabaseClient
                     .from('reopen_requests')
-                    .select('*, students:student_id(full_name, student_code, stream, is_locked)')
+                    .select('*')
                     .order('requested_at', { ascending: false })
 
                 if (status) {
                     query = query.eq('status', status)
                 }
 
-                const { data, error } = await query
+                const { data: requests, error } = await query
 
                 if (error) throw error
 
-                // فلترة بالبحث
-                let filtered = data || []
-                if (search) {
-                    filtered = filtered.filter(r => 
-                        r.student_name?.toLowerCase().includes(search) ||
-                        r.students?.full_name?.toLowerCase().includes(search) ||
-                        r.student_code?.toLowerCase().includes(search)
-                    )
+                if (!requests || requests.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-msg">
+                            <span class="icon">📭</span>
+                            لا توجد طلبات
+                        </div>
+                    `
+                    updateStats([])
+                    return
                 }
 
-                updateStats(data || [])
-                renderRequests(filtered)
+                // 2. جلب بيانات الطلاب لكل طلب
+                const studentIds = requests.map(r => r.student_id).filter(id => id)
+                let studentsMap = {}
+
+                if (studentIds.length > 0) {
+                    const { data: students, error: studentsError } = await supabaseClient
+                        .from('students')
+                        .select('id, full_name, student_code, stream, is_locked')
+                        .in('id', studentIds)
+
+                    if (studentsError) {
+                        console.error('Error fetching students:', studentsError)
+                    } else if (students) {
+                        students.forEach(s => {
+                            studentsMap[s.id] = s
+                        })
+                    }
+                }
+
+                // 3. دمج البيانات
+                const combined = requests.map(req => {
+                    const student = studentsMap[req.student_id] || {}
+                    return {
+                        ...req,
+                        student: student
+                    }
+                })
+
+                allRequests = combined
+                renderRequests(combined)
+                updateStats(requests)
 
             } catch (err) {
                 console.error('Error loading requests:', err)
                 container.innerHTML = `
                     <div class="empty-msg">
                         <span class="icon">❌</span>
-                        حدث خطأ في تحميل الطلبات
+                        حدث خطأ في تحميل الطلبات: ${err.message}
                         <br>
                         <button onclick="loadRequests()" style="margin-top:10px;padding:10px 20px;background:#1e3c72;color:white;border:none;border-radius:8px;cursor:pointer;">🔄 إعادة المحاولة</button>
                     </div>
@@ -442,18 +406,29 @@
         // ===== عرض الطلبات =====
         function renderRequests(requests) {
             const container = document.getElementById('requestsContainer')
+            const search = document.getElementById('searchInput').value.toLowerCase()
 
-            if (requests.length === 0) {
+            // فلترة بالبحث
+            let filtered = requests
+            if (search) {
+                filtered = requests.filter(req => 
+                    (req.student?.full_name?.toLowerCase().includes(search)) ||
+                    (req.student_name?.toLowerCase().includes(search)) ||
+                    (req.student_code?.toLowerCase().includes(search))
+                )
+            }
+
+            if (filtered.length === 0) {
                 container.innerHTML = `
                     <div class="empty-msg">
                         <span class="icon">📭</span>
-                        لا توجد طلبات
+                        لا توجد طلبات مطابقة للبحث
                     </div>
                 `
                 return
             }
 
-            container.innerHTML = requests.map(req => {
+            container.innerHTML = filtered.map(req => {
                 const statusClass = req.status
                 const statusText = {
                     'pending': '⏳ قيد الانتظار',
@@ -461,10 +436,10 @@
                     'rejected': '❌ مرفوض'
                 }[req.status] || req.status
 
-                const studentName = req.students?.full_name || req.student_name || 'غير معروف'
-                const studentCode = req.students?.student_code || req.student_code || '-'
-                const stream = req.students?.stream || '-'
-                const isLocked = req.students?.is_locked
+                const studentName = req.student?.full_name || req.student_name || 'غير معروف'
+                const studentCode = req.student?.student_code || req.student_code || '-'
+                const stream = req.student?.stream || '-'
+                const isLocked = req.student?.is_locked
 
                 return `
                     <div class="request-card ${req.status}">
