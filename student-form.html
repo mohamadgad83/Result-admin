@@ -446,6 +446,121 @@
             cursor: not-allowed;
         }
 
+        /* ===== طلب فتح التعديل (إضافي) ===== */
+        .btn-request {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #ffc107;
+            color: #333;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: all 0.3s;
+        }
+        .btn-request:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(255,193,7,0.4);
+        }
+        .btn-request:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .request-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .request-modal.show {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+        .request-modal .modal-content {
+            background: white;
+            max-width: 500px;
+            width: 90%;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .request-modal .modal-content .close-btn {
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+        }
+        .request-modal .modal-content .close-btn:hover {
+            color: #333;
+        }
+        .request-modal .modal-content textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+        .request-modal .modal-content textarea:focus {
+            outline: none;
+            border-color: #1e3c72;
+        }
+        .request-modal .modal-content .error-msg {
+            color: #dc3545;
+            font-size: 13px;
+            display: none;
+            margin: 10px 0;
+        }
+        .request-modal .modal-content .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .request-modal .modal-content .actions .btn-submit {
+            flex: 1;
+            padding: 12px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .request-modal .modal-content .actions .btn-submit:hover {
+            background: #1e7e34;
+        }
+        .request-modal .modal-content .actions .btn-cancel {
+            padding: 12px 25px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .request-modal .modal-content .actions .btn-cancel:hover {
+            background: #5a6268;
+        }
+
         @media (max-width: 600px) {
             .form-header {
                 flex-direction: column;
@@ -695,6 +810,26 @@
         </div>
     </div>
 
+    <!-- ===== نافذة طلب فتح التعديل ===== -->
+    <div class="request-modal" id="requestModal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeRequestModal()">✕</button>
+            <h3 style="color:#1e3c72;margin-bottom:10px;">📩 طلب فتح التعديل</h3>
+            <p style="color:#666;font-size:14px;margin-bottom:15px;">
+                اكتب سبب طلبك لفتح التعديل على رغباتك
+            </p>
+            <div class="form-group">
+                <label style="font-weight:600;color:#333;display:block;margin-bottom:5px;">السبب *</label>
+                <textarea id="requestReason" rows="4" placeholder="اكتب سبب طلبك هنا..."></textarea>
+            </div>
+            <div class="error-msg" id="requestError"></div>
+            <div class="actions">
+                <button onclick="submitRequest()" class="btn-submit">📤 إرسال الطلب</button>
+                <button onclick="closeRequestModal()" class="btn-cancel">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ===== تهيئة Supabase =====
         const SUPABASE_URL = '{{SUPABASE_URL}}'
@@ -711,6 +846,7 @@
         let dynamicValues = {}
         let isDeclarationApproved = false
         let isSaving = false
+        let requestStatus = null   // حالة طلب فتح التعديل
 
         const tracks = {
             'مسار الطب وعلوم الحياة': ['فيزياء', 'رياضيات'],
@@ -952,7 +1088,7 @@
         }
 
         // =============================================
-        // ===== عرض رسالة القفل =====
+        // ===== عرض رسالة القفل (معدلة) =====
         // =============================================
         function showLockedMessage(student, isJustSaved = false) {
             const statusDiv = document.getElementById('statusMsg')
@@ -983,6 +1119,23 @@
                         <br>
                         <small>🕐 وقت التقديم: ${new Date(student.submitted_at).toLocaleTimeString('ar-EG')}</small>
                     </p>
+
+                    <!-- حالة الطلب -->
+                    <div id="requestStatus" style="display:none;margin:15px 0;padding:15px;border-radius:12px;background:#fff3cd;border:1px solid #ffc107;">
+                        <div id="requestStatusContent"></div>
+                    </div>
+
+                    <!-- أزرار الإجراءات -->
+                    <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:10px;">
+                        <button onclick="showRequestModal()" class="btn-request" id="requestBtn">
+                            📩 طلب فتح التعديل
+                        </button>
+                        <a href="student-pdf.html" class="btn-print-only" style="display:inline-block;padding:12px 30px;background:#1e3c72;color:white;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;text-decoration:none;margin:10px 5px;">
+                            📄 طباعة PDF
+                        </a>
+                    </div>
+
+                    <!-- عرض البيانات المسجلة -->
                     <div style="margin: 20px 0; text-align: right;">
                         <h4 style="color: #155724; margin-bottom: 10px;">📋 بياناتك المسجلة:</h4>
                         <div class="info-grid-locked">
@@ -1009,11 +1162,162 @@
                             ${fieldsHtml}
                         </div>
                     </div>
-                    <a href="student-pdf.html" class="btn-print-only">
-                        <span class="icon">📄</span> طباعة PDF
-                    </a>
                 </div>
             `
+
+            // بعد عرض الرسالة، نتحقق من حالة الطلب
+            setTimeout(() => {
+                checkRequestStatus(student.id);
+            }, 200);
+        }
+
+        // =============================================
+        // ===== دوال طلب فتح التعديل =====
+        // =============================================
+
+        // عرض حالة الطلب الحالي
+        async function checkRequestStatus(studentId) {
+            try {
+                const { data, error } = await supabase
+                    .from('reopen_requests')
+                    .select('*')
+                    .eq('student_id', studentId)
+                    .order('requested_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+
+                if (error) throw error;
+                
+                requestStatus = data;
+                updateRequestUI(data);
+            } catch (err) {
+                console.error('Error checking request:', err);
+            }
+        }
+
+        // تحديث واجهة الطلب
+        function updateRequestUI(request) {
+            const statusDiv = document.getElementById('requestStatus');
+            const content = document.getElementById('requestStatusContent');
+            const requestBtn = document.getElementById('requestBtn');
+
+            if (!request) {
+                if (statusDiv) statusDiv.style.display = 'none';
+                if (requestBtn) {
+                    requestBtn.disabled = false;
+                    requestBtn.textContent = '📩 طلب فتح التعديل';
+                }
+                return;
+            }
+
+            if (statusDiv) statusDiv.style.display = 'block';
+            
+            const statusMap = {
+                'pending': { text: '⏳ قيد الانتظار', color: '#856404', bg: '#fff3cd' },
+                'approved': { text: '✅ تمت الموافقة', color: '#155724', bg: '#d4edda' },
+                'rejected': { text: '❌ تم الرفض', color: '#721c24', bg: '#f8d7da' }
+            };
+            
+            const statusInfo = statusMap[request.status] || statusMap['pending'];
+            
+            if (content) {
+                content.innerHTML = `
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                        <div>
+                            <strong style="color:${statusInfo.color};">${statusInfo.text}</strong>
+                            <br>
+                            <small style="color:#666;">📅 ${new Date(request.requested_at).toLocaleDateString('ar-EG')}</small>
+                        </div>
+                        <div style="font-size:13px;color:#555;max-width:60%;">
+                            "${request.reason}"
+                        </div>
+                    </div>
+                    ${request.admin_response ? `
+                        <div style="margin-top:8px;padding:8px;background:#f8f9fa;border-radius:8px;font-size:13px;color:#555;">
+                            <strong>رد الإدارة:</strong> ${request.admin_response}
+                        </div>
+                    ` : ''}
+                `;
+            }
+
+            // تحديث زر الطلب
+            if (requestBtn) {
+                if (request.status === 'pending') {
+                    requestBtn.disabled = true;
+                    requestBtn.textContent = '⏳ طلب قيد الانتظار';
+                } else if (request.status === 'approved') {
+                    requestBtn.disabled = true;
+                    requestBtn.textContent = '✅ تمت الموافقة - يمكنك التعديل';
+                    // يمكن إضافة رسالة أو تحديث الصفحة
+                } else if (request.status === 'rejected') {
+                    requestBtn.disabled = false;
+                    requestBtn.textContent = '📩 إعادة طلب فتح التعديل';
+                }
+            }
+        }
+
+        // عرض نافذة الطلب
+        function showRequestModal() {
+            // إذا كان هناك طلب pending، لا نسمح بطلب جديد
+            if (requestStatus && requestStatus.status === 'pending') {
+                alert('⏳ لديك طلب قيد الانتظار، يرجى الانتظار حتى يتم الرد عليه.');
+                return;
+            }
+            document.getElementById('requestModal').classList.add('show');
+            document.getElementById('requestReason').value = '';
+            document.getElementById('requestError').style.display = 'none';
+        }
+
+        // إغلاق نافذة الطلب
+        function closeRequestModal() {
+            document.getElementById('requestModal').classList.remove('show');
+        }
+
+        // إرسال الطلب
+        async function submitRequest() {
+            const reason = document.getElementById('requestReason').value.trim();
+            const errorDiv = document.getElementById('requestError');
+            
+            if (!reason) {
+                errorDiv.textContent = '❌ يرجى كتابة سبب الطلب';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            if (reason.length < 10) {
+                errorDiv.textContent = '❌ يرجى كتابة سبب واضح (10 أحرف على الأقل)';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            const studentId = sessionStorage.getItem('studentId');
+            const studentName = sessionStorage.getItem('studentName') || '';
+
+            try {
+                const { data, error } = await supabase
+                    .from('reopen_requests')
+                    .insert({
+                        student_id: studentId,
+                        reason: reason,
+                        student_name: studentName,
+                        student_code: studentData?.student_code || ''
+                    })
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                closeRequestModal();
+                alert('✅ تم إرسال طلبك بنجاح! سيتم الرد عليك من قبل الإدارة.');
+                
+                // تحديث واجهة الطلب
+                checkRequestStatus(studentId);
+
+            } catch (err) {
+                console.error('Error submitting request:', err);
+                errorDiv.textContent = '❌ حدث خطأ أثناء إرسال الطلب: ' + (err.message || '');
+                errorDiv.style.display = 'block';
+            }
         }
 
         // =============================================
@@ -1057,6 +1361,10 @@
                     document.getElementById('pdfBtn').style.display = 'block'
                     document.getElementById('formContent').classList.add('form-disabled')
                     showLockedMessage(student, false)
+                    // التحقق من حالة الطلب بعد عرض الرسالة
+                    setTimeout(() => {
+                        checkRequestStatus(student.id);
+                    }, 300);
                     return
                 }
 
