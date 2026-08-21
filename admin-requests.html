@@ -16,10 +16,7 @@
             border-right: 5px solid #ffc107;
             transition: all 0.3s;
         }
-        .request-card:hover {
-            transform: translateX(-3px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
+        .request-card:hover { transform: translateX(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         .request-card.approved { border-right-color: #28a745; background: #f0fff4; }
         .request-card.rejected { border-right-color: #dc3545; background: #fff5f5; }
         .request-card .request-header {
@@ -44,7 +41,6 @@
         .request-status.pending { background: #fff3cd; color: #856404; }
         .request-status.approved { background: #d4edda; color: #155724; }
         .request-status.rejected { background: #f8d7da; color: #721c24; }
-        
         .request-card .request-details {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -299,56 +295,55 @@
     </div>
 
     <script>
-        // =============================================
-        // ===== 1. تعريف SUPABASE_URL و SUPABASE_ANON_KEY =====
-        // =============================================
-        // 🔐 يجب استبدال هذه القيم بقيمتك الفعلية من Supabase
-        const SUPABASE_URL = '{{SUPABASE_URL}}'
-        const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
+        // ==========================================================
+        // 1. تعريف المتغيرات (يجب أن تكون أول شيء)
+        // ==========================================================
+        const SUPABASE_URL = '{{SUPABASE_URL}}';
+        const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}';
 
-        // =============================================
-        // ===== 2. تعريف supabaseClient =====
-        // =============================================
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-        window.supabase = supabaseClient
+        // ==========================================================
+        // 2. إنشاء عميل Supabase (قبل أي استخدام)
+        // ==========================================================
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        window.supabase = supabaseClient;
 
-        // =============================================
-        // ===== 3. التحقق من الأدمن =====
-        // =============================================
+        // ==========================================================
+        // 3. التحقق من الأدمن
+        // ==========================================================
         if (!sessionStorage.getItem('adminId')) {
-            window.location.href = 'admin-login.html'
+            window.location.href = 'admin-login.html';
         }
 
-        // =============================================
-        // ===== 4. المتغيرات العامة =====
-        // =============================================
-        let currentRequestId = null
-        let allRequests = []
+        // ==========================================================
+        // 4. المتغيرات العامة
+        // ==========================================================
+        let currentRequestId = null;
+        let allRequests = [];
 
-        // =============================================
-        // ===== 5. دوال تحميل الطلبات =====
-        // =============================================
+        // ==========================================================
+        // 5. دوال تحميل الطلبات
+        // ==========================================================
         async function loadRequests() {
-            const container = document.getElementById('requestsContainer')
-            const status = document.getElementById('filterStatus').value
-            const search = document.getElementById('searchInput').value.toLowerCase()
+            const container = document.getElementById('requestsContainer');
+            const status = document.getElementById('filterStatus').value;
+            const search = document.getElementById('searchInput').value.toLowerCase();
 
-            container.innerHTML = `<div class="empty-msg"><span class="icon">⏳</span> جاري التحميل...</div>`
+            container.innerHTML = `<div class="empty-msg"><span class="icon">⏳</span> جاري التحميل...</div>`;
 
             try {
-                // 1. جلب الطلبات من جدول reopen_requests
+                // 5.1 جلب الطلبات من جدول reopen_requests
                 let query = supabaseClient
                     .from('reopen_requests')
                     .select('*')
-                    .order('requested_at', { ascending: false })
+                    .order('requested_at', { ascending: false });
 
                 if (status) {
-                    query = query.eq('status', status)
+                    query = query.eq('status', status);
                 }
 
-                const { data: requests, error } = await query
+                const { data: requests, error } = await query;
 
-                if (error) throw error
+                if (error) throw error;
 
                 if (!requests || requests.length === 0) {
                     container.innerHTML = `
@@ -356,45 +351,45 @@
                             <span class="icon">📭</span>
                             لا توجد طلبات
                         </div>
-                    `
-                    updateStats([])
-                    return
+                    `;
+                    updateStats([]);
+                    return;
                 }
 
-                // 2. جلب بيانات الطلاب لكل طلب
-                const studentIds = requests.map(r => r.student_id).filter(id => id)
-                let studentsMap = {}
+                // 5.2 جلب بيانات الطلاب لكل طلب
+                const studentIds = requests.map(r => r.student_id).filter(id => id);
+                let studentsMap = {};
 
                 if (studentIds.length > 0) {
                     const { data: students, error: studentsError } = await supabaseClient
                         .from('students')
                         .select('id, full_name, student_code, stream, is_locked')
-                        .in('id', studentIds)
+                        .in('id', studentIds);
 
                     if (studentsError) {
-                        console.error('Error fetching students:', studentsError)
+                        console.error('Error fetching students:', studentsError);
                     } else if (students) {
                         students.forEach(s => {
-                            studentsMap[s.id] = s
-                        })
+                            studentsMap[s.id] = s;
+                        });
                     }
                 }
 
-                // 3. دمج البيانات
+                // 5.3 دمج البيانات
                 const combined = requests.map(req => {
-                    const student = studentsMap[req.student_id] || {}
+                    const student = studentsMap[req.student_id] || {};
                     return {
                         ...req,
                         student: student
-                    }
-                })
+                    };
+                });
 
-                allRequests = combined
-                renderRequests(combined)
-                updateStats(requests)
+                allRequests = combined;
+                renderRequests(combined);
+                updateStats(requests);
 
             } catch (err) {
-                console.error('Error loading requests:', err)
+                console.error('Error loading requests:', err);
                 container.innerHTML = `
                     <div class="empty-msg">
                         <span class="icon">❌</span>
@@ -402,39 +397,38 @@
                         <br>
                         <button onclick="loadRequests()" style="margin-top:10px;padding:10px 20px;background:#1e3c72;color:white;border:none;border-radius:8px;cursor:pointer;">🔄 إعادة المحاولة</button>
                     </div>
-                `
+                `;
             }
         }
 
-        // =============================================
-        // ===== 6. تحديث الإحصائيات =====
-        // =============================================
+        // ==========================================================
+        // 6. تحديث الإحصائيات
+        // ==========================================================
         function updateStats(requests) {
-            const pending = requests.filter(r => r.status === 'pending').length
-            const approved = requests.filter(r => r.status === 'approved').length
-            const rejected = requests.filter(r => r.status === 'rejected').length
+            const pending = requests.filter(r => r.status === 'pending').length;
+            const approved = requests.filter(r => r.status === 'approved').length;
+            const rejected = requests.filter(r => r.status === 'rejected').length;
 
-            document.getElementById('pendingCount').textContent = pending
-            document.getElementById('approvedCount').textContent = approved
-            document.getElementById('rejectedCount').textContent = rejected
-            document.getElementById('totalCount').textContent = requests.length
+            document.getElementById('pendingCount').textContent = pending;
+            document.getElementById('approvedCount').textContent = approved;
+            document.getElementById('rejectedCount').textContent = rejected;
+            document.getElementById('totalCount').textContent = requests.length;
         }
 
-        // =============================================
-        // ===== 7. عرض الطلبات =====
-        // =============================================
+        // ==========================================================
+        // 7. عرض الطلبات
+        // ==========================================================
         function renderRequests(requests) {
-            const container = document.getElementById('requestsContainer')
-            const search = document.getElementById('searchInput').value.toLowerCase()
+            const container = document.getElementById('requestsContainer');
+            const search = document.getElementById('searchInput').value.toLowerCase();
 
-            // فلترة بالبحث
-            let filtered = requests
+            let filtered = requests;
             if (search) {
                 filtered = requests.filter(req => 
                     (req.student?.full_name?.toLowerCase().includes(search)) ||
                     (req.student_name?.toLowerCase().includes(search)) ||
                     (req.student_code?.toLowerCase().includes(search))
-                )
+                );
             }
 
             if (filtered.length === 0) {
@@ -443,22 +437,21 @@
                         <span class="icon">📭</span>
                         لا توجد طلبات مطابقة للبحث
                     </div>
-                `
-                return
+                `;
+                return;
             }
 
             container.innerHTML = filtered.map(req => {
-                const statusClass = req.status
                 const statusText = {
                     'pending': '⏳ قيد الانتظار',
                     'approved': '✅ تمت الموافقة',
                     'rejected': '❌ مرفوض'
-                }[req.status] || req.status
+                }[req.status] || req.status;
 
-                const studentName = req.student?.full_name || req.student_name || 'غير معروف'
-                const studentCode = req.student?.student_code || req.student_code || '-'
-                const stream = req.student?.stream || '-'
-                const isLocked = req.student?.is_locked
+                const studentName = req.student?.full_name || req.student_name || 'غير معروف';
+                const studentCode = req.student?.student_code || req.student_code || '-';
+                const stream = req.student?.stream || '-';
+                const isLocked = req.student?.is_locked;
 
                 return `
                     <div class="request-card ${req.status}">
@@ -489,38 +482,37 @@
                             <a href="admin-student-detail.html?id=${req.student_id}" target="_blank" class="btn-view" style="padding:8px 25px;background:#17a2b8;color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;text-decoration:none;display:inline-block;">👁️ عرض الطالب</a>
                         </div>
                     </div>
-                `
-            }).join('')
+                `;
+            }).join('');
         }
 
-        // =============================================
-        // ===== 8. نافذة الرد =====
-        // =============================================
+        // ==========================================================
+        // 8. نافذة الرد
+        // ==========================================================
         function openResponseModal(requestId, studentName, reason) {
-            currentRequestId = requestId
-            document.getElementById('responseStudent').textContent = `الطالب: ${studentName}`
-            document.getElementById('responseReason').textContent = `📝 سبب الطلب: ${reason}`
-            document.getElementById('responseText').value = ''
-            document.getElementById('responseModal').classList.add('show')
+            currentRequestId = requestId;
+            document.getElementById('responseStudent').textContent = `الطالب: ${studentName}`;
+            document.getElementById('responseReason').textContent = `📝 سبب الطلب: ${reason}`;
+            document.getElementById('responseText').value = '';
+            document.getElementById('responseModal').classList.add('show');
         }
 
         function closeResponseModal() {
-            document.getElementById('responseModal').classList.remove('show')
-            currentRequestId = null
+            document.getElementById('responseModal').classList.remove('show');
+            currentRequestId = null;
         }
 
-        // =============================================
-        // ===== 9. إرسال الرد =====
-        // =============================================
+        // ==========================================================
+        // 9. إرسال الرد
+        // ==========================================================
         async function submitResponse(action) {
-            if (!currentRequestId) return
+            if (!currentRequestId) return;
 
-            const responseText = document.getElementById('responseText').value.trim()
-            const adminId = sessionStorage.getItem('adminId')
-            const adminEmail = sessionStorage.getItem('adminEmail') || 'unknown'
+            const responseText = document.getElementById('responseText').value.trim();
+            const adminId = sessionStorage.getItem('adminId');
+            const adminEmail = sessionStorage.getItem('adminEmail') || 'unknown';
 
             try {
-                // تحديث الطلب
                 const { data: request, error: updateError } = await supabaseClient
                     .from('reopen_requests')
                     .update({
@@ -531,11 +523,10 @@
                     })
                     .eq('id', currentRequestId)
                     .select('student_id')
-                    .single()
+                    .single();
 
-                if (updateError) throw updateError
+                if (updateError) throw updateError;
 
-                // إذا كانت موافقة، نفتح الطالب
                 if (action === 'approved' && request) {
                     const { error: studentError } = await supabaseClient
                         .from('students')
@@ -543,40 +534,39 @@
                             is_locked: false,
                             submitted_at: null
                         })
-                        .eq('id', request.student_id)
+                        .eq('id', request.student_id);
 
-                    if (studentError) throw studentError
+                    if (studentError) throw studentError;
                 }
 
-                closeResponseModal()
-                loadRequests()
+                closeResponseModal();
+                loadRequests();
 
-                // تسجيل النشاط
                 await logActivity(
                     action === 'approved' ? 'موافقة على طلب فتح' : 'رفض طلب فتح',
                     `${action === 'approved' ? 'تمت الموافقة' : 'تم الرفض'} على طلب فتح التعديل للطالب`
-                )
+                );
 
-                alert(`✅ تم ${action === 'approved' ? 'الموافقة على' : 'رفض'} الطلب بنجاح`)
+                alert(`✅ تم ${action === 'approved' ? 'الموافقة على' : 'رفض'} الطلب بنجاح`);
 
             } catch (err) {
-                console.error('Error submitting response:', err)
-                alert('❌ حدث خطأ أثناء معالجة الطلب: ' + (err.message || ''))
+                console.error('Error submitting response:', err);
+                alert('❌ حدث خطأ أثناء معالجة الطلب: ' + (err.message || ''));
             }
         }
 
-        // =============================================
-        // ===== 10. تسجيل النشاطات =====
-        // =============================================
+        // ==========================================================
+        // 10. تسجيل النشاطات
+        // ==========================================================
         async function logActivity(action, details) {
             try {
-                const adminId = sessionStorage.getItem('adminId')
-                const adminEmail = sessionStorage.getItem('adminEmail') || 'unknown'
-                let ipAddress = 'unknown'
+                const adminId = sessionStorage.getItem('adminId');
+                const adminEmail = sessionStorage.getItem('adminEmail') || 'unknown';
+                let ipAddress = 'unknown';
                 try {
-                    const ipRes = await fetch('https://api.ipify.org?format=json')
-                    const ipData = await ipRes.json()
-                    ipAddress = ipData.ip
+                    const ipRes = await fetch('https://api.ipify.org?format=json');
+                    const ipData = await ipRes.json();
+                    ipAddress = ipData.ip;
                 } catch (e) {}
                 await supabaseClient
                     .from('admin_logs')
@@ -586,32 +576,31 @@
                         action: action,
                         details: details,
                         ip_address: ipAddress
-                    })
+                    });
             } catch (err) {
-                console.error('Error logging activity:', err)
+                console.error('Error logging activity:', err);
             }
         }
 
-        // =============================================
-        // ===== 11. تسجيل الخروج =====
-        // =============================================
+        // ==========================================================
+        // 11. تسجيل الخروج
+        // ==========================================================
         function logout() {
-            sessionStorage.clear()
-            window.location.href = 'admin-login.html'
+            sessionStorage.clear();
+            window.location.href = 'admin-login.html';
         }
 
-        // =============================================
-        // ===== 12. بدء تحميل البيانات =====
-        // =============================================
-        // تأكد من أن الصفحة جاهزة قبل تحميل البيانات
+        // ==========================================================
+        // 12. بدء تحميل البيانات (بعد أن تكون الصفحة جاهزة)
+        // ==========================================================
         document.addEventListener('DOMContentLoaded', function() {
-            loadRequests()
-        })
+            loadRequests();
+        });
 
-        // في حال لم يعمل DOMContentLoaded، نستخدم setTimeout
-        setTimeout(function() {
-            loadRequests()
-        }, 500)
+        // تأمين إضافي: لو لم يعمل DOMContentLoaded
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            loadRequests();
+        }
     </script>
 </body>
 </html>
