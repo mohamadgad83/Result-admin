@@ -6,42 +6,70 @@
     <title>لوحة التحكم - الأدمن</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
         /* ===== تنسيق البطاقات ===== */
         .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
             margin: 20px 0;
         }
         .stat-card {
             background: linear-gradient(135deg, #1e3c72, #2a5298);
             color: white;
-            padding: 20px;
+            padding: 18px;
             border-radius: 16px;
             text-align: center;
             transition: transform 0.3s, box-shadow 0.3s;
             cursor: default;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+            transform: rotate(25deg);
         }
         .stat-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
         .stat-card .number {
-            font-size: 32px;
+            font-size: 30px;
             font-weight: bold;
+            position: relative;
+            z-index: 1;
         }
         .stat-card .label {
-            font-size: 14px;
+            font-size: 13px;
             opacity: 0.85;
-            margin-top: 5px;
+            margin-top: 3px;
+            position: relative;
+            z-index: 1;
         }
         .stat-card .sub-info {
-            font-size: 11px;
+            font-size: 10px;
             opacity: 0.6;
-            margin-top: 5px;
+            margin-top: 3px;
             display: block;
+            position: relative;
+            z-index: 1;
+        }
+        .stat-card .stat-icon {
+            font-size: 28px;
+            position: absolute;
+            left: 10px;
+            bottom: 10px;
+            opacity: 0.2;
+            z-index: 0;
         }
         .stat-card.green { background: linear-gradient(135deg, #28a745, #20c997); }
         .stat-card.purple { background: linear-gradient(135deg, #6f42c1, #a855f7); }
@@ -49,16 +77,18 @@
         .stat-card.red { background: linear-gradient(135deg, #dc3545, #e83e8c); }
         .stat-card.teal { background: linear-gradient(135deg, #20c997, #0dcaf0); }
         .stat-card.info { background: linear-gradient(135deg, #17a2b8, #5bc0de); }
+        .stat-card.pink { background: linear-gradient(135deg, #e83e8c, #f06292); }
+        .stat-card.dark { background: linear-gradient(135deg, #343a40, #6c757d); }
 
         /* ===== الإجراءات السريعة ===== */
         .quick-actions {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
             margin: 20px 0;
         }
         .quick-action {
-            padding: 20px 15px;
+            padding: 18px 12px;
             background: #f8f9fa;
             border-radius: 12px;
             text-align: center;
@@ -66,21 +96,6 @@
             color: #1e3c72;
             border: 2px solid transparent;
             transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-        .quick-action::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            width: 0;
-            height: 3px;
-            background: #1e3c72;
-            transition: width 0.3s;
-        }
-        .quick-action:hover::after {
-            width: 100%;
         }
         .quick-action:hover {
             border-color: #1e3c72;
@@ -88,9 +103,9 @@
             transform: translateY(-3px);
             box-shadow: 0 4px 15px rgba(30, 60, 114, 0.12);
         }
-        .quick-action .icon { font-size: 28px; display: block; margin-bottom: 6px; }
-        .quick-action .title { font-weight: 600; font-size: 14px; }
-        .quick-action .desc { font-size: 11px; color: #999; display: block; margin-top: 3px; }
+        .quick-action .icon { font-size: 26px; display: block; margin-bottom: 4px; }
+        .quick-action .title { font-weight: 600; font-size: 13px; }
+        .quick-action .desc { font-size: 10px; color: #999; display: block; margin-top: 2px; }
         .quick-action.purple { border-color: #6f42c1; background: #f8f0ff; }
         .quick-action.purple:hover { background: #f0e6ff; border-color: #6f42c1; }
         .quick-action.purple .title { color: #6f42c1; }
@@ -103,6 +118,9 @@
         .quick-action.red { border-color: #dc3545; background: #fff5f5; }
         .quick-action.red:hover { background: #ffe8e8; border-color: #dc3545; }
         .quick-action.red .title { color: #dc3545; }
+        .quick-action.teal { border-color: #20c997; background: #f0fff8; }
+        .quick-action.teal:hover { background: #e0f5f0; border-color: #20c997; }
+        .quick-action.teal .title { color: #20c997; }
 
         /* ===== الهيدر ===== */
         .admin-header {
@@ -117,28 +135,29 @@
         }
         .admin-header .user-info {
             color: #666;
-            font-size: 14px;
+            font-size: 13px;
         }
         .admin-header .admin-title {
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap;
         }
         .admin-header .admin-title .badge {
             background: #28a745;
             color: white;
-            padding: 3px 10px;
+            padding: 2px 10px;
             border-radius: 20px;
             font-size: 11px;
         }
         .btn-logout {
-            padding: 10px 20px;
+            padding: 8px 18px;
             background: #dc3545;
             color: white;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             transition: all 0.3s;
         }
@@ -146,12 +165,120 @@
             background: #a71d2a;
             transform: scale(1.02);
         }
+        .btn-refresh {
+            padding: 8px 18px;
+            background: #17a2b8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-refresh:hover {
+            background: #138496;
+            transform: scale(1.02);
+        }
+
+        /* ===== الرسوم البيانية ===== */
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .chart-card {
+            background: white;
+            padding: 18px;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid #eee;
+        }
+        .chart-card h4 {
+            color: #1e3c72;
+            margin-bottom: 12px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .chart-card canvas {
+            max-height: 200px;
+            max-width: 100%;
+        }
+
+        /* ===== سجل النشاطات ===== */
+        .activity-section {
+            background: #f8f9fa;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #e9ecef;
+        }
+        .activity-section .activity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .activity-section .activity-header h4 {
+            color: #1e3c72;
+            margin: 0;
+        }
+        .activity-section .activity-header a {
+            color: #1e3c72;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .activity-section .activity-header a:hover {
+            text-decoration: underline;
+        }
+        .activity-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+        }
+        .activity-item:hover {
+            background: white;
+            border-radius: 8px;
+        }
+        .activity-item .activity-action {
+            font-weight: 600;
+            color: #1e3c72;
+            font-size: 13px;
+        }
+        .activity-item .activity-details {
+            color: #555;
+            font-size: 13px;
+            flex: 1;
+            margin: 0 12px;
+        }
+        .activity-item .activity-time {
+            color: #999;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+        .activity-item .activity-badge {
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        .activity-badge.student { background: #d4edda; color: #155724; }
+        .activity-badge.admin { background: #cce5ff; color: #004085; }
+        .activity-badge.system { background: #fff3cd; color: #856404; }
+        .activity-badge.other { background: #f8d7da; color: #721c24; }
 
         /* ===== قسم الاستيراد ===== */
         .import-section {
             background: #f8f9fa;
             border-radius: 16px;
-            padding: 25px;
+            padding: 20px;
             margin: 20px 0;
             border: 2px dashed #ccc;
             transition: all 0.3s;
@@ -170,42 +297,51 @@
         .import-section .import-header h4 {
             color: #1e3c72;
             margin: 0;
+            font-size: 16px;
         }
         .import-section .import-header .badge-info {
             background: #17a2b8;
             color: white;
-            padding: 3px 12px;
+            padding: 2px 12px;
             border-radius: 20px;
             font-size: 11px;
         }
+        .import-section .import-hint {
+            font-size: 12px;
+            color: #666;
+            margin: 8px 0 0;
+        }
+        .import-section .import-hint strong {
+            color: #dc3545;
+        }
         .import-section .file-upload-area {
             display: flex;
-            gap: 15px;
+            gap: 12px;
             flex-wrap: wrap;
             align-items: center;
-            margin-top: 15px;
+            margin-top: 12px;
         }
         .import-section .file-upload-area input[type="file"] {
             flex: 1;
-            min-width: 200px;
-            padding: 12px;
+            min-width: 180px;
+            padding: 10px;
             border: 2px solid #e0e0e0;
             border-radius: 10px;
             background: white;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
         }
         .import-section .file-upload-area input[type="file"]:hover {
             border-color: #1e3c72;
         }
         .import-section .file-upload-area .btn-import {
-            padding: 12px 30px;
+            padding: 10px 25px;
             background: #28a745;
             color: white;
             border: none;
             border-radius: 10px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
             transition: all 0.3s;
         }
@@ -219,13 +355,13 @@
             transform: none;
         }
         .import-section .file-upload-area .btn-template {
-            padding: 12px 25px;
+            padding: 10px 20px;
             background: #6c757d;
             color: white;
             border: none;
             border-radius: 10px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             transition: all 0.3s;
         }
@@ -233,8 +369,8 @@
             background: #5a6268;
         }
         .import-section .import-result {
-            margin-top: 15px;
-            padding: 15px;
+            margin-top: 12px;
+            padding: 12px;
             border-radius: 12px;
             display: none;
         }
@@ -254,30 +390,30 @@
         }
         .import-section .import-result .stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px;
-            margin-top: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 8px;
+            margin-top: 8px;
         }
         .import-section .import-result .stats .stat-item {
             text-align: center;
-            padding: 8px;
+            padding: 6px;
             background: white;
             border-radius: 8px;
         }
         .import-section .import-result .stats .stat-item .num {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 700;
         }
         .import-section .import-result .stats .stat-item .lbl {
-            font-size: 12px;
+            font-size: 11px;
             color: #666;
         }
 
-        /* ===== إشعارات ===== */
+        /* ===== الإشعارات ===== */
         .notification-bell {
             position: relative;
             cursor: pointer;
-            font-size: 24px;
+            font-size: 22px;
             background: none;
             border: none;
             padding: 5px;
@@ -289,10 +425,10 @@
             background: #dc3545;
             color: white;
             border-radius: 50%;
-            padding: 2px 7px;
-            font-size: 11px;
+            padding: 1px 6px;
+            font-size: 10px;
             font-weight: 700;
-            min-width: 18px;
+            min-width: 16px;
             text-align: center;
             display: none;
         }
@@ -310,10 +446,20 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* ===== نظام المعلومات ===== */
+        .system-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            font-size: 13px;
+            color: #666;
+        }
+
         /* ===== التوافق ===== */
-        @media (max-width: 600px) {
+        @media (max-width: 768px) {
+            .charts-section { grid-template-columns: 1fr; }
             .dashboard-grid { grid-template-columns: 1fr 1fr; }
-            .quick-actions { grid-template-columns: 1fr; }
+            .quick-actions { grid-template-columns: 1fr 1fr; }
             .import-section .file-upload-area {
                 flex-direction: column;
                 align-items: stretch;
@@ -322,9 +468,11 @@
                 min-width: unset;
             }
             .admin-header .admin-title { flex-direction: column; align-items: flex-start; }
+            .system-info { grid-template-columns: 1fr; }
         }
-        @media (max-width: 400px) {
+        @media (max-width: 480px) {
             .dashboard-grid { grid-template-columns: 1fr; }
+            .quick-actions { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -334,12 +482,13 @@
             <!-- ===== الهيدر ===== -->
             <div class="admin-header">
                 <div class="admin-title">
-                    <h1 style="margin:0;">📊 لوحة التحكم</h1>
+                    <h1 style="margin:0;font-size:22px;">📊 لوحة التحكم</h1>
                     <span class="badge">مدير النظام</span>
-                    <div class="user-info" id="adminInfo">مرحباً بك في لوحة الإدارة</div>
+                    <div class="user-info" id="adminInfo">مرحباً بك</div>
                 </div>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-                    <a href="index.html" class="btn-primary" style="padding:10px 20px;font-size:14px;width:auto;">🏠 الرئيسية</a>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                    <button onclick="refreshData()" class="btn-refresh">🔄 تحديث</button>
+                    <a href="index.html" class="btn-primary" style="padding:8px 16px;font-size:13px;width:auto;">🏠 الرئيسية</a>
                     <button onclick="logout()" class="btn-logout">🚪 خروج</button>
                 </div>
             </div>
@@ -347,34 +496,52 @@
             <!-- ===== الإحصائيات ===== -->
             <div class="dashboard-grid" id="statsGrid">
                 <div class="stat-card">
+                    <span class="stat-icon">👨‍🎓</span>
                     <div class="number" id="totalStudents">0</div>
-                    <div class="label">👨‍🎓 إجمالي الطلاب</div>
-                    <span class="sub-info" id="totalSubInfo">في النظام</span>
+                    <div class="label">إجمالي الطلاب</div>
+                    <span class="sub-info">في النظام</span>
                 </div>
                 <div class="stat-card green">
+                    <span class="stat-icon">✅</span>
                     <div class="number" id="lockedStudents">0</div>
-                    <div class="label">✅ الطلاب المسجلين</div>
+                    <div class="label">مسجلين</div>
                     <span class="sub-info">تم تسجيل رغباتهم</span>
                 </div>
                 <div class="stat-card orange">
+                    <span class="stat-icon">🔓</span>
                     <div class="number" id="unlockedStudents">0</div>
-                    <div class="label">🔓 مفتوح للتعديل</div>
+                    <div class="label">مفتوح للتعديل</div>
                     <span class="sub-info">لم يسجلوا بعد</span>
                 </div>
                 <div class="stat-card purple">
+                    <span class="stat-icon">📅</span>
                     <div class="number" id="todayStudents">0</div>
-                    <div class="label">📅 سجلوا اليوم</div>
+                    <div class="label">سجلوا اليوم</div>
                     <span class="sub-info">آخر 24 ساعة</span>
                 </div>
                 <div class="stat-card teal">
+                    <span class="stat-icon">📝</span>
                     <div class="number" id="totalFields">0</div>
-                    <div class="label">📝 الحقول الديناميكية</div>
+                    <div class="label">حقول ديناميكية</div>
                     <span class="sub-info">قابلة للتخصيص</span>
                 </div>
                 <div class="stat-card info">
+                    <span class="stat-icon">📚</span>
                     <div class="number" id="baccalaureateCount">0</div>
-                    <div class="label">📚 بكالوريا</div>
+                    <div class="label">بكالوريا</div>
                     <span class="sub-info">نظام المسارات</span>
+                </div>
+                <div class="stat-card pink">
+                    <span class="stat-icon">🔬</span>
+                    <div class="number" id="scienceCount">0</div>
+                    <div class="label">علمي</div>
+                    <span class="sub-info">طلاب الثانوي</span>
+                </div>
+                <div class="stat-card dark">
+                    <span class="stat-icon">📖</span>
+                    <div class="number" id="artsCount">0</div>
+                    <div class="label">أدبي</div>
+                    <span class="sub-info">طلاب الثانوي</span>
                 </div>
             </div>
 
@@ -384,25 +551,57 @@
                 <a href="admin-students.html" class="quick-action">
                     <span class="icon">👨‍🎓</span>
                     <span class="title">إدارة الطلاب</span>
-                    <span class="desc">عرض وتعديل الطلاب</span>
+                    <span class="desc">عرض وتعديل</span>
                 </a>
                 <a href="admin-fields.html" class="quick-action">
                     <span class="icon">📝</span>
                     <span class="title">إدارة الحقول</span>
-                    <span class="desc">إضافة حقول ديناميكية</span>
+                    <span class="desc">حقول ديناميكية</span>
                 </a>
                 <a href="admin-import-export.html" class="quick-action green">
                     <span class="icon">📤</span>
                     <span class="title">استيراد/تصدير</span>
                     <span class="desc">Excel - CSV</span>
                 </a>
-                <!-- ===== تبويب التقارير المتقدمة ===== -->
                 <a href="admin-reports.html" class="quick-action purple">
                     <span class="icon">📊</span>
                     <span class="title">تقارير متقدمة</span>
                     <span class="desc">تحليلات وإحصائيات</span>
                 </a>
-               
+                <a href="admin-logs.html" class="quick-action orange">
+                    <span class="icon">📋</span>
+                    <span class="title">سجل النشاطات</span>
+                    <span class="desc">تتبع العمليات</span>
+                </a>
+                <a href="admin-students.html" class="quick-action teal">
+                    <span class="icon">🔓</span>
+                    <span class="title">فتح الكل</span>
+                    <span class="desc">تعديل جماعي</span>
+                </a>
+            </div>
+
+            <!-- ===== الرسوم البيانية ===== -->
+            <div class="charts-section">
+                <div class="chart-card">
+                    <h4>📊 توزيع التشعيبات</h4>
+                    <canvas id="streamChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h4>📊 توزيع التخصصات (ثانوي)</h4>
+                    <canvas id="specializationChart"></canvas>
+                </div>
+            </div>
+
+            <!-- ===== سجل النشاطات ===== -->
+            <div class="activity-section" id="activitySection">
+                <div class="activity-header">
+                    <h4>📋 آخر النشاطات</h4>
+                    <a href="admin-logs.html">عرض الكل →</a>
+                </div>
+                <div id="activityList">
+                    <div style="text-align:center;padding:20px;color:#999;">⏳ جاري التحميل...</div>
+                </div>
+            </div>
 
             <!-- ===== قسم استيراد ملف الطلاب ===== -->
             <div class="import-section" id="importSection">
@@ -410,8 +609,9 @@
                     <h4>📤 استيراد بيانات الطلاب</h4>
                     <span class="badge-info">Excel - CSV</span>
                 </div>
-                <p style="color:#666;font-size:13px;margin:10px 0 0;">
-                    قم برفع ملف Excel أو CSV يحتوي على بيانات الطلاب الأساسية
+                <p class="import-hint">
+                    <strong>3 أعمدة فقط:</strong> الكود، الرقم القومي، الاسم
+                    <span style="color:#6c757d;margin-right:10px;">(سيتم تعيين التشعيب تلقائياً إلى "ثانوي")</span>
                 </p>
                 <div class="file-upload-area">
                     <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
@@ -425,12 +625,14 @@
 
             <!-- ===== معلومات النظام ===== -->
             <div style="margin-top:20px;padding:15px;background:#f8f9fa;border-radius:12px;">
-                <h4 style="color:#1e3c72;">ℹ️ معلومات النظام</h4>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:14px;color:#666;">
-                    <span>🏫 نظام: تسجيل رغبات طلاب الصف الثاني الثانوي</span>
+                <h4 style="color:#1e3c72;font-size:15px;margin:0 0 10px;">ℹ️ معلومات النظام</h4>
+                <div class="system-info">
+                    <span>🏫 نظام: تسجيل رغبات الصف الثاني الثانوي</span>
                     <span>📍 المدرسة: دشنا الثانوية</span>
                     <span>🟢 الحالة: <span style="color:#28a745;">يعمل</span></span>
                     <span>🕐 آخر تحديث: <span id="lastUpdate"></span></span>
+                    <span>👤 الأدمن: <span id="adminEmailDisplay"></span></span>
+                    <span>📊 عدد الطلاب: <span id="totalStudentsDisplay">0</span></span>
                 </div>
             </div>
         </div>
@@ -451,6 +653,9 @@
 
         const adminEmail = sessionStorage.getItem('adminEmail') || ''
         document.getElementById('adminInfo').textContent = '👑 ' + adminEmail
+        document.getElementById('adminEmailDisplay').textContent = adminEmail
+
+        let chartInstances = {}
 
         // ===== تحميل الإحصائيات =====
         async function loadStats() {
@@ -467,6 +672,7 @@
                 const locked = lockedRes.count || 0
 
                 document.getElementById('totalStudents').textContent = total
+                document.getElementById('totalStudentsDisplay').textContent = total
                 document.getElementById('lockedStudents').textContent = locked
                 document.getElementById('unlockedStudents').textContent = total - locked
                 document.getElementById('totalFields').textContent = fieldsRes.count || 0
@@ -479,10 +685,154 @@
                     .eq('stream', 'بكالوريا')
                 document.getElementById('baccalaureateCount').textContent = bacCount || 0
 
-                document.getElementById('lastUpdate').textContent = new Date().toLocaleDateString('ar-EG')
+                // إحصائيات علمي/أدبي
+                const { count: scienceCount } = await supabaseClient
+                    .from('students')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('stream', 'ثانوي')
+                    .eq('specialization', 'علمي')
+                document.getElementById('scienceCount').textContent = scienceCount || 0
+
+                const { count: artsCount } = await supabaseClient
+                    .from('students')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('stream', 'ثانوي')
+                    .eq('specialization', 'أدبي')
+                document.getElementById('artsCount').textContent = artsCount || 0
+
+                document.getElementById('lastUpdate').textContent = new Date().toLocaleDateString('ar-EG') + ' ' + new Date().toLocaleTimeString('ar-EG')
+
+                // تحميل الرسوم البيانية
+                loadCharts()
 
             } catch (err) {
                 console.error('Error loading stats:', err)
+            }
+        }
+
+        // ===== الرسوم البيانية =====
+        async function loadCharts() {
+            try {
+                const { data: students } = await supabaseClient
+                    .from('students')
+                    .select('stream, specialization')
+
+                if (!students || students.length === 0) {
+                    document.querySelectorAll('.chart-card canvas').forEach(c => {
+                        c.style.display = 'none'
+                    })
+                    return
+                }
+
+                // 1. رسم بياني للتشعيبات
+                const streams = {
+                    'ثانوي': students.filter(s => s.stream === 'ثانوي').length,
+                    'بكالوريا': students.filter(s => s.stream === 'بكالوريا').length
+                }
+
+                if (chartInstances.stream) chartInstances.stream.destroy()
+                chartInstances.stream = new Chart(document.getElementById('streamChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['🎓 ثانوي', '📚 بكالوريا'],
+                        datasets: [{
+                            data: [streams['ثانوي'], streams['بكالوريا']],
+                            backgroundColor: ['#1e3c72', '#28a745'],
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { font: { size: 12 } }
+                            }
+                        }
+                    }
+                })
+
+                // 2. رسم بياني للتخصصات
+                const ثانويطلاب = students.filter(s => s.stream === 'ثانوي')
+                const specs = {
+                    'علمي': ثانويطلاب.filter(s => s.specialization === 'علمي').length,
+                    'أدبي': ثانويطلاب.filter(s => s.specialization === 'أدبي').length
+                }
+
+                if (chartInstances.specialization) chartInstances.specialization.destroy()
+                chartInstances.specialization = new Chart(document.getElementById('specializationChart'), {
+                    type: 'pie',
+                    data: {
+                        labels: ['🔬 علمي', '📝 أدبي'],
+                        datasets: [{
+                            data: [specs['علمي'], specs['أدبي']],
+                            backgroundColor: ['#6f42c1', '#fd7e14'],
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { font: { size: 12 } }
+                            }
+                        }
+                    }
+                })
+
+            } catch (err) {
+                console.error('Error loading charts:', err)
+            }
+        }
+
+        // ===== تحميل آخر النشاطات =====
+        async function loadRecentActivities() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('admin_logs')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(10)
+
+                if (error) throw error
+
+                const container = document.getElementById('activityList')
+
+                if (!data || data.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align:center;padding:20px;color:#999;">
+                            <span style="font-size:30px;display:block;">📭</span>
+                            لا توجد نشاطات مسجلة
+                        </div>
+                    `
+                    return
+                }
+
+                container.innerHTML = data.map(log => {
+                    const time = new Date(log.created_at).toLocaleString('ar-EG')
+                    const badgeClass = log.action.includes('طالب') ? 'student' :
+                                     log.action.includes('دخول') || log.action.includes('خروج') ? 'admin' :
+                                     log.action.includes('تصدير') || log.action.includes('استيراد') ? 'system' : 'other'
+
+                    return `
+                        <div class="activity-item">
+                            <span class="activity-badge ${badgeClass}">${log.action}</span>
+                            <span class="activity-details">${log.details || ''}</span>
+                            <span class="activity-time">🕐 ${time}</span>
+                        </div>
+                    `
+                }).join('')
+
+            } catch (err) {
+                console.error('Error loading activities:', err)
+                document.getElementById('activityList').innerHTML = `
+                    <div style="text-align:center;padding:20px;color:#999;">
+                        ❌ حدث خطأ في تحميل النشاطات
+                    </div>
+                `
             }
         }
 
@@ -514,8 +864,8 @@
                 let errorCount = 0
                 const errors = []
 
-                // الحقول المطلوبة
-                const requiredFields = ['الكود', 'الرقم القومي', 'الاسم', 'التشعيب']
+                // الأعمدة المطلوبة (3 أعمدة فقط)
+                const requiredFields = ['الكود', 'الرقم القومي', 'الاسم']
 
                 for (let i = 0; i < rows.length; i++) {
                     const row = rows[i]
@@ -530,11 +880,15 @@
                             continue
                         }
 
+                        const studentCode = String(row['الكود']).trim()
+                        const nationalId = String(row['الرقم القومي']).trim()
+                        const fullName = String(row['الاسم']).trim()
+
                         // التحقق من التكرار
                         const { data: existing } = await supabaseClient
                             .from('students')
                             .select('id')
-                            .or(`student_code.eq.${String(row['الكود'])},national_id.eq.${String(row['الرقم القومي'])}`)
+                            .or(`student_code.eq.${studentCode},national_id.eq.${nationalId}`)
                             .maybeSingle()
 
                         if (existing) {
@@ -543,25 +897,13 @@
                             continue
                         }
 
-                        // إعداد بيانات الطالب
+                        // إعداد بيانات الطالب (بدون تشعيب، بدون قفل)
                         const studentData = {
-                            student_code: String(row['الكود']).trim(),
-                            national_id: String(row['الرقم القومي']).trim(),
-                            full_name: String(row['الاسم']).trim(),
-                            stream: row['التشعيب'],
-                            is_locked: true,
-                            submitted_at: new Date().toISOString()
-                        }
-
-                        // معالجة التخصص أو المسار
-                        if (row['التشعيب'] === 'ثانوي') {
-                            studentData.specialization = row['التخصص/المسار'] || null
-                            studentData.track = null
-                            studentData.optional_subject = null
-                        } else if (row['التشعيب'] === 'بكالوريا') {
-                            studentData.specialization = null
-                            studentData.track = row['التخصص/المسار'] || null
-                            studentData.optional_subject = row['المادة الاختيارية'] || null
+                            student_code: studentCode,
+                            national_id: nationalId,
+                            full_name: fullName,
+                            // لا نضع stream، is_locked، submitted_at
+                            // ستبقى null/false بشكل افتراضي
                         }
 
                         const { error } = await supabaseClient
@@ -635,28 +977,33 @@
         // ===== تحميل نموذج Excel =====
         function downloadTemplate() {
             const template = [
-                ['الكود', 'الرقم القومي', 'الاسم', 'التشعيب', 'التخصص/المسار', 'المادة الاختيارية'],
-                ['101', '12345678901234', 'أحمد محمد', 'ثانوي', 'علمي', ''],
-                ['102', '12345678901235', 'سارة علي', 'بكالوريا', 'مسار الطب', 'فيزياء'],
-                ['103', '12345678901236', 'محمد خالد', 'ثانوي', 'أدبي', ''],
-                ['104', '12345678901237', 'نورا أحمد', 'بكالوريا', 'مسار الهندسة', 'برمجة']
+                ['الكود', 'الرقم القومي', 'الاسم'],
+                ['101', '12345678901234', 'أحمد محمد'],
+                ['102', '12345678901235', 'سارة علي'],
+                ['103', '12345678901236', 'محمد خالد'],
+                ['104', '12345678901237', 'نورا أحمد']
             ]
 
             const wb = XLSX.utils.book_new()
             const ws = XLSX.utils.aoa_to_sheet(template)
-            
-            // تعيين عرض الأعمدة
             ws['!cols'] = [
-                { wch: 10 }, // الكود
-                { wch: 16 }, // الرقم القومي
-                { wch: 20 }, // الاسم
-                { wch: 12 }, // التشعيب
-                { wch: 20 }, // التخصص/المسار
-                { wch: 18 }  // المادة الاختيارية
+                { wch: 12 },
+                { wch: 18 },
+                { wch: 25 }
             ]
-
             XLSX.utils.book_append_sheet(wb, ws, 'الطلاب')
             XLSX.writeFile(wb, 'نموذج_استيراد_طلاب.xlsx')
+        }
+
+        // ===== تحديث البيانات =====
+        function refreshData() {
+            loadStats()
+            loadRecentActivities()
+            const btn = document.querySelector('.btn-refresh')
+            btn.textContent = '⏳ جاري...'
+            setTimeout(() => {
+                btn.textContent = '🔄 تحديث'
+            }, 1000)
         }
 
         // ===== تسجيل النشاطات =====
@@ -694,6 +1041,7 @@
 
         // ===== تحميل البيانات =====
         loadStats()
+        loadRecentActivities()
     </script>
 </body>
 </html>
