@@ -543,6 +543,13 @@
                     <div class="label">أدبي</div>
                     <span class="sub-info">طلاب الثانوي</span>
                 </div>
+                <!-- ===== إضافة بطاقة الطلبات المعلقة ===== -->
+                <div class="stat-card orange" style="cursor:pointer;" onclick="window.location.href='admin-requests.html'">
+                    <span class="stat-icon">📩</span>
+                    <div class="number" id="pendingRequests">0</div>
+                    <div class="label">طلبات فتح التعديل</div>
+                    <span class="sub-info">قيد الانتظار</span>
+                </div>
             </div>
 
             <!-- ===== الإجراءات السريعة ===== -->
@@ -577,6 +584,12 @@
                     <span class="icon">🔓</span>
                     <span class="title">فتح الكل</span>
                     <span class="desc">تعديل جماعي</span>
+                </a>
+                <!-- ===== إضافة رابط طلبات الفتح ===== -->
+                <a href="admin-requests.html" class="quick-action orange">
+                    <span class="icon">📩</span>
+                    <span class="title">طلبات الفتح</span>
+                    <span class="desc">إدارة طلبات الطلاب</span>
                 </a>
             </div>
 
@@ -705,8 +718,35 @@
                 // تحميل الرسوم البيانية
                 loadCharts()
 
+                // تحميل عدد الطلبات المعلقة
+                loadPendingRequests()
+
             } catch (err) {
                 console.error('Error loading stats:', err)
+            }
+        }
+
+        // ===== تحميل عدد الطلبات المعلقة =====
+        async function loadPendingRequests() {
+            try {
+                const { count, error } = await supabaseClient
+                    .from('reopen_requests')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('status', 'pending');
+
+                if (error) throw error;
+                const el = document.getElementById('pendingRequests');
+                if (el) {
+                    el.textContent = count || 0;
+                    // إذا كان هناك طلبات، نضيف تأثير وميض
+                    if (count > 0) {
+                        el.style.animation = 'pulse 1.5s infinite';
+                    } else {
+                        el.style.animation = 'none';
+                    }
+                }
+            } catch (err) {
+                console.error('Error loading pending requests:', err);
             }
         }
 
