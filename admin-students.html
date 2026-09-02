@@ -5,36 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>إدارة الطلاب - مدرسة دشنا الثانوية</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
-        .table-container {
-            overflow-x: auto;
-            margin: 20px 0;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-        table th {
-            background: #1e3c72;
-            color: white;
-            padding: 12px 10px;
-            text-align: center;
-            white-space: nowrap;
-        }
-        table td {
-            padding: 10px 10px;
-            border-bottom: 1px solid #eee;
-            text-align: center;
-            vertical-align: middle;
-        }
-        table tr:hover {
-            background: #f8f9fa;
-        }
-        table tr.selected {
-            background: #d4edda;
-        }
+        /* ===== نفس الأنماط السابقة مع إضافة تنسيق زر التصدير ===== */
+        .table-container { overflow-x: auto; margin: 20px 0; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        table th { background: #1e3c72; color: white; padding: 12px 10px; text-align: center; white-space: nowrap; }
+        table td { padding: 10px 10px; border-bottom: 1px solid #eee; text-align: center; vertical-align: middle; }
+        table tr:hover { background: #f8f9fa; }
+        table tr.selected { background: #d4edda; }
 
         .search-bar {
             display: flex;
@@ -63,14 +43,8 @@
             font-weight: 600;
             display: inline-block;
         }
-        .status-locked {
-            background: #d4edda;
-            color: #155724;
-        }
-        .status-unlocked {
-            background: #fff3cd;
-            color: #856404;
-        }
+        .status-locked { background: #d4edda; color: #155724; }
+        .status-unlocked { background: #fff3cd; color: #856404; }
         .action-link {
             color: #1e3c72;
             text-decoration: none;
@@ -80,19 +54,13 @@
             border-radius: 6px;
             transition: all 0.2s;
         }
-        .action-link:hover {
-            text-decoration: underline;
-        }
+        .action-link:hover { text-decoration: underline; }
         .action-link.view { color: #1e3c72; }
         .action-link.unlock { color: #28a745; }
         .action-link.lock { color: #dc3545; }
         .action-link.pdf { color: #17a2b8; }
 
-        .empty-msg {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
+        .empty-msg { text-align: center; padding: 40px; color: #999; }
 
         .admin-header {
             display: flex;
@@ -115,9 +83,7 @@
             text-decoration: none;
             display: inline-block;
         }
-        .btn-back:hover {
-            background: #5a6268;
-        }
+        .btn-back:hover { background: #5a6268; }
         .btn-logout {
             padding: 10px 20px;
             background: #dc3545;
@@ -127,9 +93,7 @@
             cursor: pointer;
             font-size: 14px;
         }
-        .btn-logout:hover {
-            background: #a71d2a;
-        }
+        .btn-logout:hover { background: #a71d2a; }
 
         /* ===== كروت الإحصائيات ===== */
         .stats-mini {
@@ -145,10 +109,7 @@
             font-size: 14px;
             color: #555;
         }
-        .stats-mini .stat strong {
-            color: #1e3c72;
-            font-size: 18px;
-        }
+        .stats-mini .stat strong { color: #1e3c72; font-size: 18px; }
         .stats-mini .stat .dot {
             display: inline-block;
             width: 10px;
@@ -159,7 +120,7 @@
         .stats-mini .stat .dot.green { background: #28a745; }
         .stats-mini .stat .dot.yellow { background: #ffc107; }
 
-        /* ===== كروت الإحصائيات الإضافية (مواد ومسارات) ===== */
+        /* ===== كروت المواد والمسارات ===== */
         .extra-stats-grid {
             display: flex;
             flex-wrap: wrap;
@@ -200,13 +161,9 @@
             border-left: 2px solid #ddd;
             padding-left: 10px;
         }
-        .extra-stats-grid .empty-msg {
-            color: #999;
-            font-size: 13px;
-            padding: 5px;
-        }
+        .extra-stats-grid .empty-msg { color: #999; font-size: 13px; padding: 5px; }
 
-        /* ===== أدوات التحكم الجماعي ===== */
+        /* ===== أدوات التحكم الجماعي (مع زر التصدير) ===== */
         .bulk-actions {
             display: flex;
             flex-wrap: wrap;
@@ -223,9 +180,7 @@
             color: #555;
             flex: 1;
         }
-        .bulk-actions .info strong {
-            color: #1e3c72;
-        }
+        .bulk-actions .info strong { color: #1e3c72; }
         .bulk-actions .btn-bulk {
             padding: 8px 20px;
             border: none;
@@ -234,37 +189,17 @@
             cursor: pointer;
             transition: all 0.3s;
         }
-        .bulk-actions .btn-bulk:hover {
-            transform: scale(1.02);
-        }
-        .bulk-actions .btn-bulk.unlock {
-            background: #28a745;
-            color: white;
-        }
-        .bulk-actions .btn-bulk.unlock:hover {
-            background: #1e7e34;
-        }
-        .bulk-actions .btn-bulk.lock {
-            background: #dc3545;
-            color: white;
-        }
-        .bulk-actions .btn-bulk.lock:hover {
-            background: #a71d2a;
-        }
-        .bulk-actions .btn-bulk.select-all {
-            background: #6c757d;
-            color: white;
-        }
-        .bulk-actions .btn-bulk.select-all:hover {
-            background: #5a6268;
-        }
-        .bulk-actions .btn-bulk.deselect-all {
-            background: #6c757d;
-            color: white;
-        }
-        .bulk-actions .btn-bulk.deselect-all:hover {
-            background: #5a6268;
-        }
+        .bulk-actions .btn-bulk:hover { transform: scale(1.02); }
+        .bulk-actions .btn-bulk.unlock { background: #28a745; color: white; }
+        .bulk-actions .btn-bulk.unlock:hover { background: #1e7e34; }
+        .bulk-actions .btn-bulk.lock { background: #dc3545; color: white; }
+        .bulk-actions .btn-bulk.lock:hover { background: #a71d2a; }
+        .bulk-actions .btn-bulk.select-all { background: #6c757d; color: white; }
+        .bulk-actions .btn-bulk.select-all:hover { background: #5a6268; }
+        .bulk-actions .btn-bulk.deselect-all { background: #6c757d; color: white; }
+        .bulk-actions .btn-bulk.deselect-all:hover { background: #5a6268; }
+        .bulk-actions .btn-bulk.export { background: #17a2b8; color: white; }
+        .bulk-actions .btn-bulk.export:hover { background: #138496; }
         .bulk-actions .btn-bulk:disabled {
             opacity: 0.5;
             cursor: not-allowed;
@@ -284,6 +219,7 @@
             accent-color: #1e3c72;
         }
 
+        /* ===== Toast ===== */
         .toast-container {
             position: fixed;
             bottom: 20px;
@@ -356,13 +292,13 @@
                 <div class="stat">✅ المحدد: <strong id="selectedCount">0</strong></div>
             </div>
 
-            <!-- ===== كروت إحصائيات المواد الاختيارية والمسارات (جديد) ===== -->
+            <!-- ===== كروت إحصائيات المواد الاختيارية والمسارات ===== -->
             <div class="extra-stats-grid" id="extraStatsGrid">
                 <span class="section-label">📊 إحصائيات إضافية</span>
                 <span class="empty-msg">⏳ جاري التحميل...</span>
             </div>
 
-            <!-- ===== البحث والفلترة (مُوسّعة) ===== -->
+            <!-- ===== البحث والفلترة ===== -->
             <div class="search-bar">
                 <input type="text" id="searchInput" placeholder="🔍 بحث بالاسم، الكود، أو الرقم القومي..." onkeyup="filterStudents()">
                 <select id="filterStream" onchange="filterStudents()">
@@ -375,7 +311,6 @@
                     <option value="locked">🔒 مقفل</option>
                     <option value="unlocked">🔓 مفتوح</option>
                 </select>
-                <!-- فلاتر جديدة -->
                 <select id="filterOptional" onchange="filterStudents()">
                     <option value="">كل المواد الاختيارية</option>
                 </select>
@@ -385,7 +320,7 @@
                 <button onclick="resetFilters()" style="padding:10px 20px;background:#6c757d;color:white;border:none;border-radius:10px;cursor:pointer;">مسح الكل</button>
             </div>
 
-            <!-- ===== أدوات التحكم الجماعي ===== -->
+            <!-- ===== أدوات التحكم الجماعي (مع زر التصدير) ===== -->
             <div class="bulk-actions" id="bulkActions">
                 <div class="info">
                     <span>✅ المحدد: <span class="selected-count" id="selectedCountDisplay">0</span> طالب</span>
@@ -396,6 +331,7 @@
                 <div>
                     <button onclick="bulkUnlock()" class="btn-bulk unlock" id="bulkUnlockBtn">🔓 فتح التسجيل</button>
                     <button onclick="bulkLock()" class="btn-bulk lock" id="bulkLockBtn">🔒 غلق التسجيل</button>
+                    <button onclick="exportFilteredStudents()" class="btn-bulk export" id="exportBtn">📥 تصدير Excel</button>
                 </div>
             </div>
 
@@ -404,7 +340,7 @@
                 عدد الطلاب: <span id="studentsCount">0</span>
             </div>
 
-            <!-- ===== جدول الطلاب (مُوسّع بعمود المادة الاختيارية) ===== -->
+            <!-- ===== جدول الطلاب ===== -->
             <div class="table-container">
                 <table>
                     <thead>
@@ -417,7 +353,7 @@
                             <th>الكود</th>
                             <th>التشعيب</th>
                             <th>التخصص/المسار</th>
-                            <th>المادة الاختيارية</th> <!-- عمود جديد -->
+                            <th>المادة الاختيارية</th>
                             <th>الحالة</th>
                             <th>الإجراءات</th>
                         </tr>
@@ -436,6 +372,7 @@
                     <li>🔓 <strong>فتح التسجيل</strong> - يسمح للطلاب المحددين بتعديل رغباتهم</li>
                     <li>🔒 <strong>غلق التسجيل</strong> - يمنع الطلاب المحددين من التعديل</li>
                     <li>📄 يمكنك أيضاً فتح/غلق طالب فردي من عمود الإجراءات</li>
+                    <li>📥 زر <strong>تصدير Excel</strong> يصدر البيانات حسب الفلتر الحالي</li>
                 </ul>
             </div>
         </div>
@@ -488,8 +425,8 @@
                 selectedStudents.clear()
                 renderTable()
                 updateStats()
-                updateExtraStats() // تحديث الكروت الجديدة
-                populateFilterOptions() // تعبئة خيارات الفلاتر الجديدة
+                updateExtraStats()
+                populateFilterOptions()
             } catch (err) {
                 console.error('Error loading students:', err)
                 document.getElementById('studentsTableBody').innerHTML = 
@@ -511,12 +448,11 @@
             document.getElementById('selectedCountDisplay').textContent = selected
         }
 
-        // ===== تحديث كروت المواد الاختيارية والمسارات (جديد) =====
+        // ===== تحديث كروت المواد والمسارات =====
         function updateExtraStats() {
             const container = document.getElementById('extraStatsGrid');
             const bacStudents = allStudents.filter(s => s.stream === 'بكالوريا');
 
-            // حساب تكرارات المواد
             const optCounts = {};
             bacStudents.forEach(s => {
                 if (s.optional_subject) {
@@ -524,7 +460,6 @@
                 }
             });
 
-            // حساب تكرارات المسارات
             const trackCounts = {};
             bacStudents.forEach(s => {
                 if (s.track) {
@@ -534,7 +469,6 @@
 
             let html = `<span class="section-label">📊 إحصائيات إضافية</span>`;
 
-            // عرض المواد
             const sortedOpts = Object.entries(optCounts).sort((a, b) => b[1] - a[1]);
             if (sortedOpts.length > 0) {
                 sortedOpts.forEach(([name, count]) => {
@@ -544,12 +478,10 @@
                 html += `<span class="empty-msg" style="margin:0 5px;">لا توجد مواد اختيارية مسجلة</span>`;
             }
 
-            // فاصل بسيط بين المجموعتين
             if (sortedOpts.length > 0 && Object.keys(trackCounts).length > 0) {
                 html += `<span style="color:#ddd; margin: 0 5px;">|</span>`;
             }
 
-            // عرض المسارات
             const sortedTracks = Object.entries(trackCounts).sort((a, b) => b[1] - a[1]);
             if (sortedTracks.length > 0) {
                 sortedTracks.forEach(([name, count]) => {
@@ -562,9 +494,8 @@
             container.innerHTML = html;
         }
 
-        // ===== تعبئة خيارات الفلاتر الجديدة =====
+        // ===== تعبئة خيارات الفلاتر =====
         function populateFilterOptions() {
-            // المواد الاختيارية
             const optSelect = document.getElementById('filterOptional');
             const optSet = new Set();
             allStudents.forEach(s => { if (s.optional_subject) optSet.add(s.optional_subject); });
@@ -574,7 +505,6 @@
                 optSelect.innerHTML += `<option value="${opt}">${opt}</option>`;
             });
 
-            // المسارات
             const trackSelect = document.getElementById('filterTrack');
             const trackSet = new Set();
             allStudents.forEach(s => { if (s.track) trackSet.add(s.track); });
@@ -585,7 +515,7 @@
             });
         }
 
-        // ===== عرض الجدول (مع عمود المادة الاختيارية) =====
+        // ===== عرض الجدول =====
         function renderTable() {
             const tbody = document.getElementById('studentsTableBody')
             document.getElementById('studentsCount').textContent = filteredStudents.length
@@ -643,7 +573,7 @@
             `}).join('')
         }
 
-        // ===== فلترة الطلاب (مُوسّعة) =====
+        // ===== فلترة الطلاب =====
         function filterStudents() {
             const search = document.getElementById('searchInput').value.toLowerCase()
             const stream = document.getElementById('filterStream').value
@@ -666,8 +596,6 @@
                 return matchSearch && matchStream && matchStatus && matchOptional && matchTrack
             })
 
-            // إعادة تعيين التحديدات بما يتناسب مع الفلترة الجديدة (اختياري)
-            // نقوم بإزالة التحديدات القديمة التي لم تعد في القائمة
             const filteredIds = new Set(filteredStudents.map(s => s.id));
             selectedStudents.forEach(id => {
                 if (!filteredIds.has(id)) {
@@ -717,10 +645,64 @@
 
         function toggleSelectAll() {
             const checked = document.getElementById('selectAllCheckbox').checked
-            if (checked) {
-                selectAll()
-            } else {
-                deselectAll()
+            if (checked) selectAll()
+            else deselectAll()
+        }
+
+        // ===== دالة تصدير Excel حسب الفلتر الحالي (جديد) =====
+        async function exportFilteredStudents() {
+            const btn = document.getElementById('exportBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ جاري...';
+
+            try {
+                if (filteredStudents.length === 0) {
+                    showToast('⚠️ لا توجد بيانات للتصدير', 'error');
+                    btn.disabled = false;
+                    btn.textContent = '📥 تصدير Excel';
+                    return;
+                }
+
+                // بناء بيانات التصدير
+                const exportData = filteredStudents.map((student, index) => ({
+                    '#': index + 1,
+                    'الاسم': student.full_name || '',
+                    'الكود': student.student_code || '',
+                    'الرقم القومي': student.national_id || '',
+                    'التشعيب': student.stream || '',
+                    'التخصص/المسار': student.specialization || student.track || '',
+                    'المادة الاختيارية': student.optional_subject || '',
+                    'الحالة': student.is_locked ? 'مقفل' : 'مفتوح',
+                    'تاريخ التقديم': student.submitted_at ? new Date(student.submitted_at).toLocaleDateString('ar-EG') : '',
+                }));
+
+                // إنشاء ملف Excel باستخدام XLSX مع Blob
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                XLSX.utils.book_append_sheet(wb, ws, 'الطلاب');
+
+                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                const blob = new Blob([wbout], { type: 'application/octet-stream' });
+
+                // تحميل الملف
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `طلاب_مدرسة_دشنا_${new Date().toISOString().split('T')[0]}.xlsx`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+
+                showToast(`✅ تم تصدير ${filteredStudents.length} طالب بنجاح`, 'success');
+                await logActivity('تصدير طلاب', `تصدير ${filteredStudents.length} طالب حسب الفلتر`);
+
+            } catch (err) {
+                console.error('Export Error:', err);
+                showToast('❌ حدث خطأ أثناء التصدير: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '📥 تصدير Excel';
             }
         }
 
@@ -774,7 +756,7 @@
 
                 filterStudents()
                 updateStats()
-                updateExtraStats() // تحديث الكروت بعد التغيير
+                updateExtraStats()
 
                 selectedStudents.clear()
                 updateStats()
