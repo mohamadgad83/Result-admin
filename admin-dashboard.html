@@ -206,6 +206,60 @@
             max-width: 100%;
         }
 
+        /* ===== جدول آخر الطلاب المسجلين (تحسين جديد) ===== */
+        .recent-students-section {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #eee;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .recent-students-section .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .recent-students-section .header h4 {
+            color: #1e3c72;
+            margin: 0;
+        }
+        .recent-students-section .header a {
+            color: #1e3c72;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .recent-students-section .header a:hover {
+            text-decoration: underline;
+        }
+        .recent-students-section table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .recent-students-section table th {
+            background: #f8f9fa;
+            color: #333;
+            padding: 10px 12px;
+            text-align: right;
+            border-bottom: 2px solid #e9ecef;
+            font-weight: 600;
+        }
+        .recent-students-section table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .recent-students-section table tr:hover {
+            background: #f8f9fa;
+        }
+        .recent-students-section .empty-msg {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+
         /* ===== سجل النشاطات ===== */
         .activity-section {
             background: #f8f9fa;
@@ -469,6 +523,9 @@
             }
             .admin-header .admin-title { flex-direction: column; align-items: flex-start; }
             .system-info { grid-template-columns: 1fr; }
+            .recent-students-section table { font-size: 12px; }
+            .recent-students-section table th, 
+            .recent-students-section table td { padding: 8px 6px; }
         }
         @media (max-width: 480px) {
             .dashboard-grid { grid-template-columns: 1fr; }
@@ -543,7 +600,14 @@
                     <div class="label">أدبي</div>
                     <span class="sub-info">طلاب الثانوي</span>
                 </div>
-                <!-- ===== إضافة بطاقة الطلبات المعلقة ===== -->
+                <!-- ===== بطاقة المواد الاختيارية (تحسين جديد) ===== -->
+                <div class="stat-card pink">
+                    <span class="stat-icon">📖</span>
+                    <div class="number" id="optionalSubjectsCount">0</div>
+                    <div class="label">مواد اختيارية</div>
+                    <span class="sub-info">طلاب بكالوريا</span>
+                </div>
+                <!-- ===== بطاقة الطلبات المعلقة ===== -->
                 <div class="stat-card orange" style="cursor:pointer;" onclick="window.location.href='admin-requests.html'">
                     <span class="stat-icon">📩</span>
                     <div class="number" id="pendingRequests">0</div>
@@ -585,7 +649,6 @@
                     <span class="title">فتح الكل</span>
                     <span class="desc">تعديل جماعي</span>
                 </a>
-                <!-- ===== إضافة رابط طلبات الفتح ===== -->
                 <a href="admin-requests.html" class="quick-action orange">
                     <span class="icon">📩</span>
                     <span class="title">طلبات الفتح</span>
@@ -602,6 +665,25 @@
                 <div class="chart-card">
                     <h4>📊 توزيع التخصصات (ثانوي)</h4>
                     <canvas id="specializationChart"></canvas>
+                </div>
+            </div>
+
+            <!-- ===== رسم بياني إضافي للمواد الاختيارية ===== -->
+            <div class="charts-section" style="grid-template-columns: 1fr;">
+                <div class="chart-card">
+                    <h4>📊 توزيع المواد الاختيارية (بكالوريا)</h4>
+                    <canvas id="optionalSubjectsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- ===== جدول آخر الطلاب المسجلين (تحسين جديد) ===== -->
+            <div class="recent-students-section">
+                <div class="header">
+                    <h4>🕐 آخر الطلاب تسجيلاً</h4>
+                    <a href="admin-students.html">عرض الكل →</a>
+                </div>
+                <div id="recentStudentsList">
+                    <div class="empty-msg">⏳ جاري التحميل...</div>
                 </div>
             </div>
 
@@ -717,9 +799,12 @@
 
                 // تحميل الرسوم البيانية
                 loadCharts()
-
+                // تحميل إحصائيات المواد الاختيارية
+                loadOptionalSubjectsStats()
                 // تحميل عدد الطلبات المعلقة
                 loadPendingRequests()
+                // تحميل آخر الطلاب تسجيلاً
+                loadRecentStudents()
 
             } catch (err) {
                 console.error('Error loading stats:', err)
@@ -738,7 +823,6 @@
                 const el = document.getElementById('pendingRequests');
                 if (el) {
                     el.textContent = count || 0;
-                    // إذا كان هناك طلبات، نضيف تأثير وميض
                     if (count > 0) {
                         el.style.animation = 'pulse 1.5s infinite';
                     } else {
@@ -747,6 +831,111 @@
                 }
             } catch (err) {
                 console.error('Error loading pending requests:', err);
+            }
+        }
+
+        // ===== تحميل إحصائيات المواد الاختيارية =====
+        async function loadOptionalSubjectsStats() {
+            try {
+                const { data: students, error } = await supabaseClient
+                    .from('students')
+                    .select('optional_subject')
+                    .eq('stream', 'بكالوريا')
+                    .not('optional_subject', 'is', null)
+
+                if (error) throw error
+
+                const counts = {}
+                students.forEach(s => {
+                    const subject = s.optional_subject
+                    counts[subject] = (counts[subject] || 0) + 1
+                })
+
+                const total = students.length
+                document.getElementById('optionalSubjectsCount').textContent = total
+
+                const labels = Object.keys(counts)
+                const data = Object.values(counts)
+
+                if (chartInstances.optionalSubjects) chartInstances.optionalSubjects.destroy()
+                if (labels.length > 0) {
+                    chartInstances.optionalSubjects = new Chart(document.getElementById('optionalSubjectsChart'), {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'عدد الطلاب',
+                                data: data,
+                                backgroundColor: '#6f42c1',
+                                borderRadius: 8
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                            }
+                        }
+                    })
+                } else {
+                    document.getElementById('optionalSubjectsChart').style.display = 'none'
+                }
+
+            } catch (err) {
+                console.error('Error loading optional subjects stats:', err)
+            }
+        }
+
+        // ===== تحميل آخر الطلاب تسجيلاً (تحسين جديد) =====
+        async function loadRecentStudents() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('students')
+                    .select('full_name, student_code, stream, created_at, is_locked')
+                    .order('created_at', { ascending: false })
+                    .limit(5)
+
+                if (error) throw error
+
+                const container = document.getElementById('recentStudentsList')
+
+                if (!data || data.length === 0) {
+                    container.innerHTML = `<div class="empty-msg">📭 لا يوجد طلاب مسجلين بعد</div>`
+                    return
+                }
+
+                let html = `<table>
+                    <thead><tr>
+                        <th>#</th>
+                        <th>الاسم</th>
+                        <th>الكود</th>
+                        <th>التشعيب</th>
+                        <th>الحالة</th>
+                        <th>تاريخ التسجيل</th>
+                    </tr></thead><tbody>`
+
+                data.forEach((student, index) => {
+                    const status = student.is_locked ? '🔒 مقفل' : '🔓 مفتوح'
+                    const date = new Date(student.created_at).toLocaleDateString('ar-EG') + ' ' + new Date(student.created_at).toLocaleTimeString('ar-EG', {hour: '2-digit', minute:'2-digit'})
+                    html += `<tr>
+                        <td>${index + 1}</td>
+                        <td><strong>${student.full_name}</strong></td>
+                        <td dir="ltr">${student.student_code}</td>
+                        <td>${student.stream || '-'}</td>
+                        <td>${status}</td>
+                        <td style="font-size:12px;color:#666;">${date}</td>
+                    </tr>`
+                })
+
+                html += `</tbody></table>`
+                container.innerHTML = html
+
+            } catch (err) {
+                console.error('Error loading recent students:', err)
+                document.getElementById('recentStudentsList').innerHTML = `<div class="empty-msg">❌ حدث خطأ في التحميل</div>`
             }
         }
 
@@ -904,7 +1093,6 @@
                 let errorCount = 0
                 const errors = []
 
-                // الأعمدة المطلوبة (3 أعمدة فقط)
                 const requiredFields = ['الكود', 'الرقم القومي', 'الاسم']
 
                 for (let i = 0; i < rows.length; i++) {
@@ -912,7 +1100,6 @@
                     const rowNum = i + 2
 
                     try {
-                        // التحقق من الحقول المطلوبة
                         const missing = requiredFields.filter(f => !row[f])
                         if (missing.length > 0) {
                             errorCount++
@@ -924,7 +1111,6 @@
                         const nationalId = String(row['الرقم القومي']).trim()
                         const fullName = String(row['الاسم']).trim()
 
-                        // التحقق من التكرار
                         const { data: existing } = await supabaseClient
                             .from('students')
                             .select('id')
@@ -937,13 +1123,10 @@
                             continue
                         }
 
-                        // إعداد بيانات الطالب (بدون تشعيب، بدون قفل)
                         const studentData = {
                             student_code: studentCode,
                             national_id: nationalId,
                             full_name: fullName,
-                            // لا نضع stream، is_locked، submitted_at
-                            // ستبقى null/false بشكل افتراضي
                         }
 
                         const { error } = await supabaseClient
@@ -964,7 +1147,6 @@
                     }
                 }
 
-                // عرض النتيجة
                 let resultHtml = `
                     <div class="stats">
                         <div class="stat-item">
@@ -997,10 +1179,7 @@
                 contentDiv.innerHTML = resultHtml
                 resultDiv.className = `import-result show ${errorCount === 0 ? 'success' : errorCount < successCount ? 'success' : 'error'}`
 
-                // تحديث الإحصائيات
                 loadStats()
-
-                // تسجيل النشاط
                 await logActivity('استيراد طلاب', `تم استيراد ${successCount} طالب من ملف Excel`)
 
             } catch (err) {
