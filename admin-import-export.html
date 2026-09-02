@@ -29,67 +29,6 @@
             font-size: 14px;
             margin-bottom: 15px;
         }
-        .file-input {
-            width: 100%;
-            padding: 15px;
-            border: 2px dashed #ccc;
-            border-radius: 12px;
-            cursor: pointer;
-            margin: 10px 0;
-            background: white;
-        }
-        .file-input:hover {
-            border-color: #1e3c72;
-            background: #f0f7ff;
-        }
-        .results-box {
-            margin-top: 15px;
-            padding: 15px;
-            background: white;
-            border-radius: 12px;
-            border: 1px solid #e9ecef;
-        }
-        .results-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-            margin: 10px 0;
-        }
-        .results-stats div {
-            text-align: center;
-            padding: 10px;
-            border-radius: 8px;
-        }
-        .results-stats .success-count { background: #d4edda; color: #155724; }
-        .results-stats .error-count { background: #f8d7da; color: #721c24; }
-        .results-stats .total-count { background: #cce5ff; color: #004085; }
-        .errors-list {
-            max-height: 200px;
-            overflow-y: auto;
-            font-size: 13px;
-            margin-top: 10px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 8px;
-        }
-        .errors-list li {
-            padding: 3px 0;
-            color: #dc3545;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .errors-list li:last-child { border-bottom: none; }
-
-        .columns-info {
-            background: #f0f7ff;
-            padding: 12px;
-            border-radius: 8px;
-            margin: 10px 0;
-            font-size: 13px;
-            color: #1e3c72;
-        }
-        .columns-info .required { color: #dc3545; font-weight: 700; }
-        .columns-info .optional { color: #6c757d; }
-
         .file-upload-area {
             display: flex;
             gap: 10px;
@@ -171,42 +110,85 @@
             font-size: 16px;
             font-weight: 600;
             width: 100%;
+            transition: all 0.3s;
         }
         .btn-export:hover { background: #0f2b4f; }
-
-        .debug-info {
-            background: #d4edda;
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 10px;
-            font-size: 13px;
-            border-right: 4px solid #28a745;
+        .btn-export:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
-        .debug-info strong { color: #155724; }
 
-        .import-instructions {
-            background: #fff8e1;
+        .results-box {
+            margin-top: 15px;
             padding: 15px;
+            background: white;
             border-radius: 12px;
-            margin-bottom: 15px;
-            border-right: 4px solid #ffc107;
-            font-size: 14px;
+            border: 1px solid #e9ecef;
         }
-        .import-instructions strong { color: #e65100; }
+        .results-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .results-stats div {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .results-stats .success-count { background: #d4edda; color: #155724; }
+        .results-stats .error-count { background: #f8d7da; color: #721c24; }
+        .results-stats .total-count { background: #cce5ff; color: #004085; }
+        .errors-list {
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 13px;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .errors-list li {
+            padding: 3px 0;
+            color: #dc3545;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .errors-list li:last-child { border-bottom: none; }
+
+        /* ===== Toast ===== */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            padding: 15px 25px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideIn 0.3s ease;
+            min-width: 200px;
+            max-width: 400px;
+        }
+        .toast.success { background: #28a745; }
+        .toast.error { background: #dc3545; }
+        .toast.info { background: #17a2b8; }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
 
         @media (max-width: 600px) {
             .import-export-grid { grid-template-columns: 1fr; }
-            .results-stats { grid-template-columns: 1fr; }
-            .file-upload-area {
-                flex-direction: column;
-                align-items: stretch;
-            }
+            .file-upload-area { flex-direction: column; align-items: stretch; }
             .file-upload-area input[type="file"] { min-width: unset; }
             .file-upload-area .btn-import,
-            .file-upload-area .btn-template {
-                width: 100%;
-                text-align: center;
-            }
+            .file-upload-area .btn-template { width: 100%; text-align: center; }
         }
     </style>
 </head>
@@ -232,31 +214,19 @@
                 <div class="action-card">
                     <h3>📥 تصدير البيانات</h3>
                     <p>تصدير جميع بيانات الطلاب إلى ملف Excel شامل</p>
-                    <button onclick="exportData()" class="btn-export">📥 تحميل ملف Excel</button>
+                    <button onclick="exportData()" class="btn-export" id="exportBtn">📥 تحميل ملف Excel</button>
                 </div>
 
                 <!-- استيراد -->
                 <div class="action-card">
                     <h3>📤 استيراد طلاب</h3>
-                    
-                    <div class="import-instructions">
+                    <div style="background:#fff8e1;padding:15px;border-radius:12px;margin-bottom:15px;border-right:4px solid #ffc107;font-size:14px;">
                         <strong>📌 الأعمدة المطلوبة فقط:</strong><br>
                         <span style="font-size:16px;color:#dc3545;font-weight:700;">الكود</span>
                         <span style="font-size:16px;color:#dc3545;font-weight:700;">الرقم القومي</span>
                         <span style="font-size:16px;color:#dc3545;font-weight:700;">الاسم</span>
                         <br>
-                        <span style="font-size:12px;color:#666;">(يمكن إضافة أعمدة أخرى، سيتم تجاهلها)</span>
-                        <br>
                         <span style="font-size:12px;color:#856404;">⚠️ التشعيب سيتم تعيينه تلقائياً إلى "ثانوي"</span>
-                    </div>
-
-                    <div class="columns-info">
-                        <strong>✅ الأعمدة المطلوبة:</strong>
-                        <span class="required">الكود</span> ،
-                        <span class="required">الرقم القومي</span> ،
-                        <span class="required">الاسم</span>
-                        <br>
-                        <span class="optional">(أي أعمدة إضافية سيتم تجاهلها)</span>
                     </div>
 
                     <div class="file-upload-area">
@@ -270,6 +240,9 @@
         </div>
     </div>
 
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
     <script>
         const SUPABASE_URL = '{{SUPABASE_URL}}'
         const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
@@ -280,52 +253,60 @@
             window.location.href = 'admin-login.html'
         }
 
-        function findColumn(availableColumns, possibleNames) {
-            const normalizedAvailable = availableColumns.map(col => ({
-                original: col,
-                normalized: col.trim().toLowerCase().replace(/\s+/g, ' ')
-            }))
-
-            for (const name of possibleNames) {
-                const normalizedName = name.trim().toLowerCase().replace(/\s+/g, ' ')
-                const found = normalizedAvailable.find(
-                    col => col.normalized === normalizedName
-                )
-                if (found) return found.original
-            }
-            return null
+        // ===== Toast System =====
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
         }
 
-        // ===== دالة التصدير المُصلحة =====
+        // ===== دالة التصدير المُصلحة (باستخدام Blob) =====
         async function exportData() {
+            const btn = document.getElementById('exportBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ جاري التجهيز...';
+
             try {
+                // 1. جلب الطلاب
                 const { data: students, error } = await supabase
                     .from('students')
                     .select('*')
-                    .order('created_at', { ascending: false })
+                    .order('created_at', { ascending: false });
 
-                if (error) throw error
+                if (error) throw new Error('فشل جلب الطلاب: ' + error.message);
                 if (!students || students.length === 0) {
-                    alert('⚠️ لا توجد بيانات للتصدير')
-                    return
+                    showToast('⚠️ لا توجد بيانات للتصدير', 'error');
+                    btn.disabled = false;
+                    btn.textContent = '📥 تحميل ملف Excel';
+                    return;
                 }
 
+                // 2. جلب الحقول الديناميكية
                 const { data: fields, error: fieldsError } = await supabase
                     .from('dynamic_fields')
                     .select('id, name')
                     .eq('visible_for_student', true)
-                    .order('display_order', { ascending: true })
+                    .order('display_order', { ascending: true });
 
-                if (fieldsError) throw fieldsError
+                if (fieldsError) throw new Error('فشل جلب الحقول: ' + fieldsError.message);
 
-                const studentIds = students.map(s => s.id)
+                // 3. جلب الاستجابات
+                const studentIds = students.map(s => s.id);
                 const { data: responses, error: responsesError } = await supabase
                     .from('student_dynamic_responses')
                     .select('student_id, field_id, value')
-                    .in('student_id', studentIds)
+                    .in('student_id', studentIds);
 
-                if (responsesError) throw responsesError
+                if (responsesError) throw new Error('فشل جلب الاستجابات: ' + responsesError.message);
 
+                // 4. بناء البيانات
                 const exportData = students.map(student => {
                     const row = {
                         'الكود': student.student_code || '',
@@ -336,252 +317,196 @@
                         'المادة الاختيارية': student.optional_subject || '',
                         'الحالة': student.is_locked ? 'مقفل' : 'مفتوح',
                         'تاريخ التقديم': student.submitted_at ? new Date(student.submitted_at).toLocaleDateString('ar-EG') : '',
-                    }
-                    fields.forEach(field => {
+                    };
+                    (fields || []).forEach(field => {
                         const response = responses?.find(
                             r => r.student_id === student.id && r.field_id === field.id
-                        )
-                        row[field.name] = response?.value || ''
-                    })
-                    return row
-                })
+                        );
+                        row[field.name] = response?.value || '';
+                    });
+                    return row;
+                });
 
-                const wb = XLSX.utils.book_new()
-                const ws = XLSX.utils.json_to_sheet(exportData)
-                XLSX.utils.book_append_sheet(wb, ws, 'الطلاب')
-                XLSX.writeFile(wb, `طلاب_مدرسة_دشنا_${new Date().toISOString().split('T')[0]}.xlsx`)
+                // 5. إنشاء ملف Excel باستخدام XLSX مع Blob
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                XLSX.utils.book_append_sheet(wb, ws, 'الطلاب');
 
-                await logActivity('تصدير بيانات', 'تم تصدير جميع بيانات الطلاب')
-                alert('✅ تم تصدير البيانات بنجاح')
+                // استخدام write بدلاً من writeFile لإنشاء ArrayBuffer ثم تحويله إلى Blob
+                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                const blob = new Blob([wbout], { type: 'application/octet-stream' });
+                
+                // إنشاء رابط تحميل
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `طلاب_مدرسة_دشنا_${new Date().toISOString().split('T')[0]}.xlsx`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+
+                // تسجيل النشاط
+                await logActivity('تصدير بيانات', `تم تصدير ${students.length} طالب بنجاح`);
+                showToast(`✅ تم تصدير ${students.length} طالب بنجاح`, 'success');
 
             } catch (err) {
-                console.error('Error exporting:', err)
-                alert('❌ حدث خطأ أثناء التصدير: ' + err.message)
+                console.error('Export Error:', err);
+                showToast('❌ حدث خطأ أثناء التصدير: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '📥 تحميل ملف Excel';
             }
         }
 
         // ===== استيراد البيانات =====
         async function importData() {
-            const fileInput = document.getElementById('fileInput')
-            const file = fileInput.files[0]
-            const resultDiv = document.getElementById('importResult')
-            const importBtn = document.getElementById('importBtn')
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            const resultDiv = document.getElementById('importResult');
+            const importBtn = document.getElementById('importBtn');
 
             if (!file) {
-                resultDiv.innerHTML = '<div class="error" style="color:#dc3545;margin-top:10px;">⚠️ يرجى اختيار ملف أولاً</div>'
-                return
+                resultDiv.innerHTML = '<div class="error" style="color:#dc3545;margin-top:10px;">⚠️ يرجى اختيار ملف أولاً</div>';
+                return;
             }
 
-            importBtn.disabled = true
-            importBtn.textContent = '⏳ جاري الاستيراد...'
-            resultDiv.innerHTML = ''
+            importBtn.disabled = true;
+            importBtn.textContent = '⏳ جاري الاستيراد...';
+            resultDiv.innerHTML = '';
 
             try {
-                const data = await file.arrayBuffer()
-                const workbook = XLSX.read(data)
-                const worksheet = workbook.Sheets[workbook.SheetNames[0]]
-                const rows = XLSX.utils.sheet_to_json(worksheet)
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data);
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(worksheet);
 
                 if (rows.length === 0) {
-                    resultDiv.innerHTML = `<div class="error" style="color:#dc3545;margin-top:10px;">❌ الملف فارغ أو لا يحتوي على بيانات</div>`
-                    importBtn.disabled = false
-                    importBtn.textContent = '📊 استيراد البيانات'
-                    return
+                    resultDiv.innerHTML = `<div class="error" style="color:#dc3545;margin-top:10px;">❌ الملف فارغ أو لا يحتوي على بيانات</div>`;
+                    importBtn.disabled = false;
+                    importBtn.textContent = '📊 استيراد البيانات';
+                    return;
                 }
 
-                const availableColumns = Object.keys(rows[0])
-
+                const availableColumns = Object.keys(rows[0]);
                 const columnAliases = {
-                    'الكود': ['الكود', 'كود', 'كود الطالب', 'student_code', 'code', 'كود الطالب'],
-                    'الرقم القومي': ['الرقم القومي', 'رقم قومي', 'national_id', 'nationalid', 'id', 'الرقم القومي'],
-                    'الاسم': ['الاسم', 'اسم', 'اسم الطالب', 'full_name', 'name', 'الاسم']
-                }
+                    'الكود': ['الكود', 'كود', 'كود الطالب', 'student_code', 'code'],
+                    'الرقم القومي': ['الرقم القومي', 'رقم قومي', 'national_id', 'nationalid', 'id'],
+                    'الاسم': ['الاسم', 'اسم', 'اسم الطالب', 'full_name', 'name']
+                };
 
-                const columnMap = {}
-                const missingFields = []
-
-                for (const [key, aliases] of Object.entries(columnAliases)) {
-                    const found = findColumn(availableColumns, aliases)
-                    if (found) {
-                        columnMap[key] = found
-                    } else {
-                        missingFields.push(key)
+                const findColumn = (possibleNames) => {
+                    const normalizedAvailable = availableColumns.map(col => col.trim().toLowerCase().replace(/\s+/g, ' '));
+                    for (const name of possibleNames) {
+                        const idx = normalizedAvailable.indexOf(name.trim().toLowerCase().replace(/\s+/g, ' '));
+                        if (idx !== -1) return availableColumns[idx];
                     }
+                    return null;
+                };
+
+                const columnMap = {};
+                const missingFields = [];
+                for (const [key, aliases] of Object.entries(columnAliases)) {
+                    const found = findColumn(aliases);
+                    if (found) columnMap[key] = found;
+                    else missingFields.push(key);
                 }
 
                 if (missingFields.length > 0) {
                     resultDiv.innerHTML = `
-                        <div class="error" style="color:#dc3545;margin-top:10px;padding:15px;background:#f8d7da;border-radius:12px;">
-                            <strong>❌ الأعمدة المطلوبة غير موجودة في الملف</strong>
-                            <br>
-                            <span style="font-size:13px;">الأعمدة المطلوبة: <strong>الكود، الرقم القومي، الاسم</strong></span>
-                            <br>
-                            <span style="font-size:13px;">الأعمدة الموجودة في ملفك: <strong>${availableColumns.join('، ') || 'لا توجد أعمدة'}</strong></span>
-                            <br>
-                            <span style="font-size:13px;color:#856404;">⚠️ تأكد من تطابق أسماء الأعمدة مع النموذج</span>
-                            <br>
-                            <button onclick="downloadTemplate()" style="margin-top:10px;padding:8px 20px;background:#17a2b8;color:white;border:none;border-radius:8px;cursor:pointer;">
-                                📋 تحميل نموذج صحيح
-                            </button>
+                        <div style="color:#dc3545;margin-top:10px;padding:15px;background:#f8d7da;border-radius:12px;">
+                            <strong>❌ الأعمدة المطلوبة غير موجودة</strong><br>
+                            المطلوب: <strong>الكود، الرقم القومي، الاسم</strong><br>
+                            الموجود: <strong>${availableColumns.join('، ') || 'لا توجد أعمدة'}</strong>
                         </div>
-                    `
-                    importBtn.disabled = false
-                    importBtn.textContent = '📊 استيراد البيانات'
-                    return
+                    `;
+                    importBtn.disabled = false;
+                    importBtn.textContent = '📊 استيراد البيانات';
+                    return;
                 }
 
-                let successCount = 0
-                let errorCount = 0
-                const errors = []
+                let successCount = 0, errorCount = 0, errors = [];
 
                 for (let i = 0; i < rows.length; i++) {
-                    const row = rows[i]
-                    const rowNum = i + 2
-
+                    const row = rows[i];
+                    const rowNum = i + 2;
                     try {
-                        const studentCode = String(row[columnMap['الكود']] || '').trim()
-                        const nationalId = String(row[columnMap['الرقم القومي']] || '').trim()
-                        const fullName = String(row[columnMap['الاسم']] || '').trim()
+                        const studentCode = String(row[columnMap['الكود']] || '').trim();
+                        const nationalId = String(row[columnMap['الرقم القومي']] || '').trim();
+                        const fullName = String(row[columnMap['الاسم']] || '').trim();
 
                         if (!studentCode || !nationalId || !fullName) {
-                            errorCount++
-                            errors.push(`صف ${rowNum}: الحقول المطلوبة غير مكتملة`)
-                            continue
+                            errorCount++; errors.push(`صف ${rowNum}: بيانات ناقصة`); continue;
                         }
 
-                        const { data: existing, error: checkError } = await supabase
+                        const { data: existing } = await supabase
                             .from('students')
                             .select('id')
                             .or(`student_code.eq.${studentCode},national_id.eq.${nationalId}`)
-                            .maybeSingle()
-
-                        if (checkError) {
-                            errorCount++
-                            errors.push(`صف ${rowNum}: خطأ في التحقق - ${checkError.message}`)
-                            continue
-                        }
+                            .maybeSingle();
 
                         if (existing) {
-                            errorCount++
-                            errors.push(`صف ${rowNum}: الكود أو الرقم القومي موجود مسبقاً`)
-                            continue
-                        }
-
-                        const studentData = {
-                            student_code: studentCode,
-                            national_id: nationalId,
-                            full_name: fullName,
+                            errorCount++; errors.push(`صف ${rowNum}: الكود أو الرقم القومي موجود`); continue;
                         }
 
                         const { error: insertError } = await supabase
                             .from('students')
-                            .insert(studentData)
+                            .insert({ student_code: studentCode, national_id: nationalId, full_name: fullName });
 
                         if (insertError) {
-                            errorCount++
-                            errors.push(`صف ${rowNum}: ${insertError.message}`)
-                            continue
+                            errorCount++; errors.push(`صف ${rowNum}: ${insertError.message}`); continue;
                         }
-
-                        successCount++
-                    } catch (err) {
-                        errorCount++
-                        errors.push(`صف ${rowNum}: خطأ غير متوقع - ${err.message}`)
+                        successCount++;
+                    } catch (e) {
+                        errorCount++; errors.push(`صف ${rowNum}: خطأ غير متوقع`);
                     }
                 }
 
-                let resultHtml = `
-                    <div class="results-box">
-                        <div class="results-stats">
-                            <div class="success-count">✅ ${successCount} تمت الإضافة</div>
-                            <div class="error-count">❌ ${errorCount} فشل</div>
-                            <div class="total-count">📊 ${rows.length} إجمالي</div>
-                        </div>
-                `
-
-                if (errors.length > 0) {
-                    resultHtml += `
-                        <div class="errors-list">
-                            <strong>الأخطاء:</strong>
-                            <ul>
-                                ${errors.slice(0, 50).map(e => `<li>${e}</li>`).join('')}
-                                ${errors.length > 50 ? `<li style="color:#999;">... و ${errors.length - 50} خطأ إضافي</li>` : ''}
-                            </ul>
-                        </div>
-                    `
+                let html = `<div class="results-box">
+                    <div class="results-stats">
+                        <div class="success-count">✅ ${successCount} تمت الإضافة</div>
+                        <div class="error-count">❌ ${errorCount} فشل</div>
+                        <div class="total-count">📊 ${rows.length} إجمالي</div>
+                    </div>`;
+                if (errors.length) {
+                    html += `<div class="errors-list"><strong>الأخطاء:</strong><ul>${errors.slice(0,30).map(e => `<li>${e}</li>`).join('')}</ul></div>`;
                 }
-
-                resultHtml += `
-                    <div class="debug-info">
-                        <strong>✅ الأعمدة التي تم التعرف عليها:</strong>
-                        ${Object.entries(columnMap).map(([key, col]) => `<span style="margin-left:10px;">${key} → "${col}"</span>`).join('')}
-                        <br>
-                        <span style="font-size:12px;color:#155724;">✅ التشعيب تم تعيينه تلقائياً إلى "ثانوي"</span>
-                    </div>
-                `
-
-                resultHtml += '</div>'
-                resultDiv.innerHTML = resultHtml
-
+                html += '</div>';
+                resultDiv.innerHTML = html;
                 if (successCount > 0) {
-                    await logActivity('استيراد طلاب', `تم استيراد ${successCount} طالب من ملف Excel`)
+                    showToast(`✅ تم استيراد ${successCount} طالب بنجاح`, 'success');
+                    await logActivity('استيراد طلاب', `تم استيراد ${successCount} طالب`);
                 }
-
             } catch (err) {
-                console.error('Error importing:', err)
-                resultDiv.innerHTML = `<div class="error" style="color:#dc3545;margin-top:10px;">❌ حدث خطأ أثناء الاستيراد: ${err.message}</div>`
+                resultDiv.innerHTML = `<div style="color:#dc3545;margin-top:10px;">❌ خطأ: ${err.message}</div>`;
             } finally {
-                importBtn.disabled = false
-                importBtn.textContent = '📊 استيراد البيانات'
+                importBtn.disabled = false;
+                importBtn.textContent = '📊 استيراد البيانات';
+                fileInput.value = '';
             }
         }
 
         function downloadTemplate() {
-            const template = [
-                ['الكود', 'الرقم القومي', 'الاسم'],
-                ['101', '12345678901234', 'أحمد محمد'],
-                ['102', '12345678901235', 'سارة علي'],
-                ['103', '12345678901236', 'محمد خالد'],
-                ['104', '12345678901237', 'نورا أحمد']
-            ]
-
-            const wb = XLSX.utils.book_new()
-            const ws = XLSX.utils.aoa_to_sheet(template)
-            ws['!cols'] = [
-                { wch: 12 },
-                { wch: 18 },
-                { wch: 25 }
-            ]
-            XLSX.utils.book_append_sheet(wb, ws, 'الطلاب')
-            XLSX.writeFile(wb, 'نموذج_استيراد_طلاب_3_اعمدة.xlsx')
+            const template = [['الكود', 'الرقم القومي', 'الاسم'], ['101', '12345678901234', 'أحمد محمد']];
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(template);
+            XLSX.utils.book_append_sheet(wb, ws, 'الطلاب');
+            XLSX.writeFile(wb, 'نموذج_استيراد_طلاب.xlsx');
+            showToast('📋 تم تحميل النموذج', 'info');
         }
 
         async function logActivity(action, details) {
             try {
-                const adminId = sessionStorage.getItem('adminId')
-                const adminEmail = sessionStorage.getItem('adminEmail') || 'unknown'
-                let ipAddress = 'unknown'
-                try {
-                    const ipRes = await fetch('https://api.ipify.org?format=json')
-                    const ipData = await ipRes.json()
-                    ipAddress = ipData.ip
-                } catch (e) {}
                 await supabase.from('admin_logs').insert({
-                    admin_id: adminId,
-                    admin_email: adminEmail,
-                    action: action,
-                    details: details,
-                    ip_address: ipAddress
-                })
-            } catch (err) {
-                console.error('Error logging activity:', err)
-            }
+                    admin_id: sessionStorage.getItem('adminId'),
+                    admin_email: sessionStorage.getItem('adminEmail') || 'unknown',
+                    action, details,
+                    ip_address: 'unknown'
+                });
+            } catch (e) {}
         }
 
-        function logout() {
-            sessionStorage.clear()
-            window.location.href = 'admin-login.html'
-        }
+        function logout() { sessionStorage.clear(); window.location.href = 'admin-login.html'; }
     </script>
 </body>
 </html>
