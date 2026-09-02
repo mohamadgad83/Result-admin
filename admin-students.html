@@ -50,6 +50,7 @@
             font-size: 14px;
             flex: 1;
             min-width: 150px;
+            background: white;
         }
         .search-bar input:focus, .search-bar select:focus {
             outline: none;
@@ -130,6 +131,81 @@
             background: #a71d2a;
         }
 
+        /* ===== كروت الإحصائيات ===== */
+        .stats-mini {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+        .stats-mini .stat {
+            font-size: 14px;
+            color: #555;
+        }
+        .stats-mini .stat strong {
+            color: #1e3c72;
+            font-size: 18px;
+        }
+        .stats-mini .stat .dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 5px;
+        }
+        .stats-mini .stat .dot.green { background: #28a745; }
+        .stats-mini .stat .dot.yellow { background: #ffc107; }
+
+        /* ===== كروت الإحصائيات الإضافية (مواد ومسارات) ===== */
+        .extra-stats-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 15px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #eee;
+            align-items: center;
+        }
+        .extra-stats-grid .stat-card-mini {
+            background: linear-gradient(135deg, #6f42c1, #a855f7);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            white-space: nowrap;
+        }
+        .extra-stats-grid .stat-card-mini .num {
+            font-weight: 700;
+            font-size: 16px;
+            background: rgba(255,255,255,0.2);
+            padding: 0 8px;
+            border-radius: 20px;
+        }
+        .extra-stats-grid .stat-card-mini.optional { background: linear-gradient(135deg, #e83e8c, #f06292); }
+        .extra-stats-grid .stat-card-mini.track { background: linear-gradient(135deg, #1e3c72, #2a5298); }
+        .extra-stats-grid .section-label {
+            font-weight: 700;
+            color: #333;
+            margin-left: 5px;
+            font-size: 14px;
+            border-left: 2px solid #ddd;
+            padding-left: 10px;
+        }
+        .extra-stats-grid .empty-msg {
+            color: #999;
+            font-size: 13px;
+            padding: 5px;
+        }
+
         /* ===== أدوات التحكم الجماعي ===== */
         .bulk-actions {
             display: flex;
@@ -195,7 +271,6 @@
             transform: none;
         }
 
-        /* ===== Checkbox ===== */
         .row-checkbox {
             width: 18px;
             height: 18px;
@@ -209,7 +284,6 @@
             accent-color: #1e3c72;
         }
 
-        /* ===== Toast ===== */
         .toast-container {
             position: fixed;
             bottom: 20px;
@@ -237,34 +311,7 @@
             to { transform: translateX(0); opacity: 1; }
         }
 
-        .stats-mini {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 12px;
-            margin-bottom: 15px;
-        }
-        .stats-mini .stat {
-            font-size: 14px;
-            color: #555;
-        }
-        .stats-mini .stat strong {
-            color: #1e3c72;
-            font-size: 18px;
-        }
-        .stats-mini .stat .dot {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-left: 5px;
-        }
-        .stats-mini .stat .dot.green { background: #28a745; }
-        .stats-mini .stat .dot.yellow { background: #ffc107; }
-
-        .bulk-actions .selected-count {
+        .selected-count {
             font-weight: 700;
             color: #1e3c72;
             font-size: 16px;
@@ -273,11 +320,14 @@
         @media (max-width: 600px) {
             table { font-size: 12px; }
             table th, table td { padding: 6px 5px; }
-            .search-bar input, .search-bar select { min-width: 100px; }
+            .search-bar input, .search-bar select { min-width: 100px; flex: 1 1 100%; }
             .stats-mini { flex-direction: column; gap: 5px; }
             .bulk-actions { flex-direction: column; align-items: stretch; }
             .bulk-actions .info { text-align: center; }
             .bulk-actions .btn-bulk { width: 100%; text-align: center; }
+            .extra-stats-grid { gap: 8px; justify-content: center; }
+            .extra-stats-grid .stat-card-mini { font-size: 12px; padding: 6px 12px; }
+            .extra-stats-grid .section-label { display: block; width: 100%; text-align: center; border-left: none; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 5px; }
         }
     </style>
 </head>
@@ -298,7 +348,7 @@
                 </div>
             </div>
 
-            <!-- إحصائيات سريعة -->
+            <!-- ===== إحصائيات سريعة أساسية ===== -->
             <div class="stats-mini" id="statsMini">
                 <div class="stat">📊 الإجمالي: <strong id="totalCount">0</strong></div>
                 <div class="stat"><span class="dot green"></span> مقفل: <strong id="lockedCount">0</strong></div>
@@ -306,7 +356,13 @@
                 <div class="stat">✅ المحدد: <strong id="selectedCount">0</strong></div>
             </div>
 
-            <!-- البحث والفلترة -->
+            <!-- ===== كروت إحصائيات المواد الاختيارية والمسارات (جديد) ===== -->
+            <div class="extra-stats-grid" id="extraStatsGrid">
+                <span class="section-label">📊 إحصائيات إضافية</span>
+                <span class="empty-msg">⏳ جاري التحميل...</span>
+            </div>
+
+            <!-- ===== البحث والفلترة (مُوسّعة) ===== -->
             <div class="search-bar">
                 <input type="text" id="searchInput" placeholder="🔍 بحث بالاسم، الكود، أو الرقم القومي..." onkeyup="filterStudents()">
                 <select id="filterStream" onchange="filterStudents()">
@@ -319,7 +375,14 @@
                     <option value="locked">🔒 مقفل</option>
                     <option value="unlocked">🔓 مفتوح</option>
                 </select>
-                <button onclick="resetFilters()" style="padding:10px 20px;background:#6c757d;color:white;border:none;border-radius:10px;cursor:pointer;">مسح</button>
+                <!-- فلاتر جديدة -->
+                <select id="filterOptional" onchange="filterStudents()">
+                    <option value="">كل المواد الاختيارية</option>
+                </select>
+                <select id="filterTrack" onchange="filterStudents()">
+                    <option value="">كل المسارات</option>
+                </select>
+                <button onclick="resetFilters()" style="padding:10px 20px;background:#6c757d;color:white;border:none;border-radius:10px;cursor:pointer;">مسح الكل</button>
             </div>
 
             <!-- ===== أدوات التحكم الجماعي ===== -->
@@ -341,7 +404,7 @@
                 عدد الطلاب: <span id="studentsCount">0</span>
             </div>
 
-            <!-- جدول الطلاب -->
+            <!-- ===== جدول الطلاب (مُوسّع بعمود المادة الاختيارية) ===== -->
             <div class="table-container">
                 <table>
                     <thead>
@@ -354,12 +417,13 @@
                             <th>الكود</th>
                             <th>التشعيب</th>
                             <th>التخصص/المسار</th>
+                            <th>المادة الاختيارية</th> <!-- عمود جديد -->
                             <th>الحالة</th>
                             <th>الإجراءات</th>
                         </tr>
                     </thead>
                     <tbody id="studentsTableBody">
-                        <tr><td colspan="8" class="empty-msg">⏳ جاري التحميل...</td></tr>
+                        <tr><td colspan="9" class="empty-msg">⏳ جاري التحميل...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -389,11 +453,25 @@
 
         let allStudents = []
         let filteredStudents = []
-        let selectedStudents = new Set() // لتخزين IDs المحددين
+        let selectedStudents = new Set()
 
         // التحقق من وجود أدمن
         if (!sessionStorage.getItem('adminId')) {
             window.location.href = 'admin-login.html'
+        }
+
+        // ===== Toast System =====
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
         }
 
         // ===== تحميل الطلاب =====
@@ -410,14 +488,16 @@
                 selectedStudents.clear()
                 renderTable()
                 updateStats()
+                updateExtraStats() // تحديث الكروت الجديدة
+                populateFilterOptions() // تعبئة خيارات الفلاتر الجديدة
             } catch (err) {
                 console.error('Error loading students:', err)
                 document.getElementById('studentsTableBody').innerHTML = 
-                    '<tr><td colspan="8" class="empty-msg">❌ خطأ في تحميل البيانات</td></tr>'
+                    '<tr><td colspan="9" class="empty-msg">❌ خطأ في تحميل البيانات</td></tr>'
             }
         }
 
-        // ===== تحديث الإحصائيات =====
+        // ===== تحديث الإحصائيات الأساسية =====
         function updateStats() {
             const total = allStudents.length
             const locked = allStudents.filter(s => s.is_locked).length
@@ -431,17 +511,90 @@
             document.getElementById('selectedCountDisplay').textContent = selected
         }
 
-        // ===== عرض الجدول =====
+        // ===== تحديث كروت المواد الاختيارية والمسارات (جديد) =====
+        function updateExtraStats() {
+            const container = document.getElementById('extraStatsGrid');
+            const bacStudents = allStudents.filter(s => s.stream === 'بكالوريا');
+
+            // حساب تكرارات المواد
+            const optCounts = {};
+            bacStudents.forEach(s => {
+                if (s.optional_subject) {
+                    optCounts[s.optional_subject] = (optCounts[s.optional_subject] || 0) + 1;
+                }
+            });
+
+            // حساب تكرارات المسارات
+            const trackCounts = {};
+            bacStudents.forEach(s => {
+                if (s.track) {
+                    trackCounts[s.track] = (trackCounts[s.track] || 0) + 1;
+                }
+            });
+
+            let html = `<span class="section-label">📊 إحصائيات إضافية</span>`;
+
+            // عرض المواد
+            const sortedOpts = Object.entries(optCounts).sort((a, b) => b[1] - a[1]);
+            if (sortedOpts.length > 0) {
+                sortedOpts.forEach(([name, count]) => {
+                    html += `<span class="stat-card-mini optional">📖 ${name} <span class="num">${count}</span></span>`;
+                });
+            } else {
+                html += `<span class="empty-msg" style="margin:0 5px;">لا توجد مواد اختيارية مسجلة</span>`;
+            }
+
+            // فاصل بسيط بين المجموعتين
+            if (sortedOpts.length > 0 && Object.keys(trackCounts).length > 0) {
+                html += `<span style="color:#ddd; margin: 0 5px;">|</span>`;
+            }
+
+            // عرض المسارات
+            const sortedTracks = Object.entries(trackCounts).sort((a, b) => b[1] - a[1]);
+            if (sortedTracks.length > 0) {
+                sortedTracks.forEach(([name, count]) => {
+                    html += `<span class="stat-card-mini track">📚 ${name} <span class="num">${count}</span></span>`;
+                });
+            } else {
+                html += `<span class="empty-msg" style="margin:0 5px;">لا توجد مسارات مسجلة</span>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // ===== تعبئة خيارات الفلاتر الجديدة =====
+        function populateFilterOptions() {
+            // المواد الاختيارية
+            const optSelect = document.getElementById('filterOptional');
+            const optSet = new Set();
+            allStudents.forEach(s => { if (s.optional_subject) optSet.add(s.optional_subject); });
+            const sortedOpts = Array.from(optSet).sort();
+            optSelect.innerHTML = '<option value="">كل المواد الاختيارية</option>';
+            sortedOpts.forEach(opt => {
+                optSelect.innerHTML += `<option value="${opt}">${opt}</option>`;
+            });
+
+            // المسارات
+            const trackSelect = document.getElementById('filterTrack');
+            const trackSet = new Set();
+            allStudents.forEach(s => { if (s.track) trackSet.add(s.track); });
+            const sortedTracks = Array.from(trackSet).sort();
+            trackSelect.innerHTML = '<option value="">كل المسارات</option>';
+            sortedTracks.forEach(track => {
+                trackSelect.innerHTML += `<option value="${track}">${track}</option>`;
+            });
+        }
+
+        // ===== عرض الجدول (مع عمود المادة الاختيارية) =====
         function renderTable() {
             const tbody = document.getElementById('studentsTableBody')
             document.getElementById('studentsCount').textContent = filteredStudents.length
 
             if (filteredStudents.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="empty-msg">📭 لا يوجد طلاب</td></tr>'
+                tbody.innerHTML = '<tr><td colspan="9" class="empty-msg">📭 لا يوجد طلاب</td></tr>'
                 return
             }
 
-            // تحديث حالة الـ select all
             const allChecked = filteredStudents.every(s => selectedStudents.has(s.id))
             document.getElementById('selectAllCheckbox').checked = allChecked
 
@@ -450,6 +603,7 @@
                 const isSelected = selectedStudents.has(student.id)
                 const streamDisplay = student.stream || '-'
                 const specializationDisplay = student.specialization || student.track || '-'
+                const optionalDisplay = student.optional_subject || '-'
                 
                 return `
                 <tr class="${isSelected ? 'selected' : ''}">
@@ -464,6 +618,7 @@
                     <td dir="ltr">${student.student_code}</td>
                     <td>${streamDisplay}</td>
                     <td>${specializationDisplay}</td>
+                    <td style="font-size:13px; color: ${student.optional_subject ? '#1e3c72' : '#999'};">${optionalDisplay}</td>
                     <td>
                         <span class="status-badge ${isLocked ? 'status-locked' : 'status-unlocked'}">
                             ${isLocked ? '🔒 مقفل' : '🔓 مفتوح'}
@@ -488,11 +643,13 @@
             `}).join('')
         }
 
-        // ===== فلترة الطلاب =====
+        // ===== فلترة الطلاب (مُوسّعة) =====
         function filterStudents() {
             const search = document.getElementById('searchInput').value.toLowerCase()
             const stream = document.getElementById('filterStream').value
             const status = document.getElementById('filterStatus').value
+            const optional = document.getElementById('filterOptional').value
+            const track = document.getElementById('filterTrack').value
 
             filteredStudents = allStudents.filter(student => {
                 const matchSearch = 
@@ -503,9 +660,20 @@
                 const matchStream = stream ? student.stream === stream : true
                 const matchStatus = status ? 
                     (status === 'locked' ? student.is_locked : !student.is_locked) : true
+                const matchOptional = optional ? student.optional_subject === optional : true
+                const matchTrack = track ? student.track === track : true
 
-                return matchSearch && matchStream && matchStatus
+                return matchSearch && matchStream && matchStatus && matchOptional && matchTrack
             })
+
+            // إعادة تعيين التحديدات بما يتناسب مع الفلترة الجديدة (اختياري)
+            // نقوم بإزالة التحديدات القديمة التي لم تعد في القائمة
+            const filteredIds = new Set(filteredStudents.map(s => s.id));
+            selectedStudents.forEach(id => {
+                if (!filteredIds.has(id)) {
+                    selectedStudents.delete(id);
+                }
+            });
 
             renderTable()
             updateStats()
@@ -516,12 +684,15 @@
             document.getElementById('searchInput').value = ''
             document.getElementById('filterStream').value = ''
             document.getElementById('filterStatus').value = ''
+            document.getElementById('filterOptional').value = ''
+            document.getElementById('filterTrack').value = ''
             filteredStudents = [...allStudents]
+            selectedStudents.clear()
             renderTable()
             updateStats()
         }
 
-        // ===== إدارة التحديد الفردي =====
+        // ===== إدارة التحديد =====
         function toggleStudent(id) {
             if (selectedStudents.has(id)) {
                 selectedStudents.delete(id)
@@ -532,21 +703,18 @@
             renderTable()
         }
 
-        // ===== تحديد الكل =====
         function selectAll() {
             filteredStudents.forEach(s => selectedStudents.add(s.id))
             updateStats()
             renderTable()
         }
 
-        // ===== إلغاء تحديد الكل =====
         function deselectAll() {
             selectedStudents.clear()
             updateStats()
             renderTable()
         }
 
-        // ===== تبديل تحديد الكل من الـ checkbox الرئيسي =====
         function toggleSelectAll() {
             const checked = document.getElementById('selectAllCheckbox').checked
             if (checked) {
@@ -563,8 +731,7 @@
                 showToast('⚠️ يرجى تحديد طالب واحد على الأقل', 'error')
                 return
             }
-            if (!confirm(`⚠️ هل أنت متأكد من فتح التسجيل لـ ${ids.length} طالب؟\n\nسيتمكنون من تعديل رغباتهم.`)) return
-
+            if (!confirm(`⚠️ هل أنت متأكد من فتح التسجيل لـ ${ids.length} طالب؟`)) return
             await bulkUpdateLock(ids, false, 'فتح')
         }
 
@@ -574,8 +741,7 @@
                 showToast('⚠️ يرجى تحديد طالب واحد على الأقل', 'error')
                 return
             }
-            if (!confirm(`⚠️ هل أنت متأكد من غلق التسجيل لـ ${ids.length} طالب؟\n\nلن يتمكنوا من التعديل بعد الآن.`)) return
-
+            if (!confirm(`⚠️ هل أنت متأكد من غلق التسجيل لـ ${ids.length} طالب؟`)) return
             await bulkUpdateLock(ids, true, 'غلق')
         }
 
@@ -585,19 +751,16 @@
             btn.textContent = '⏳ جاري...'
 
             try {
-                // تحديث is_locked لكل الطلاب المحددين
                 const { error } = await supabaseClient
                     .from('students')
                     .update({ 
                         is_locked: newLockState,
-                        // إذا كان فتح، نزيل submitted_at
                         ...(newLockState === false ? { submitted_at: null } : {})
                     })
                     .in('id', ids)
 
                 if (error) throw error
 
-                // تحديث البيانات محلياً
                 allStudents = allStudents.map(s => {
                     if (ids.includes(s.id)) {
                         return { 
@@ -609,23 +772,16 @@
                     return s
                 })
 
-                // تحديث الفلترة وعرض الجدول
                 filterStudents()
                 updateStats()
+                updateExtraStats() // تحديث الكروت بعد التغيير
 
-                // إلغاء التحديد بعد العملية
                 selectedStudents.clear()
                 updateStats()
                 renderTable()
 
-                // رسالة نجاح
                 showToast(`✅ تم ${actionName} التسجيل لـ ${ids.length} طالب بنجاح`, 'success')
-
-                // تسجيل النشاط
-                await logActivity(
-                    `${actionName} جماعي`,
-                    `تم ${actionName} التسجيل لـ ${ids.length} طالب`
-                )
+                await logActivity(`${actionName} جماعي`, `تم ${actionName} التسجيل لـ ${ids.length} طالب`)
 
             } catch (err) {
                 console.error('Error bulk update:', err)
@@ -639,11 +795,7 @@
         // ===== تبديل حالة القفل (فردي) =====
         async function toggleLock(studentId, currentLock) {
             const action = currentLock ? 'فتح' : 'قفل'
-            const message = currentLock 
-                ? `⚠️ هل أنت متأكد من فتح هذا الطالب للتعديل؟\n\nسيمكنه من تغيير رغباته مرة أخرى.`
-                : `⚠️ هل أنت متأكد من قفل هذا الطالب؟\n\nلن يتمكن من التعديل بعد القفل.`
-
-            if (!confirm(message)) return
+            if (!confirm(`⚠️ هل أنت متأكد من ${action} هذا الطالب؟`)) return
 
             try {
                 const newLockState = !currentLock
@@ -657,7 +809,6 @@
 
                 if (error) throw error
 
-                // تحديث البيانات محلياً
                 allStudents = allStudents.map(s =>
                     s.id === studentId ? { 
                         ...s, 
@@ -668,40 +819,16 @@
                 
                 filterStudents()
                 updateStats()
+                updateExtraStats()
 
-                showToast(
-                    currentLock ? '✅ تم فتح الطالب للتعديل' : '✅ تم قفل الطالب بنجاح',
-                    'success'
-                )
-
-                // تسجيل النشاط
+                showToast(currentLock ? '✅ تم فتح الطالب للتعديل' : '✅ تم قفل الطالب', 'success')
                 const studentName = allStudents.find(s => s.id === studentId)?.full_name || studentId
-                await logActivity(
-                    `${action} طالب`,
-                    `تم ${action} الطالب ${studentName}`,
-                    studentId,
-                    studentName
-                )
+                await logActivity(`${action} طالب`, `تم ${action} الطالب ${studentName}`)
 
             } catch (err) {
                 console.error('Error toggling lock:', err)
                 showToast('❌ حدث خطأ أثناء تغيير حالة القفل', 'error')
             }
-        }
-
-        // ===== إشعارات Toast =====
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toastContainer')
-            const toast = document.createElement('div')
-            toast.className = `toast ${type}`
-            toast.textContent = message
-            container.appendChild(toast)
-            
-            setTimeout(() => {
-                toast.style.opacity = '0'
-                toast.style.transition = 'opacity 0.3s'
-                setTimeout(() => toast.remove(), 300)
-            }, 3500)
         }
 
         // ===== تسجيل النشاطات =====
