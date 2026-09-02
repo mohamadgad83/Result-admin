@@ -239,7 +239,6 @@
                 <div class="action-card">
                     <h3>📤 استيراد طلاب</h3>
                     
-                    <!-- تعليمات واضحة -->
                     <div class="import-instructions">
                         <strong>📌 الأعمدة المطلوبة فقط:</strong><br>
                         <span style="font-size:16px;color:#dc3545;font-weight:700;">الكود</span>
@@ -281,7 +280,6 @@
             window.location.href = 'admin-login.html'
         }
 
-        // ===== دالة ذكية لمطابقة أسماء الأعمدة =====
         function findColumn(availableColumns, possibleNames) {
             const normalizedAvailable = availableColumns.map(col => ({
                 original: col,
@@ -296,6 +294,70 @@
                 if (found) return found.original
             }
             return null
+        }
+
+        // ===== دالة التصدير المُصلحة =====
+        async function exportData() {
+            try {
+                const { data: students, error } = await supabase
+                    .from('students')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+
+                if (error) throw error
+                if (!students || students.length === 0) {
+                    alert('⚠️ لا توجد بيانات للتصدير')
+                    return
+                }
+
+                const { data: fields, error: fieldsError } = await supabase
+                    .from('dynamic_fields')
+                    .select('id, name')
+                    .eq('visible_for_student', true)
+                    .order('display_order', { ascending: true })
+
+                if (fieldsError) throw fieldsError
+
+                const studentIds = students.map(s => s.id)
+                const { data: responses, error: responsesError } = await supabase
+                    .from('student_dynamic_responses')
+                    .select('student_id, field_id, value')
+                    .in('student_id', studentIds)
+
+                if (responsesError) throw responsesError
+
+                const exportData = students.map(student => {
+                    const row = {
+                        'الكود': student.student_code || '',
+                        'الرقم القومي': student.national_id || '',
+                        'الاسم': student.full_name || '',
+                        'التشعيب': student.stream || '',
+                        'التخصص/المسار': student.specialization || student.track || '',
+                        'المادة الاختيارية': student.optional_subject || '',
+                        'الحالة': student.is_locked ? 'مقفل' : 'مفتوح',
+                        'تاريخ التقديم': student.submitted_at ? new Date(student.submitted_at).toLocaleDateString('ar-EG') : '',
+                    }
+                    fields.forEach(field => {
+                        const response = responses?.find(
+                            r => r.student_id === student.id && r.field_id === field.id
+                        )
+                        row[field.name] = response?.value || ''
+                    })
+                    return row
+                })
+
+                const wb = XLSX.utils.book_new()
+                const ws = XLSX.utils.json_to_sheet(exportData)
+                XLSX.utils.book_append_sheet(wb, ws, 'الطلاب')
+                XLSX.writeFile(wb, `طلاب_مدرسة_دشنا_${new Date().toISOString().split('T')[0]}.xlsx`)
+
+                await logActivity('تصدير بيانات', 'تم تصدير جميع بيانات الطلاب')
+                alert('✅ تم تصدير البيانات بنجاح')
+
+            } catch (err) {
+                console.error('Error exporting:', err)
+                alert('❌ حدث خطأ أثناء التصدير: ' + err.message)
+            }
         }
 
         // ===== استيراد البيانات =====
@@ -329,14 +391,12 @@
 
                 const availableColumns = Object.keys(rows[0])
 
-                // ===== الأسماء البديلة لكل عمود مطلوب =====
                 const columnAliases = {
                     'الكود': ['الكود', 'كود', 'كود الطالب', 'student_code', 'code', 'كود الطالب'],
                     'الرقم القومي': ['الرقم القومي', 'رقم قومي', 'national_id', 'nationalid', 'id', 'الرقم القومي'],
                     'الاسم': ['الاسم', 'اسم', 'اسم الطالب', 'full_name', 'name', 'الاسم']
                 }
 
-                // ===== البحث عن الأعمدة =====
                 const columnMap = {}
                 const missingFields = []
 
@@ -349,7 +409,6 @@
                     }
                 }
 
-                // ===== عرض تقرير بالأعمدة المكتشفة =====
                 if (missingFields.length > 0) {
                     resultDiv.innerHTML = `
                         <div class="error" style="color:#dc3545;margin-top:10px;padding:15px;background:#f8d7da;border-radius:12px;">
@@ -371,7 +430,6 @@
                     return
                 }
 
-                // ===== بدء الاستيراد =====
                 let successCount = 0
                 let errorCount = 0
                 const errors = []
@@ -387,11 +445,10 @@
 
                         if (!studentCode || !nationalId || !fullName) {
                             errorCount++
-                            errors.push(`صف ${rowNum}: الحقول المطلوبة غير مكتملة (الكود: ${studentCode || 'فارغ'}, الرقم القومي: ${nationalId || 'فارغ'}, الاسم: ${fullName || 'فارغ'})`)
+                            errors.push(`صف ${rowNum}: الحقول المطلوبة غير مكتملة`)
                             continue
                         }
 
-                        // التحقق من التكرار
                         const { data: existing, error: checkError } = await supabase
                             .from('students')
                             .select('id')
@@ -406,17 +463,14 @@
 
                         if (existing) {
                             errorCount++
-                            errors.push(`صف ${rowNum}: الكود (${studentCode}) أو الرقم القومي (${nationalId}) موجود مسبقاً`)
+                            errors.push(`صف ${rowNum}: الكود أو الرقم القومي موجود مسبقاً`)
                             continue
                         }
 
-                        // ===== إعداد بيانات الطالب =====
-                        // التشعيب يتم تعيينه تلقائياً إلى "ثانوي"
                         const studentData = {
                             student_code: studentCode,
                             national_id: nationalId,
                             full_name: fullName,
-                           
                         }
 
                         const { error: insertError } = await supabase
@@ -436,7 +490,6 @@
                     }
                 }
 
-                // عرض النتائج
                 let resultHtml = `
                     <div class="results-box">
                         <div class="results-stats">
@@ -458,7 +511,6 @@
                     `
                 }
 
-                // عرض الأعمدة التي تم التعرف عليها
                 resultHtml += `
                     <div class="debug-info">
                         <strong>✅ الأعمدة التي تم التعرف عليها:</strong>
@@ -484,65 +536,6 @@
             }
         }
 
-        // ===== تصدير البيانات =====
-        async function exportData() {
-            try {
-                const { data: students, error } = await supabase
-                    .from('students')
-                    .select('*')
-                    .order('created_at', { ascending: false })
-
-                if (error) throw error
-
-                const { data: fields, error: fieldsError } = await supabase
-                    .from('dynamic_fields')
-                    .select('id, name')
-                    .eq('visible_for_student', true)
-
-                if (fieldsError) throw fieldsError
-
-                const studentIds = students.map(s => s.id)
-                const { data: responses, error: responsesError } = await supabase
-                    .from('student_dynamic_responses')
-                    .select('student_id, field_id, value')
-                    .in('student_id', studentIds)
-
-                if (responsesError) throw responsesError
-
-                const exportData = students.map(student => {
-                    const row = {
-                        'الكود': student.student_code,
-                        'الرقم القومي': student.national_id,
-                        'الاسم': student.full_name,
-                        'التشعيب': student.stream || '',
-                        'التخصص/المسار': student.specialization || student.track || '',
-                        'المادة الاختيارية': student.optional_subject || '',
-                        'الحالة': student.is_locked ? 'مقفل' : 'مفتوح',
-                        'تاريخ التقديم': student.submitted_at ? new Date(student.submitted_at).toLocaleDateString('ar-EG') : '',
-                    }
-                    fields.forEach(field => {
-                        const response = responses?.find(
-                            r => r.student_id === student.id && r.field_id === field.id
-                        )
-                        row[field.name] = response?.value || ''
-                    })
-                    return row
-                })
-
-                const wb = XLSX.utils.book_new()
-                const ws = XLSX.utils.json_to_sheet(exportData)
-                XLSX.utils.book_append_sheet(wb, ws, 'الطلاب')
-                XLSX.writeFile(wb, `طلاب_مدرسة_دشنا_${new Date().toISOString().split('T')[0]}.xlsx`)
-
-                await logActivity('تصدير بيانات', 'تم تصدير جميع بيانات الطلاب')
-
-            } catch (err) {
-                console.error('Error exporting:', err)
-                alert('حدث خطأ أثناء التصدير: ' + err.message)
-            }
-        }
-
-        // ===== تحميل النموذج =====
         function downloadTemplate() {
             const template = [
                 ['الكود', 'الرقم القومي', 'الاسم'],
@@ -555,15 +548,14 @@
             const wb = XLSX.utils.book_new()
             const ws = XLSX.utils.aoa_to_sheet(template)
             ws['!cols'] = [
-                { wch: 12 },  // الكود
-                { wch: 18 },  // الرقم القومي
-                { wch: 25 }   // الاسم
+                { wch: 12 },
+                { wch: 18 },
+                { wch: 25 }
             ]
             XLSX.utils.book_append_sheet(wb, ws, 'الطلاب')
             XLSX.writeFile(wb, 'نموذج_استيراد_طلاب_3_اعمدة.xlsx')
         }
 
-        // ===== تسجيل النشاطات =====
         async function logActivity(action, details) {
             try {
                 const adminId = sessionStorage.getItem('adminId')
