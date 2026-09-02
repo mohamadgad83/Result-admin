@@ -3,363 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>التقارير المتقدمة - الأدمن</title>
+    <title>استيراد/تصدير الطلاب - مدرسة دشنا الثانوية</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
-        .reports-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 20px;
-            margin: 20px 0;
-        }
-        .report-card {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 16px;
-            border: 2px solid #e9ecef;
-            transition: all 0.3s;
-        }
-        .report-card:hover {
-            border-color: #1e3c72;
-            transform: translateY(-3px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-        .report-card h3 {
-            color: #1e3c72;
-            margin-bottom: 5px;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .report-card .subtitle {
-            color: #888;
-            font-size: 12px;
-            margin-bottom: 12px;
-        }
-        .report-card .btn-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .report-card .btn-report {
-            padding: 8px 18px;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-        .report-card .btn-report:hover { transform: scale(1.03); }
-        .report-card .btn-report.blue { background: #1e3c72; }
-        .report-card .btn-report.blue:hover { background: #0f2b4f; }
-        .report-card .btn-report.green { background: #28a745; }
-        .report-card .btn-report.green:hover { background: #1e7e34; }
-        .report-card .btn-report.purple { background: #6f42c1; }
-        .report-card .btn-report.purple:hover { background: #5a32a3; }
-        .report-card .btn-report.orange { background: #fd7e14; }
-        .report-card .btn-report.orange:hover { background: #e06b0a; }
-        .report-card .btn-report.red { background: #dc3545; }
-        .report-card .btn-report.red:hover { background: #a71d2a; }
-        .report-card .btn-report.teal { background: #20c997; }
-        .report-card .btn-report.teal:hover { background: #1ba87e; }
-        .report-card .btn-preview {
-            padding: 8px 16px;
-            background: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: all 0.3s;
-        }
-        .report-card .btn-preview:hover { background: #5a6268; }
-        .report-card .btn-report:disabled, .report-card .btn-preview:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
+        /* نفس الأنماط السابقة - تم حذفها للاختصار */
+        .import-export-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin: 20px 0; }
+        .action-card { background: #f8f9fa; padding: 25px; border-radius: 16px; border: 2px solid #e9ecef; }
+        .action-card h3 { color: #1e3c72; margin-bottom: 10px; }
+        .action-card p { color: #666; font-size: 14px; margin-bottom: 15px; }
+        .file-upload-area { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+        .file-upload-area input[type="file"] { flex: 1; min-width: 200px; padding: 10px; border: 2px solid #e0e0e0; border-radius: 10px; background: white; cursor: pointer; font-size: 14px; }
+        .file-upload-area input[type="file"]:hover { border-color: #1e3c72; }
+        .file-upload-area .btn-import { padding: 12px 30px; background: #28a745; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: 600; transition: all 0.3s; }
+        .file-upload-area .btn-import:hover { background: #1e7e34; }
+        .file-upload-area .btn-import:disabled { opacity: 0.5; cursor: not-allowed; }
+        .file-upload-area .btn-template { padding: 12px 25px; background: #17a2b8; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.3s; }
+        .file-upload-area .btn-template:hover { background: #138496; }
 
-        .admin-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #eee;
-            margin-bottom: 20px;
-        }
-        .btn-back {
-            padding: 8px 18px;
-            background: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            text-decoration: none;
-            display: inline-block;
-        }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding-bottom: 15px; border-bottom: 2px solid #eee; margin-bottom: 20px; }
+        .btn-back { padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; text-decoration: none; display: inline-block; }
         .btn-back:hover { background: #5a6268; }
-        .btn-logout {
-            padding: 8px 18px;
-            background: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-        }
-        .btn-logout:hover { background: #a71d2a; }
+        .btn-export { padding: 12px 30px; background: #1e3c72; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; width: 100%; transition: all 0.3s; }
+        .btn-export:hover { background: #0f2b4f; }
+        .btn-export:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        .report-preview {
-            margin-top: 20px;
-            padding: 20px;
-            background: white;
-            border-radius: 12px;
-            border: 1px solid #ddd;
-            max-height: 550px;
-            overflow-y: auto;
-            display: none;
-            position: relative;
-        }
-        .report-preview.show { 
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-        .report-preview .preview-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #eee;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .report-preview .preview-header h4 {
-            color: #1e3c72;
-            margin: 0;
-        }
-        .report-preview .preview-header .actions {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .report-preview .preview-header .actions button {
-            padding: 6px 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-        .report-preview .preview-header .actions .btn-print {
-            background: #17a2b8;
-            color: white;
-        }
-        .report-preview .preview-header .actions .btn-print:hover { background: #138496; }
-        .report-preview .preview-header .actions .btn-close {
-            background: #dc3545;
-            color: white;
-        }
-        .report-preview .preview-header .actions .btn-close:hover { background: #a71d2a; }
-        .report-preview table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-        .report-preview table th {
-            background: #1e3c72;
-            color: white;
-            padding: 10px 12px;
-            text-align: right;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-        .report-preview table td {
-            padding: 8px 12px;
-            border-bottom: 1px solid #eee;
-        }
-        .report-preview table tr:hover { background: #f8f9fa; }
-        .report-preview .no-data {
-            text-align: center;
-            padding: 40px;
-            color: #999;
-        }
-        .report-preview .summary-stats {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            padding: 12px;
-            background: #f0f7ff;
-            border-radius: 10px;
-            margin-bottom: 15px;
-        }
-        .report-preview .summary-stats .stat {
-            font-size: 14px;
-            color: #333;
-        }
-        .report-preview .summary-stats .stat strong {
-            color: #1e3c72;
-            font-size: 18px;
-        }
+        .results-box { margin-top: 15px; padding: 15px; background: white; border-radius: 12px; border: 1px solid #e9ecef; }
+        .results-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 10px 0; }
+        .results-stats div { text-align: center; padding: 10px; border-radius: 8px; }
+        .results-stats .success-count { background: #d4edda; color: #155724; }
+        .results-stats .error-count { background: #f8d7da; color: #721c24; }
+        .results-stats .total-count { background: #cce5ff; color: #004085; }
+        .errors-list { max-height: 200px; overflow-y: auto; font-size: 13px; margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 8px; }
+        .errors-list li { padding: 3px 0; color: #dc3545; border-bottom: 1px solid #f0f0f0; }
+        .errors-list li:last-child { border-bottom: none; }
 
-        /* Toast */
-        .toast-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .toast {
-            padding: 15px 25px;
-            border-radius: 12px;
-            color: white;
-            font-weight: 600;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            animation: slideIn 0.3s ease;
-            min-width: 200px;
-            max-width: 400px;
-        }
+        .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { padding: 15px 25px; border-radius: 12px; color: white; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.15); animation: slideIn 0.3s ease; min-width: 200px; max-width: 400px; }
         .toast.success { background: #28a745; }
         .toast.error { background: #dc3545; }
         .toast.info { background: #17a2b8; }
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @media (max-width: 900px) {
-            .reports-grid { grid-template-columns: 1fr 1fr; }
-        }
         @media (max-width: 600px) {
-            .reports-grid { grid-template-columns: 1fr; }
-            .report-card .btn-group { flex-direction: column; }
-            .report-card .btn-group .btn-report, 
-            .report-card .btn-group .btn-preview { width: 100%; text-align: center; }
-        }
-        @media print {
-            .no-print { display: none !important; }
-            .report-preview { border: none !important; padding: 0 !important; max-height: none !important; overflow: visible !important; }
-            .report-preview .preview-header .actions { display: none !important; }
-            .report-preview table th { background: #1e3c72 !important; color: white !important; }
+            .import-export-grid { grid-template-columns: 1fr; }
+            .file-upload-area { flex-direction: column; align-items: stretch; }
+            .file-upload-area input[type="file"] { min-width: unset; }
+            .file-upload-area .btn-import,
+            .file-upload-area .btn-template { width: 100%; text-align: center; }
         }
     </style>
 </head>
 <body>
-    <div class="container" style="max-width:1100px;">
+    <div class="container" style="max-width:900px;">
         <div class="card">
+            <!-- Header -->
             <div class="admin-header">
                 <div>
-                    <h1 style="margin:0;font-size:22px;">📊 التقارير المتقدمة</h1>
-                    <p style="color:#666;font-size:13px;margin-top:5px;">تصدير وتحليل بيانات الطلاب (Excel - PDF - طباعة)</p>
+                    <h1 style="margin:0;">📤 استيراد/تصدير الطلاب</h1>
+                    <p style="color:#666;font-size:13px;margin-top:5px;">
+                        استيراد الطلاب من ملف Excel أو تصدير البيانات مع الحقول الإضافية إلى Excel
+                    </p>
                 </div>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;">
                     <a href="admin-dashboard.html" class="btn-back">📊 لوحة التحكم</a>
-                    <a href="admin-students.html" class="btn-back">👨‍🎓 الطلاب</a>
-                    <button onclick="logout()" class="btn-logout">🚪 خروج</button>
+                    <button onclick="logout()" style="padding:10px 20px;background:#dc3545;color:white;border:none;border-radius:8px;cursor:pointer;">🚪 خروج</button>
                 </div>
             </div>
 
-            <div class="reports-grid">
-                <div class="report-card">
-                    <h3>📊 توزيع التشعيبات</h3>
-                    <div class="subtitle">إحصائية بعدد الطلاب في كل تشعيب</div>
-                    <div class="btn-group">
-                        <button onclick="generateReport('stream')" class="btn-report blue">📥 Excel</button>
-                        <button onclick="generateReport('stream_pdf')" class="btn-report red">📄 PDF</button>
-                        <button onclick="previewReport('stream')" class="btn-preview">👁️ معاينة</button>
-                    </div>
+            <div class="import-export-grid">
+                <!-- تصدير -->
+                <div class="action-card">
+                    <h3>📥 تصدير البيانات</h3>
+                    <p>تصدير جميع بيانات الطلاب إلى ملف Excel شامل مع الحقول الإضافية</p>
+                    <button onclick="exportData()" class="btn-export" id="exportBtn">📥 تحميل ملف Excel</button>
                 </div>
-                <div class="report-card">
-                    <h3>🔬 توزيع التخصصات</h3>
-                    <div class="subtitle">طلاب الثانوي حسب التخصص مع الأسماء</div>
-                    <div class="btn-group">
-                        <button onclick="generateReport('specialization')" class="btn-report green">📥 Excel</button>
-                        <button onclick="generateReport('specialization_pdf')" class="btn-report red">📄 PDF</button>
-                        <button onclick="previewReport('specialization')" class="btn-preview">👁️ معاينة</button>
-                    </div>
-                </div>
-                <div class="report-card">
-                    <h3>📚 توزيع المسارات</h3>
-                    <div class="subtitle">طلاب البكالوريا حسب المسار مع الأسماء</div>
-                    <div class="btn-group">
-                        <button onclick="generateReport('tracks')" class="btn-report purple">📥 Excel</button>
-                        <button onclick="generateReport('tracks_pdf')" class="btn-report red">📄 PDF</button>
-                        <button onclick="previewReport('tracks')" class="btn-preview">👁️ معاينة</button>
-                    </div>
-                </div>
-                <div class="report-card">
-                    <h3>📖 المواد الاختيارية</h3>
-                    <div class="subtitle">طلاب البكالوريا حسب المادة الاختيارية</div>
-                    <div class="btn-group">
-                        <button onclick="generateReport('optional')" class="btn-report orange">📥 Excel</button>
-                        <button onclick="generateReport('optional_pdf')" class="btn-report red">📄 PDF</button>
-                        <button onclick="previewReport('optional')" class="btn-preview">👁️ معاينة</button>
-                    </div>
-                </div>
-                <div class="report-card">
-                    <h3>📅 التسجيل اليومي</h3>
-                    <div class="subtitle">عدد الطلاب المسجلين خلال الأيام الماضية</div>
-                    <div class="btn-group">
-                        <button onclick="generateReport('daily')" class="btn-report teal">📥 Excel</button>
-                        <button onclick="generateReport('daily_pdf')" class="btn-report red">📄 PDF</button>
-                        <button onclick="previewReport('daily')" class="btn-preview">👁️ معاينة</button>
-                    </div>
-                </div>
-                <div class="report-card">
-                    <h3>📋 تقرير شامل</h3>
-                    <div class="subtitle">جميع بيانات الطلاب مع الحقول الديناميكية</div>
-                    <div class="btn-group">
-                        <button onclick="generateReport('full')" class="btn-report blue">📥 Excel</button>
-                        <button onclick="generateReport('full_pdf')" class="btn-report red">📄 PDF</button>
-                        <button onclick="previewReport('full')" class="btn-preview">👁️ معاينة</button>
-                    </div>
-                </div>
-            </div>
 
-            <div class="report-preview" id="reportPreview">
-                <div class="preview-header">
-                    <h4 id="previewTitle">📊 معاينة التقرير</h4>
-                    <div class="actions">
-                        <button onclick="printPreview()" class="btn-print">🖨️ طباعة</button>
-                        <button onclick="closePreview()" class="btn-close">✕ إغلاق</button>
+                <!-- استيراد -->
+                <div class="action-card">
+                    <h3>📤 استيراد طلاب</h3>
+                    <div style="background:#fff8e1;padding:15px;border-radius:12px;margin-bottom:15px;border-right:4px solid #ffc107;font-size:14px;">
+                        <strong>📌 الأعمدة المطلوبة فقط:</strong><br>
+                        <span style="font-size:16px;color:#dc3545;font-weight:700;">الكود</span>
+                        <span style="font-size:16px;color:#dc3545;font-weight:700;">الرقم القومي</span>
+                        <span style="font-size:16px;color:#dc3545;font-weight:700;">الاسم</span>
+                        <br>
+                        <span style="font-size:12px;color:#856404;">⚠️ التشعيب سيتم تعيينه تلقائياً إلى "ثانوي"</span>
                     </div>
+
+                    <div class="file-upload-area">
+                        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+                        <button onclick="downloadTemplate()" class="btn-template">📋 تحميل نموذج</button>
+                        <button onclick="importData()" class="btn-import" id="importBtn">📊 استيراد البيانات</button>
+                    </div>
+                    <div id="importResult"></div>
                 </div>
-                <div id="previewContent"><div class="no-data">⏳ جاري التحميل...</div></div>
             </div>
         </div>
     </div>
 
+    <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
 
     <script>
-        const SUPABASE_URL = '{{SUPABASE_URL}}';
-        const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        window.supabase = supabaseClient;
+        const SUPABASE_URL = '{{SUPABASE_URL}}'
+        const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+        window.supabase = supabaseClient
 
-        if (!sessionStorage.getItem('adminId')) window.location.href = 'admin-login.html';
+        if (!sessionStorage.getItem('adminId')) {
+            window.location.href = 'admin-login.html'
+        }
 
-        // ===== Toast =====
+        // ===== Toast System =====
         function showToast(message, type = 'success') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
@@ -373,261 +130,259 @@
             }, 4000);
         }
 
-        // ===== جلب البيانات =====
-        async function getStudents() {
-            const { data } = await supabaseClient.from('students').select('*');
-            return data || [];
-        }
-        async function getFields() {
-            const { data } = await supabaseClient.from('dynamic_fields')
-                .select('id, name').eq('visible_for_student', true).order('display_order', { ascending: true });
-            return data || [];
-        }
-        async function getResponses(studentIds) {
-            if (!studentIds.length) return [];
-            const { data } = await supabaseClient.from('student_dynamic_responses')
-                .select('student_id, field_id, value').in('student_id', studentIds);
-            return data || [];
-        }
-
-        // ===== بناء البيانات =====
-        function buildReportData(students, type) {
-            let headers = [], rows = [], title = '';
-            switch(type) {
-                case 'stream': {
-                    title = 'توزيع التشعيبات';
-                    const ثانوي = students.filter(s => s.stream === 'ثانوي').length;
-                    const بكالوريا = students.filter(s => s.stream === 'بكالوريا').length;
-                    const بدون = students.filter(s => !s.stream).length;
-                    headers = ['التشعيب', 'العدد', 'النسبة'];
-                    rows = [
-                        ['🎓 ثانوي', ثانوي, students.length ? ((ثانوي/students.length)*100).toFixed(1)+'%' : '0%'],
-                        ['📚 بكالوريا', بكالوريا, students.length ? ((بكالوريا/students.length)*100).toFixed(1)+'%' : '0%'],
-                        ['❌ غير محدد', بدون, students.length ? ((بدون/students.length)*100).toFixed(1)+'%' : '0%'],
-                        ['📊 الإجمالي', students.length, '100%']
-                    ];
-                    break;
-                }
-                case 'specialization': {
-                    title = 'توزيع التخصصات (ثانوي)';
-                    const ثانويطلاب = students.filter(s => s.stream === 'ثانوي');
-                    const علمي = ثانويطلاب.filter(s => s.specialization === 'علمي');
-                    const أدبي = ثانويطلاب.filter(s => s.specialization === 'أدبي');
-                    const بدون = ثانويطلاب.filter(s => !s.specialization);
-                    headers = ['التخصص', 'العدد', 'أسماء الطلاب'];
-                    rows = [
-                        ['🔬 علمي', علمي.length, علمي.map(s=>s.full_name).join('، ') || 'لا يوجد'],
-                        ['📝 أدبي', أدبي.length, أدبي.map(s=>s.full_name).join('، ') || 'لا يوجد'],
-                        ['❌ غير محدد', بدون.length, بدون.map(s=>s.full_name).join('، ') || 'لا يوجد'],
-                        ['📊 الإجمالي', ثانويطلاب.length, '']
-                    ];
-                    break;
-                }
-                case 'tracks': {
-                    title = 'توزيع المسارات (بكالوريا)';
-                    const بكالورياطلاب = students.filter(s => s.stream === 'بكالوريا');
-                    const groups = {};
-                    بكالورياطلاب.forEach(s => { const k = s.track || 'غير محدد'; if(!groups[k]) groups[k]=[]; groups[k].push(s); });
-                    headers = ['المسار', 'العدد', 'أسماء الطلاب'];
-                    rows = Object.entries(groups).map(([k, v]) => [k, v.length, v.map(s=>s.full_name).join('، ')]);
-                    rows.push(['📊 الإجمالي', بكالورياطلاب.length, '']);
-                    break;
-                }
-                case 'optional': {
-                    title = 'توزيع المواد الاختيارية (بكالوريا)';
-                    const بكالورياطلاب = students.filter(s => s.stream === 'بكالوريا' && s.optional_subject);
-                    const groups = {};
-                    بكالورياطلاب.forEach(s => { const k = s.optional_subject; if(!groups[k]) groups[k]=[]; groups[k].push(s); });
-                    headers = ['المادة', 'العدد', 'أسماء الطلاب'];
-                    rows = Object.entries(groups).map(([k, v]) => [k, v.length, v.map(s=>s.full_name).join('، ')]);
-                    if(!rows.length) rows.push(['لا توجد مواد', 0, '']);
-                    rows.push(['📊 الإجمالي', بكالورياطلاب.length, '']);
-                    break;
-                }
-                case 'daily': {
-                    title = 'التسجيل اليومي (آخر 7 أيام)';
-                    const days = [];
-                    for(let i=6; i>=0; i--) { const d = new Date(); d.setDate(d.getDate()-i); days.push(d.toISOString().split('T')[0]); }
-                    headers = ['التاريخ', 'عدد المسجلين'];
-                    rows = days.map(d => [new Date(d).toLocaleDateString('ar-EG'), students.filter(s => new Date(s.created_at).toISOString().split('T')[0] === d).length]);
-                    rows.push(['📊 الإجمالي', students.length]);
-                    break;
-                }
-                case 'full': {
-                    title = 'تقرير شامل';
-                    headers = ['#', 'الكود', 'الرقم القومي', 'الاسم', 'التشعيب', 'التخصص/المسار', 'المادة', 'الحالة', 'تاريخ التقديم'];
-                    rows = students.map((s,i) => [
-                        i+1, s.student_code||'-', s.national_id||'-', s.full_name||'-', 
-                        s.stream||'غير محدد', s.specialization||s.track||'-', 
-                        s.optional_subject||'-', s.is_locked ? '🔒 مقفل' : '🔓 مفتوح',
-                        s.submitted_at ? new Date(s.submitted_at).toLocaleDateString('ar-EG') : '-'
-                    ]);
-                    break;
-                }
-                default: return { headers: [], rows: [], title: 'غير معروف' };
-            }
-            return { headers, rows, title };
-        }
-
-        // ===== دالة التحميل باستخدام Blob =====
-        function downloadBlob(blob, fileName) {
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        }
-
-        // ===== إنشاء التقرير =====
-        async function generateReport(type) {
-            const btn = event?.target;
-            if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري...'; }
+        // ===== دالة التصدير مع الحقول الديناميكية =====
+        async function exportData() {
+            const btn = document.getElementById('exportBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ جاري التجهيز...';
 
             try {
-                const students = await getStudents();
-                if (!students || students.length === 0) { showToast('⚠️ لا توجد بيانات', 'error'); return; }
+                // 1. جلب الطلاب
+                const { data: students, error } = await supabaseClient
+                    .from('students')
+                    .select('*')
+                    .order('created_at', { ascending: false });
 
-                const isPdf = type.includes('_pdf');
-                const cleanType = type.replace('_pdf', '');
-                let report = buildReportData(students, cleanType);
-
-                if (cleanType === 'full') {
-                    const fields = await getFields();
-                    const responses = await getResponses(students.map(s => s.id));
-                    fields.forEach(f => report.headers.push(f.name));
-                    report.rows = report.rows.map((row, idx) => {
-                        const student = students[idx];
-                        fields.forEach(f => {
-                            const resp = responses.find(r => r.student_id === student.id && r.field_id === f.id);
-                            row.push(resp?.value || '-');
-                        });
-                        return row;
-                    });
-                }
-
-                const fileName = `تقرير_${report.title}_${new Date().toISOString().split('T')[0]}`;
-
-                if (isPdf) {
-                    // PDF
-                    try {
-                        const { jsPDF } = window.jspdf;
-                        const doc = new jsPDF('l', 'mm', 'a4');
-                        doc.setFontSize(16);
-                        doc.text(`📊 ${report.title}`, 14, 15);
-                        doc.setFontSize(10);
-                        doc.text(`التاريخ: ${new Date().toLocaleDateString('ar-EG')}`, 14, 22);
-                        doc.text(`الإجمالي: ${students.length}`, 14, 28);
-
-                        doc.autoTable({
-                            head: [report.headers.map(h => String(h))],
-                            body: report.rows.map(row => row.map(cell => String(cell))),
-                            startY: 35,
-                            styles: { fontSize: 7, cellPadding: 2 },
-                            headStyles: { fillColor: [30, 60, 114], fontSize: 8 }
-                        });
-
-                        const pdfBlob = doc.output('blob');
-                        downloadBlob(pdfBlob, `${fileName}.pdf`);
-                        showToast('✅ تم تصدير PDF بنجاح', 'success');
-                    } catch (pdfErr) {
-                        console.error(pdfErr);
-                        showToast('❌ فشل تصدير PDF: تأكد من تحميل المكتبات', 'error');
-                    }
-                } else {
-                    // Excel
-                    const wb = XLSX.utils.book_new();
-                    const ws = XLSX.utils.aoa_to_sheet([report.headers, ...report.rows]);
-                    XLSX.utils.book_append_sheet(wb, ws, 'تقرير');
-                    const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-                    const blob = new Blob([wbout], { type: 'application/octet-stream' });
-                    downloadBlob(blob, `${fileName}.xlsx`);
-                    showToast('✅ تم تصدير Excel بنجاح', 'success');
-                }
-
-                await logActivity('تصدير تقرير', `تصدير ${report.title}`);
-
-            } catch (err) {
-                console.error(err);
-                showToast('❌ خطأ: ' + err.message, 'error');
-            } finally {
-                if (btn) { btn.disabled = false; btn.textContent = btn.innerText.includes('PDF') ? '📄 PDF' : '📥 Excel'; }
-            }
-        }
-
-        // ===== معاينة =====
-        async function previewReport(type) {
-            const btn = event?.target;
-            if (btn) btn.disabled = true;
-
-            try {
-                const students = await getStudents();
-                const previewDiv = document.getElementById('reportPreview');
-                const contentDiv = document.getElementById('previewContent');
-                const titleDiv = document.getElementById('previewTitle');
-
+                if (error) throw new Error('فشل جلب الطلاب: ' + error.message);
                 if (!students || students.length === 0) {
-                    titleDiv.textContent = '📊 معاينة التقرير';
-                    contentDiv.innerHTML = `<div class="no-data">📭 لا توجد بيانات</div>`;
-                    previewDiv.classList.add('show');
+                    showToast('⚠️ لا توجد بيانات للتصدير', 'error');
+                    btn.disabled = false;
+                    btn.textContent = '📥 تحميل ملف Excel';
                     return;
                 }
 
-                let report = buildReportData(students, type);
-                if (type === 'full') {
-                    const fields = await getFields();
-                    const responses = await getResponses(students.map(s => s.id));
-                    fields.forEach(f => report.headers.push(f.name));
-                    report.rows = report.rows.map((row, idx) => {
-                        const student = students[idx];
-                        fields.forEach(f => {
-                            const resp = responses.find(r => r.student_id === student.id && r.field_id === f.id);
-                            row.push(resp?.value || '-');
-                        });
-                        return row;
-                    });
-                }
+                // 2. جلب الحقول الديناميكية
+                const { data: fields, error: fieldsError } = await supabaseClient
+                    .from('dynamic_fields')
+                    .select('id, name')
+                    .eq('visible_for_student', true)
+                    .order('display_order', { ascending: true });
 
-                titleDiv.textContent = `📊 ${report.title}`;
+                if (fieldsError) throw new Error('فشل جلب الحقول: ' + fieldsError.message);
 
-                let statsHtml = `<div class="summary-stats"><div class="stat">📊 الإجمالي: <strong>${students.length}</strong></div>`;
-                if (type === 'stream') {
-                    statsHtml += `<div class="stat">🎓 ثانوي: <strong>${students.filter(s=>s.stream==='ثانوي').length}</strong></div>`;
-                    statsHtml += `<div class="stat">📚 بكالوريا: <strong>${students.filter(s=>s.stream==='بكالوريا').length}</strong></div>`;
-                }
-                statsHtml += `</div>`;
+                // 3. جلب استجابات الطلاب
+                const studentIds = students.map(s => s.id);
+                const { data: responses, error: responsesError } = await supabaseClient
+                    .from('student_dynamic_responses')
+                    .select('student_id, field_id, value')
+                    .in('student_id', studentIds);
 
-                let tableHtml = `<table><thead><tr>${report.headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>`;
-                report.rows.slice(0, 100).forEach(row => {
-                    tableHtml += `<tr>${row.map(c => `<td>${c || '—'}</td>`).join('')}</tr>`;
+                if (responsesError) throw new Error('فشل جلب الاستجابات: ' + responsesError.message);
+
+                // 4. تحويل الاستجابات إلى كائن سهل الاستخدام
+                const responsesMap = {};
+                responses.forEach(r => {
+                    if (!responsesMap[r.student_id]) responsesMap[r.student_id] = {};
+                    responsesMap[r.student_id][r.field_id] = r.value;
                 });
-                if (report.rows.length > 100) {
-                    tableHtml += `<tr><td colspan="${report.headers.length}" style="text-align:center;color:#999;padding:15px;">... وعرض ${report.rows.length - 100} صف إضافي</td></tr>`;
-                }
-                tableHtml += `</tbody></table>`;
 
-                contentDiv.innerHTML = statsHtml + tableHtml;
-                previewDiv.classList.add('show');
-                previewDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // 5. بناء البيانات للتصدير
+                // رؤوس الأعمدة الأساسية
+                const baseHeaders = [
+                    'الكود', 'الرقم القومي', 'الاسم', 'التشعيب', 
+                    'التخصص/المسار', 'المادة الاختيارية', 'الحالة', 'تاريخ التقديم'
+                ];
+                // إضافة أسماء الحقول الديناميكية
+                const fieldNames = fields.map(f => f.name);
+                const fullHeaders = [...baseHeaders, ...fieldNames];
+
+                // بناء صفوف البيانات
+                const exportData = students.map(student => {
+                    const row = {
+                        'الكود': student.student_code || '',
+                        'الرقم القومي': student.national_id || '',
+                        'الاسم': student.full_name || '',
+                        'التشعيب': student.stream || '',
+                        'التخصص/المسار': student.specialization || student.track || '',
+                        'المادة الاختيارية': student.optional_subject || '',
+                        'الحالة': student.is_locked ? 'مقفل' : 'مفتوح',
+                        'تاريخ التقديم': student.submitted_at ? new Date(student.submitted_at).toLocaleDateString('ar-EG') : '',
+                    };
+                    // إضافة الحقول الديناميكية
+                    const studentResponses = responsesMap[student.id] || {};
+                    fields.forEach(field => {
+                        const fieldName = field.name;
+                        row[fieldName] = studentResponses[field.id] || '';
+                    });
+                    return row;
+                });
+
+                // 6. إنشاء ملف Excel باستخدام XLSX
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.json_to_sheet(exportData, { header: fullHeaders });
+                XLSX.utils.book_append_sheet(wb, ws, 'الطلاب');
+
+                // 7. تحميل الملف باستخدام Blob
+                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                const blob = new Blob([wbout], { type: 'application/octet-stream' });
+
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `طلاب_مدرسة_دشنا_${new Date().toISOString().split('T')[0]}.xlsx`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+
+                showToast(`✅ تم تصدير ${students.length} طالب مع الحقول الإضافية`, 'success');
+                await logActivity('تصدير بيانات', `تم تصدير ${students.length} طالب مع الحقول الديناميكية`);
 
             } catch (err) {
-                showToast('❌ خطأ في المعاينة: ' + err.message, 'error');
+                console.error('Export Error:', err);
+                showToast('❌ حدث خطأ أثناء التصدير: ' + err.message, 'error');
             } finally {
-                if (btn) btn.disabled = false;
+                btn.disabled = false;
+                btn.textContent = '📥 تحميل ملف Excel';
             }
         }
 
-        function printPreview() { window.print(); }
-        function closePreview() { document.getElementById('reportPreview').classList.remove('show'); }
+        // ===== استيراد البيانات =====
+        async function importData() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            const resultDiv = document.getElementById('importResult');
+            const importBtn = document.getElementById('importBtn');
+
+            if (!file) {
+                resultDiv.innerHTML = '<div class="error" style="color:#dc3545;margin-top:10px;">⚠️ يرجى اختيار ملف أولاً</div>';
+                return;
+            }
+
+            importBtn.disabled = true;
+            importBtn.textContent = '⏳ جاري الاستيراد...';
+            resultDiv.innerHTML = '';
+
+            try {
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data);
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(worksheet);
+
+                if (rows.length === 0) {
+                    resultDiv.innerHTML = `<div class="error" style="color:#dc3545;margin-top:10px;">❌ الملف فارغ أو لا يحتوي على بيانات</div>`;
+                    importBtn.disabled = false;
+                    importBtn.textContent = '📊 استيراد البيانات';
+                    return;
+                }
+
+                const availableColumns = Object.keys(rows[0]);
+                const columnAliases = {
+                    'الكود': ['الكود', 'كود', 'كود الطالب', 'student_code', 'code'],
+                    'الرقم القومي': ['الرقم القومي', 'رقم قومي', 'national_id', 'nationalid', 'id'],
+                    'الاسم': ['الاسم', 'اسم', 'اسم الطالب', 'full_name', 'name']
+                };
+
+                const findColumn = (possibleNames) => {
+                    const normalizedAvailable = availableColumns.map(col => col.trim().toLowerCase().replace(/\s+/g, ' '));
+                    for (const name of possibleNames) {
+                        const idx = normalizedAvailable.indexOf(name.trim().toLowerCase().replace(/\s+/g, ' '));
+                        if (idx !== -1) return availableColumns[idx];
+                    }
+                    return null;
+                };
+
+                const columnMap = {};
+                const missingFields = [];
+                for (const [key, aliases] of Object.entries(columnAliases)) {
+                    const found = findColumn(aliases);
+                    if (found) columnMap[key] = found;
+                    else missingFields.push(key);
+                }
+
+                if (missingFields.length > 0) {
+                    resultDiv.innerHTML = `
+                        <div style="color:#dc3545;margin-top:10px;padding:15px;background:#f8d7da;border-radius:12px;">
+                            <strong>❌ الأعمدة المطلوبة غير موجودة</strong><br>
+                            المطلوب: <strong>الكود، الرقم القومي، الاسم</strong><br>
+                            الموجود: <strong>${availableColumns.join('، ') || 'لا توجد أعمدة'}</strong>
+                        </div>
+                    `;
+                    importBtn.disabled = false;
+                    importBtn.textContent = '📊 استيراد البيانات';
+                    return;
+                }
+
+                let successCount = 0, errorCount = 0, errors = [];
+
+                for (let i = 0; i < rows.length; i++) {
+                    const row = rows[i];
+                    const rowNum = i + 2;
+                    try {
+                        const studentCode = String(row[columnMap['الكود']] || '').trim();
+                        const nationalId = String(row[columnMap['الرقم القومي']] || '').trim();
+                        const fullName = String(row[columnMap['الاسم']] || '').trim();
+
+                        if (!studentCode || !nationalId || !fullName) {
+                            errorCount++; errors.push(`صف ${rowNum}: بيانات ناقصة`); continue;
+                        }
+
+                        const { data: existing } = await supabaseClient
+                            .from('students')
+                            .select('id')
+                            .or(`student_code.eq.${studentCode},national_id.eq.${nationalId}`)
+                            .maybeSingle();
+
+                        if (existing) {
+                            errorCount++; errors.push(`صف ${rowNum}: الكود أو الرقم القومي موجود`); continue;
+                        }
+
+                        const { error: insertError } = await supabaseClient
+                            .from('students')
+                            .insert({ student_code: studentCode, national_id: nationalId, full_name: fullName });
+
+                        if (insertError) {
+                            errorCount++; errors.push(`صف ${rowNum}: ${insertError.message}`); continue;
+                        }
+                        successCount++;
+                    } catch (e) {
+                        errorCount++; errors.push(`صف ${rowNum}: خطأ غير متوقع`);
+                    }
+                }
+
+                let html = `<div class="results-box">
+                    <div class="results-stats">
+                        <div class="success-count">✅ ${successCount} تمت الإضافة</div>
+                        <div class="error-count">❌ ${errorCount} فشل</div>
+                        <div class="total-count">📊 ${rows.length} إجمالي</div>
+                    </div>`;
+                if (errors.length) {
+                    html += `<div class="errors-list"><strong>الأخطاء:</strong><ul>${errors.slice(0,30).map(e => `<li>${e}</li>`).join('')}</ul></div>`;
+                }
+                html += '</div>';
+                resultDiv.innerHTML = html;
+                if (successCount > 0) {
+                    showToast(`✅ تم استيراد ${successCount} طالب بنجاح`, 'success');
+                    await logActivity('استيراد طلاب', `تم استيراد ${successCount} طالب`);
+                }
+            } catch (err) {
+                resultDiv.innerHTML = `<div style="color:#dc3545;margin-top:10px;">❌ خطأ: ${err.message}</div>`;
+            } finally {
+                importBtn.disabled = false;
+                importBtn.textContent = '📊 استيراد البيانات';
+                fileInput.value = '';
+            }
+        }
+
+        function downloadTemplate() {
+            const template = [
+                ['الكود', 'الرقم القومي', 'الاسم'],
+                ['101', '12345678901234', 'أحمد محمد']
+            ];
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(template);
+            XLSX.utils.book_append_sheet(wb, ws, 'الطلاب');
+            XLSX.writeFile(wb, 'نموذج_استيراد_طلاب.xlsx');
+            showToast('📋 تم تحميل النموذج', 'info');
+        }
 
         async function logActivity(action, details) {
             try {
                 await supabaseClient.from('admin_logs').insert({
                     admin_id: sessionStorage.getItem('adminId'),
                     admin_email: sessionStorage.getItem('adminEmail') || 'unknown',
-                    action, details
+                    action, details,
+                    ip_address: 'unknown'
                 });
             } catch (e) {}
         }
