@@ -9,7 +9,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* ===== تنسيق البطاقات ===== */
+        /* ===== التنسيقات الحالية ===== */
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -80,7 +80,6 @@
         .stat-card.pink { background: linear-gradient(135deg, #e83e8c, #f06292); }
         .stat-card.dark { background: linear-gradient(135deg, #343a40, #6c757d); }
 
-        /* ===== الإجراءات السريعة ===== */
         .quick-actions {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -106,23 +105,7 @@
         .quick-action .icon { font-size: 26px; display: block; margin-bottom: 4px; }
         .quick-action .title { font-weight: 600; font-size: 13px; }
         .quick-action .desc { font-size: 10px; color: #999; display: block; margin-top: 2px; }
-        .quick-action.purple { border-color: #6f42c1; background: #f8f0ff; }
-        .quick-action.purple:hover { background: #f0e6ff; border-color: #6f42c1; }
-        .quick-action.purple .title { color: #6f42c1; }
-        .quick-action.orange { border-color: #fd7e14; background: #fff8f0; }
-        .quick-action.orange:hover { background: #fff0e0; border-color: #fd7e14; }
-        .quick-action.orange .title { color: #fd7e14; }
-        .quick-action.green { border-color: #28a745; background: #f0fff4; }
-        .quick-action.green:hover { background: #e0f5e8; border-color: #28a745; }
-        .quick-action.green .title { color: #28a745; }
-        .quick-action.red { border-color: #dc3545; background: #fff5f5; }
-        .quick-action.red:hover { background: #ffe8e8; border-color: #dc3545; }
-        .quick-action.red .title { color: #dc3545; }
-        .quick-action.teal { border-color: #20c997; background: #f0fff8; }
-        .quick-action.teal:hover { background: #e0f5f0; border-color: #20c997; }
-        .quick-action.teal .title { color: #20c997; }
 
-        /* ===== الهيدر ===== */
         .admin-header {
             display: flex;
             justify-content: space-between;
@@ -181,7 +164,6 @@
             transform: scale(1.02);
         }
 
-        /* ===== الرسوم البيانية ===== */
         .charts-section {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -206,7 +188,51 @@
             max-width: 100%;
         }
 
-        /* ===== جدول آخر الطلاب المسجلين (تحسين جديد) ===== */
+        /* ===== أقسام الإحصائيات الجديدة ===== */
+        .stats-table-section {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #eee;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .stats-table-section .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .stats-table-section .header h4 {
+            color: #1e3c72;
+            margin: 0;
+        }
+        .stats-table-section table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .stats-table-section table th {
+            background: #f8f9fa;
+            color: #333;
+            padding: 10px 12px;
+            text-align: right;
+            border-bottom: 2px solid #e9ecef;
+            font-weight: 600;
+        }
+        .stats-table-section table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .stats-table-section table tr:hover {
+            background: #f8f9fa;
+        }
+        .stats-table-section .empty-msg {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+
         .recent-students-section {
             background: white;
             border-radius: 16px;
@@ -260,7 +286,6 @@
             color: #999;
         }
 
-        /* ===== سجل النشاطات ===== */
         .activity-section {
             background: #f8f9fa;
             border-radius: 16px;
@@ -328,7 +353,6 @@
         .activity-badge.system { background: #fff3cd; color: #856404; }
         .activity-badge.other { background: #f8d7da; color: #721c24; }
 
-        /* ===== قسم الاستيراد ===== */
         .import-section {
             background: #f8f9fa;
             border-radius: 16px;
@@ -463,7 +487,6 @@
             color: #666;
         }
 
-        /* ===== الإشعارات ===== */
         .notification-bell {
             position: relative;
             cursor: pointer;
@@ -500,7 +523,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* ===== نظام المعلومات ===== */
         .system-info {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -509,7 +531,6 @@
             color: #666;
         }
 
-        /* ===== التوافق ===== */
         @media (max-width: 768px) {
             .charts-section { grid-template-columns: 1fr; }
             .dashboard-grid { grid-template-columns: 1fr 1fr; }
@@ -526,6 +547,9 @@
             .recent-students-section table { font-size: 12px; }
             .recent-students-section table th, 
             .recent-students-section table td { padding: 8px 6px; }
+            .stats-table-section table { font-size: 12px; }
+            .stats-table-section table th,
+            .stats-table-section table td { padding: 8px 6px; }
         }
         @media (max-width: 480px) {
             .dashboard-grid { grid-template-columns: 1fr; }
@@ -550,7 +574,7 @@
                 </div>
             </div>
 
-            <!-- ===== الإحصائيات ===== -->
+            <!-- ===== الإحصائيات الأساسية ===== -->
             <div class="dashboard-grid" id="statsGrid">
                 <div class="stat-card">
                     <span class="stat-icon">👨‍🎓</span>
@@ -600,14 +624,14 @@
                     <div class="label">أدبي</div>
                     <span class="sub-info">طلاب الثانوي</span>
                 </div>
-                <!-- ===== بطاقة المواد الاختيارية (تحسين جديد) ===== -->
+                <!-- بطاقة المواد الاختيارية (إجمالي) -->
                 <div class="stat-card pink">
                     <span class="stat-icon">📖</span>
                     <div class="number" id="optionalSubjectsCount">0</div>
                     <div class="label">مواد اختيارية</div>
                     <span class="sub-info">طلاب بكالوريا</span>
                 </div>
-                <!-- ===== بطاقة الطلبات المعلقة ===== -->
+                <!-- بطاقة الطلبات المعلقة -->
                 <div class="stat-card orange" style="cursor:pointer;" onclick="window.location.href='admin-requests.html'">
                     <span class="stat-icon">📩</span>
                     <div class="number" id="pendingRequests">0</div>
@@ -656,7 +680,7 @@
                 </a>
             </div>
 
-            <!-- ===== الرسوم البيانية ===== -->
+            <!-- ===== الرسوم البيانية الأساسية ===== -->
             <div class="charts-section">
                 <div class="chart-card">
                     <h4>📊 توزيع التشعيبات</h4>
@@ -668,15 +692,27 @@
                 </div>
             </div>
 
-            <!-- ===== رسم بياني إضافي للمواد الاختيارية ===== -->
-            <div class="charts-section" style="grid-template-columns: 1fr;">
-                <div class="chart-card">
-                    <h4>📊 توزيع المواد الاختيارية (بكالوريا)</h4>
-                    <canvas id="optionalSubjectsChart"></canvas>
+            <!-- ===== إحصائيات المواد الاختيارية (جديد) ===== -->
+            <div class="stats-table-section" id="optionalSubjectsSection" style="display:none;">
+                <div class="header">
+                    <h4>📊 إحصائيات المواد الاختيارية (بكالوريا)</h4>
+                </div>
+                <div id="optionalSubjectsTable">
+                    <div class="empty-msg">⏳ جاري التحميل...</div>
                 </div>
             </div>
 
-            <!-- ===== جدول آخر الطلاب المسجلين (تحسين جديد) ===== -->
+            <!-- ===== إحصائيات المسارات (جديد) ===== -->
+            <div class="stats-table-section" id="tracksSection" style="display:none;">
+                <div class="header">
+                    <h4>📊 إحصائيات المسارات (بكالوريا)</h4>
+                </div>
+                <div id="tracksTable">
+                    <div class="empty-msg">⏳ جاري التحميل...</div>
+                </div>
+            </div>
+
+            <!-- ===== جدول آخر الطلاب تسجيلاً ===== -->
             <div class="recent-students-section">
                 <div class="header">
                     <h4>🕐 آخر الطلاب تسجيلاً</h4>
@@ -752,7 +788,7 @@
 
         let chartInstances = {}
 
-        // ===== تحميل الإحصائيات =====
+        // ===== تحميل الإحصائيات الأساسية =====
         async function loadStats() {
             try {
                 const [totalRes, lockedRes, fieldsRes, todayRes] = await Promise.all([
@@ -799,8 +835,9 @@
 
                 // تحميل الرسوم البيانية
                 loadCharts()
-                // تحميل إحصائيات المواد الاختيارية
+                // تحميل إحصائيات المواد الاختيارية والمسارات
                 loadOptionalSubjectsStats()
+                loadTracksStats()
                 // تحميل عدد الطلبات المعلقة
                 loadPendingRequests()
                 // تحميل آخر الطلاب تسجيلاً
@@ -834,7 +871,7 @@
             }
         }
 
-        // ===== تحميل إحصائيات المواد الاختيارية =====
+        // ===== إحصائيات المواد الاختيارية =====
         async function loadOptionalSubjectsStats() {
             try {
                 const { data: students, error } = await supabaseClient
@@ -854,42 +891,77 @@
                 const total = students.length
                 document.getElementById('optionalSubjectsCount').textContent = total
 
-                const labels = Object.keys(counts)
-                const data = Object.values(counts)
+                const section = document.getElementById('optionalSubjectsSection')
+                const container = document.getElementById('optionalSubjectsTable')
 
-                if (chartInstances.optionalSubjects) chartInstances.optionalSubjects.destroy()
-                if (labels.length > 0) {
-                    chartInstances.optionalSubjects = new Chart(document.getElementById('optionalSubjectsChart'), {
-                        type: 'bar',
-                        data: {
-                            labels: labels,
-                            datasets: [{
-                                label: 'عدد الطلاب',
-                                data: data,
-                                backgroundColor: '#6f42c1',
-                                borderRadius: 8
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            plugins: {
-                                legend: { display: false }
-                            },
-                            scales: {
-                                y: { beginAtZero: true, ticks: { stepSize: 1 } }
-                            }
-                        }
-                    })
-                } else {
-                    document.getElementById('optionalSubjectsChart').style.display = 'none'
+                if (Object.keys(counts).length === 0) {
+                    section.style.display = 'none'
+                    return
                 }
+
+                section.style.display = 'block'
+                let html = `<table>
+                    <thead><tr><th>المادة الاختيارية</th><th>عدد الطلاب</th></tr></thead>
+                    <tbody>`
+                // ترتيب تنازلي حسب العدد
+                const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1])
+                sorted.forEach(([subject, count]) => {
+                    html += `<tr><td>${subject}</td><td><strong>${count}</strong></td></tr>`
+                })
+                html += `<tr style="font-weight:bold;background:#f8f9fa;"><td>📊 الإجمالي</td><td>${total}</td></tr>`
+                html += `</tbody></table>`
+                container.innerHTML = html
 
             } catch (err) {
                 console.error('Error loading optional subjects stats:', err)
             }
         }
 
-        // ===== تحميل آخر الطلاب تسجيلاً (تحسين جديد) =====
+        // ===== إحصائيات المسارات =====
+        async function loadTracksStats() {
+            try {
+                const { data: students, error } = await supabaseClient
+                    .from('students')
+                    .select('track')
+                    .eq('stream', 'بكالوريا')
+                    .not('track', 'is', null)
+
+                if (error) throw error
+
+                const counts = {}
+                students.forEach(s => {
+                    const track = s.track
+                    counts[track] = (counts[track] || 0) + 1
+                })
+
+                const total = students.length
+
+                const section = document.getElementById('tracksSection')
+                const container = document.getElementById('tracksTable')
+
+                if (Object.keys(counts).length === 0) {
+                    section.style.display = 'none'
+                    return
+                }
+
+                section.style.display = 'block'
+                let html = `<table>
+                    <thead><tr><th>المسار</th><th>عدد الطلاب</th></tr></thead>
+                    <tbody>`
+                const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1])
+                sorted.forEach(([track, count]) => {
+                    html += `<tr><td>${track}</td><td><strong>${count}</strong></td></tr>`
+                })
+                html += `<tr style="font-weight:bold;background:#f8f9fa;"><td>📊 الإجمالي</td><td>${total}</td></tr>`
+                html += `</tbody></table>`
+                container.innerHTML = html
+
+            } catch (err) {
+                console.error('Error loading tracks stats:', err)
+            }
+        }
+
+        // ===== آخر الطلاب تسجيلاً =====
         async function loadRecentStudents() {
             try {
                 const { data, error } = await supabaseClient
@@ -939,7 +1011,7 @@
             }
         }
 
-        // ===== الرسوم البيانية =====
+        // ===== الرسوم البيانية الأساسية =====
         async function loadCharts() {
             try {
                 const { data: students } = await supabaseClient
@@ -953,7 +1025,7 @@
                     return
                 }
 
-                // 1. رسم بياني للتشعيبات
+                // 1. تشعيبات
                 const streams = {
                     'ثانوي': students.filter(s => s.stream === 'ثانوي').length,
                     'بكالوريا': students.filter(s => s.stream === 'بكالوريا').length
@@ -982,7 +1054,7 @@
                     }
                 })
 
-                // 2. رسم بياني للتخصصات
+                // 2. تخصصات
                 const ثانويطلاب = students.filter(s => s.stream === 'ثانوي')
                 const specs = {
                     'علمي': ثانويطلاب.filter(s => s.specialization === 'علمي').length,
@@ -1017,7 +1089,7 @@
             }
         }
 
-        // ===== تحميل آخر النشاطات =====
+        // ===== سجل النشاطات =====
         async function loadRecentActivities() {
             try {
                 const { data, error } = await supabaseClient
