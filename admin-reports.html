@@ -262,7 +262,6 @@
 
             <!-- ===== بطاقات التقارير ===== -->
             <div class="reports-grid">
-                <!-- 1. تقرير التشعيبات -->
                 <div class="report-card">
                     <h3>📊 توزيع التشعيبات</h3>
                     <div class="subtitle">إحصائية بعدد الطلاب في كل تشعيب</div>
@@ -273,7 +272,6 @@
                     </div>
                 </div>
 
-                <!-- 2. تقرير التخصصات (مع الأسماء) -->
                 <div class="report-card">
                     <h3>🔬 توزيع التخصصات</h3>
                     <div class="subtitle">طلاب الثانوي حسب التخصص مع الأسماء</div>
@@ -284,7 +282,6 @@
                     </div>
                 </div>
 
-                <!-- 3. تقرير المسارات (مع الأسماء) -->
                 <div class="report-card">
                     <h3>📚 توزيع المسارات</h3>
                     <div class="subtitle">طلاب البكالوريا حسب المسار مع الأسماء</div>
@@ -295,7 +292,6 @@
                     </div>
                 </div>
 
-                <!-- 4. تقرير المواد الاختيارية (مع الأسماء) -->
                 <div class="report-card">
                     <h3>📖 المواد الاختيارية</h3>
                     <div class="subtitle">طلاب البكالوريا حسب المادة الاختيارية</div>
@@ -306,7 +302,6 @@
                     </div>
                 </div>
 
-                <!-- 5. تقرير التسجيل اليومي -->
                 <div class="report-card">
                     <h3>📅 التسجيل اليومي</h3>
                     <div class="subtitle">عدد الطلاب المسجلين خلال الأيام الماضية</div>
@@ -317,7 +312,6 @@
                     </div>
                 </div>
 
-                <!-- 6. تقرير شامل -->
                 <div class="report-card">
                     <h3>📋 تقرير شامل</h3>
                     <div class="subtitle">جميع بيانات الطلاب مع الحقول الديناميكية</div>
@@ -380,7 +374,7 @@
             return data || []
         }
 
-        // ===== دالة مساعدة لتوليد التقارير =====
+        // ===== دالة بناء البيانات (مُصلحة) =====
         function buildReportData(students, type) {
             let headers = []
             let rows = []
@@ -506,26 +500,28 @@
             return { headers, rows, title }
         }
 
-        // ===== إنشاء التقرير (Excel / PDF) =====
+        // ===== إنشاء التقرير (مُصلح) =====
         async function generateReport(type) {
             const students = await getStudents()
+            if (!students || students.length === 0) {
+                alert('⚠️ لا توجد بيانات لعرض التقرير')
+                return
+            }
+
             const isPdf = type.includes('_pdf')
             const cleanType = type.replace('_pdf', '')
             
             let report = buildReportData(students, cleanType)
             
-            // إضافة الحقول الديناميكية للتقرير الشامل
             if (cleanType === 'full') {
                 const fields = await getFields()
                 const studentIds = students.map(s => s.id)
                 const responses = await getResponses(studentIds)
                 
-                // إضافة أسماء الحقول كأعمدة إضافية
                 fields.forEach(f => {
                     report.headers.push(f.name)
                 })
                 
-                // إضافة القيم لكل طالب
                 report.rows = report.rows.map((row, idx) => {
                     const student = students[idx]
                     fields.forEach(f => {
@@ -547,17 +543,15 @@
             await logActivity('تصدير تقرير', `تم تصدير تقرير ${report.title} (${isPdf ? 'PDF' : 'Excel'})`)
         }
 
-        // ===== تصدير Excel =====
         function generateExcelReport(headers, rows, fileName) {
             const wsData = [headers, ...rows]
             const wb = XLSX.utils.book_new()
             const ws = XLSX.utils.aoa_to_sheet(wsData)
             XLSX.utils.book_append_sheet(wb, ws, 'تقرير')
             XLSX.writeFile(wb, `${fileName}.xlsx`)
-            showToast('✅ تم تصدير Excel بنجاح', 'success')
+            alert('✅ تم تصدير Excel بنجاح')
         }
 
-        // ===== تصدير PDF =====
         function generatePDFReport(headers, rows, title, fileName) {
             try {
                 const { jsPDF } = window.jspdf
@@ -580,23 +574,29 @@
                 })
                 
                 doc.save(`${fileName}.pdf`)
-                showToast('✅ تم تصدير PDF بنجاح', 'success')
+                alert('✅ تم تصدير PDF بنجاح')
             } catch (err) {
                 console.error('PDF Error:', err)
-                showToast('❌ حدث خطأ في تصدير PDF', 'error')
+                alert('❌ حدث خطأ في تصدير PDF')
             }
         }
 
-        // ===== معاينة التقرير =====
+        // ===== معاينة التقرير (مُصلحة) =====
         async function previewReport(type) {
             const students = await getStudents()
             const previewDiv = document.getElementById('reportPreview')
             const contentDiv = document.getElementById('previewContent')
             const titleDiv = document.getElementById('previewTitle')
 
+            if (!students || students.length === 0) {
+                titleDiv.textContent = '📊 معاينة التقرير'
+                contentDiv.innerHTML = `<div class="no-data">📭 لا توجد بيانات لعرضها</div>`
+                previewDiv.classList.add('show')
+                return
+            }
+
             let report = buildReportData(students, type)
             
-            // إضافة الحقول الديناميكية للتقرير الشامل
             if (type === 'full') {
                 const fields = await getFields()
                 const studentIds = students.map(s => s.id)
@@ -618,13 +618,6 @@
 
             titleDiv.textContent = `📊 ${report.title}`
 
-            if (students.length === 0 || report.rows.length === 0) {
-                contentDiv.innerHTML = `<div class="no-data">📭 لا توجد بيانات لعرضها</div>`
-                previewDiv.classList.add('show')
-                return
-            }
-
-            // عرض إحصائيات
             let statsHtml = `<div class="summary-stats">`
             statsHtml += `<div class="stat">📊 إجمالي الطلاب: <strong>${students.length}</strong></div>`
             if (type === 'stream') {
@@ -635,14 +628,13 @@
             }
             statsHtml += `</div>`
 
-            // عرض الجدول
             let tableHtml = `<table><thead><tr>`
             report.headers.forEach(h => {
                 tableHtml += `<th>${h}</th>`
             })
             tableHtml += `</tr></thead><tbody>`
             
-            const displayRows = report.rows.slice(0, 100) // عرض 100 صف كحد أقصى
+            const displayRows = report.rows.slice(0, 100)
             displayRows.forEach(row => {
                 tableHtml += `<tr>`
                 row.forEach(cell => {
@@ -664,44 +656,14 @@
             previewDiv.scrollIntoView({ behavior: 'smooth', block: 'start' })
         }
 
-        // ===== طباعة المعاينة =====
         function printPreview() {
             window.print()
         }
 
-        // ===== إغلاق المعاينة =====
         function closePreview() {
             document.getElementById('reportPreview').classList.remove('show')
         }
 
-        // ===== Toast Notification =====
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div')
-            toast.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                padding: 15px 25px;
-                background: ${type === 'success' ? '#28a745' : '#dc3545'};
-                color: white;
-                border-radius: 12px;
-                font-weight: 600;
-                z-index: 9999;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                animation: slideIn 0.3s ease;
-                max-width: 400px;
-            `
-            toast.textContent = message
-            document.body.appendChild(toast)
-            
-            setTimeout(() => {
-                toast.style.opacity = '0'
-                toast.style.transition = 'opacity 0.3s'
-                setTimeout(() => toast.remove(), 300)
-            }, 3000)
-        }
-
-        // ===== تسجيل النشاطات =====
         async function logActivity(action, details) {
             try {
                 const adminId = sessionStorage.getItem('adminId')
@@ -726,7 +688,6 @@
             }
         }
 
-        // ===== تسجيل الخروج =====
         function logout() {
             sessionStorage.clear()
             window.location.href = 'admin-login.html'
