@@ -8,7 +8,7 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* نفس الأنماط السابقة - تم حذفها للاختصار، ولكن احتفظ بها من الكود السابق */
+        /* نفس الأنماط السابقة - تم حذفها للاختصار، احتفظ بالأنماط من الكود السابق */
         .table-container { overflow-x: auto; margin: 20px 0; }
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
         table th { background: #1e3c72; color: white; padding: 12px 10px; text-align: center; white-space: nowrap; }
@@ -320,6 +320,15 @@
             window.location.href = 'admin-login.html'
         }
 
+        // ===== دالة مساعدة لتقسيم المصفوفة =====
+        function chunkArray(arr, size) {
+            const chunks = [];
+            for (let i = 0; i < arr.length; i += size) {
+                chunks.push(arr.slice(i, i + size));
+            }
+            return chunks;
+        }
+
         // ===== Toast System =====
         function showToast(message, type = 'success') {
             const container = document.getElementById('toastContainer');
@@ -358,21 +367,27 @@
                 if (fieldsError) throw fieldsError
                 dynamicFields = fields || []
 
-                // جلب استجابات الطلاب (لجميع الطلاب)
+                // جلب استجابات الطلاب - باستخدام تقسيم المعرفات لتجنب طول URL
                 if (allStudents.length > 0) {
-                    const studentIds = allStudents.map(s => s.id)
-                    const { data: responses, error: responsesError } = await supabaseClient
-                        .from('student_dynamic_responses')
-                        .select('student_id, field_id, value')
-                        .in('student_id', studentIds)
+                    const studentIds = allStudents.map(s => s.id);
+                    // تقسيم المعرفات إلى مجموعات صغيرة (حجم 50)
+                    const chunks = chunkArray(studentIds, 50);
+                    let allResponsesData = [];
+                    for (const chunk of chunks) {
+                        const { data, error } = await supabaseClient
+                            .from('student_dynamic_responses')
+                            .select('student_id, field_id, value')
+                            .in('student_id', chunk);
+                        if (error) throw error;
+                        if (data) allResponsesData = allResponsesData.concat(data);
+                    }
 
-                    if (responsesError) throw responsesError
                     // تحويل الاستجابات إلى كائن سهل الوصول
-                    allResponses = {}
-                    responses.forEach(r => {
-                        if (!allResponses[r.student_id]) allResponses[r.student_id] = {}
-                        allResponses[r.student_id][r.field_id] = r.value
-                    })
+                    allResponses = {};
+                    allResponsesData.forEach(r => {
+                        if (!allResponses[r.student_id]) allResponses[r.student_id] = {};
+                        allResponses[r.student_id][r.field_id] = r.value;
+                    });
                 }
 
                 renderTable()
@@ -382,12 +397,67 @@
             } catch (err) {
                 console.error('Error loading students:', err)
                 document.getElementById('studentsTableBody').innerHTML = 
-                    '<tr><td colspan="9" class="empty-msg">❌ خطأ في تحميل البيانات</td></tr>'
+                    '<tr><td colspan="9" class="empty-msg">❌ خطأ في تحميل البيانات: ' + (err.message || '') + '</td></tr>'
             }
         }
 
-        // ===== عرض الجدول مع إظهار الحقول الديناميكية (اختياري) =====
-        // ملاحظة: لا نعرض الحقول الديناميكية في الجدول لتجنب الزحام، ولكن سيتم تصديرها.
+        // ===== عرض الجدول =====
+        function renderTable() {
+            const tbody = document.getElementById('studentsTableBody')
+            document.getElementById('studentsCount').textContent = filteredStudents.length
+
+            if (filteredStudents.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="empty-msg">📭 لا يوجد طلاب</td></tr>'
+                return
+            }
+
+            const allChecked = filteredStudents.every(s => selectedStudents.has(s.id))
+            document.getElementById('selectAllCheckbox').checked = allChecked
+
+            tbody.innerHTML = filteredStudents.map((student, index) => {
+                const isLocked = student.is_locked
+                const isSelected = selectedStudents.has(student.id)
+                const streamDisplay = student.stream || '-'
+                const specializationDisplay = student.specialization || student.track || '-'
+                const optionalDisplay = student.optional_subject || '-'
+                
+                return `
+                <tr class="${isSelected ? 'selected' : ''}">
+                    <td>
+                        <input type="checkbox" class="row-checkbox" 
+                               data-id="${student.id}" 
+                               ${isSelected ? 'checked' : ''} 
+                               onchange="toggleStudent('${student.id}')">
+                    </td>
+                    <td>${index + 1}</td>
+                    <td><strong>${student.full_name}</strong></td>
+                    <td dir="ltr">${student.student_code}</td>
+                    <td>${streamDisplay}</td>
+                    <td>${specializationDisplay}</td>
+                    <td style="font-size:13px; color: ${student.optional_subject ? '#1e3c72' : '#999'};">${optionalDisplay}</td>
+                    <td>
+                        <span class="status-badge ${isLocked ? 'status-locked' : 'status-unlocked'}">
+                            ${isLocked ? '🔒 مقفل' : '🔓 مفتوح'}
+                        </span>
+                        ${student.submitted_at ? `
+                            <br><small style="font-size:10px;color:#999;">
+                                ${new Date(student.submitted_at).toLocaleDateString('ar-EG')}
+                            </small>
+                        ` : ''}
+                    </td>
+                    <td style="white-space:nowrap;">
+                        <a href="admin-student-detail.html?id=${student.id}" class="action-link view" title="عرض التفاصيل">👁️</a>
+                        <a href="#" onclick="toggleLock('${student.id}', ${isLocked})" 
+                           class="action-link ${isLocked ? 'unlock' : 'lock'}" 
+                           title="${isLocked ? '🔓 فتح التعديل' : '🔒 قفل التعديل'}">
+                            ${isLocked ? '🔓' : '🔒'}
+                        </a>
+                        <a href="student-pdf.html?print=${student.id}" target="_blank" 
+                           class="action-link pdf" title="طباعة PDF">📄</a>
+                    </td>
+                </tr>
+            `}).join('')
+        }
 
         // ===== تحديث الإحصائيات الأساسية =====
         function updateStats() {
@@ -468,64 +538,6 @@
             sortedTracks.forEach(track => {
                 trackSelect.innerHTML += `<option value="${track}">${track}</option>`;
             });
-        }
-
-        // ===== عرض الجدول =====
-        function renderTable() {
-            const tbody = document.getElementById('studentsTableBody')
-            document.getElementById('studentsCount').textContent = filteredStudents.length
-
-            if (filteredStudents.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="empty-msg">📭 لا يوجد طلاب</td></tr>'
-                return
-            }
-
-            const allChecked = filteredStudents.every(s => selectedStudents.has(s.id))
-            document.getElementById('selectAllCheckbox').checked = allChecked
-
-            tbody.innerHTML = filteredStudents.map((student, index) => {
-                const isLocked = student.is_locked
-                const isSelected = selectedStudents.has(student.id)
-                const streamDisplay = student.stream || '-'
-                const specializationDisplay = student.specialization || student.track || '-'
-                const optionalDisplay = student.optional_subject || '-'
-                
-                return `
-                <tr class="${isSelected ? 'selected' : ''}">
-                    <td>
-                        <input type="checkbox" class="row-checkbox" 
-                               data-id="${student.id}" 
-                               ${isSelected ? 'checked' : ''} 
-                               onchange="toggleStudent('${student.id}')">
-                    </td>
-                    <td>${index + 1}</td>
-                    <td><strong>${student.full_name}</strong></td>
-                    <td dir="ltr">${student.student_code}</td>
-                    <td>${streamDisplay}</td>
-                    <td>${specializationDisplay}</td>
-                    <td style="font-size:13px; color: ${student.optional_subject ? '#1e3c72' : '#999'};">${optionalDisplay}</td>
-                    <td>
-                        <span class="status-badge ${isLocked ? 'status-locked' : 'status-unlocked'}">
-                            ${isLocked ? '🔒 مقفل' : '🔓 مفتوح'}
-                        </span>
-                        ${student.submitted_at ? `
-                            <br><small style="font-size:10px;color:#999;">
-                                ${new Date(student.submitted_at).toLocaleDateString('ar-EG')}
-                            </small>
-                        ` : ''}
-                    </td>
-                    <td style="white-space:nowrap;">
-                        <a href="admin-student-detail.html?id=${student.id}" class="action-link view" title="عرض التفاصيل">👁️</a>
-                        <a href="#" onclick="toggleLock('${student.id}', ${isLocked})" 
-                           class="action-link ${isLocked ? 'unlock' : 'lock'}" 
-                           title="${isLocked ? '🔓 فتح التعديل' : '🔒 قفل التعديل'}">
-                            ${isLocked ? '🔓' : '🔒'}
-                        </a>
-                        <a href="student-pdf.html?print=${student.id}" target="_blank" 
-                           class="action-link pdf" title="طباعة PDF">📄</a>
-                    </td>
-                </tr>
-            `}).join('')
         }
 
         // ===== فلترة الطلاب =====
@@ -630,7 +642,6 @@
 
                 // بناء صفوف البيانات
                 const exportData = filteredStudents.map((student, index) => {
-                    // الحقول الأساسية
                     const row = {
                         '#': index + 1,
                         'الاسم': student.full_name || '',
@@ -643,7 +654,6 @@
                         'تاريخ التقديم': student.submitted_at ? new Date(student.submitted_at).toLocaleDateString('ar-EG') : '',
                     };
 
-                    // إضافة الحقول الديناميكية
                     const studentResponses = allResponses[student.id] || {};
                     dynamicFields.forEach(field => {
                         const fieldName = field.name;
@@ -653,12 +663,11 @@
                     return row;
                 });
 
-                // إنشاء ملف Excel باستخدام XLSX
+                // إنشاء ملف Excel
                 const wb = XLSX.utils.book_new();
                 const ws = XLSX.utils.json_to_sheet(exportData, { header: fullHeaders });
                 XLSX.utils.book_append_sheet(wb, ws, 'الطلاب');
 
-                // تحميل الملف باستخدام Blob
                 const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
                 const blob = new Blob([wbout], { type: 'application/octet-stream' });
 
