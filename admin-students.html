@@ -8,7 +8,7 @@
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* ===== نفس الأنماط السابقة مع إضافة تنسيق زر التصدير ===== */
+        /* نفس الأنماط السابقة - تم حذفها للاختصار، ولكن احتفظ بها من الكود السابق */
         .table-container { overflow-x: auto; margin: 20px 0; }
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
         table th { background: #1e3c72; color: white; padding: 12px 10px; text-align: center; white-space: nowrap; }
@@ -36,24 +36,10 @@
             outline: none;
             border-color: #1e3c72;
         }
-        .status-badge {
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            display: inline-block;
-        }
+        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
         .status-locked { background: #d4edda; color: #155724; }
         .status-unlocked { background: #fff3cd; color: #856404; }
-        .action-link {
-            color: #1e3c72;
-            text-decoration: none;
-            font-weight: 600;
-            margin: 0 5px;
-            padding: 4px 8px;
-            border-radius: 6px;
-            transition: all 0.2s;
-        }
+        .action-link { color: #1e3c72; text-decoration: none; font-weight: 600; margin: 0 5px; padding: 4px 8px; border-radius: 6px; transition: all 0.2s; }
         .action-link:hover { text-decoration: underline; }
         .action-link.view { color: #1e3c72; }
         .action-link.unlock { color: #28a745; }
@@ -72,30 +58,11 @@
             border-bottom: 2px solid #eee;
             margin-bottom: 20px;
         }
-        .btn-back {
-            padding: 10px 20px;
-            background: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            text-decoration: none;
-            display: inline-block;
-        }
+        .btn-back { padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; text-decoration: none; display: inline-block; }
         .btn-back:hover { background: #5a6268; }
-        .btn-logout {
-            padding: 10px 20px;
-            background: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-        }
+        .btn-logout { padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
         .btn-logout:hover { background: #a71d2a; }
 
-        /* ===== كروت الإحصائيات ===== */
         .stats-mini {
             display: flex;
             gap: 20px;
@@ -105,22 +72,12 @@
             border-radius: 12px;
             margin-bottom: 15px;
         }
-        .stats-mini .stat {
-            font-size: 14px;
-            color: #555;
-        }
+        .stats-mini .stat { font-size: 14px; color: #555; }
         .stats-mini .stat strong { color: #1e3c72; font-size: 18px; }
-        .stats-mini .stat .dot {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-left: 5px;
-        }
+        .stats-mini .stat .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-left: 5px; }
         .stats-mini .stat .dot.green { background: #28a745; }
         .stats-mini .stat .dot.yellow { background: #ffc107; }
 
-        /* ===== كروت المواد والمسارات ===== */
         .extra-stats-grid {
             display: flex;
             flex-wrap: wrap;
@@ -144,26 +101,12 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.1);
             white-space: nowrap;
         }
-        .extra-stats-grid .stat-card-mini .num {
-            font-weight: 700;
-            font-size: 16px;
-            background: rgba(255,255,255,0.2);
-            padding: 0 8px;
-            border-radius: 20px;
-        }
+        .extra-stats-grid .stat-card-mini .num { font-weight: 700; font-size: 16px; background: rgba(255,255,255,0.2); padding: 0 8px; border-radius: 20px; }
         .extra-stats-grid .stat-card-mini.optional { background: linear-gradient(135deg, #e83e8c, #f06292); }
         .extra-stats-grid .stat-card-mini.track { background: linear-gradient(135deg, #1e3c72, #2a5298); }
-        .extra-stats-grid .section-label {
-            font-weight: 700;
-            color: #333;
-            margin-left: 5px;
-            font-size: 14px;
-            border-left: 2px solid #ddd;
-            padding-left: 10px;
-        }
+        .extra-stats-grid .section-label { font-weight: 700; color: #333; margin-left: 5px; font-size: 14px; border-left: 2px solid #ddd; padding-left: 10px; }
         .extra-stats-grid .empty-msg { color: #999; font-size: 13px; padding: 5px; }
 
-        /* ===== أدوات التحكم الجماعي (مع زر التصدير) ===== */
         .bulk-actions {
             display: flex;
             flex-wrap: wrap;
@@ -175,11 +118,7 @@
             margin: 15px 0;
             border: 1px solid #e9ecef;
         }
-        .bulk-actions .info {
-            font-size: 14px;
-            color: #555;
-            flex: 1;
-        }
+        .bulk-actions .info { font-size: 14px; color: #555; flex: 1; }
         .bulk-actions .info strong { color: #1e3c72; }
         .bulk-actions .btn-bulk {
             padding: 8px 20px;
@@ -200,26 +139,11 @@
         .bulk-actions .btn-bulk.deselect-all:hover { background: #5a6268; }
         .bulk-actions .btn-bulk.export { background: #17a2b8; color: white; }
         .bulk-actions .btn-bulk.export:hover { background: #138496; }
-        .bulk-actions .btn-bulk:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
+        .bulk-actions .btn-bulk:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-        .row-checkbox {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-            accent-color: #1e3c72;
-        }
-        .select-all-checkbox {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-            accent-color: #1e3c72;
-        }
+        .row-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #1e3c72; }
+        .select-all-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #1e3c72; }
 
-        /* ===== Toast ===== */
         .toast-container {
             position: fixed;
             bottom: 20px;
@@ -247,11 +171,7 @@
             to { transform: translateX(0); opacity: 1; }
         }
 
-        .selected-count {
-            font-weight: 700;
-            color: #1e3c72;
-            font-size: 16px;
-        }
+        .selected-count { font-weight: 700; color: #1e3c72; font-size: 16px; }
 
         @media (max-width: 600px) {
             table { font-size: 12px; }
@@ -372,7 +292,7 @@
                     <li>🔓 <strong>فتح التسجيل</strong> - يسمح للطلاب المحددين بتعديل رغباتهم</li>
                     <li>🔒 <strong>غلق التسجيل</strong> - يمنع الطلاب المحددين من التعديل</li>
                     <li>📄 يمكنك أيضاً فتح/غلق طالب فردي من عمود الإجراءات</li>
-                    <li>📥 زر <strong>تصدير Excel</strong> يصدر البيانات حسب الفلتر الحالي</li>
+                    <li>📥 زر <strong>تصدير Excel</strong> يصدر البيانات حسب الفلتر الحالي مع الحقول الإضافية</li>
                 </ul>
             </div>
         </div>
@@ -391,6 +311,9 @@
         let allStudents = []
         let filteredStudents = []
         let selectedStudents = new Set()
+        // متغيرات لحفظ الحقول الديناميكية والاستجابات
+        let dynamicFields = []
+        let allResponses = {}
 
         // التحقق من وجود أدمن
         if (!sessionStorage.getItem('adminId')) {
@@ -411,18 +334,47 @@
             }, 4000);
         }
 
-        // ===== تحميل الطلاب =====
+        // ===== تحميل الطلاب والحقول الإضافية =====
         async function loadStudents() {
             try {
-                const { data, error } = await supabaseClient
+                // جلب الطلاب
+                const { data: students, error } = await supabaseClient
                     .from('students')
                     .select('*')
                     .order('created_at', { ascending: false })
 
                 if (error) throw error
-                allStudents = data || []
+                allStudents = students || []
                 filteredStudents = [...allStudents]
                 selectedStudents.clear()
+
+                // جلب الحقول الديناميكية
+                const { data: fields, error: fieldsError } = await supabaseClient
+                    .from('dynamic_fields')
+                    .select('id, name')
+                    .eq('visible_for_student', true)
+                    .order('display_order', { ascending: true })
+
+                if (fieldsError) throw fieldsError
+                dynamicFields = fields || []
+
+                // جلب استجابات الطلاب (لجميع الطلاب)
+                if (allStudents.length > 0) {
+                    const studentIds = allStudents.map(s => s.id)
+                    const { data: responses, error: responsesError } = await supabaseClient
+                        .from('student_dynamic_responses')
+                        .select('student_id, field_id, value')
+                        .in('student_id', studentIds)
+
+                    if (responsesError) throw responsesError
+                    // تحويل الاستجابات إلى كائن سهل الوصول
+                    allResponses = {}
+                    responses.forEach(r => {
+                        if (!allResponses[r.student_id]) allResponses[r.student_id] = {}
+                        allResponses[r.student_id][r.field_id] = r.value
+                    })
+                }
+
                 renderTable()
                 updateStats()
                 updateExtraStats()
@@ -433,6 +385,9 @@
                     '<tr><td colspan="9" class="empty-msg">❌ خطأ في تحميل البيانات</td></tr>'
             }
         }
+
+        // ===== عرض الجدول مع إظهار الحقول الديناميكية (اختياري) =====
+        // ملاحظة: لا نعرض الحقول الديناميكية في الجدول لتجنب الزحام، ولكن سيتم تصديرها.
 
         // ===== تحديث الإحصائيات الأساسية =====
         function updateStats() {
@@ -649,7 +604,7 @@
             else deselectAll()
         }
 
-        // ===== دالة تصدير Excel حسب الفلتر الحالي (جديد) =====
+        // ===== دالة تصدير Excel مع الحقول الديناميكية =====
         async function exportFilteredStudents() {
             const btn = document.getElementById('exportBtn');
             btn.disabled = true;
@@ -663,28 +618,50 @@
                     return;
                 }
 
-                // بناء بيانات التصدير
-                const exportData = filteredStudents.map((student, index) => ({
-                    '#': index + 1,
-                    'الاسم': student.full_name || '',
-                    'الكود': student.student_code || '',
-                    'الرقم القومي': student.national_id || '',
-                    'التشعيب': student.stream || '',
-                    'التخصص/المسار': student.specialization || student.track || '',
-                    'المادة الاختيارية': student.optional_subject || '',
-                    'الحالة': student.is_locked ? 'مقفل' : 'مفتوح',
-                    'تاريخ التقديم': student.submitted_at ? new Date(student.submitted_at).toLocaleDateString('ar-EG') : '',
-                }));
+                // بناء رؤوس الأعمدة الأساسية
+                const headers = [
+                    '#', 'الاسم', 'الكود', 'الرقم القومي', 'التشعيب', 
+                    'التخصص/المسار', 'المادة الاختيارية', 'الحالة', 'تاريخ التقديم'
+                ];
 
-                // إنشاء ملف Excel باستخدام XLSX مع Blob
+                // إضافة أسماء الحقول الديناميكية إلى الرؤوس
+                const fieldNames = dynamicFields.map(f => f.name);
+                const fullHeaders = [...headers, ...fieldNames];
+
+                // بناء صفوف البيانات
+                const exportData = filteredStudents.map((student, index) => {
+                    // الحقول الأساسية
+                    const row = {
+                        '#': index + 1,
+                        'الاسم': student.full_name || '',
+                        'الكود': student.student_code || '',
+                        'الرقم القومي': student.national_id || '',
+                        'التشعيب': student.stream || '',
+                        'التخصص/المسار': student.specialization || student.track || '',
+                        'المادة الاختيارية': student.optional_subject || '',
+                        'الحالة': student.is_locked ? 'مقفل' : 'مفتوح',
+                        'تاريخ التقديم': student.submitted_at ? new Date(student.submitted_at).toLocaleDateString('ar-EG') : '',
+                    };
+
+                    // إضافة الحقول الديناميكية
+                    const studentResponses = allResponses[student.id] || {};
+                    dynamicFields.forEach(field => {
+                        const fieldName = field.name;
+                        row[fieldName] = studentResponses[field.id] || '';
+                    });
+
+                    return row;
+                });
+
+                // إنشاء ملف Excel باستخدام XLSX
                 const wb = XLSX.utils.book_new();
-                const ws = XLSX.utils.json_to_sheet(exportData);
+                const ws = XLSX.utils.json_to_sheet(exportData, { header: fullHeaders });
                 XLSX.utils.book_append_sheet(wb, ws, 'الطلاب');
 
+                // تحميل الملف باستخدام Blob
                 const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
                 const blob = new Blob([wbout], { type: 'application/octet-stream' });
 
-                // تحميل الملف
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
@@ -694,8 +671,8 @@
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
 
-                showToast(`✅ تم تصدير ${filteredStudents.length} طالب بنجاح`, 'success');
-                await logActivity('تصدير طلاب', `تصدير ${filteredStudents.length} طالب حسب الفلتر`);
+                showToast(`✅ تم تصدير ${filteredStudents.length} طالب مع الحقول الإضافية`, 'success');
+                await logActivity('تصدير طلاب', `تصدير ${filteredStudents.length} طالب مع الحقول الديناميكية`);
 
             } catch (err) {
                 console.error('Export Error:', err);
