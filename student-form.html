@@ -812,679 +812,216 @@
 
         </div>
 
-    <script>
-        // ===== تهيئة Supabase =====
-        const SUPABASE_URL = '{{SUPABASE_URL}}'
-        const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-        window.supabase = supabaseClient
-
-        // ===== المتغيرات العامة =====
-        let studentData = null
-        let fieldsData = []
-        let isLocked = false
-        let selectedStream = ''
-        let selectedSpecialization = ''
-        let dynamicValues = {}
-        let isDeclarationApproved = false
-        let isSaving = false
-        let requestStatus = null   // حالة طلب فتح التعديل
-
-        const tracks = {
-            'مسار الطب وعلوم الحياة': ['فيزياء', 'رياضيات'],
-            'مسار الهندسة وعلوم الحاسب': ['كيمياء', 'برمجة'],
-            'مسار الأعمال': ['إدارة أعمال', 'محاسبة'],
-            'مسار الآداب والفنون': ['لغة ثانية فرنسي', 'لغة ثانية ألماني', 'علم نفس']
-        }
-
-        document.getElementById('yearDisplay').textContent = new Date().getFullYear()
-
-        // =============================================
-        // ===== دوال الخروج =====
-        // =============================================
-        function logoutStudent() {
-            if (confirm('هل أنت متأكد من الخروج؟')) {
-                sessionStorage.clear()
-                window.location.href = 'index.html'
-            }
-        }
-
-        // =============================================
-        // ===== دوال التشعيب =====
-        // =============================================
-        function selectStream(value) {
-            if (isLocked) return
-            selectedStream = value
-            document.getElementById('stream').value = value
-
-            document.querySelectorAll('.btn-option[data-value="ثانوي"], .btn-option[data-value="بكالوريا"]').forEach(el => {
-                el.classList.toggle('active', el.dataset.value === value)
-            })
-
-            const displayDiv = document.getElementById('selectedStreamDisplay')
-            const displayText = document.getElementById('selectedStreamText')
-            displayText.textContent = value === 'ثانوي' ? '🎓 ثانوي' : '📚 بكالوريا'
-            displayDiv.classList.add('show')
-
-            document.getElementById('specializationGroup').style.display = value === 'ثانوي' ? 'block' : 'none'
-            document.getElementById('trackGroup').style.display = value === 'بكالوريا' ? 'block' : 'none'
-
-            if (value === 'بكالوريا') {
-                document.getElementById('track').value = ''
-                document.getElementById('optionalSubject').innerHTML = '<option value="">اختر المادة</option>'
-            }
-        }
-
-        function selectSpecialization(value) {
-            if (isLocked) return
-            selectedSpecialization = value
-            document.getElementById('specialization').value = value
-
-            document.querySelectorAll('.btn-option[data-value="علمي"], .btn-option[data-value="أدبي"]').forEach(el => {
-                el.classList.toggle('active', el.dataset.value === value)
-            })
-        }
-
-        function updateSubjects() {
-            const track = document.getElementById('track').value
-            const subjectSelect = document.getElementById('optionalSubject')
-            subjectSelect.innerHTML = '<option value="">اختر المادة</option>'
-
-            if (track && tracks[track]) {
-                tracks[track].forEach(subject => {
-                    const option = document.createElement('option')
-                    option.value = subject
-                    option.textContent = subject
-                    subjectSelect.appendChild(option)
-                })
-            }
-        }
-
-        // =============================================
-        // ===== دالة الموافقة على الإقرار =====
-        // =============================================
-        function approveDeclaration() {
-            if (isLocked) return
-            
-            const btn = document.getElementById('approveBtn')
-            const confirmMsg = document.getElementById('approvalConfirm')
-            
-            if (!isDeclarationApproved) {
-                isDeclarationApproved = true
-                btn.classList.add('approved')
-                document.getElementById('approveText').textContent = '✅ تمت الموافقة'
-                confirmMsg.classList.add('show')
-                document.getElementById('declarationSection').style.borderRightColor = '#28a745'
-            } else {
-                isDeclarationApproved = false
-                btn.classList.remove('approved')
-                document.getElementById('approveText').textContent = 'أوافق على الإقرار والتعهد'
-                confirmMsg.classList.remove('show')
-                document.getElementById('declarationSection').style.borderRightColor = '#1e3c72'
-            }
-        }
-
-        // =============================================
-        // ===== دوال التحذير والحفظ =====
-        // =============================================
-        function showWarning() {
-            if (!isDeclarationApproved) {
-                document.getElementById('formError').textContent = '❌ يجب الموافقة على الإقرار والتعهد أولاً'
-                document.getElementById('formError').style.display = 'block'
-                document.getElementById('declarationSection').scrollIntoView({ behavior: 'smooth' })
-                return
-            }
-
-            const stream = document.getElementById('stream').value
-            if (!stream) {
-                document.getElementById('formError').textContent = '❌ يرجى اختيار التشعيب'
-                document.getElementById('formError').style.display = 'block'
-                return
-            }
-
-            if (stream === 'ثانوي') {
-                const specialization = document.getElementById('specialization').value
-                if (!specialization) {
-                    document.getElementById('formError').textContent = '❌ يرجى اختيار التخصص'
-                    document.getElementById('formError').style.display = 'block'
-                    return
-                }
-            }
-
-            if (stream === 'بكالوريا') {
-                const track = document.getElementById('track').value
-                const optionalSubject = document.getElementById('optionalSubject').value
-                if (!track) {
-                    document.getElementById('formError').textContent = '❌ يرجى اختيار المسار'
-                    document.getElementById('formError').style.display = 'block'
-                    return
-                }
-                if (!optionalSubject) {
-                    document.getElementById('formError').textContent = '❌ يرجى اختيار المادة الاختيارية'
-                    document.getElementById('formError').style.display = 'block'
-                    return
-                }
-            }
-
-            document.getElementById('formError').style.display = 'none'
-            document.getElementById('warningConfirmBox').classList.add('show')
-            document.getElementById('warningConfirmBox').scrollIntoView({ behavior: 'smooth', block: 'center' })
-        }
-
-        function cancelWarning() {
-            document.getElementById('warningConfirmBox').classList.remove('show')
-        }
-
-        // =============================================
-        // ===== تأكيد الحفظ النهائي =====
-        // =============================================
-        async function confirmSave() {
-            if (isSaving) return
-            isSaving = true
-
-            const studentId = sessionStorage.getItem('studentId')
-            const stream = document.getElementById('stream').value
-            const specialization = document.getElementById('specialization').value
-            const track = document.getElementById('track').value
-            const optionalSubject = document.getElementById('optionalSubject').value
-
-            const errorMsg = document.getElementById('formError')
-            const successMsg = document.getElementById('formSuccess')
-            errorMsg.style.display = 'none'
-            successMsg.style.display = 'none'
-
-            try {
-                const saveBtn = document.getElementById('saveBtn')
-                saveBtn.disabled = true
-                saveBtn.textContent = '⏳ جاري الحفظ...'
-
-                const updateData = {
-                    stream: String(stream),
-                    submitted_at: new Date().toISOString(),
-                    is_locked: true
-                }
-
-                if (stream === 'ثانوي') {
-                    updateData.specialization = String(specialization)
-                    updateData.track = null
-                    updateData.optional_subject = null
-                } else {
-                    updateData.specialization = null
-                    updateData.track = String(track)
-                    updateData.optional_subject = String(optionalSubject)
-                }
-
-                const { error: updateError } = await supabaseClient
-                    .from('students')
-                    .update(updateData)
-                    .eq('id', studentId)
-
-                if (updateError) throw updateError
-
-                // حفظ الحقول الديناميكية
-                for (const [fieldId, value] of Object.entries(dynamicValues)) {
-                    if (value) {
-                        await supabaseClient
-                            .from('student_dynamic_responses')
-                            .upsert({
-                                student_id: studentId,
-                                field_id: fieldId,
-                                value: String(value)
-                            }, {
-                                onConflict: 'student_id,field_id'
-                            })
-                    }
-                }
-
-                document.getElementById('warningConfirmBox').classList.remove('show')
-                successMsg.style.display = 'block'
-                document.getElementById('saveBtn').style.display = 'none'
-                document.getElementById('pdfBtn').style.display = 'block'
-
-                isLocked = true
-                document.getElementById('formContent').classList.add('form-disabled')
-
-                // عرض رسالة القفل
-                const { data: updatedStudent } = await supabaseClient
-                    .from('students')
-                    .select('*')
-                    .eq('id', studentId)
-                    .single()
-
-                if (updatedStudent) {
-                    showLockedMessage(updatedStudent, true)
-                }
-
-                window.scrollTo({ top: 0, behavior: 'smooth' })
-
-            } catch (err) {
-                console.error('Error:', err)
-                errorMsg.textContent = '❌ حدث خطأ أثناء الحفظ: ' + (err.message || '')
-                errorMsg.style.display = 'block'
-                document.getElementById('saveBtn').disabled = false
-                document.getElementById('saveBtn').textContent = '💾 حفظ وتقديم الطلب'
-            } finally {
-                isSaving = false
-                document.getElementById('warningConfirmBox').classList.remove('show')
-            }
-        }
-
-        // =============================================
-        // ===== عرض رسالة القفل (معدلة) =====
-        // =============================================
-        function showLockedMessage(student, isJustSaved = false) {
-            const statusDiv = document.getElementById('statusMsg')
-            
-            let fieldsHtml = ''
-            fieldsData.forEach(field => {
-                const value = dynamicValues[field.id] || ''
-                if (value) {
-                    fieldsHtml += `
-                        <div class="info-item">
-                            <span class="label">${field.name}</span>
-                            <span class="value">${value}</span>
-                        </div>
-                    `
-                }
-            })
-
-            statusDiv.innerHTML = `
-                <div class="locked-message">
-                    <span class="icon">${isJustSaved ? '✅' : '🔒'}</span>
-                    <h3>${isJustSaved ? 'تم تقديم الطلب بنجاح!' : 'تم تسجيل الرغبات مسبقاً'}</h3>
-                    <p>
-                        ${isJustSaved 
-                            ? 'تم تسجيل رغباتك بشكل نهائي ولا يمكن التعديل.' 
-                            : 'لقد قمت بتسجيل رغباتك مسبقاً ولا يمكن التعديل.'}
-                        <br>
-                        <small>📅 تاريخ التقديم: ${new Date(student.submitted_at).toLocaleDateString('ar-EG')}</small>
-                        <br>
-                        <small>🕐 وقت التقديم: ${new Date(student.submitted_at).toLocaleTimeString('ar-EG')}</small>
-                    </p>
-
-                    <!-- حالة الطلب -->
-                    <div id="requestStatus" style="display:none;margin:15px 0;padding:15px;border-radius:12px;background:#fff3cd;border:1px solid #ffc107;">
-                        <div id="requestStatusContent"></div>
-                    </div>
-
-                    <!-- أزرار الإجراءات -->
-                    <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:10px;">
-                        <button onclick="showRequestModal()" class="btn-request" id="requestBtn">
-                            📩 طلب فتح التعديل
-                        </button>
-                        <a href="student-pdf.html" class="btn-print-only" style="display:inline-block;padding:12px 30px;background:#1e3c72;color:white;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;text-decoration:none;margin:10px 5px;">
-                            📄 طباعة PDF
-                        </a>
-                    </div>
-
-                    <!-- عرض البيانات المسجلة -->
-                    <div style="margin: 20px 0; text-align: right;">
-                        <h4 style="color: #155724; margin-bottom: 10px;">📋 بياناتك المسجلة:</h4>
-                        <div class="info-grid-locked">
-                            <div class="info-item">
-                                <span class="label">التشعيب</span>
-                                <span class="value">${student.stream || '-'}</span>
-                            </div>
-                            ${student.stream === 'ثانوي' ? `
-                                <div class="info-item">
-                                    <span class="label">التخصص</span>
-                                    <span class="value">${student.specialization || '-'}</span>
-                                </div>
-                            ` : ''}
-                            ${student.stream === 'بكالوريا' ? `
-                                <div class="info-item">
-                                    <span class="label">المسار</span>
-                                    <span class="value">${student.track || '-'}</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="label">المادة الاختيارية</span>
-                                    <span class="value">${student.optional_subject || '-'}</span>
-                                </div>
-                            ` : ''}
-                            ${fieldsHtml}
-                        </div>
-                    </div>
-                </div>
-            `
-
-            // بعد عرض الرسالة، نتحقق من حالة الطلب
-            setTimeout(() => {
-                checkRequestStatus(student.id);
-            }, 200);
-        }
-
-        // =============================================
-        // ===== دوال طلب فتح التعديل =====
-        // =============================================
-
-        // عرض حالة الطلب الحالي
-        async function checkRequestStatus(studentId) {
-            try {
-                const { data, error } = await supabase
-                    .from('reopen_requests')
-                    .select('*')
-                    .eq('student_id', studentId)
-                    .order('requested_at', { ascending: false })
-                    .limit(1)
-                    .maybeSingle();
-
-                if (error) throw error;
-                
-                requestStatus = data;
-                updateRequestUI(data);
-            } catch (err) {
-                console.error('Error checking request:', err);
-            }
-        }
-
-        // تحديث واجهة الطلب
-        function updateRequestUI(request) {
-            const statusDiv = document.getElementById('requestStatus');
-            const content = document.getElementById('requestStatusContent');
-            const requestBtn = document.getElementById('requestBtn');
-
-            if (!request) {
-                if (statusDiv) statusDiv.style.display = 'none';
-                if (requestBtn) {
-                    requestBtn.disabled = false;
-                    requestBtn.textContent = '📩 طلب فتح التعديل';
-                }
-                return;
-            }
-
-            if (statusDiv) statusDiv.style.display = 'block';
-            
-            const statusMap = {
-                'pending': { text: '⏳ قيد الانتظار', color: '#856404', bg: '#fff3cd' },
-                'approved': { text: '✅ تمت الموافقة', color: '#155724', bg: '#d4edda' },
-                'rejected': { text: '❌ تم الرفض', color: '#721c24', bg: '#f8d7da' }
-            };
-            
-            const statusInfo = statusMap[request.status] || statusMap['pending'];
-            
-            if (content) {
-                content.innerHTML = `
-                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-                        <div>
-                            <strong style="color:${statusInfo.color};">${statusInfo.text}</strong>
-                            <br>
-                            <small style="color:#666;">📅 ${new Date(request.requested_at).toLocaleDateString('ar-EG')}</small>
-                        </div>
-                        <div style="font-size:13px;color:#555;max-width:60%;">
-                            "${request.reason}"
-                        </div>
-                    </div>
-                    ${request.admin_response ? `
-                        <div style="margin-top:8px;padding:8px;background:#f8f9fa;border-radius:8px;font-size:13px;color:#555;">
-                            <strong>رد الإدارة:</strong> ${request.admin_response}
-                        </div>
-                    ` : ''}
-                `;
-            }
-
-            // تحديث زر الطلب
-            if (requestBtn) {
-                if (request.status === 'pending') {
-                    requestBtn.disabled = true;
-                    requestBtn.textContent = '⏳ طلب قيد الانتظار';
-                } else if (request.status === 'approved') {
-                    requestBtn.disabled = true;
-                    requestBtn.textContent = '✅ تمت الموافقة - يمكنك التعديل';
-                    // يمكن إضافة رسالة أو تحديث الصفحة
-                } else if (request.status === 'rejected') {
-                    requestBtn.disabled = false;
-                    requestBtn.textContent = '📩 إعادة طلب فتح التعديل';
-                }
-            }
-        }
-
-        // عرض نافذة الطلب
-        function showRequestModal() {
-            // إذا كان هناك طلب pending، لا نسمح بطلب جديد
-            if (requestStatus && requestStatus.status === 'pending') {
-                alert('⏳ لديك طلب قيد الانتظار، يرجى الانتظار حتى يتم الرد عليه.');
-                return;
-            }
-            document.getElementById('requestModal').classList.add('show');
-            document.getElementById('requestReason').value = '';
-            document.getElementById('requestError').style.display = 'none';
-        }
-
-        // إغلاق نافذة الطلب
-        function closeRequestModal() {
-            document.getElementById('requestModal').classList.remove('show');
-        }
-
-        // إرسال الطلب
-        async function submitRequest() {
-            const reason = document.getElementById('requestReason').value.trim();
-            const errorDiv = document.getElementById('requestError');
-            
-            if (!reason) {
-                errorDiv.textContent = '❌ يرجى كتابة سبب الطلب';
-                errorDiv.style.display = 'block';
-                return;
-            }
-            
-            if (reason.length < 10) {
-                errorDiv.textContent = '❌ يرجى كتابة سبب واضح (10 أحرف على الأقل)';
-                errorDiv.style.display = 'block';
-                return;
-            }
-
-            const studentId = sessionStorage.getItem('studentId');
-            const studentName = sessionStorage.getItem('studentName') || '';
-
-            try {
-                const { data, error } = await supabase
-                    .from('reopen_requests')
-                    .insert({
-                        student_id: studentId,
-                        reason: reason,
-                        student_name: studentName,
-                        student_code: studentData?.student_code || ''
-                    })
-                    .select()
-                    .single();
-
-                if (error) throw error;
-
-                closeRequestModal();
-                alert('✅ تم إرسال طلبك بنجاح! سيتم الرد عليك من قبل الإدارة.');
-                
-                // تحديث واجهة الطلب
-                checkRequestStatus(studentId);
-
-            } catch (err) {
-                console.error('Error submitting request:', err);
-                errorDiv.textContent = '❌ حدث خطأ أثناء إرسال الطلب: ' + (err.message || '');
-                errorDiv.style.display = 'block';
-            }
-        }
-
-        // =============================================
-        // ===== تحميل بيانات الطالب =====
-        // =============================================
-        async function loadStudentData() {
-            const studentId = sessionStorage.getItem('studentId')
-            if (!studentId) {
-                window.location.href = 'index.html'
-                return
-            }
-
-            try {
-                const { data: student, error: studentError } = await supabaseClient
-                    .from('students')
-                    .select('*')
-                    .eq('id', studentId)
-                    .maybeSingle()
-
-                if (studentError || !student) {
-                    throw new Error(studentError?.message || 'Student not found')
-                }
-
-                studentData = student
-                isLocked = student.is_locked && student.submitted_at
-
-                // عرض بيانات الطالب
-                document.getElementById('studentInfo').innerHTML = `
-                    <div class="grid-3">
-                        <div><span class="label">الاسم</span><span class="value">${student.full_name || ''}</span></div>
-                        <div><span class="label">كود الطالب</span><span class="value" dir="ltr">${student.student_code || ''}</span></div>
-                        <div><span class="label">الرقم القومي</span><span class="value" dir="ltr">${student.national_id || ''}</span></div>
-                    </div>
-                `
-
-                document.getElementById('declarationStudentName').textContent = student.full_name || ''
-
-                // ===== إذا كان الطالب مقفل =====
-                if (isLocked) {
-                    document.getElementById('saveBtn').style.display = 'none'
-                    document.getElementById('pdfBtn').style.display = 'block'
-                    document.getElementById('formContent').classList.add('form-disabled')
-                    showLockedMessage(student, false)
-                    // التحقق من حالة الطلب بعد عرض الرسالة
-                    setTimeout(() => {
-                        checkRequestStatus(student.id);
-                    }, 300);
-                    return
-                }
-
-                // ===== تعبئة التشعيب =====
-                if (student.stream) {
-                    selectedStream = student.stream
-                    document.getElementById('stream').value = student.stream
-                    
-                    document.querySelectorAll('.btn-option[data-value="ثانوي"], .btn-option[data-value="بكالوريا"]').forEach(el => {
-                        if (el.dataset.value === student.stream) {
-                            el.classList.add('active')
-                        }
-                    })
-
-                    const displayDiv = document.getElementById('selectedStreamDisplay')
-                    const displayText = document.getElementById('selectedStreamText')
-                    displayText.textContent = student.stream === 'ثانوي' ? '🎓 ثانوي' : '📚 بكالوريا'
-                    displayDiv.classList.add('show')
-
-                    if (student.stream === 'ثانوي') {
-                        document.getElementById('specializationGroup').style.display = 'block'
-                        if (student.specialization) {
-                            selectedSpecialization = student.specialization
-                            document.getElementById('specialization').value = student.specialization
-                            document.querySelectorAll('.btn-option[data-value="علمي"], .btn-option[data-value="أدبي"]').forEach(el => {
-                                if (el.dataset.value === student.specialization) {
-                                    el.classList.add('active')
-                                }
-                            })
-                        }
-                    } else if (student.stream === 'بكالوريا') {
-                        document.getElementById('trackGroup').style.display = 'block'
-                        if (student.track) {
-                            document.getElementById('track').value = student.track
-                            updateSubjects()
-                            if (student.optional_subject) {
-                                setTimeout(() => {
-                                    document.getElementById('optionalSubject').value = student.optional_subject
-                                }, 100)
-                            }
-                        }
-                    }
-                }
-
-                // ===== جلب الحقول الديناميكية =====
-                const { data: fields } = await supabaseClient
-                    .from('dynamic_fields')
-                    .select('*')
-                    .eq('visible_for_student', true)
-                    .order('display_order', { ascending: true })
-
-                if (fields) fieldsData = fields
-
-                // ===== جلب قيم الحقول =====
-                const { data: responses } = await supabaseClient
-                    .from('student_dynamic_responses')
-                    .select('field_id, value')
-                    .eq('student_id', studentId)
-
-                if (responses) {
-                    responses.forEach(r => {
-                        dynamicValues[r.field_id] = r.value
-                    })
-                }
-
-                renderDynamicFields()
-
-            } catch (err) {
-                console.error('Error:', err)
-                alert('حدث خطأ في تحميل البيانات')
-            }
-        }
-
-        // =============================================
-        // ===== عرض الحقول الديناميكية =====
-        // =============================================
-        function renderDynamicFields() {
-            const container = document.getElementById('dynamicFields')
-            container.innerHTML = ''
-
-            fieldsData.forEach(field => {
-                const div = document.createElement('div')
-                div.className = 'form-group'
-
-                const label = document.createElement('label')
-                label.textContent = field.name + (field.is_required ? ' *' : '')
-                div.appendChild(label)
-
-                if (field.type === 'text') {
-                    const input = document.createElement('input')
-                    input.type = 'text'
-                    input.className = 'form-control'
-                    input.id = 'field_' + field.id
-                    input.value = dynamicValues[field.id] || ''
-                    input.disabled = isLocked || field.is_readonly
-                    if (field.is_required) input.required = true
-                    input.addEventListener('change', (e) => {
-                        dynamicValues[field.id] = e.target.value
-                    })
-                    div.appendChild(input)
-                } else if (field.type === 'select') {
-                    const select = document.createElement('select')
-                    select.className = 'form-control'
-                    select.id = 'field_' + field.id
-                    select.disabled = isLocked || field.is_readonly
-                    if (field.is_required) select.required = true
-
-                    const defaultOption = document.createElement('option')
-                    defaultOption.value = ''
-                    defaultOption.textContent = 'اختر'
-                    select.appendChild(defaultOption)
-
-                    if (field.options) {
-                        field.options.forEach(opt => {
-                            const option = document.createElement('option')
-                            option.value = opt
-                            option.textContent = opt
-                            if (dynamicValues[field.id] === opt) {
-                                option.selected = true
-                            }
-                            select.appendChild(option)
-                        })
-                    }
-
-                    select.addEventListener('change', (e) => {
-                        dynamicValues[field.id] = e.target.value
-                    })
-                    div.appendChild(select)
-                }
-
-                container.appendChild(div)
-            })
-        }
-
-        // =============================================
-        // ===== تشغيل تحميل البيانات =====
-        // =============================================
-        loadStudentData()
-    </script>
-</body>
+   <script src="lib/supabase.js"></script>
+<script src="lib/auth.js"></script>
+<script src="lib/toast.js"></script>
+<script src="lib/escape.js"></script>
+<script>
+const token = Auth.requireStudent();
+let studentData = null, fieldsData = [], dynamicValues = {}, isLocked = false;
+let isDeclarationApproved = false, isSaving = false, requestStatus = null;
+
+const tracks = {
+  'مسار الطب وعلوم الحياة': ['فيزياء','رياضيات'],
+  'مسار الهندسة وعلوم الحاسب': ['كيمياء','برمجة'],
+  'مسار الأعمال': ['إدارة أعمال','محاسبة'],
+  'مسار الآداب والفنون': ['لغة ثانية فرنسي','لغة ثانية ألماني','علم نفس']
+};
+
+document.getElementById('yearDisplay').textContent = new Date().getFullYear();
+function logoutStudent() { if (confirm('تأكيد الخروج؟')) Auth.studentLogout(); }
+
+function selectStream(v) {
+  if (isLocked) return;
+  document.getElementById('stream').value = v;
+  document.querySelectorAll('.btn-option[data-value="ثانوي"],.btn-option[data-value="بكالوريا"]')
+    .forEach(el => el.classList.toggle('active', el.dataset.value === v));
+  document.getElementById('selectedStreamDisplay').classList.add('show');
+  document.getElementById('selectedStreamText').textContent = v === 'ثانوي' ? '🎓 ثانوي' : '📚 بكالوريا';
+  document.getElementById('specializationGroup').style.display = v === 'ثانوي' ? 'block' : 'none';
+  document.getElementById('trackGroup').style.display = v === 'بكالوريا' ? 'block' : 'none';
+  if (v === 'بكالوريا') {
+    document.getElementById('track').value = '';
+    document.getElementById('optionalSubject').innerHTML = '<option value="">اختر المادة</option>';
+  }
+}
+function selectSpecialization(v) {
+  if (isLocked) return;
+  document.getElementById('specialization').value = v;
+  document.querySelectorAll('.btn-option[data-value="علمي"],.btn-option[data-value="أدبي"]')
+    .forEach(el => el.classList.toggle('active', el.dataset.value === v));
+}
+function updateSubjects() {
+  const track = document.getElementById('track').value;
+  const sel = document.getElementById('optionalSubject');
+  sel.innerHTML = '<option value="">اختر المادة</option>';
+  (tracks[track] || []).forEach(s => sel.innerHTML += `<option value="${esc(s)}">${esc(s)}</option>`);
+}
+function approveDeclaration() {
+  if (isLocked) return;
+  isDeclarationApproved = !isDeclarationApproved;
+  document.getElementById('approveBtn').classList.toggle('approved', isDeclarationApproved);
+  document.getElementById('approveText').textContent = isDeclarationApproved ? '✅ تمت الموافقة' : 'أوافق على الإقرار والتعهد';
+  document.getElementById('approvalConfirm').classList.toggle('show', isDeclarationApproved);
+  document.getElementById('declarationSection').style.borderRightColor = isDeclarationApproved ? '#28a745' : '#1e3c72';
+}
+
+async function loadData() {
+  try {
+    const [{data:s,error:e1}, {data:f}, {data:r}] = await Promise.all([
+      SB.rpc('student_get_data', { p_token: token }),
+      SB.rpc('student_get_fields', { p_token: token }),
+      SB.rpc('student_get_responses', { p_token: token })
+    ]);
+    if (e1 || !s) { Auth.studentLogout(); return; }
+    studentData = s;
+    fieldsData = f || [];
+    (r || []).forEach(x => dynamicValues[x.field_id] = x.value);
+    isLocked = s.is_locked && s.submitted_at;
+
+    document.getElementById('studentInfo').innerHTML = `
+      <div class="grid-3">
+        <div><span class="label">الاسم</span><span class="value">${esc(s.full_name)}</span></div>
+        <div><span class="label">كود الطالب</span><span class="value" dir="ltr">${esc(s.student_code)}</span></div>
+        <div><span class="label">الرقم القومي</span><span class="value" dir="ltr">${esc(s.national_id_masked)}</span></div>
+      </div>`;
+    document.getElementById('declarationStudentName').textContent = s.full_name;
+
+    if (isLocked) {
+      document.getElementById('saveBtn').style.display = 'none';
+      document.getElementById('pdfBtn').style.display = 'block';
+      document.getElementById('formContent').classList.add('form-disabled');
+      showLocked(s, false);
+      return;
+    }
+
+    if (s.stream) {
+      selectStream(s.stream);
+      if (s.stream === 'ثانوي' && s.specialization) selectSpecialization(s.specialization);
+      if (s.stream === 'بكالوريا' && s.track) {
+        document.getElementById('track').value = s.track;
+        updateSubjects();
+        if (s.optional_subject) setTimeout(() => document.getElementById('optionalSubject').value = s.optional_subject, 100);
+      }
+    }
+
+    renderFields();
+  } catch (err) {
+    console.error(err);
+    Toast.show('خطأ في تحميل البيانات', 'error');
+  }
+}
+
+function renderFields() {
+  const c = document.getElementById('dynamicFields');
+  c.innerHTML = fieldsData.map(f => {
+    const val = dynamicValues[f.id] || '';
+    if (f.type === 'select') {
+      const opts = (f.options || []).map(o => `<option value="${esc(o)}" ${val===o?'selected':''}>${esc(o)}</option>`).join('');
+      return `<div class="form-group"><label>${esc(f.name)} ${f.is_required?'*':''}</label>
+        <select class="form-control" onchange="dynamicValues['${f.id}']=this.value">
+          <option value="">اختر...</option>${opts}
+        </select></div>`;
+    }
+    return `<div class="form-group"><label>${esc(f.name)} ${f.is_required?'*':''}</label>
+      <input type="text" class="form-control" value="${esc(val)}" onchange="dynamicValues['${f.id}']=this.value">
+    </div>`;
+  }).join('');
+}
+
+function showWarning() {
+  if (!isDeclarationApproved) {
+    Toast.show('يجب الموافقة على الإقرار أولاً', 'error');
+    document.getElementById('declarationSection').scrollIntoView({behavior:'smooth'});
+    return;
+  }
+  const stream = document.getElementById('stream').value;
+  if (!stream) return Toast.show('اختر التشعيب', 'error');
+  if (stream === 'ثانوي' && !document.getElementById('specialization').value)
+    return Toast.show('اختر التخصص', 'error');
+  if (stream === 'بكالوريا' && (!document.getElementById('track').value || !document.getElementById('optionalSubject').value))
+    return Toast.show('اختر المسار والمادة', 'error');
+  document.getElementById('warningConfirmBox').classList.add('show');
+  document.getElementById('warningConfirmBox').scrollIntoView({behavior:'smooth', block:'center'});
+}
+function cancelWarning() { document.getElementById('warningConfirmBox').classList.remove('show'); }
+
+async function confirmSave() {
+  if (isSaving) return;
+  isSaving = true;
+  const stream = document.getElementById('stream').value;
+  const spec = document.getElementById('specialization').value || null;
+  const track = document.getElementById('track').value || null;
+  const opt = document.getElementById('optionalSubject').value || null;
+  const resp = Object.entries(dynamicValues).map(([field_id, value]) => ({ field_id, value }));
+
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true; btn.textContent = '⏳ جاري الحفظ...';
+
+  const { data, error } = await SB.rpc('student_submit', {
+    p_token: token, p_stream: stream,
+    p_specialization: stream === 'ثانوي' ? spec : null,
+    p_track: stream === 'بكالوريا' ? track : null,
+    p_optional_subject: stream === 'بكالوريا' ? opt : null,
+    p_responses: resp
+  });
+
+  if (error || !data?.ok) {
+    Toast.show(data?.error || error?.message || 'فشل الحفظ', 'error');
+    btn.disabled = false; btn.textContent = '💾 حفظ وتقديم الطلب';
+    isSaving = false;
+    return;
+  }
+  Toast.show('✅ تم التقديم بنجاح', 'success');
+  setTimeout(() => location.reload(), 800);
+}
+
+async function showLocked(s, justSaved) {
+  const { data: req } = await SB.rpc('student_get_reopen_status', { p_token: token });
+  requestStatus = req;
+
+  document.getElementById('statusMsg').innerHTML = `
+    <div class="locked-message">
+      <span class="icon">${justSaved ? '✅' : '🔒'}</span>
+      <h3>${justSaved ? 'تم التقديم بنجاح!' : 'تم تسجيل الرغبات مسبقاً'}</h3>
+      <p>${s.submitted_at ? '📅 ' + new Date(s.submitted_at).toLocaleString('ar-EG') : ''}</p>
+      ${req ? `
+        <div style="margin:15px 0;padding:15px;border-radius:12px;background:${
+          req.status==='pending'?'#fff3cd':req.status==='approved'?'#d4edda':'#f8d7da'};">
+          <strong>${req.status==='pending'?'⏳ قيد الانتظار':req.status==='approved'?'✅ تمت الموافقة':'❌ مرفوض'}</strong>
+          ${req.admin_response ? `<div style="margin-top:6px;font-size:13px;">${esc(req.admin_response)}</div>` : ''}
+        </div>` : ''}
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:15px;">
+        ${!req || req.status === 'rejected' ? `<button onclick="showRequestModal()" class="btn-request">📩 طلب فتح التعديل</button>` : ''}
+        <a href="student-pdf.html" class="btn-print-only">📄 طباعة PDF</a>
+      </div>
+    </div>`;
+}
+
+function showRequestModal() {
+  document.getElementById('requestModal').classList.add('show');
+  document.getElementById('requestReason').value = '';
+  document.getElementById('requestError').style.display = 'none';
+}
+function closeRequestModal() { document.getElementById('requestModal').classList.remove('show'); }
+
+async function submitRequest() {
+  const reason = document.getElementById('requestReason').value.trim();
+  const err = document.getElementById('requestError');
+  if (reason.length < 10) {
+    err.textContent = '❌ السبب قصير جداً'; err.style.display = 'block'; return;
+  }
+  const { data, error } = await SB.rpc('student_request_reopen', { p_token: token, p_reason: reason });
+  if (error || !data?.ok) {
+    err.textContent = '❌ ' + (data?.error || error?.message);
+    err.style.display = 'block';
+    return;
+  }
+  closeRequestModal();
+  Toast.show('✅ تم إرسال الطلب', 'success');
+  location.reload();
+}
+
+loadData();
+</script></body>
 </html>
