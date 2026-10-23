@@ -938,127 +938,60 @@ body::after{
 </button>
 
 <script>
-/* ===== تهيئة Supabase ===== */
-const SUPABASE_URL = '{{SUPABASE_URL}}'
-const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-window.supabase = supabaseClient
+<script src="lib/supabase.js"></script>
+<script src="lib/auth.js"></script>
+<script src="lib/toast.js"></script>
+<script>
+document.getElementById('yearDisplay').textContent = new Date().getFullYear();
 
-/* ===== تحديث السنة ===== */
-document.getElementById('yearDisplay').textContent = new Date().getFullYear()
-
-/* ===== نموذج الدخول ===== */
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
-  e.preventDefault()
+  e.preventDefault();
+  const code = document.getElementById('studentCode').value.trim();
+  const nid = document.getElementById('nationalId').value.trim();
+  const errorMsg = document.getElementById('errorMsg');
+  const infoMsg = document.getElementById('infoMsg');
+  const btn = document.getElementById('loginBtn');
+  const spinner = document.getElementById('loadingSpinner');
 
-  const studentCode = document.getElementById('studentCode').value.trim()
-  const nationalId  = document.getElementById('nationalId').value.trim()
-  const errorMsg    = document.getElementById('errorMsg')
-  const infoMsg     = document.getElementById('infoMsg')
-  const loginBtn    = document.getElementById('loginBtn')
-  const spinner     = document.getElementById('loadingSpinner')
+  errorMsg.classList.remove('show');
+  infoMsg.classList.remove('show');
 
-  errorMsg.classList.remove('show')
-  errorMsg.textContent = ''
-  infoMsg.classList.remove('show')
-  infoMsg.textContent = ''
-
-  if (!studentCode || !nationalId) {
-    errorMsg.textContent = 'يرجى إدخال كود الطالب والرقم القومي'
-    errorMsg.classList.add('show')
-    return
+  if (!code || nid.length !== 14) {
+    errorMsg.textContent = 'يرجى إدخال كود الطالب والرقم القومي (14 رقم)';
+    errorMsg.classList.add('show');
+    return;
   }
 
-  if (nationalId.length !== 14) {
-    errorMsg.textContent = 'الرقم القومي يجب أن يكون 14 رقم'
-    errorMsg.classList.add('show')
-    return
-  }
-
-  loginBtn.disabled = true
-  loginBtn.innerHTML = 'جاري التحقق...'
-  spinner.classList.add('show')
+  btn.disabled = true;
+  btn.textContent = 'جاري التحقق...';
+  spinner.classList.add('show');
 
   try {
-    const { data, error } = await supabaseClient
-      .from('students')
-      .select('*')
-      .eq('student_code', String(studentCode))
-      .eq('national_id', String(nationalId))
-      .maybeSingle()
-
-    if (error) {
-      console.error('Supabase error:', error)
-      errorMsg.textContent = 'حدث خطأ في قاعدة البيانات'
-      errorMsg.classList.add('show')
-      resetBtn()
-      return
+    const { data, error } = await SB.rpc('student_login', { p_code: code, p_national_id: nid });
+    if (error) throw error;
+    if (!data || !data.ok) {
+      errorMsg.textContent = data?.error || 'بيانات الدخول غير صحيحة';
+      errorMsg.classList.add('show');
+      btn.disabled = false; btn.innerHTML = '🚪 دخول إلى النظام';
+      spinner.classList.remove('show');
+      return;
     }
-
-    if (!data) {
-      errorMsg.textContent = 'كود الطالب أو الرقم القومي غير صحيح'
-      errorMsg.classList.add('show')
-      resetBtn()
-      return
-    }
-
-    if (data.is_locked && data.submitted_at) {
-      infoMsg.innerHTML = `
-        <strong>تم تسجيل الرغبات مسبقاً</strong><br>
-        <small>تاريخ التقديم: ${new Date(data.submitted_at).toLocaleDateString('ar-EG')}</small><br>
-        <small style="color:#64748B;">يمكنك طباعة PDF فقط</small>
-      `
-      infoMsg.classList.add('show')
-    }
-
-    sessionStorage.setItem('studentId', data.id)
-    sessionStorage.setItem('studentName', data.full_name)
-
-    setTimeout(() => {
-      window.location.href = 'student-form.html'
-    }, 500)
-
+    sessionStorage.setItem('studentToken', data.token);
+    sessionStorage.setItem('studentName', data.student.full_name);
+    sessionStorage.setItem('studentId', data.student.id);
+    setTimeout(() => location.href = 'student-form.html', 300);
   } catch (err) {
-    console.error('Error:', err)
-    errorMsg.textContent = 'حدث خطأ أثناء محاولة الدخول'
-    errorMsg.classList.add('show')
-    resetBtn()
+    console.error(err);
+    errorMsg.textContent = 'حدث خطأ أثناء محاولة الدخول';
+    errorMsg.classList.add('show');
+    btn.disabled = false; btn.innerHTML = '🚪 دخول إلى النظام';
+    spinner.classList.remove('show');
   }
+});
 
-  function resetBtn() {
-    loginBtn.disabled = false
-    loginBtn.innerHTML = `
-      <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2">
-        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-        <polyline points="10 17 15 12 10 7"/>
-        <line x1="15" y1="12" x2="3" y2="12"/>
-      </svg>
-      دخول إلى النظام
-    `
-    spinner.classList.remove('show')
-  }
-})
-
-/* ===== زر العودة للأعلى ===== */
-const topBtn = document.getElementById('topBtn')
-window.addEventListener('scroll', () => {
-  topBtn.classList.toggle('show', scrollY > 400)
-})
-topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'}))
-
-/* ===== تأثيرات الظهور ===== */
-document.addEventListener('DOMContentLoaded', () => {
-  const cards = document.querySelectorAll('.feature-card')
-  cards.forEach((card, i) => {
-    card.style.opacity = '0'
-    card.style.transform = 'translateY(20px)'
-    setTimeout(() => {
-      card.style.transition = 'all .6s cubic-bezier(.2,.7,.3,1)'
-      card.style.opacity = '1'
-      card.style.transform = 'translateY(0)'
-    }, 150 + (i * 110))
-  })
-})
+const topBtn = document.getElementById('topBtn');
+window.addEventListener('scroll', () => topBtn.classList.toggle('show', scrollY > 400));
+topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'}));
 </script>
 
 </body>
