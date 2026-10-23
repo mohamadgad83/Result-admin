@@ -1,841 +1,266 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إدارة الطلاب - مدرسة دشنا الثانوية</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        /* نفس الأنماط السابقة - تم حذفها للاختصار، احتفظ بالأنماط من الكود السابق */
-        .table-container { overflow-x: auto; margin: 20px 0; }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        table th { background: #1e3c72; color: white; padding: 12px 10px; text-align: center; white-space: nowrap; }
-        table td { padding: 10px 10px; border-bottom: 1px solid #eee; text-align: center; vertical-align: middle; }
-        table tr:hover { background: #f8f9fa; }
-        table tr.selected { background: #d4edda; }
-
-        .search-bar {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-            align-items: center;
-        }
-        .search-bar input, .search-bar select {
-            padding: 10px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 14px;
-            flex: 1;
-            min-width: 150px;
-            background: white;
-        }
-        .search-bar input:focus, .search-bar select:focus {
-            outline: none;
-            border-color: #1e3c72;
-        }
-        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
-        .status-locked { background: #d4edda; color: #155724; }
-        .status-unlocked { background: #fff3cd; color: #856404; }
-        .action-link { color: #1e3c72; text-decoration: none; font-weight: 600; margin: 0 5px; padding: 4px 8px; border-radius: 6px; transition: all 0.2s; }
-        .action-link:hover { text-decoration: underline; }
-        .action-link.view { color: #1e3c72; }
-        .action-link.unlock { color: #28a745; }
-        .action-link.lock { color: #dc3545; }
-        .action-link.pdf { color: #17a2b8; }
-
-        .empty-msg { text-align: center; padding: 40px; color: #999; }
-
-        .admin-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #eee;
-            margin-bottom: 20px;
-        }
-        .btn-back { padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; text-decoration: none; display: inline-block; }
-        .btn-back:hover { background: #5a6268; }
-        .btn-logout { padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
-        .btn-logout:hover { background: #a71d2a; }
-
-        .stats-mini {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 12px;
-            margin-bottom: 15px;
-        }
-        .stats-mini .stat { font-size: 14px; color: #555; }
-        .stats-mini .stat strong { color: #1e3c72; font-size: 18px; }
-        .stats-mini .stat .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-left: 5px; }
-        .stats-mini .stat .dot.green { background: #28a745; }
-        .stats-mini .stat .dot.yellow { background: #ffc107; }
-
-        .extra-stats-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            padding: 15px;
-            background: white;
-            border-radius: 12px;
-            margin-bottom: 15px;
-            border: 1px solid #eee;
-            align-items: center;
-        }
-        .extra-stats-grid .stat-card-mini {
-            background: linear-gradient(135deg, #6f42c1, #a855f7);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 30px;
-            font-size: 13px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            white-space: nowrap;
-        }
-        .extra-stats-grid .stat-card-mini .num { font-weight: 700; font-size: 16px; background: rgba(255,255,255,0.2); padding: 0 8px; border-radius: 20px; }
-        .extra-stats-grid .stat-card-mini.optional { background: linear-gradient(135deg, #e83e8c, #f06292); }
-        .extra-stats-grid .stat-card-mini.track { background: linear-gradient(135deg, #1e3c72, #2a5298); }
-        .extra-stats-grid .section-label { font-weight: 700; color: #333; margin-left: 5px; font-size: 14px; border-left: 2px solid #ddd; padding-left: 10px; }
-        .extra-stats-grid .empty-msg { color: #999; font-size: 13px; padding: 5px; }
-
-        .bulk-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            align-items: center;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 12px;
-            margin: 15px 0;
-            border: 1px solid #e9ecef;
-        }
-        .bulk-actions .info { font-size: 14px; color: #555; flex: 1; }
-        .bulk-actions .info strong { color: #1e3c72; }
-        .bulk-actions .btn-bulk {
-            padding: 8px 20px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .bulk-actions .btn-bulk:hover { transform: scale(1.02); }
-        .bulk-actions .btn-bulk.unlock { background: #28a745; color: white; }
-        .bulk-actions .btn-bulk.unlock:hover { background: #1e7e34; }
-        .bulk-actions .btn-bulk.lock { background: #dc3545; color: white; }
-        .bulk-actions .btn-bulk.lock:hover { background: #a71d2a; }
-        .bulk-actions .btn-bulk.select-all { background: #6c757d; color: white; }
-        .bulk-actions .btn-bulk.select-all:hover { background: #5a6268; }
-        .bulk-actions .btn-bulk.deselect-all { background: #6c757d; color: white; }
-        .bulk-actions .btn-bulk.deselect-all:hover { background: #5a6268; }
-        .bulk-actions .btn-bulk.export { background: #17a2b8; color: white; }
-        .bulk-actions .btn-bulk.export:hover { background: #138496; }
-        .bulk-actions .btn-bulk:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-        .row-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #1e3c72; }
-        .select-all-checkbox { width: 18px; height: 18px; cursor: pointer; accent-color: #1e3c72; }
-
-        .toast-container {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .toast {
-            padding: 15px 25px;
-            border-radius: 12px;
-            color: white;
-            font-weight: 600;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            animation: slideIn 0.3s ease;
-            min-width: 250px;
-            max-width: 450px;
-        }
-        .toast.success { background: #28a745; }
-        .toast.error { background: #dc3545; }
-        .toast.info { background: #17a2b8; }
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        .selected-count { font-weight: 700; color: #1e3c72; font-size: 16px; }
-
-        @media (max-width: 600px) {
-            table { font-size: 12px; }
-            table th, table td { padding: 6px 5px; }
-            .search-bar input, .search-bar select { min-width: 100px; flex: 1 1 100%; }
-            .stats-mini { flex-direction: column; gap: 5px; }
-            .bulk-actions { flex-direction: column; align-items: stretch; }
-            .bulk-actions .info { text-align: center; }
-            .bulk-actions .btn-bulk { width: 100%; text-align: center; }
-            .extra-stats-grid { gap: 8px; justify-content: center; }
-            .extra-stats-grid .stat-card-mini { font-size: 12px; padding: 6px 12px; }
-            .extra-stats-grid .section-label { display: block; width: 100%; text-align: center; border-left: none; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 5px; }
-        }
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>إدارة الطلاب</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="style.css">
+<style>
+.admin-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;padding-bottom:15px;border-bottom:2px solid #eee;margin-bottom:20px}
+.btn-back{padding:10px 18px;background:#6c757d;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;text-decoration:none;display:inline-block}
+.btn-logout{padding:10px 18px;background:#dc3545;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px}
+.search-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px}
+.search-bar input,.search-bar select{padding:10px 14px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;min-width:150px;flex:1;font-family:inherit}
+.search-bar input:focus,.search-bar select:focus{outline:none;border-color:#1e3c72}
+.stats-mini{display:flex;gap:20px;flex-wrap:wrap;padding:14px;background:#f8f9fa;border-radius:12px;margin-bottom:15px;font-size:14px}
+.stats-mini strong{color:#1e3c72;font-size:18px}
+.bulk-bar{display:flex;gap:10px;flex-wrap:wrap;padding:14px;background:#f8f9fa;border-radius:12px;margin-bottom:15px;align-items:center}
+.bulk-bar .btn{padding:8px 18px;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px}
+.btn-unlock{background:#28a745;color:#fff}.btn-unlock:hover{background:#1e7e34}
+.btn-lock{background:#dc3545;color:#fff}.btn-lock:hover{background:#a71d2a}
+.btn-export{background:#17a2b8;color:#fff}.btn-export:hover{background:#138496}
+.btn-select{background:#6c757d;color:#fff}.btn-select:hover{background:#5a6268}
+.table-wrap{overflow-x:auto;margin:15px 0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#1e3c72;color:#fff;padding:10px;text-align:center;white-space:nowrap}
+td{padding:8px;border-bottom:1px solid #eee;text-align:center;vertical-align:middle}
+tr:hover{background:#f8f9fa}
+tr.selected{background:#e7f5ea}
+.row-cb{width:16px;height:16px;cursor:pointer;accent-color:#1e3c72}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge.locked{background:#d4edda;color:#155724}
+.badge.unlocked{background:#fff3cd;color:#856404}
+.act{padding:4px 8px;text-decoration:none;font-size:14px;margin:0 2px;border-radius:4px}
+.act:hover{background:#eef}
+.pagination{display:flex;gap:8px;justify-content:center;margin:15px 0;flex-wrap:wrap}
+.pagination button{padding:6px 12px;background:#fff;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px}
+.pagination button.active{background:#1e3c72;color:#fff;border-color:#1e3c72}
+.pagination button:disabled{opacity:.4;cursor:not-allowed}
+</style>
 </head>
 <body>
-    <div class="container" style="max-width:1100px;">
-        <div class="card">
-            <!-- Header -->
-            <div class="admin-header">
-                <div>
-                    <h1 style="margin:0;">👨‍🎓 إدارة الطلاب</h1>
-                    <p style="color:#666;font-size:13px;margin-top:5px;">
-                        عرض الطلاب، فتح/قفل التعديل، وإدارة جماعية
-                    </p>
-                </div>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                    <a href="admin-dashboard.html" class="btn-back">📊 لوحة التحكم</a>
-                    <button onclick="logout()" class="btn-logout">🚪 خروج</button>
-                </div>
-            </div>
-
-            <!-- ===== إحصائيات سريعة أساسية ===== -->
-            <div class="stats-mini" id="statsMini">
-                <div class="stat">📊 الإجمالي: <strong id="totalCount">0</strong></div>
-                <div class="stat"><span class="dot green"></span> مقفل: <strong id="lockedCount">0</strong></div>
-                <div class="stat"><span class="dot yellow"></span> مفتوح: <strong id="unlockedCount">0</strong></div>
-                <div class="stat">✅ المحدد: <strong id="selectedCount">0</strong></div>
-            </div>
-
-            <!-- ===== كروت إحصائيات المواد الاختيارية والمسارات ===== -->
-            <div class="extra-stats-grid" id="extraStatsGrid">
-                <span class="section-label">📊 إحصائيات إضافية</span>
-                <span class="empty-msg">⏳ جاري التحميل...</span>
-            </div>
-
-            <!-- ===== البحث والفلترة ===== -->
-            <div class="search-bar">
-                <input type="text" id="searchInput" placeholder="🔍 بحث بالاسم، الكود، أو الرقم القومي..." onkeyup="filterStudents()">
-                <select id="filterStream" onchange="filterStudents()">
-                    <option value="">كل التشعيبات</option>
-                    <option value="ثانوي">ثانوي</option>
-                    <option value="بكالوريا">بكالوريا</option>
-                </select>
-                <select id="filterStatus" onchange="filterStudents()">
-                    <option value="">كل الحالات</option>
-                    <option value="locked">🔒 مقفل</option>
-                    <option value="unlocked">🔓 مفتوح</option>
-                </select>
-                <select id="filterOptional" onchange="filterStudents()">
-                    <option value="">كل المواد الاختيارية</option>
-                </select>
-                <select id="filterTrack" onchange="filterStudents()">
-                    <option value="">كل المسارات</option>
-                </select>
-                <button onclick="resetFilters()" style="padding:10px 20px;background:#6c757d;color:white;border:none;border-radius:10px;cursor:pointer;">مسح الكل</button>
-            </div>
-
-            <!-- ===== أدوات التحكم الجماعي (مع زر التصدير) ===== -->
-            <div class="bulk-actions" id="bulkActions">
-                <div class="info">
-                    <span>✅ المحدد: <span class="selected-count" id="selectedCountDisplay">0</span> طالب</span>
-                    &nbsp;|&nbsp;
-                    <button onclick="selectAll()" class="btn-bulk select-all">✔️ تحديد الكل</button>
-                    <button onclick="deselectAll()" class="btn-bulk deselect-all">✖️ إلغاء الكل</button>
-                </div>
-                <div>
-                    <button onclick="bulkUnlock()" class="btn-bulk unlock" id="bulkUnlockBtn">🔓 فتح التسجيل</button>
-                    <button onclick="bulkLock()" class="btn-bulk lock" id="bulkLockBtn">🔒 غلق التسجيل</button>
-                    <button onclick="exportFilteredStudents()" class="btn-bulk export" id="exportBtn">📥 تصدير Excel</button>
-                </div>
-            </div>
-
-            <!-- عدد الطلاب -->
-            <div style="margin-bottom:10px;color:#666;font-size:14px;">
-                عدد الطلاب: <span id="studentsCount">0</span>
-            </div>
-
-            <!-- ===== جدول الطلاب ===== -->
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width:40px;">
-                                <input type="checkbox" class="select-all-checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
-                            </th>
-                            <th>#</th>
-                            <th>الاسم</th>
-                            <th>الكود</th>
-                            <th>التشعيب</th>
-                            <th>التخصص/المسار</th>
-                            <th>المادة الاختيارية</th>
-                            <th>الحالة</th>
-                            <th>الإجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody id="studentsTableBody">
-                        <tr><td colspan="9" class="empty-msg">⏳ جاري التحميل...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- تعليمات -->
-            <div style="margin-top:15px;padding:15px;background:#f0f7ff;border-radius:12px;font-size:13px;color:#555;">
-                <strong>💡 تعليمات الإدارة الجماعية:</strong>
-                <ul style="margin:5px 0 0 20px;padding-right:20px;">
-                    <li>✔️ حدد الطلاب المطلوبين باستخدام الـ Checkbox</li>
-                    <li>🔓 <strong>فتح التسجيل</strong> - يسمح للطلاب المحددين بتعديل رغباتهم</li>
-                    <li>🔒 <strong>غلق التسجيل</strong> - يمنع الطلاب المحددين من التعديل</li>
-                    <li>📄 يمكنك أيضاً فتح/غلق طالب فردي من عمود الإجراءات</li>
-                    <li>📥 زر <strong>تصدير Excel</strong> يصدر البيانات حسب الفلتر الحالي مع الحقول الإضافية</li>
-                </ul>
-            </div>
-        </div>
+<div class="container" style="max-width:1200px;">
+<div class="card">
+  <div class="admin-header">
+    <h1 style="margin:0;font-size:22px;">👨‍🎓 إدارة الطلاب</h1>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <a href="admin-import-export.html" class="btn-back" style="background:#17a2b8;">📥 استيراد</a>
+      <a href="admin-dashboard.html" class="btn-back">📊 لوحة التحكم</a>
+      <button class="btn-logout" onclick="Auth.adminLogout()">🚪 خروج</button>
     </div>
-
-    <!-- حاوية الإشعارات -->
-    <div class="toast-container" id="toastContainer"></div>
-
-    <script>
-        // ===== تهيئة Supabase =====
-        const SUPABASE_URL = '{{SUPABASE_URL}}'
-        const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-        window.supabase = supabaseClient
-
-        let allStudents = []
-        let filteredStudents = []
-        let selectedStudents = new Set()
-        // متغيرات لحفظ الحقول الديناميكية والاستجابات
-        let dynamicFields = []
-        let allResponses = {}
-
-        // التحقق من وجود أدمن
-        if (!sessionStorage.getItem('adminId')) {
-            window.location.href = 'admin-login.html'
-        }
-
-        // ===== دالة مساعدة لتقسيم المصفوفة =====
-        function chunkArray(arr, size) {
-            const chunks = [];
-            for (let i = 0; i < arr.length; i += size) {
-                chunks.push(arr.slice(i, i + size));
-            }
-            return chunks;
-        }
-
-        // ===== Toast System =====
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.textContent = message;
-            container.appendChild(toast);
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transition = 'opacity 0.3s';
-                setTimeout(() => toast.remove(), 300);
-            }, 4000);
-        }
-
-        // ===== تحميل الطلاب والحقول الإضافية =====
-        async function loadStudents() {
-            try {
-                // جلب الطلاب
-                const { data: students, error } = await supabaseClient
-                    .from('students')
-                    .select('*')
-                    .order('created_at', { ascending: false })
-
-                if (error) throw error
-                allStudents = students || []
-                filteredStudents = [...allStudents]
-                selectedStudents.clear()
-
-                // جلب الحقول الديناميكية
-                const { data: fields, error: fieldsError } = await supabaseClient
-                    .from('dynamic_fields')
-                    .select('id, name')
-                    .eq('visible_for_student', true)
-                    .order('display_order', { ascending: true })
-
-                if (fieldsError) throw fieldsError
-                dynamicFields = fields || []
-
-                // جلب استجابات الطلاب - باستخدام تقسيم المعرفات لتجنب طول URL
-                if (allStudents.length > 0) {
-                    const studentIds = allStudents.map(s => s.id);
-                    // تقسيم المعرفات إلى مجموعات صغيرة (حجم 50)
-                    const chunks = chunkArray(studentIds, 50);
-                    let allResponsesData = [];
-                    for (const chunk of chunks) {
-                        const { data, error } = await supabaseClient
-                            .from('student_dynamic_responses')
-                            .select('student_id, field_id, value')
-                            .in('student_id', chunk);
-                        if (error) throw error;
-                        if (data) allResponsesData = allResponsesData.concat(data);
-                    }
-
-                    // تحويل الاستجابات إلى كائن سهل الوصول
-                    allResponses = {};
-                    allResponsesData.forEach(r => {
-                        if (!allResponses[r.student_id]) allResponses[r.student_id] = {};
-                        allResponses[r.student_id][r.field_id] = r.value;
-                    });
-                }
-
-                renderTable()
-                updateStats()
-                updateExtraStats()
-                populateFilterOptions()
-            } catch (err) {
-                console.error('Error loading students:', err)
-                document.getElementById('studentsTableBody').innerHTML = 
-                    '<tr><td colspan="9" class="empty-msg">❌ خطأ في تحميل البيانات: ' + (err.message || '') + '</td></tr>'
-            }
-        }
-
-        // ===== عرض الجدول =====
-        function renderTable() {
-            const tbody = document.getElementById('studentsTableBody')
-            document.getElementById('studentsCount').textContent = filteredStudents.length
-
-            if (filteredStudents.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="empty-msg">📭 لا يوجد طلاب</td></tr>'
-                return
-            }
-
-            const allChecked = filteredStudents.every(s => selectedStudents.has(s.id))
-            document.getElementById('selectAllCheckbox').checked = allChecked
-
-            tbody.innerHTML = filteredStudents.map((student, index) => {
-                const isLocked = student.is_locked
-                const isSelected = selectedStudents.has(student.id)
-                const streamDisplay = student.stream || '-'
-                const specializationDisplay = student.specialization || student.track || '-'
-                const optionalDisplay = student.optional_subject || '-'
-                
-                return `
-                <tr class="${isSelected ? 'selected' : ''}">
-                    <td>
-                        <input type="checkbox" class="row-checkbox" 
-                               data-id="${student.id}" 
-                               ${isSelected ? 'checked' : ''} 
-                               onchange="toggleStudent('${student.id}')">
-                    </td>
-                    <td>${index + 1}</td>
-                    <td><strong>${student.full_name}</strong></td>
-                    <td dir="ltr">${student.student_code}</td>
-                    <td>${streamDisplay}</td>
-                    <td>${specializationDisplay}</td>
-                    <td style="font-size:13px; color: ${student.optional_subject ? '#1e3c72' : '#999'};">${optionalDisplay}</td>
-                    <td>
-                        <span class="status-badge ${isLocked ? 'status-locked' : 'status-unlocked'}">
-                            ${isLocked ? '🔒 مقفل' : '🔓 مفتوح'}
-                        </span>
-                        ${student.submitted_at ? `
-                            <br><small style="font-size:10px;color:#999;">
-                                ${new Date(student.submitted_at).toLocaleDateString('ar-EG')}
-                            </small>
-                        ` : ''}
-                    </td>
-                    <td style="white-space:nowrap;">
-                        <a href="admin-student-detail.html?id=${student.id}" class="action-link view" title="عرض التفاصيل">👁️</a>
-                        <a href="#" onclick="toggleLock('${student.id}', ${isLocked})" 
-                           class="action-link ${isLocked ? 'unlock' : 'lock'}" 
-                           title="${isLocked ? '🔓 فتح التعديل' : '🔒 قفل التعديل'}">
-                            ${isLocked ? '🔓' : '🔒'}
-                        </a>
-                        <a href="student-pdf.html?print=${student.id}" target="_blank" 
-                           class="action-link pdf" title="طباعة PDF">📄</a>
-                    </td>
-                </tr>
-            `}).join('')
-        }
-
-        // ===== تحديث الإحصائيات الأساسية =====
-        function updateStats() {
-            const total = allStudents.length
-            const locked = allStudents.filter(s => s.is_locked).length
-            const unlocked = total - locked
-            const selected = selectedStudents.size
-
-            document.getElementById('totalCount').textContent = total
-            document.getElementById('lockedCount').textContent = locked
-            document.getElementById('unlockedCount').textContent = unlocked
-            document.getElementById('selectedCount').textContent = selected
-            document.getElementById('selectedCountDisplay').textContent = selected
-        }
-
-        // ===== تحديث كروت المواد والمسارات =====
-        function updateExtraStats() {
-            const container = document.getElementById('extraStatsGrid');
-            const bacStudents = allStudents.filter(s => s.stream === 'بكالوريا');
-
-            const optCounts = {};
-            bacStudents.forEach(s => {
-                if (s.optional_subject) {
-                    optCounts[s.optional_subject] = (optCounts[s.optional_subject] || 0) + 1;
-                }
-            });
-
-            const trackCounts = {};
-            bacStudents.forEach(s => {
-                if (s.track) {
-                    trackCounts[s.track] = (trackCounts[s.track] || 0) + 1;
-                }
-            });
-
-            let html = `<span class="section-label">📊 إحصائيات إضافية</span>`;
-
-            const sortedOpts = Object.entries(optCounts).sort((a, b) => b[1] - a[1]);
-            if (sortedOpts.length > 0) {
-                sortedOpts.forEach(([name, count]) => {
-                    html += `<span class="stat-card-mini optional">📖 ${name} <span class="num">${count}</span></span>`;
-                });
-            } else {
-                html += `<span class="empty-msg" style="margin:0 5px;">لا توجد مواد اختيارية مسجلة</span>`;
-            }
-
-            if (sortedOpts.length > 0 && Object.keys(trackCounts).length > 0) {
-                html += `<span style="color:#ddd; margin: 0 5px;">|</span>`;
-            }
-
-            const sortedTracks = Object.entries(trackCounts).sort((a, b) => b[1] - a[1]);
-            if (sortedTracks.length > 0) {
-                sortedTracks.forEach(([name, count]) => {
-                    html += `<span class="stat-card-mini track">📚 ${name} <span class="num">${count}</span></span>`;
-                });
-            } else {
-                html += `<span class="empty-msg" style="margin:0 5px;">لا توجد مسارات مسجلة</span>`;
-            }
-
-            container.innerHTML = html;
-        }
-
-        // ===== تعبئة خيارات الفلاتر =====
-        function populateFilterOptions() {
-            const optSelect = document.getElementById('filterOptional');
-            const optSet = new Set();
-            allStudents.forEach(s => { if (s.optional_subject) optSet.add(s.optional_subject); });
-            const sortedOpts = Array.from(optSet).sort();
-            optSelect.innerHTML = '<option value="">كل المواد الاختيارية</option>';
-            sortedOpts.forEach(opt => {
-                optSelect.innerHTML += `<option value="${opt}">${opt}</option>`;
-            });
-
-            const trackSelect = document.getElementById('filterTrack');
-            const trackSet = new Set();
-            allStudents.forEach(s => { if (s.track) trackSet.add(s.track); });
-            const sortedTracks = Array.from(trackSet).sort();
-            trackSelect.innerHTML = '<option value="">كل المسارات</option>';
-            sortedTracks.forEach(track => {
-                trackSelect.innerHTML += `<option value="${track}">${track}</option>`;
-            });
-        }
-
-        // ===== فلترة الطلاب =====
-        function filterStudents() {
-            const search = document.getElementById('searchInput').value.toLowerCase()
-            const stream = document.getElementById('filterStream').value
-            const status = document.getElementById('filterStatus').value
-            const optional = document.getElementById('filterOptional').value
-            const track = document.getElementById('filterTrack').value
-
-            filteredStudents = allStudents.filter(student => {
-                const matchSearch = 
-                    student.full_name.toLowerCase().includes(search) ||
-                    String(student.student_code).toLowerCase().includes(search) ||
-                    String(student.national_id).toLowerCase().includes(search)
-                
-                const matchStream = stream ? student.stream === stream : true
-                const matchStatus = status ? 
-                    (status === 'locked' ? student.is_locked : !student.is_locked) : true
-                const matchOptional = optional ? student.optional_subject === optional : true
-                const matchTrack = track ? student.track === track : true
-
-                return matchSearch && matchStream && matchStatus && matchOptional && matchTrack
-            })
-
-            const filteredIds = new Set(filteredStudents.map(s => s.id));
-            selectedStudents.forEach(id => {
-                if (!filteredIds.has(id)) {
-                    selectedStudents.delete(id);
-                }
-            });
-
-            renderTable()
-            updateStats()
-        }
-
-        // ===== إعادة تعيين الفلترة =====
-        function resetFilters() {
-            document.getElementById('searchInput').value = ''
-            document.getElementById('filterStream').value = ''
-            document.getElementById('filterStatus').value = ''
-            document.getElementById('filterOptional').value = ''
-            document.getElementById('filterTrack').value = ''
-            filteredStudents = [...allStudents]
-            selectedStudents.clear()
-            renderTable()
-            updateStats()
-        }
-
-        // ===== إدارة التحديد =====
-        function toggleStudent(id) {
-            if (selectedStudents.has(id)) {
-                selectedStudents.delete(id)
-            } else {
-                selectedStudents.add(id)
-            }
-            updateStats()
-            renderTable()
-        }
-
-        function selectAll() {
-            filteredStudents.forEach(s => selectedStudents.add(s.id))
-            updateStats()
-            renderTable()
-        }
-
-        function deselectAll() {
-            selectedStudents.clear()
-            updateStats()
-            renderTable()
-        }
-
-        function toggleSelectAll() {
-            const checked = document.getElementById('selectAllCheckbox').checked
-            if (checked) selectAll()
-            else deselectAll()
-        }
-
-        // ===== دالة تصدير Excel مع الحقول الديناميكية =====
-        async function exportFilteredStudents() {
-            const btn = document.getElementById('exportBtn');
-            btn.disabled = true;
-            btn.textContent = '⏳ جاري...';
-
-            try {
-                if (filteredStudents.length === 0) {
-                    showToast('⚠️ لا توجد بيانات للتصدير', 'error');
-                    btn.disabled = false;
-                    btn.textContent = '📥 تصدير Excel';
-                    return;
-                }
-
-                // بناء رؤوس الأعمدة الأساسية
-                const headers = [
-                    '#', 'الاسم', 'الكود', 'الرقم القومي', 'التشعيب', 
-                    'التخصص/المسار', 'المادة الاختيارية', 'الحالة', 'تاريخ التقديم'
-                ];
-
-                // إضافة أسماء الحقول الديناميكية إلى الرؤوس
-                const fieldNames = dynamicFields.map(f => f.name);
-                const fullHeaders = [...headers, ...fieldNames];
-
-                // بناء صفوف البيانات
-                const exportData = filteredStudents.map((student, index) => {
-                    const row = {
-                        '#': index + 1,
-                        'الاسم': student.full_name || '',
-                        'الكود': student.student_code || '',
-                        'الرقم القومي': student.national_id || '',
-                        'التشعيب': student.stream || '',
-                        'التخصص/المسار': student.specialization || student.track || '',
-                        'المادة الاختيارية': student.optional_subject || '',
-                        'الحالة': student.is_locked ? 'مقفل' : 'مفتوح',
-                        'تاريخ التقديم': student.submitted_at ? new Date(student.submitted_at).toLocaleDateString('ar-EG') : '',
-                    };
-
-                    const studentResponses = allResponses[student.id] || {};
-                    dynamicFields.forEach(field => {
-                        const fieldName = field.name;
-                        row[fieldName] = studentResponses[field.id] || '';
-                    });
-
-                    return row;
-                });
-
-                // إنشاء ملف Excel
-                const wb = XLSX.utils.book_new();
-                const ws = XLSX.utils.json_to_sheet(exportData, { header: fullHeaders });
-                XLSX.utils.book_append_sheet(wb, ws, 'الطلاب');
-
-                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-                const blob = new Blob([wbout], { type: 'application/octet-stream' });
-
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `طلاب_مدرسة_دشنا_${new Date().toISOString().split('T')[0]}.xlsx`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-
-                showToast(`✅ تم تصدير ${filteredStudents.length} طالب مع الحقول الإضافية`, 'success');
-                await logActivity('تصدير طلاب', `تصدير ${filteredStudents.length} طالب مع الحقول الديناميكية`);
-
-            } catch (err) {
-                console.error('Export Error:', err);
-                showToast('❌ حدث خطأ أثناء التصدير: ' + err.message, 'error');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '📥 تصدير Excel';
-            }
-        }
-
-        // ===== الإجراءات الجماعية =====
-        async function bulkUnlock() {
-            const ids = Array.from(selectedStudents)
-            if (ids.length === 0) {
-                showToast('⚠️ يرجى تحديد طالب واحد على الأقل', 'error')
-                return
-            }
-            if (!confirm(`⚠️ هل أنت متأكد من فتح التسجيل لـ ${ids.length} طالب؟`)) return
-            await bulkUpdateLock(ids, false, 'فتح')
-        }
-
-        async function bulkLock() {
-            const ids = Array.from(selectedStudents)
-            if (ids.length === 0) {
-                showToast('⚠️ يرجى تحديد طالب واحد على الأقل', 'error')
-                return
-            }
-            if (!confirm(`⚠️ هل أنت متأكد من غلق التسجيل لـ ${ids.length} طالب؟`)) return
-            await bulkUpdateLock(ids, true, 'غلق')
-        }
-
-        async function bulkUpdateLock(ids, newLockState, actionName) {
-            const btn = newLockState ? document.getElementById('bulkLockBtn') : document.getElementById('bulkUnlockBtn')
-            btn.disabled = true
-            btn.textContent = '⏳ جاري...'
-
-            try {
-                const { error } = await supabaseClient
-                    .from('students')
-                    .update({ 
-                        is_locked: newLockState,
-                        ...(newLockState === false ? { submitted_at: null } : {})
-                    })
-                    .in('id', ids)
-
-                if (error) throw error
-
-                allStudents = allStudents.map(s => {
-                    if (ids.includes(s.id)) {
-                        return { 
-                            ...s, 
-                            is_locked: newLockState,
-                            ...(newLockState === false ? { submitted_at: null } : {})
-                        }
-                    }
-                    return s
-                })
-
-                filterStudents()
-                updateStats()
-                updateExtraStats()
-
-                selectedStudents.clear()
-                updateStats()
-                renderTable()
-
-                showToast(`✅ تم ${actionName} التسجيل لـ ${ids.length} طالب بنجاح`, 'success')
-                await logActivity(`${actionName} جماعي`, `تم ${actionName} التسجيل لـ ${ids.length} طالب`)
-
-            } catch (err) {
-                console.error('Error bulk update:', err)
-                showToast(`❌ حدث خطأ أثناء ${actionName} التسجيل: ${err.message}`, 'error')
-            } finally {
-                btn.disabled = false
-                btn.textContent = newLockState ? '🔒 غلق التسجيل' : '🔓 فتح التسجيل'
-            }
-        }
-
-        // ===== تبديل حالة القفل (فردي) =====
-        async function toggleLock(studentId, currentLock) {
-            const action = currentLock ? 'فتح' : 'قفل'
-            if (!confirm(`⚠️ هل أنت متأكد من ${action} هذا الطالب؟`)) return
-
-            try {
-                const newLockState = !currentLock
-                const { error } = await supabaseClient
-                    .from('students')
-                    .update({ 
-                        is_locked: newLockState,
-                        ...(newLockState === false ? { submitted_at: null } : {})
-                    })
-                    .eq('id', studentId)
-
-                if (error) throw error
-
-                allStudents = allStudents.map(s =>
-                    s.id === studentId ? { 
-                        ...s, 
-                        is_locked: newLockState,
-                        ...(newLockState === false ? { submitted_at: null } : {})
-                    } : s
-                )
-                
-                filterStudents()
-                updateStats()
-                updateExtraStats()
-
-                showToast(currentLock ? '✅ تم فتح الطالب للتعديل' : '✅ تم قفل الطالب', 'success')
-                const studentName = allStudents.find(s => s.id === studentId)?.full_name || studentId
-                await logActivity(`${action} طالب`, `تم ${action} الطالب ${studentName}`)
-
-            } catch (err) {
-                console.error('Error toggling lock:', err)
-                showToast('❌ حدث خطأ أثناء تغيير حالة القفل', 'error')
-            }
-        }
-
-        // ===== تسجيل النشاطات =====
-        async function logActivity(action, details, studentId = null, studentName = null) {
-            try {
-                const adminId = sessionStorage.getItem('adminId')
-                const adminEmail = sessionStorage.getItem('adminEmail') || 'unknown'
-                
-                let ipAddress = 'unknown'
-                try {
-                    const ipRes = await fetch('https://api.ipify.org?format=json')
-                    const ipData = await ipRes.json()
-                    ipAddress = ipData.ip
-                } catch (e) {}
-
-                await supabaseClient
-                    .from('admin_logs')
-                    .insert({
-                        admin_id: adminId,
-                        admin_email: adminEmail,
-                        action: action,
-                        details: details,
-                        student_id: studentId,
-                        student_name: studentName,
-                        ip_address: ipAddress
-                    })
-            } catch (err) {
-                console.error('Error logging activity:', err)
-            }
-        }
-
-        // ===== تسجيل الخروج =====
-        function logout() {
-            sessionStorage.clear()
-            window.location.href = 'admin-login.html'
-        }
-
-        // ===== تحميل البيانات =====
-        loadStudents()
-    </script>
+  </div>
+
+  <div class="stats-mini">
+    <span>📊 الإجمالي: <strong id="totalCount">0</strong></span>
+    <span>🔒 مقفل: <strong id="lockedCount">0</strong></span>
+    <span>🔓 مفتوح: <strong id="unlockedCount">0</strong></span>
+    <span>✅ المحدد: <strong id="selectedCount">0</strong></span>
+  </div>
+
+  <div class="search-bar">
+    <input type="text" id="q" placeholder="🔍 بحث بالاسم/الكود/الرقم القومي" oninput="debouncedLoad()">
+    <select id="filterStream" onchange="loadStudents()">
+      <option value="">كل التشعيبات</option><option value="ثانوي">ثانوي</option><option value="بكالوريا">بكالوريا</option>
+    </select>
+    <select id="filterStatus" onchange="loadStudents()">
+      <option value="">كل الحالات</option><option value="locked">🔒 مقفل</option><option value="unlocked">🔓 مفتوح</option>
+    </select>
+    <button class="btn-back" onclick="resetFilters()">مسح</button>
+  </div>
+
+  <div class="bulk-bar">
+    <span>✅ المحدد: <strong id="selDisplay">0</strong></span>
+    <button class="btn btn-select" onclick="selectAll()">✔️ تحديد الكل</button>
+    <button class="btn btn-select" onclick="deselectAll()">✖️ إلغاء الكل</button>
+    <button class="btn btn-unlock" onclick="bulkUnlock()">🔓 فتح</button>
+    <button class="btn btn-lock" onclick="bulkLock()">🔒 قفل</button>
+    <button class="btn btn-export" onclick="exportSelected()">📥 تصدير Excel</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th style="width:36px;"><input type="checkbox" class="row-cb" id="selectAllCb" onchange="toggleAll()"></th>
+        <th>#</th><th>الاسم</th><th>الكود</th><th>الرقم القومي</th><th>التشعيب</th><th>الحالة</th><th>الإجراءات</th>
+      </tr></thead>
+      <tbody id="tbody"><tr><td colspan="8" style="padding:30px;text-align:center;color:#999;">⏳ جاري التحميل...</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="pagination" id="pagination"></div>
+</div>
+</div>
+
+<script src="lib/supabase.js"></script>
+<script src="lib/auth.js"></script>
+<script src="lib/toast.js"></script>
+<script src="lib/escape.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<script>
+const PAGE_SIZE = 50;
+let currentPage = 1;
+let totalPages = 1;
+let allStudents = [];
+let selected = new Set();
+let auth0 = null;
+
+(async () => {
+  auth0 = await Auth.requireAdmin();
+  if (!auth0) return;
+  loadStudents();
+})();
+
+let debounceTimer;
+function debouncedLoad() { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => { currentPage = 1; loadStudents(); }, 400); }
+
+function buildQuery() {
+  let q = SB.from('students').select('*', { count: 'exact' });
+  const search = document.getElementById('q').value.trim();
+  if (search) q = q.or(`full_name.ilike.%${search}%,student_code.ilike.%${search}%,national_id.ilike.%${search}%`);
+  const stream = document.getElementById('filterStream').value;
+  if (stream) q = q.eq('stream', stream);
+  const status = document.getElementById('filterStatus').value;
+  if (status === 'locked') q = q.eq('is_locked', true);
+  else if (status === 'unlocked') q = q.or('is_locked.is.null,is_locked.eq.false');
+  return q;
+}
+
+async function loadStudents() {
+  const from = (currentPage - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
+  const { data, error, count } = await buildQuery()
+    .order('created_at', { ascending: false }).range(from, to);
+  if (error) { Toast.show('خطأ: ' + error.message, 'error'); return; }
+  allStudents = data || [];
+  totalPages = Math.max(1, Math.ceil((count || 0) / PAGE_SIZE));
+  render();
+  updateStats(count || 0);
+  renderPagination();
+  document.getElementById('totalCount').textContent = count || 0;
+}
+
+async function updateStats(total) {
+  const [{count:locked},{count:unlocked}] = await Promise.all([
+    SB.from('students').select('*',{count:'exact',head:true}).eq('is_locked',true),
+    SB.from('students').select('*',{count:'exact',head:true}).or('is_locked.is.null,is_locked.eq.false')
+  ]);
+  document.getElementById('lockedCount').textContent = locked || 0;
+  document.getElementById('unlockedCount').textContent = unlocked || 0;
+}
+
+function render() {
+  const tb = document.getElementById('tbody');
+  if (allStudents.length === 0) {
+    tb.innerHTML = '<tr><td colspan="8" style="padding:30px;text-align:center;color:#999;">📭 لا يوجد طلاب</td></tr>';
+    return;
+  }
+  tb.innerHTML = allStudents.map((s, i) => {
+    const locked = !!s.is_locked;
+    const isSel = selected.has(s.id);
+    const idx = (currentPage - 1) * PAGE_SIZE + i + 1;
+    const masked = s.national_id ? ('****' + String(s.national_id).slice(-4)) : '-';
+    return `<tr class="${isSel?'selected':''}">
+      <td><input type="checkbox" class="row-cb" data-id="${s.id}" ${isSel?'checked':''} onchange="toggleOne('${s.id}')"></td>
+      <td>${idx}</td>
+      <td><strong>${esc(s.full_name)}</strong></td>
+      <td dir="ltr">${esc(s.student_code)}</td>
+      <td dir="ltr">${esc(masked)}</td>
+      <td>${esc(s.stream||'-')}</td>
+      <td><span class="badge ${locked?'locked':'unlocked'}">${locked?'🔒 مقفل':'🔓 مفتوح'}</span></td>
+      <td>
+        <a href="admin-student-detail.html?id=${s.id}" class="act" title="عرض">👁️</a>
+        <a href="#" class="act" onclick="toggleLock('${s.id}');return false;" title="${locked?'فتح':'قفل'}">${locked?'🔓':'🔒'}</a>
+        <a href="student-pdf.html?print=${s.id}" target="_blank" class="act" title="PDF">📄</a>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderPagination() {
+  const el = document.getElementById('pagination');
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+  let html = `<button ${currentPage===1?'disabled':''} onclick="goPage(${currentPage-1})">‹ السابق</button>`;
+  const start = Math.max(1, currentPage - 2);
+  const end = Math.min(totalPages, currentPage + 2);
+  if (start > 1) html += `<button onclick="goPage(1)">1</button>${start>2?'...':''}`;
+  for (let p = start; p <= end; p++) {
+    html += `<button class="${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+  }
+  if (end < totalPages) html += `${end<totalPages-1?'...':''}<button onclick="goPage(${totalPages})">${totalPages}</button>`;
+  html += `<button ${currentPage===totalPages?'disabled':''} onclick="goPage(${currentPage+1})">التالي ›</button>`;
+  el.innerHTML = html;
+}
+
+function goPage(p) { if (p<1||p>totalPages) return; currentPage = p; loadStudents(); }
+function toggleOne(id) { selected.has(id) ? selected.delete(id) : selected.add(id); updateSel(); render(); }
+function toggleAll() { const c = document.getElementById('selectAllCb').checked; if (c) allStudents.forEach(s => selected.add(s.id)); else allStudents.forEach(s => selected.delete(s.id)); updateSel(); render(); }
+function selectAll() { allStudents.forEach(s => selected.add(s.id)); document.getElementById('selectAllCb').checked = true; updateSel(); render(); }
+function deselectAll() { selected.clear(); document.getElementById('selectAllCb').checked = false; updateSel(); render(); }
+function updateSel() { document.getElementById('selDisplay').textContent = selected.size; document.getElementById('selectedCount').textContent = selected.size; }
+
+async function toggleLock(id) {
+  const s = allStudents.find(x => x.id === id);
+  if (!s) return;
+  const newLock = !s.is_locked;
+  if (!confirm(newLock ? 'قفل هذا الطالب؟' : 'فتح هذا الطالب للتعديل؟')) return;
+  const { error } = await SB.from('students').update({
+    is_locked: newLock, submitted_at: newLock ? s.submitted_at : null
+  }).eq('id', id);
+  if (error) { Toast.show('خطأ: ' + error.message, 'error'); return; }
+  await logAction(newLock ? 'قفل طالب' : 'فتح طالب', `${newLock?'قفل':'فتح'} الطالب ${s.full_name}`, id, s.full_name);
+  Toast.show(newLock ? '✅ تم القفل' : '✅ تم الفتح');
+  loadStudents();
+}
+
+async function bulkLock() { await bulkUpdate(true); }
+async function bulkUnlock() { await bulkUpdate(false); }
+async function bulkUpdate(lock) {
+  if (selected.size === 0) return Toast.show('اختر طالباً على الأقل', 'warn');
+  const action = lock ? 'قفل' : 'فتح';
+  if (!confirm(`${action} ${selected.size} طالب؟`)) return;
+  const ids = Array.from(selected);
+  const update = { is_locked: lock };
+  if (!lock) update.submitted_at = null;
+  const { error } = await SB.from('students').update(update).in('id', ids);
+  if (error) return Toast.show('خطأ: ' + error.message, 'error');
+  await logAction(`${action} جماعي`, `${action} ${ids.length} طالب`);
+  Toast.show(`✅ تم ${action} ${ids.length} طالب`);
+  selected.clear(); updateSel();
+  loadStudents();
+}
+
+async function exportSelected() {
+  const list = selected.size > 0 ? allStudents.filter(s => selected.has(s.id)) : allStudents;
+  if (list.length === 0) return Toast.show('لا بيانات', 'warn');
+  const { data: fields } = await SB.from('dynamic_fields').select('id,name').eq('visible_for_student', true);
+  const ids = list.map(s => s.id);
+  const { data: resp } = await SB.from('student_dynamic_responses').select('student_id,field_id,value').in('student_id', ids);
+  const rmap = {};
+  (resp||[]).forEach(r => { (rmap[r.student_id] ??= {})[r.field_id] = r.value; });
+  const headers = ['#','الاسم','الكود','الرقم القومي','التشعيب','التخصص','المسار','المادة الاختيارية','الحالة','تاريخ التقديم',...(fields||[]).map(f=>f.name)];
+  const rows = list.map((s,i) => [
+    i+1, s.full_name, s.student_code, s.national_id, s.stream||'', s.specialization||'', s.track||'', s.optional_subject||'',
+    s.is_locked?'مقفل':'مفتوح', s.submitted_at?new Date(s.submitted_at).toLocaleString('ar-EG'):'',
+    ...(fields||[]).map(f => rmap[s.id]?.[f.id] || '')
+  ]);
+  Excel.download([headers, ...rows], `طلاب_${new Date().toISOString().slice(0,10)}.xlsx`, 'طلاب');
+  await logAction('تصدير', `${list.length} طالب`);
+}
+
+async function logAction(action, details, studentId = null, studentName = null) {
+  await SB.from('admin_logs').insert({
+    admin_id: auth0.user.id, admin_email: auth0.user.email,
+    action, details, student_id: studentId, student_name: studentName
+  });
+}
+
+function resetFilters() {
+  document.getElementById('q').value = '';
+  document.getElementById('filterStream').value = '';
+  document.getElementById('filterStatus').value = '';
+  currentPage = 1;
+  loadStudents();
+}
+</script>
 </body>
 </html>
