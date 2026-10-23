@@ -1,512 +1,362 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>استيراد/تصدير الطلاب - مدرسة دشنا الثانوية</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        .import-export-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin: 20px 0;
-        }
-        .action-card {
-            background: #f8f9fa;
-            padding: 25px;
-            border-radius: 16px;
-            border: 2px solid #e9ecef;
-        }
-        .action-card h3 {
-            color: #1e3c72;
-            margin-bottom: 10px;
-        }
-        .action-card p {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 15px;
-        }
-        .file-upload-area {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            align-items: center;
-            margin-top: 10px;
-        }
-        .file-upload-area input[type="file"] {
-            flex: 1;
-            min-width: 200px;
-            padding: 10px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            background: white;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        .file-upload-area input[type="file"]:hover {
-            border-color: #1e3c72;
-        }
-        .file-upload-area .btn-import {
-            padding: 12px 30px;
-            background: #28a745;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-        .file-upload-area .btn-import:hover { background: #1e7e34; }
-        .file-upload-area .btn-import:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .file-upload-area .btn-template {
-            padding: 12px 25px;
-            background: #17a2b8;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-        .file-upload-area .btn-template:hover { background: #138496; }
-
-        .admin-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #eee;
-            margin-bottom: 20px;
-        }
-        .btn-back {
-            padding: 10px 20px;
-            background: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .btn-back:hover { background: #5a6268; }
-        .btn-export {
-            padding: 12px 30px;
-            background: #1e3c72;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            width: 100%;
-            transition: all 0.3s;
-        }
-        .btn-export:hover { background: #0f2b4f; }
-        .btn-export:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .results-box {
-            margin-top: 15px;
-            padding: 15px;
-            background: white;
-            border-radius: 12px;
-            border: 1px solid #e9ecef;
-        }
-        .results-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-            margin: 10px 0;
-        }
-        .results-stats div {
-            text-align: center;
-            padding: 10px;
-            border-radius: 8px;
-        }
-        .results-stats .success-count { background: #d4edda; color: #155724; }
-        .results-stats .error-count { background: #f8d7da; color: #721c24; }
-        .results-stats .total-count { background: #cce5ff; color: #004085; }
-        .errors-list {
-            max-height: 200px;
-            overflow-y: auto;
-            font-size: 13px;
-            margin-top: 10px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 8px;
-        }
-        .errors-list li {
-            padding: 3px 0;
-            color: #dc3545;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .errors-list li:last-child { border-bottom: none; }
-
-        /* ===== Toast ===== */
-        .toast-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .toast {
-            padding: 15px 25px;
-            border-radius: 12px;
-            color: white;
-            font-weight: 600;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            animation: slideIn 0.3s ease;
-            min-width: 200px;
-            max-width: 400px;
-        }
-        .toast.success { background: #28a745; }
-        .toast.error { background: #dc3545; }
-        .toast.info { background: #17a2b8; }
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        @media (max-width: 600px) {
-            .import-export-grid { grid-template-columns: 1fr; }
-            .file-upload-area { flex-direction: column; align-items: stretch; }
-            .file-upload-area input[type="file"] { min-width: unset; }
-            .file-upload-area .btn-import,
-            .file-upload-area .btn-template { width: 100%; text-align: center; }
-        }
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>استيراد/تصدير Excel</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="style.css">
+<style>
+.admin-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;padding-bottom:15px;border-bottom:2px solid #eee;margin-bottom:20px}
+.btn{padding:10px 18px;border:none;border-radius:8px;cursor:pointer;font-size:14px;text-decoration:none;display:inline-block;font-weight:600}
+.btn-gray{background:#6c757d;color:#fff}.btn-red{background:#dc3545;color:#fff}
+.btn-green{background:#28a745;color:#fff}.btn-blue{background:#17a2b8;color:#fff}
+.tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.tab{padding:10px 22px;border-radius:10px;cursor:pointer;background:#fff;border:2px solid #e0e0e0;font-weight:600;font-size:14px}
+.tab.active{background:#1e3c72;color:#fff;border-color:#1e3c72}
+.panel{background:#f8f9fa;padding:22px;border-radius:14px;margin:15px 0}
+.panel h3{margin:0 0 15px;color:#1e3c72;font-size:16px}
+.info-box{background:#fff8e1;padding:14px;border-radius:10px;margin:10px 0;font-size:13px;border-right:4px solid #ffc107;color:#856404}
+.upload-area{display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding:20px;background:#fff;border:2px dashed #ccc;border-radius:12px}
+.upload-area input[type=file]{flex:1;min-width:200px;padding:10px;border:1px solid #ddd;border-radius:8px;background:#fafafa}
+.btn-template{background:#17a2b8;color:#fff;padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px}
+.btn-import{background:#28a745;color:#fff;padding:12px 30px;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:15px}
+.btn-import:disabled{opacity:.5;cursor:not-allowed}
+.preview{background:#fff;border-radius:10px;padding:15px;margin-top:15px;overflow-x:auto;max-height:400px}
+.preview table{width:100%;border-collapse:collapse;font-size:12px}
+.preview th{background:#1e3c72;color:#fff;padding:8px;text-align:right;position:sticky;top:0}
+.preview td{padding:8px;border-bottom:1px solid #eee}
+.result{margin-top:15px;padding:16px;border-radius:12px;display:none}
+.result.show{display:block}
+.result.success{background:#d4edda;color:#155724;border:1px solid #28a745}
+.result.error{background:#f8d7da;color:#721c24;border:1px solid #dc3545}
+.result.partial{background:#fff3cd;color:#856404;border:1px solid #ffc107}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0}
+.stat-box{text-align:center;padding:12px;background:#fff;border-radius:10px}
+.stat-box .num{font-size:22px;font-weight:700}
+.stat-box .lbl{font-size:11px;color:#666}
+.progress{height:8px;background:#e9ecef;border-radius:4px;margin:10px 0;overflow:hidden;display:none}
+.progress.show{display:block}
+.progress-bar{height:100%;background:#28a745;width:0;transition:width .3s}
+.mode-row{display:flex;gap:14px;flex-wrap:wrap;margin:12px 0;padding:12px;background:#fff;border-radius:10px;font-size:14px}
+.mode-row label{display:flex;align-items:center;gap:6px;cursor:pointer}
+</style>
 </head>
 <body>
-    <div class="container" style="max-width:900px;">
-        <div class="card">
-            <!-- Header -->
-            <div class="admin-header">
-                <div>
-                    <h1 style="margin:0;">📤 استيراد/تصدير الطلاب</h1>
-                    <p style="color:#666;font-size:13px;margin-top:5px;">
-                        استيراد الطلاب من ملف Excel أو تصدير البيانات إلى Excel
-                    </p>
-                </div>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                    <a href="admin-dashboard.html" class="btn-back">📊 لوحة التحكم</a>
-                    <button onclick="logout()" style="padding:10px 20px;background:#dc3545;color:white;border:none;border-radius:8px;cursor:pointer;">🚪 خروج</button>
-                </div>
-            </div>
+<div class="container" style="max-width:1050px;">
+<div class="card">
+  <div class="admin-header">
+    <h1 style="margin:0;font-size:22px;">📥 استيراد/تصدير البيانات</h1>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <a href="admin-dashboard.html" class="btn btn-gray">📊 لوحة التحكم</a>
+      <button class="btn btn-red" onclick="Auth.adminLogout()">🚪 خروج</button>
+    </div>
+  </div>
 
-            <div class="import-export-grid">
-                <!-- تصدير -->
-                <div class="action-card">
-                    <h3>📥 تصدير البيانات</h3>
-                    <p>تصدير جميع بيانات الطلاب إلى ملف Excel شامل</p>
-                    <button onclick="exportData()" class="btn-export" id="exportBtn">📥 تحميل ملف Excel</button>
-                </div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('import')" id="tab-import">📥 استيراد</button>
+    <button class="tab" onclick="switchTab('export')" id="tab-export">📤 تصدير</button>
+  </div>
 
-                <!-- استيراد -->
-                <div class="action-card">
-                    <h3>📤 استيراد طلاب</h3>
-                    <div style="background:#fff8e1;padding:15px;border-radius:12px;margin-bottom:15px;border-right:4px solid #ffc107;font-size:14px;">
-                        <strong>📌 الأعمدة المطلوبة فقط:</strong><br>
-                        <span style="font-size:16px;color:#dc3545;font-weight:700;">الكود</span>
-                        <span style="font-size:16px;color:#dc3545;font-weight:700;">الرقم القومي</span>
-                        <span style="font-size:16px;color:#dc3545;font-weight:700;">الاسم</span>
-                        <br>
-                        <span style="font-size:12px;color:#856404;">⚠️ التشعيب سيتم تعيينه تلقائياً إلى "ثانوي"</span>
-                    </div>
-
-                    <div class="file-upload-area">
-                        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
-                        <button onclick="downloadTemplate()" class="btn-template">📋 تحميل نموذج</button>
-                        <button onclick="importData()" class="btn-import" id="importBtn">📊 استيراد البيانات</button>
-                    </div>
-                    <div id="importResult"></div>
-                </div>
-            </div>
-        </div>
+  <!-- Import Panel -->
+  <div id="panel-import">
+    <div style="display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap;">
+      <button class="tab active" onclick="selectSchema('students')" id="schema-students">👨‍🎓 الطلاب</button>
+      <button class="tab" onclick="selectSchema('fields')" id="schema-fields">📝 الحقول الديناميكية</button>
     </div>
 
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
+    <div class="info-box" id="infoBox"></div>
 
-    <script>
-        const SUPABASE_URL = '{{SUPABASE_URL}}'
-        const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-        window.supabase = supabaseClient
+    <div class="panel">
+      <h3>1️⃣ حمّل النموذج (إذا لم يكن لديك)</h3>
+      <button class="btn-template" onclick="downloadTemplate()">📋 تحميل النموذج</button>
+    </div>
 
-        if (!sessionStorage.getItem('adminId')) {
-            window.location.href = 'admin-login.html'
+    <div class="panel">
+      <h3>2️⃣ ارفع الملف</h3>
+      <div class="upload-area">
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+        <button class="btn-import" id="importBtn" onclick="doImport()">📊 استيراد</button>
+      </div>
+      <div class="mode-row">
+        <label><input type="radio" name="mode" value="insert" checked> إضافة فقط (تجاهل المكرر)</label>
+        <label><input type="radio" name="mode" value="upsert"> تحديث الموجود + إضافة الجديد</label>
+      </div>
+      <div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
+      <div class="preview" id="preview" style="display:none;"></div>
+      <div class="result" id="result"></div>
+    </div>
+  </div>
+
+  <!-- Export Panel -->
+  <div id="panel-export" style="display:none;">
+    <div class="panel">
+      <h3>📤 تصدير البيانات الحالية</h3>
+      <p style="font-size:13px;color:#666;margin:0 0 15px;">تصدير كل البيانات إلى Excel</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-green" style="padding:12px 25px;" onclick="exportData('students')">📥 تصدير الطلاب</button>
+        <button class="btn btn-blue" style="padding:12px 25px;" onclick="exportData('fields')">📥 تصدير الحقول</button>
+        <button class="btn btn-blue" style="padding:12px 25px;background:#6f42c1;" onclick="exportResponses()">📥 تصدير الاستجابات</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script src="lib/supabase.js"></script>
+<script src="lib/auth.js"></script>
+<script src="lib/toast.js"></script>
+<script src="lib/escape.js"></script>
+<script src="lib/excel.js"></script>
+<script>
+const SCHEMAS = {
+  students: {
+    label: 'الطلاب',
+    table: 'students',
+    match: 'student_code',
+    columns: [
+      { key: 'student_code', label: 'الكود', aliases: ['كود الطالب','كود','code'], required: true, type: 'text' },
+      { key: 'national_id', label: 'الرقم القومي', aliases: ['رقم قومي','nationalid'], required: true, type: 'text' },
+      { key: 'full_name', label: 'الاسم', aliases: ['اسم الطالب','name'], required: true, type: 'text' },
+      { key: 'stream', label: 'التشعيب', aliases: ['stream'], type: 'text', default: 'ثانوي' },
+      { key: 'specialization', label: 'التخصص', aliases: ['specialization'], type: 'text' },
+      { key: 'track', label: 'المسار', aliases: ['track'], type: 'text' },
+      { key: 'optional_subject', label: 'المادة الاختيارية', aliases: ['المادة','optional'], type: 'text' }
+    ]
+  },
+  fields: {
+    label: 'الحقول الديناميكية',
+    table: 'dynamic_fields',
+    match: 'field_key',
+    columns: [
+      { key: 'name', label: 'الاسم', aliases: ['اسم الحقل','name'], required: true, type: 'text' },
+      { key: 'field_key', label: 'المفتاح', aliases: ['key','field_key'], required: true, type: 'text' },
+      { key: 'type', label: 'النوع (text/select)', aliases: ['النوع','type'], required: true, type: 'text', default: 'text' },
+      { key: 'options', label: 'الخيارات (فاصلة)', aliases: ['الخيارات','options'], type: 'array' },
+      { key: 'is_required', label: 'مطلوب (نعم/لا)', aliases: ['مطلوب','required'], type: 'boolean', default: false },
+      { key: 'visible_for_student', label: 'ظاهر للطالب (نعم/لا)', aliases: ['ظاهر','visible'], type: 'boolean', default: true },
+      { key: 'display_order', label: 'الترتيب', aliases: ['order'], type: 'number', default: 0 }
+    ]
+  }
+};
+
+let currentSchema = 'students';
+let parsedRows = [];
+let auth0 = null;
+
+(async () => {
+  auth0 = await Auth.requireAdmin();
+  if (!auth0) return;
+  selectSchema('students');
+})();
+
+function switchTab(t) {
+  document.getElementById('panel-import').style.display = t === 'import' ? 'block' : 'none';
+  document.getElementById('panel-export').style.display = t === 'export' ? 'block' : 'none';
+  document.getElementById('tab-import').classList.toggle('active', t === 'import');
+  document.getElementById('tab-export').classList.toggle('active', t === 'export');
+}
+
+function selectSchema(s) {
+  currentSchema = s;
+  parsedRows = [];
+  document.getElementById('schema-students').classList.toggle('active', s === 'students');
+  document.getElementById('schema-fields').classList.toggle('active', s === 'fields');
+  const sc = SCHEMAS[s];
+  document.getElementById('infoBox').innerHTML = `
+    <strong>📋 ${sc.label}</strong><br>
+    الأعمدة المطلوبة: <strong>${sc.columns.filter(c=>c.required).map(c=>c.label).join('، ')}</strong><br>
+    الأعمدة الاختيارية: ${sc.columns.filter(c=>!c.required).map(c=>c.label).join('، ') || '—'}
+  `;
+  document.getElementById('preview').style.display = 'none';
+  document.getElementById('result').className = 'result';
+  document.getElementById('fileInput').value = '';
+}
+
+function downloadTemplate() {
+  const sc = SCHEMAS[currentSchema];
+  const headers = sc.columns.map(c => c.label);
+  const sample = sc.columns.map(c => c.default !== undefined ? String(c.default) : (c.required ? `مثال ${c.label}` : ''));
+  Excel.download([headers, sample, sc.columns.map(()=>''), sc.columns.map(()=>'')],
+    `نموذج_${sc.label}.xlsx`, sc.label);
+  Toast.show('✅ تم تحميل النموذج', 'info');
+}
+
+document.getElementById('fileInput').addEventListener('change', async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    parsedRows = await Excel.read(f);
+    if (parsedRows.length === 0) { Toast.show('الملف فارغ', 'error'); return; }
+    renderPreview();
+    Toast.show(`✅ ${parsedRows.length} صف`, 'info');
+  } catch (err) { Toast.show('فشل القراءة: ' + err.message, 'error'); }
+});
+
+function renderPreview() {
+  const sc = SCHEMAS[currentSchema];
+  const preview = parsedRows.slice(0, 5);
+  const el = document.getElementById('preview');
+  el.style.display = 'block';
+  el.innerHTML = `<div style="font-size:13px;color:#666;margin-bottom:8px;">معاينة أول ${preview.length} من ${parsedRows.length}:</div>
+    <table><thead><tr>${sc.columns.map(c=>`<th>${esc(c.label)}</th>`).join('')}</tr></thead>
+    <tbody>${preview.map(r=>`<tr>${sc.columns.map(c=>`<td>${esc(findVal(r,c)||'')}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+
+function findVal(row, col) {
+  const keys = [col.label, col.key, ...(col.aliases||[])];
+  for (const k of keys) {
+    if (row[k] !== undefined && row[k] !== '') return row[k];
+  }
+  const rowKeys = Object.keys(row);
+  for (const k of keys) {
+    const found = rowKeys.find(rk => rk.trim().toLowerCase() === k.trim().toLowerCase());
+    if (found && row[found] !== '') return row[found];
+  }
+  return '';
+}
+
+function toBool(v) {
+  if (v === true || v === false) return v;
+  const s = String(v).trim().toLowerCase();
+  return ['true','1','yes','نعم','صح','✔','✓'].includes(s);
+}
+function toNum(v) {
+  if (v === '' || v == null) return null;
+  const n = Number(String(v).replace(/[^\d.-]/g, ''));
+  return isNaN(n) ? null : n;
+}
+function toArr(v) {
+  if (v === '' || v == null) return null;
+  return String(v).split(',').map(s=>s.trim()).filter(Boolean);
+}
+
+function convertRow(row, sc) {
+  const out = {};
+  for (const col of sc.columns) {
+    let raw = findVal(row, col);
+    if (raw === '' || raw == null) {
+      if (col.default !== undefined) out[col.key] = col.default;
+      else if (col.required) throw new Error(`الحقل "${col.label}" مطلوب`);
+      continue;
+    }
+    switch (col.type) {
+      case 'boolean': out[col.key] = toBool(raw); break;
+      case 'number': out[col.key] = toNum(raw); break;
+      case 'array': out[col.key] = toArr(raw); break;
+      default: out[col.key] = String(raw).trim();
+    }
+  }
+  return out;
+}
+
+async function doImport() {
+  if (parsedRows.length === 0) return Toast.show('ارفع ملفاً أولاً', 'warn');
+  const sc = SCHEMAS[currentSchema];
+  const mode = document.querySelector('input[name=mode]:checked').value;
+  const btn = document.getElementById('importBtn');
+  const progress = document.getElementById('progress');
+  const bar = document.getElementById('progressBar');
+  btn.disabled = true;
+  progress.classList.add('show');
+  bar.style.width = '0%';
+
+  let success = 0, failed = 0, skipped = 0;
+  const errors = [];
+  const converted = [];
+
+  for (let i = 0; i < parsedRows.length; i++) {
+    try {
+      converted.push({ idx: i+2, data: convertRow(parsedRows[i], sc) });
+    } catch (err) {
+      failed++;
+      errors.push(`صف ${i+2}: ${err.message}`);
+    }
+  }
+
+  const CHUNK = 100;
+  for (let i = 0; i < converted.length; i += CHUNK) {
+    const chunk = converted.slice(i, i + CHUNK);
+    try {
+      if (mode === 'upsert') {
+        const { error } = await SB.from(sc.table).upsert(chunk.map(c => c.data), { onConflict: sc.match });
+        if (error) throw error;
+        success += chunk.length;
+      } else {
+        for (const c of chunk) {
+          const { error } = await SB.from(sc.table).insert(c.data);
+          if (!error) success++;
+          else if (error.code === '23505') skipped++;
+          else { failed++; errors.push(`صف ${c.idx}: ${error.message}`); }
         }
+      }
+    } catch (err) {
+      failed += chunk.length;
+      errors.push(`دفعة ${Math.floor(i/CHUNK)+1}: ${err.message}`);
+    }
+    bar.style.width = Math.min(100, Math.round((i+CHUNK)/converted.length*100)) + '%';
+  }
 
-        // ===== Toast System =====
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.textContent = message;
-            container.appendChild(toast);
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transition = 'opacity 0.3s';
-                setTimeout(() => toast.remove(), 300);
-            }, 4000);
-        }
+  await SB.from('admin_logs').insert({
+    admin_id: auth0.user.id, admin_email: auth0.user.email,
+    action: `استيراد ${sc.label}`,
+    details: `نجح: ${success}، فشل: ${failed}، تخطي: ${skipped}`
+  });
 
-        // ===== دالة التصدير المُصلحة (باستخدام Blob) =====
-        async function exportData() {
-            const btn = document.getElementById('exportBtn');
-            btn.disabled = true;
-            btn.textContent = '⏳ جاري التجهيز...';
+  const res = document.getElementById('result');
+  res.className = `result show ${failed===0?'success':success>0?'partial':'error'}`;
+  res.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-box"><div class="num" style="color:#28a745;">${success}</div><div class="lbl">✅ نجح</div></div>
+      <div class="stat-box"><div class="num" style="color:#dc3545;">${failed}</div><div class="lbl">❌ فشل</div></div>
+      <div class="stat-box"><div class="num" style="color:#ffc107;">${skipped}</div><div class="lbl">⏭️ تخطي</div></div>
+    </div>
+    ${errors.length > 0 ? `<details style="margin-top:10px;"><summary style="cursor:pointer;font-weight:600;">الأخطاء (${errors.length})</summary>
+      <ul style="max-height:200px;overflow:auto;margin-top:8px;font-size:13px;">${errors.slice(0,50).map(e=>`<li>${esc(e)}</li>`).join('')}</ul></details>` : ''}
+  `;
 
-            try {
-                // 1. جلب الطلاب
-                const { data: students, error } = await supabase
-                    .from('students')
-                    .select('*')
-                    .order('created_at', { ascending: false });
+  btn.disabled = false;
+  progress.classList.remove('show');
+  if (success > 0) Toast.show(`✅ ${success} صف مستورد`, 'success');
+}
 
-                if (error) throw new Error('فشل جلب الطلاب: ' + error.message);
-                if (!students || students.length === 0) {
-                    showToast('⚠️ لا توجد بيانات للتصدير', 'error');
-                    btn.disabled = false;
-                    btn.textContent = '📥 تحميل ملف Excel';
-                    return;
-                }
+async function exportData(schemaKey) {
+  const sc = SCHEMAS[schemaKey];
+  const { data, error } = await SB.from(sc.table).select('*');
+  if (error) return Toast.show('خطأ: ' + error.message, 'error');
+  if (!data || data.length === 0) return Toast.show('لا بيانات', 'warn');
+  const headers = sc.columns.map(c => c.label);
+  const rows = data.map(row => sc.columns.map(c => {
+    const v = row[c.key];
+    if (v == null) return '';
+    if (Array.isArray(v)) return v.join(', ');
+    if (typeof v === 'boolean') return v ? 'نعم' : 'لا';
+    return v;
+  }));
+  Excel.download([headers, ...rows], `${sc.label}_${new Date().toISOString().slice(0,10)}.xlsx`, sc.label);
+  await SB.from('admin_logs').insert({
+    admin_id: auth0.user.id, admin_email: auth0.user.email,
+    action: `تصدير ${sc.label}`, details: `${data.length} صف`
+  });
+  Toast.show(`✅ ${data.length} صف تم تصديره`, 'success');
+}
 
-                // 2. جلب الحقول الديناميكية
-                const { data: fields, error: fieldsError } = await supabase
-                    .from('dynamic_fields')
-                    .select('id, name')
-                    .eq('visible_for_student', true)
-                    .order('display_order', { ascending: true });
-
-                if (fieldsError) throw new Error('فشل جلب الحقول: ' + fieldsError.message);
-
-                // 3. جلب الاستجابات
-                const studentIds = students.map(s => s.id);
-                const { data: responses, error: responsesError } = await supabase
-                    .from('student_dynamic_responses')
-                    .select('student_id, field_id, value')
-                    .in('student_id', studentIds);
-
-                if (responsesError) throw new Error('فشل جلب الاستجابات: ' + responsesError.message);
-
-                // 4. بناء البيانات
-                const exportData = students.map(student => {
-                    const row = {
-                        'الكود': student.student_code || '',
-                        'الرقم القومي': student.national_id || '',
-                        'الاسم': student.full_name || '',
-                        'التشعيب': student.stream || '',
-                        'التخصص/المسار': student.specialization || student.track || '',
-                        'المادة الاختيارية': student.optional_subject || '',
-                        'الحالة': student.is_locked ? 'مقفل' : 'مفتوح',
-                        'تاريخ التقديم': student.submitted_at ? new Date(student.submitted_at).toLocaleDateString('ar-EG') : '',
-                    };
-                    (fields || []).forEach(field => {
-                        const response = responses?.find(
-                            r => r.student_id === student.id && r.field_id === field.id
-                        );
-                        row[field.name] = response?.value || '';
-                    });
-                    return row;
-                });
-
-                // 5. إنشاء ملف Excel باستخدام XLSX مع Blob
-                const wb = XLSX.utils.book_new();
-                const ws = XLSX.utils.json_to_sheet(exportData);
-                XLSX.utils.book_append_sheet(wb, ws, 'الطلاب');
-
-                // استخدام write بدلاً من writeFile لإنشاء ArrayBuffer ثم تحويله إلى Blob
-                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-                const blob = new Blob([wbout], { type: 'application/octet-stream' });
-                
-                // إنشاء رابط تحميل
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `طلاب_مدرسة_دشنا_${new Date().toISOString().split('T')[0]}.xlsx`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-
-                // تسجيل النشاط
-                await logActivity('تصدير بيانات', `تم تصدير ${students.length} طالب بنجاح`);
-                showToast(`✅ تم تصدير ${students.length} طالب بنجاح`, 'success');
-
-            } catch (err) {
-                console.error('Export Error:', err);
-                showToast('❌ حدث خطأ أثناء التصدير: ' + err.message, 'error');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = '📥 تحميل ملف Excel';
-            }
-        }
-
-        // ===== استيراد البيانات =====
-        async function importData() {
-            const fileInput = document.getElementById('fileInput');
-            const file = fileInput.files[0];
-            const resultDiv = document.getElementById('importResult');
-            const importBtn = document.getElementById('importBtn');
-
-            if (!file) {
-                resultDiv.innerHTML = '<div class="error" style="color:#dc3545;margin-top:10px;">⚠️ يرجى اختيار ملف أولاً</div>';
-                return;
-            }
-
-            importBtn.disabled = true;
-            importBtn.textContent = '⏳ جاري الاستيراد...';
-            resultDiv.innerHTML = '';
-
-            try {
-                const data = await file.arrayBuffer();
-                const workbook = XLSX.read(data);
-                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(worksheet);
-
-                if (rows.length === 0) {
-                    resultDiv.innerHTML = `<div class="error" style="color:#dc3545;margin-top:10px;">❌ الملف فارغ أو لا يحتوي على بيانات</div>`;
-                    importBtn.disabled = false;
-                    importBtn.textContent = '📊 استيراد البيانات';
-                    return;
-                }
-
-                const availableColumns = Object.keys(rows[0]);
-                const columnAliases = {
-                    'الكود': ['الكود', 'كود', 'كود الطالب', 'student_code', 'code'],
-                    'الرقم القومي': ['الرقم القومي', 'رقم قومي', 'national_id', 'nationalid', 'id'],
-                    'الاسم': ['الاسم', 'اسم', 'اسم الطالب', 'full_name', 'name']
-                };
-
-                const findColumn = (possibleNames) => {
-                    const normalizedAvailable = availableColumns.map(col => col.trim().toLowerCase().replace(/\s+/g, ' '));
-                    for (const name of possibleNames) {
-                        const idx = normalizedAvailable.indexOf(name.trim().toLowerCase().replace(/\s+/g, ' '));
-                        if (idx !== -1) return availableColumns[idx];
-                    }
-                    return null;
-                };
-
-                const columnMap = {};
-                const missingFields = [];
-                for (const [key, aliases] of Object.entries(columnAliases)) {
-                    const found = findColumn(aliases);
-                    if (found) columnMap[key] = found;
-                    else missingFields.push(key);
-                }
-
-                if (missingFields.length > 0) {
-                    resultDiv.innerHTML = `
-                        <div style="color:#dc3545;margin-top:10px;padding:15px;background:#f8d7da;border-radius:12px;">
-                            <strong>❌ الأعمدة المطلوبة غير موجودة</strong><br>
-                            المطلوب: <strong>الكود، الرقم القومي، الاسم</strong><br>
-                            الموجود: <strong>${availableColumns.join('، ') || 'لا توجد أعمدة'}</strong>
-                        </div>
-                    `;
-                    importBtn.disabled = false;
-                    importBtn.textContent = '📊 استيراد البيانات';
-                    return;
-                }
-
-                let successCount = 0, errorCount = 0, errors = [];
-
-                for (let i = 0; i < rows.length; i++) {
-                    const row = rows[i];
-                    const rowNum = i + 2;
-                    try {
-                        const studentCode = String(row[columnMap['الكود']] || '').trim();
-                        const nationalId = String(row[columnMap['الرقم القومي']] || '').trim();
-                        const fullName = String(row[columnMap['الاسم']] || '').trim();
-
-                        if (!studentCode || !nationalId || !fullName) {
-                            errorCount++; errors.push(`صف ${rowNum}: بيانات ناقصة`); continue;
-                        }
-
-                        const { data: existing } = await supabase
-                            .from('students')
-                            .select('id')
-                            .or(`student_code.eq.${studentCode},national_id.eq.${nationalId}`)
-                            .maybeSingle();
-
-                        if (existing) {
-                            errorCount++; errors.push(`صف ${rowNum}: الكود أو الرقم القومي موجود`); continue;
-                        }
-
-                        const { error: insertError } = await supabase
-                            .from('students')
-                            .insert({ student_code: studentCode, national_id: nationalId, full_name: fullName });
-
-                        if (insertError) {
-                            errorCount++; errors.push(`صف ${rowNum}: ${insertError.message}`); continue;
-                        }
-                        successCount++;
-                    } catch (e) {
-                        errorCount++; errors.push(`صف ${rowNum}: خطأ غير متوقع`);
-                    }
-                }
-
-                let html = `<div class="results-box">
-                    <div class="results-stats">
-                        <div class="success-count">✅ ${successCount} تمت الإضافة</div>
-                        <div class="error-count">❌ ${errorCount} فشل</div>
-                        <div class="total-count">📊 ${rows.length} إجمالي</div>
-                    </div>`;
-                if (errors.length) {
-                    html += `<div class="errors-list"><strong>الأخطاء:</strong><ul>${errors.slice(0,30).map(e => `<li>${e}</li>`).join('')}</ul></div>`;
-                }
-                html += '</div>';
-                resultDiv.innerHTML = html;
-                if (successCount > 0) {
-                    showToast(`✅ تم استيراد ${successCount} طالب بنجاح`, 'success');
-                    await logActivity('استيراد طلاب', `تم استيراد ${successCount} طالب`);
-                }
-            } catch (err) {
-                resultDiv.innerHTML = `<div style="color:#dc3545;margin-top:10px;">❌ خطأ: ${err.message}</div>`;
-            } finally {
-                importBtn.disabled = false;
-                importBtn.textContent = '📊 استيراد البيانات';
-                fileInput.value = '';
-            }
-        }
-
-        function downloadTemplate() {
-            const template = [['الكود', 'الرقم القومي', 'الاسم'], ['101', '12345678901234', 'أحمد محمد']];
-            const wb = XLSX.utils.book_new();
-            const ws = XLSX.utils.aoa_to_sheet(template);
-            XLSX.utils.book_append_sheet(wb, ws, 'الطلاب');
-            XLSX.writeFile(wb, 'نموذج_استيراد_طلاب.xlsx');
-            showToast('📋 تم تحميل النموذج', 'info');
-        }
-
-        async function logActivity(action, details) {
-            try {
-                await supabase.from('admin_logs').insert({
-                    admin_id: sessionStorage.getItem('adminId'),
-                    admin_email: sessionStorage.getItem('adminEmail') || 'unknown',
-                    action, details,
-                    ip_address: 'unknown'
-                });
-            } catch (e) {}
-        }
-
-        function logout() { sessionStorage.clear(); window.location.href = 'admin-login.html'; }
-    </script>
+async function exportResponses() {
+  const { data: students } = await SB.from('students').select('id,student_code,full_name,stream,specialization,track,optional_subject,is_locked,submitted_at');
+  const { data: fields } = await SB.from('dynamic_fields').select('id,name').eq('visible_for_student', true).order('display_order');
+  if (!students || students.length === 0) return Toast.show('لا بيانات', 'warn');
+  const ids = students.map(s => s.id);
+  const { data: responses } = await SB.from('student_dynamic_responses').select('student_id,field_id,value').in('student_id', ids);
+  const map = {};
+  (responses||[]).forEach(r => { (map[r.student_id] ??= {})[r.field_id] = r.value; });
+  const headers = ['#','الاسم','الكود','التشعيب','التخصص','المسار','المادة الاختيارية','الحالة','تاريخ التقديم',...(fields||[]).map(f=>f.name)];
+  const rows = students.map((s,i) => [
+    i+1, s.full_name, s.student_code, s.stream||'', s.specialization||'', s.track||'', s.optional_subject||'',
+    s.is_locked?'مقفل':'مفتوح', s.submitted_at?new Date(s.submitted_at).toLocaleString('ar-EG'):'',
+    ...(fields||[]).map(f => map[s.id]?.[f.id] || '')
+  ]);
+  Excel.download([headers, ...rows], `استجابات_${new Date().toISOString().slice(0,10)}.xlsx`, 'استجابات');
+  Toast.show(`✅ ${students.length} صف`, 'success');
+}
+</script>
 </body>
 </html>
