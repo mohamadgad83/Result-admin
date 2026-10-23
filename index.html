@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>نظام الادارة المدرسية والخدمات الطلابية - مدرسة دشنا الثانوية</title>
+
+<!-- مكتبة Supabase (يجب أن تكون الأولى) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="style.css">
 
@@ -769,10 +771,7 @@ body::after{
       </div>
 
       <h1>نظام الخدمات الطلابية الالكتروني <span class="gold"></span></h1>
-
-     
-        <span class="school-name">مدرسة دشنا الثانوية</span>
-      </p>
+      <p class="subtitle"><span class="school-name">مدرسة دشنا الثانوية</span></p>
 
       <div class="ministry">
         <svg viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 9h.01M15 9h.01M9 13h.01M15 13h.01M9 17h.01M15 17h.01"/></svg>
@@ -782,10 +781,9 @@ body::after{
     </div>
   </div>
 
-  <!-- ============ قسم كلمة مدير المدرسة ============ -->
+  <!-- ============ قسم كلمة المدير ============ -->
   <section class="principal-section">
     <div class="principal-card">
-
       <div class="principal-avatar">
         <svg viewBox="0 0 24 24">
           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -820,15 +818,11 @@ body::after{
           <span class="name">أ. عاطف أبوالعباس</span>
         </div>
       </div>
-
     </div>
   </section>
 
-  </div>
-
   <!-- ============ نموذج الدخول ============ -->
   <div class="login-wrapper">
-
     <div class="login-label-top">
       <span class="lbl">ابدأ الآن</span>
       <h2>دخول الطالب</h2>
@@ -847,16 +841,13 @@ body::after{
       </div>
 
       <form id="loginForm" class="form" novalidate>
-
         <div class="input-group">
           <label for="studentCode">كود الطالب</label>
           <div class="input-wrap">
             <span class="input-icon">
               <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             </span>
-            <input type="text" id="studentCode" class="form-control"
-                   placeholder="" required dir="ltr"
-                   autocomplete="off" inputmode="numeric">
+            <input type="text" id="studentCode" class="form-control" placeholder="" required dir="ltr" autocomplete="off" inputmode="numeric">
           </div>
         </div>
 
@@ -866,9 +857,7 @@ body::after{
             <span class="input-icon">
               <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg>
             </span>
-            <input type="text" id="nationalId" class="form-control"
-                   placeholder="14 رقم" required dir="ltr"
-                   autocomplete="off" inputmode="numeric" maxlength="14">
+            <input type="text" id="nationalId" class="form-control" placeholder="14 رقم" required dir="ltr" autocomplete="off" inputmode="numeric" maxlength="14">
           </div>
         </div>
 
@@ -886,27 +875,24 @@ body::after{
         </button>
       </form>
 
-      <!-- ===== تحذير ===== -->
       <div class="warning-box">
         <svg class="warn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
           <line x1="12" y1="9" x2="12" y2="13"/>
           <line x1="12" y1="17" x2="12.01" y2="17"/>
         </svg>
+        <div>
+          <strong>تنبيه:</strong> بعد تسجيل الرغبات، لا يمكن التعديل إلا بإذن من إدارة المدرسة.
         </div>
       </div>
-
     </div>
   </div>
 
   <!-- ============ الفوتر ============ -->
   <div class="footer">
     <div class="footer-content">
-
       <div class="copyright-line">
-        © <span class="school">مدرسة دشنا الثانوية</span>
-        — جميع الحقوق محفوظة
-        <span class="year" id="yearDisplay"></span>
+        © <span class="school">مدرسة دشنا الثانوية</span> — جميع الحقوق محفوظة <span class="year" id="yearDisplay"></span>
       </div>
 
       <div class="project-info">
@@ -915,21 +901,14 @@ body::after{
           <span class="name">محمد جاد</span>
           <span class="role"> مسئول IT وسفير مادة البرمجة بمحافظة قنا:</span>
         </span>
-        <span class="divider">|</span>
-        <span>
-          
-          
       </div>
 
       <div class="principal-credit">
         <span class="lbl">مدير المدرسة:</span>
         <span class="nm">أ. عاطف أبوالعباس</span>
       </div>
-
-     
     </div>
   </div>
-
 </div>
 
 <!-- ============ زر العودة للأعلى ============ -->
@@ -937,10 +916,12 @@ body::after{
   <svg viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
 </button>
 
-<script>
+<!-- 1. تحميل ملفات المكتبة المشتركة (يجب أن يكون بعد CDN الخاص بـ Supabase) -->
 <script src="lib/supabase.js"></script>
 <script src="lib/auth.js"></script>
 <script src="lib/toast.js"></script>
+
+<!-- 2. كود الصفحة -->
 <script>
 document.getElementById('yearDisplay').textContent = new Date().getFullYear();
 
