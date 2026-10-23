@@ -1,237 +1,360 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>إدارة الحقول والأقسام</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="style.css">
 <style>
-.admin-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;padding-bottom:15px;border-bottom:2px solid #eee;margin-bottom:20px}
-.btn{padding:10px 18px;border:none;border-radius:8px;cursor:pointer;font-size:14px;text-decoration:none;display:inline-block;font-weight:600;transition:.2s}
-.btn-gray{background:#6c757d;color:#fff}.btn-red{background:#dc3545;color:#fff}
-.btn-green{background:#28a745;color:#fff}.btn-blue{background:#1e3c72;color:#fff}
-.btn-yellow{background:#ffc107;color:#333}.btn-cyan{background:#17a2b8;color:#fff}
-.btn-sm{padding:5px 10px;font-size:11px}
-.btn:hover{opacity:.9;transform:translateY(-1px)}
+.admin-header {
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 10px; padding-bottom: 15px;
+  border-bottom: 2px solid #eee; margin-bottom: 20px;
+}
+.btn {
+  padding: 10px 18px; border: none; border-radius: 8px;
+  cursor: pointer; font-size: 13px; text-decoration: none;
+  display: inline-block; font-weight: 600; transition: all .2s;
+  font-family: inherit;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn-gray { background: #6c757d; color: #fff; }
+.btn-red { background: #dc3545; color: #fff; }
+.btn-green { background: #28a745; color: #fff; }
+.btn-blue { background: #1e3c72; color: #fff; }
+.btn-yellow { background: #ffc107; color: #333; }
+.btn-cyan { background: #17a2b8; color: #fff; }
+.btn-purple { background: #6f42c1; color: #fff; }
+.btn-sm { padding: 5px 10px; font-size: 11px; }
 
-.tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;border-bottom:2px solid #eee;padding-bottom:0}
-.tab{padding:12px 22px;border:none;background:transparent;font-size:14px;font-weight:700;cursor:pointer;color:#666;border-bottom:3px solid transparent;margin-bottom:-2px;font-family:inherit}
-.tab.active{color:#1e3c72;border-bottom-color:#1e3c72}
-.tab:hover{color:#1e3c72}
+/* ===== Tabs ===== */
+.tabs {
+  display: flex; gap: 4px; margin-bottom: 20px;
+  border-bottom: 2px solid #eee; padding-bottom: 0;
+}
+.tab {
+  padding: 14px 26px; border: none; background: transparent;
+  font-size: 15px; font-weight: 700; cursor: pointer;
+  color: #666; border-bottom: 3px solid transparent;
+  margin-bottom: -2px; font-family: inherit; transition: all .2s;
+}
+.tab.active { color: #1e3c72; border-bottom-color: #1e3c72; }
+.tab:hover:not(.active) { color: #1e3c72; background: #f8f9fa; }
 
-.panel{display:none}
-.panel.active{display:block}
+.panel { display: none; }
+.panel.active { display: block; animation: fadeIn .3s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-.field-form{display:none;background:#f8f9fa;padding:22px;border-radius:12px;margin:20px 0;border:2px solid #e0e0e0}
-.field-form.show{display:block}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:12px}
-.form-row.three{grid-template-columns:1fr 1fr 1fr}
-.form-row .full{grid-column:1/-1}
-.form-group label{display:block;font-weight:600;font-size:13px;margin-bottom:6px;color:#333}
-.form-control{width:100%;padding:10px 14px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;font-family:inherit;background:#fff}
-.form-control:focus{outline:none;border-color:#1e3c72}
-.hint{font-size:11px;color:#999;margin-top:4px;display:block}
+/* ===== Banner ===== */
+.banner {
+  background: #e8f4fd; padding: 14px 18px; border-radius: 10px;
+  margin-bottom: 18px; font-size: 13px; color: #0c5460;
+  border-right: 4px solid #17a2b8; line-height: 1.9;
+}
+.banner strong { color: #1e3c72; }
+.banner .chip {
+  display: inline-block; padding: 2px 10px; border-radius: 12px;
+  font-size: 11px; font-weight: 700; margin: 0 2px;
+}
 
-.cb-group{display:flex;gap:20px;flex-wrap:wrap;padding:12px;background:#fff;border-radius:10px;border:1px solid #e0e0e0;margin-top:10px}
-.cb-group label{display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:normal;font-size:14px;margin:0}
-.cb-group input{width:18px;height:18px;cursor:pointer}
+/* ===== Form ===== */
+.field-form {
+  display: none; background: linear-gradient(135deg, #f8f9fa, #eef2f7);
+  padding: 24px; border-radius: 14px; margin: 20px 0;
+  border: 2px solid #d0d7de;
+  animation: fadeIn .3s ease;
+}
+.field-form.show { display: block; }
+.field-form h3 { margin: 0 0 18px; color: #1e3c72; font-size: 18px; }
 
-.info-banner{background:#e8f4fd;padding:14px 18px;border-radius:10px;margin-bottom:20px;font-size:13px;color:#0c5460;border-right:4px solid #17a2b8;line-height:1.8}
-.info-banner strong{color:#1e3c72}
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+.form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+.form-row .full { grid-column: 1 / -1; }
+.form-group label {
+  display: block; font-weight: 700; font-size: 13px;
+  margin-bottom: 7px; color: #333;
+}
+.form-control {
+  width: 100%; padding: 11px 14px;
+  border: 2px solid #e0e0e0; border-radius: 10px;
+  font-size: 14px; font-family: inherit;
+  background: #fff; transition: border-color .2s;
+}
+.form-control:focus { outline: none; border-color: #1e3c72; }
+.hint { font-size: 11px; color: #999; margin-top: 4px; display: block; }
 
-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:15px}
-th{background:#1e3c72;color:#fff;padding:12px 8px;text-align:center;font-size:12px}
-td{padding:10px 8px;border-bottom:1px solid #eee;text-align:center;vertical-align:middle}
-tr:hover{background:#f8f9fa}
+.cb-group {
+  display: flex; gap: 20px; flex-wrap: wrap;
+  padding: 14px 18px; background: #fff;
+  border-radius: 10px; border: 1px solid #e0e0e0;
+  margin-top: 10px;
+}
+.cb-group label {
+  display: flex; align-items: center; gap: 8px;
+  cursor: pointer; font-weight: 600; font-size: 14px;
+  margin: 0;
+}
+.cb-group input { width: 18px; height: 18px; cursor: pointer; }
 
-.section-header-row{background:linear-gradient(90deg,#1e3c72,#2a5298)!important}
-.section-header-row td{color:#fff!important;font-weight:800!important;font-size:14px!important;padding:14px 15px!important;text-align:right!important}
-.section-header-row .count{font-size:11px;background:rgba(255,255,255,.2);padding:2px 10px;border-radius:12px;margin-right:8px;font-weight:600}
+.divider { border: none; border-top: 1px dashed #ccc; margin: 18px 0; }
 
-.toggle-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;transition:.2s;border:none;font-family:inherit;min-width:90px}
-.toggle-badge:hover{transform:scale(1.05)}
-.toggle-badge.on{background:#d4edda;color:#155724}
-.toggle-badge.off{background:#f8d7da;color:#721c24}
-.toggle-badge.readonly{background:#cce5ff;color:#004085}
-.toggle-badge.editable{background:#fff3cd;color:#856404}
-.toggle-badge.required{background:#dc3545;color:#fff}
-.toggle-badge.optional{background:#e2e3e5;color:#383d41}
+/* ===== Table ===== */
+.table-wrap { overflow-x: auto; margin-top: 15px; }
+table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+  background: #fff; border-radius: 12px; overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,.05);
+}
+th {
+  background: #1e3c72; color: #fff; padding: 14px 10px;
+  text-align: center; font-size: 12px; font-weight: 700;
+}
+td { padding: 12px 10px; border-bottom: 1px solid #f0f0f0; text-align: center; vertical-align: middle; }
+tr:hover td { background: #f8f9fa; }
 
-.section-card{background:#f8f9fa;padding:18px;border-radius:12px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-right:5px solid #1e3c72}
-.section-card.inactive{background:#f0f0f0;border-right-color:#999;opacity:.6}
-.section-card .info{flex:1;min-width:200px}
-.section-card .name{font-size:16px;font-weight:700;color:#1e3c72;margin-bottom:4px}
-.section-card .meta{font-size:12px;color:#666}
-.section-card .actions{display:flex;gap:8px;flex-wrap:wrap}
+.section-header-row {
+  background: linear-gradient(90deg, #1e3c72, #2a5298) !important;
+}
+.section-header-row td {
+  color: #fff !important; font-weight: 800 !important;
+  font-size: 14px !important; padding: 14px 18px !important;
+  text-align: right !important;
+}
+.section-header-row .count {
+  font-size: 11px; background: rgba(255,255,255,.2);
+  padding: 2px 12px; border-radius: 12px;
+  margin-right: 10px; font-weight: 600;
+}
 
-.empty{text-align:center;padding:40px;color:#999;font-size:40px}
+/* Toggle badges */
+.toggle-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 5px 12px; border-radius: 20px; font-size: 11px;
+  font-weight: 700; cursor: pointer; border: none;
+  font-family: inherit; transition: all .15s; min-width: 88px;
+}
+.toggle-badge:hover { transform: scale(1.05); }
+.toggle-badge.on { background: #d4edda; color: #155724; }
+.toggle-badge.off { background: #f8d7da; color: #721c24; }
+.toggle-badge.readonly { background: #cce5ff; color: #004085; }
+.toggle-badge.editable { background: #fff3cd; color: #856404; }
+.toggle-badge.required { background: #dc3545; color: #fff; }
+.toggle-badge.optional { background: #e2e3e5; color: #383d41; }
 
-@media(max-width:700px){
-  .form-row, .form-row.three{grid-template-columns:1fr}
-  .section-card{flex-direction:column;align-items:stretch}
+/* ===== Section cards ===== */
+.section-card {
+  background: #f8f9fa; padding: 20px;
+  border-radius: 12px; margin-bottom: 12px;
+  display: flex; justify-content: space-between;
+  align-items: center; flex-wrap: wrap; gap: 15px;
+  border-right: 5px solid #1e3c72;
+  transition: all .2s;
+}
+.section-card:hover { background: #eef2f7; }
+.section-card.inactive {
+  background: #f0f0f0; border-right-color: #999; opacity: .7;
+}
+.section-card .info { flex: 1; min-width: 200px; }
+.section-card .name {
+  font-size: 17px; font-weight: 800; color: #1e3c72;
+  margin-bottom: 6px; display: flex; align-items: center; gap: 8px;
+}
+.section-card .meta {
+  font-size: 12px; color: #666; display: flex;
+  gap: 15px; flex-wrap: wrap;
+}
+.section-card .meta strong { color: #1e3c72; }
+.section-card .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Filter */
+.filter-row {
+  display: flex; gap: 10px; align-items: center;
+  margin: 18px 0; flex-wrap: wrap;
+}
+.filter-row label { font-weight: 700; color: #333; font-size: 14px; }
+.filter-row select {
+  padding: 8px 14px; border: 2px solid #e0e0e0;
+  border-radius: 10px; font-size: 14px; font-family: inherit;
+  min-width: 220px;
+}
+
+.empty {
+  text-align: center; padding: 50px;
+  color: #999; font-size: 15px;
+}
+.empty .icon { font-size: 56px; display: block; margin-bottom: 10px; }
+
+@media (max-width: 700px) {
+  .form-row, .form-row.three { grid-template-columns: 1fr; }
+  .section-card { flex-direction: column; align-items: stretch; }
+  .tab { padding: 12px 16px; font-size: 13px; }
 }
 </style>
 </head>
 <body>
-<div class="container" style="max-width:1200px;">
-<div class="card">
-  <div class="admin-header">
-    <h1 style="margin:0;font-size:22px;">📝 إدارة الحقول والأقسام</h1>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <a href="admin-import-export.html" class="btn btn-cyan">📥 استيراد</a>
-      <a href="admin-dashboard.html" class="btn btn-gray">📊 لوحة التحكم</a>
-      <button class="btn btn-red" onclick="Auth.adminLogout()">🚪 خروج</button>
+<div class="container" style="max-width: 1250px;">
+  <div class="card">
+    <div class="admin-header">
+      <h1 style="margin: 0; font-size: 22px;">📝 إدارة الحقول والأقسام</h1>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <a href="admin-import-export.html" class="btn btn-cyan">📥 استيراد</a>
+        <a href="admin-dashboard.html" class="btn btn-gray">📊 لوحة التحكم</a>
+        <button class="btn btn-red" onclick="Auth.adminLogout()">🚪 خروج</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('fields')" id="tabFields">📋 الحقول</button>
+      <button class="tab" onclick="switchTab('sections')" id="tabSections">📂 الأقسام</button>
+    </div>
+
+    <!-- ===== تبويب الحقول ===== -->
+    <div class="panel active" id="panelFields">
+      <div class="banner">
+        <strong>💡 تحكم فوري:</strong> اضغط على أي شارة في الجدول لتبديلها مباشرة —
+        <span class="chip" style="background:#d4edda;color:#155724;">✅ ظاهر</span>
+        <span class="chip" style="background:#f8d7da;color:#721c24;">❌ مخفي</span>
+        <span class="chip" style="background:#cce5ff;color:#004085;">🔒 للقراءة</span>
+        <span class="chip" style="background:#fff3cd;color:#856404;">✏️ يعدله الطالب</span>
+        <span class="chip" style="background:#dc3545;color:#fff;">⭐ مطلوب</span>
+      </div>
+
+      <button class="btn btn-green" onclick="toggleFieldForm()" style="padding: 12px 22px;">➕ إضافة حقل جديد</button>
+
+      <!-- نموذج الحقل -->
+      <div class="field-form" id="fieldFormWrap">
+        <h3 id="fieldFormTitle">➕ إضافة حقل جديد</h3>
+        <form id="fieldFormEl" onsubmit="saveField(event)">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>📂 القسم (اختياري)</label>
+              <select id="sectionSelect" class="form-control">
+                <option value="">— بدون قسم —</option>
+              </select>
+              <small class="hint">اختر قسماً موجوداً، أو أنشئ قسماً جديداً أدناه</small>
+            </div>
+            <div class="form-group">
+              <label>🆕 أو أنشئ قسم جديد</label>
+              <input type="text" id="newSectionName" class="form-control" placeholder="مثل: بيانات الاتصال">
+              <small class="hint">سيُحفظ تلقائياً عند حفظ الحقل</small>
+            </div>
+          </div>
+
+          <hr class="divider">
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>اسم الحقل *</label>
+              <input type="text" id="fName" class="form-control" required placeholder="مثل: رقم الموبايل 1">
+            </div>
+            <div class="form-group">
+              <label>المفتاح (إنجليزي) *</label>
+              <input type="text" id="fKey" class="form-control" required dir="ltr" placeholder="phone1">
+            </div>
+          </div>
+
+          <div class="form-row three">
+            <div class="form-group">
+              <label>النوع</label>
+              <select id="fType" class="form-control" onchange="toggleOptions()">
+                <option value="text">نص</option>
+                <option value="select">قائمة منسدلة</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>ترتيب الحقل داخل القسم</label>
+              <input type="number" id="fOrder" class="form-control" value="0" min="0">
+            </div>
+            <div></div>
+          </div>
+
+          <div class="form-group" id="optionsGroup" style="display: none;">
+            <label>الخيارات (مفصولة بفاصلة)</label>
+            <input type="text" id="fOptions" class="form-control" placeholder="خيار 1, خيار 2">
+          </div>
+
+          <div class="cb-group">
+            <label><input type="checkbox" id="fRequired"> مطلوب</label>
+            <label><input type="checkbox" id="fReadonly"> للقراءة فقط (من الإدارة)</label>
+            <label><input type="checkbox" id="fVisible" checked> ظاهر للطالب</label>
+          </div>
+
+          <div style="margin-top: 20px; display: flex; gap: 10px;">
+            <button type="submit" class="btn btn-blue">💾 حفظ</button>
+            <button type="button" class="btn btn-gray" onclick="closeFieldForm()">إلغاء</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- فلتر -->
+      <div class="filter-row">
+        <label>🔍 عرض:</label>
+        <select id="filterSection" onchange="renderFields()">
+          <option value="">كل الحقول</option>
+          <option value="__none__">— بدون قسم —</option>
+        </select>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 40px;">#</th>
+              <th>الاسم</th>
+              <th>المفتاح</th>
+              <th>النوع</th>
+              <th>ظاهر</th>
+              <th>الصلاحية</th>
+              <th>مطلوب</th>
+              <th style="width: 120px;">إجراءات</th>
+            </tr>
+          </thead>
+          <tbody id="fieldsTbody">
+            <tr><td colspan="8" style="padding: 30px; color: #999;">⏳ جاري التحميل...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== تبويب الأقسام ===== -->
+    <div class="panel" id="panelSections">
+      <div class="banner">
+        <strong>📂 الأقسام:</strong> رتب الأقسام بالأرقام (الأصغر أولاً). القسم المعطل يختفي من استمارة الطالب حتى لو كان فيه حقول ظاهرة.
+      </div>
+
+      <button class="btn btn-green" onclick="toggleSectionForm()" style="padding: 12px 22px;">➕ إضافة قسم جديد</button>
+
+      <div class="field-form" id="sectionFormWrap">
+        <h3 id="sectionFormTitle">➕ إضافة قسم جديد</h3>
+        <form id="sectionFormEl" onsubmit="saveSection(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label>اسم القسم *</label>
+              <input type="text" id="sName" class="form-control" required placeholder="مثل: بيانات الاتصال">
+            </div>
+            <div class="form-group">
+              <label>الترتيب</label>
+              <input type="number" id="sOrder" class="form-control" value="0" min="0">
+              <small class="hint">الأصغر يظهر أولاً</small>
+            </div>
+          </div>
+          <div class="cb-group">
+            <label><input type="checkbox" id="sActive" checked> مفعل (يظهر للطلاب)</label>
+          </div>
+          <div style="margin-top: 20px; display: flex; gap: 10px;">
+            <button type="submit" class="btn btn-blue">💾 حفظ</button>
+            <button type="button" class="btn btn-gray" onclick="closeSectionForm()">إلغاء</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="sectionsList" style="margin-top: 20px;">
+        <div class="empty"><span class="icon">⏳</span>جاري التحميل...</div>
+      </div>
     </div>
   </div>
-
-  <div class="tabs">
-    <button class="tab active" onclick="switchTab('fields')" id="tabFields">📋 الحقول</button>
-    <button class="tab" onclick="switchTab('sections')" id="tabSections">📂 الأقسام</button>
-  </div>
-
-  <!-- ============ تبويب الحقول ============ -->
-  <div class="panel active" id="panelFields">
-    <div class="info-banner">
-      <strong>💡 تحكم سريع:</strong> اضغط على أي شارة (شارة الحالة) داخل الجدول لتبديلها مباشرة — 
-      <span style="background:#d4edda;color:#155724;padding:2px 8px;border-radius:10px;font-size:11px;">✅ ظاهر</span> /
-      <span style="background:#f8d7da;color:#721c24;padding:2px 8px;border-radius:10px;font-size:11px;">❌ مخفي</span> /
-      <span style="background:#cce5ff;color:#004085;padding:2px 8px;border-radius:10px;font-size:11px;">🔒 للقراءة</span> /
-      <span style="background:#fff3cd;color:#856404;padding:2px 8px;border-radius:10px;font-size:11px;">✏️ يعدله الطالب</span>
-    </div>
-
-    <button class="btn btn-green" onclick="toggleFieldForm()" id="addFieldBtn">➕ إضافة حقل جديد</button>
-
-    <!-- نموذج الحقل -->
-    <div class="field-form" id="fieldFormWrap">
-      <h3 style="margin:0 0 15px;color:#1e3c72;" id="fieldFormTitle">➕ إضافة حقل جديد</h3>
-      <form id="fieldFormEl" onsubmit="saveField(event)">
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>📂 القسم (اختياري)</label>
-            <select id="sectionSelect" class="form-control">
-              <option value="">— بدون قسم —</option>
-            </select>
-            <small class="hint">اختر قسماً موجوداً أو أنشئ قسماً جديداً أدناه</small>
-          </div>
-          <div class="form-group">
-            <label>🆕 أو أنشئ قسم جديد</label>
-            <input type="text" id="newSectionName" class="form-control" placeholder="مثل: بيانات الاتصال">
-            <small class="hint">سيُضاف كقسم جديد عند حفظ الحقل</small>
-          </div>
-        </div>
-
-        <hr style="margin:15px 0;border:none;border-top:1px dashed #ccc;">
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>اسم الحقل *</label>
-            <input type="text" id="fName" class="form-control" required placeholder="مثل: رقم الموبايل 1">
-          </div>
-          <div class="form-group">
-            <label>المفتاح (إنجليزي) *</label>
-            <input type="text" id="fKey" class="form-control" required dir="ltr" placeholder="phone1">
-          </div>
-        </div>
-
-        <div class="form-row three">
-          <div class="form-group">
-            <label>النوع</label>
-            <select id="fType" class="form-control" onchange="toggleOptions()">
-              <option value="text">نص</option>
-              <option value="select">قائمة منسدلة</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>ترتيب الحقل داخل القسم</label>
-            <input type="number" id="fOrder" class="form-control" value="0" min="0">
-          </div>
-          <div class="form-group"></div>
-        </div>
-
-        <div class="form-group" id="optionsGroup" style="display:none;">
-          <label>الخيارات (مفصولة بفاصلة)</label>
-          <input type="text" id="fOptions" class="form-control" placeholder="خيار 1, خيار 2">
-        </div>
-
-        <div class="cb-group">
-          <label><input type="checkbox" id="fRequired"> مطلوب</label>
-          <label><input type="checkbox" id="fReadonly"> للقراءة فقط (من الإدارة)</label>
-          <label><input type="checkbox" id="fVisible" checked> ظاهر للطالب</label>
-        </div>
-
-        <div style="margin-top:15px;display:flex;gap:10px;">
-          <button type="submit" class="btn btn-blue">💾 حفظ</button>
-          <button type="button" class="btn btn-gray" onclick="closeFieldForm()">إلغاء</button>
-        </div>
-      </form>
-    </div>
-
-    <!-- فلتر الأقسام -->
-    <div style="display:flex;gap:10px;align-items:center;margin:15px 0;flex-wrap:wrap;">
-      <label style="font-weight:600;color:#333;">🔍 عرض:</label>
-      <select id="filterSection" class="form-control" onchange="renderFields()" style="max-width:250px;">
-        <option value="">كل الحقول</option>
-        <option value="__none__">— بدون قسم —</option>
-      </select>
-    </div>
-
-    <div style="overflow-x:auto;">
-      <table>
-        <thead><tr>
-          <th style="width:40px;">#</th>
-          <th>الاسم</th>
-          <th>المفتاح</th>
-          <th>النوع</th>
-          <th>ظاهر</th>
-          <th>الصلاحية</th>
-          <th>مطلوب</th>
-          <th style="width:120px;">إجراءات</th>
-        </tr></thead>
-        <tbody id="fieldsTbody"><tr><td colspan="8" style="padding:30px;color:#999;">⏳...</td></tr></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- ============ تبويب الأقسام ============ -->
-  <div class="panel" id="panelSections">
-    <div class="info-banner">
-      <strong>📂 الأقسام:</strong> الأقسام تُرتب تلقائياً بالترتيب الرقمي. القسم المعطل لا يظهر للطلاب حتى لو كان فيه حقول ظاهرة.
-    </div>
-
-    <button class="btn btn-green" onclick="toggleSectionForm()" id="addSectionBtn">➕ إضافة قسم جديد</button>
-
-    <!-- نموذج القسم -->
-    <div class="field-form" id="sectionFormWrap">
-      <h3 style="margin:0 0 15px;color:#1e3c72;" id="sectionFormTitle">➕ إضافة قسم جديد</h3>
-      <form id="sectionFormEl" onsubmit="saveSection(event)">
-        <div class="form-row">
-          <div class="form-group">
-            <label>اسم القسم *</label>
-            <input type="text" id="sName" class="form-control" required placeholder="مثل: بيانات الاتصال">
-          </div>
-          <div class="form-group">
-            <label>الترتيب</label>
-            <input type="number" id="sOrder" class="form-control" value="0" min="0">
-            <small class="hint">الأصغر يظهر أولاً</small>
-          </div>
-        </div>
-        <div class="cb-group">
-          <label><input type="checkbox" id="sActive" checked> مفعل (يظهر للطلاب)</label>
-        </div>
-        <div style="margin-top:15px;display:flex;gap:10px;">
-          <button type="submit" class="btn btn-blue">💾 حفظ</button>
-          <button type="button" class="btn btn-gray" onclick="closeSectionForm()">إلغاء</button>
-        </div>
-      </form>
-    </div>
-
-    <div id="sectionsList" style="margin-top:20px;">
-      <div class="empty">⏳</div>
-    </div>
-  </div>
-
-</div>
 </div>
 
 <script src="lib/supabase.js"></script>
@@ -256,7 +379,7 @@ function switchTab(t) {
 }
 
 async function loadAll() {
-  const [{data:f}, {data:s}] = await Promise.all([
+  const [{ data: f }, { data: s }] = await Promise.all([
     SB.from('dynamic_fields').select('*').order('display_order').order('created_at'),
     SB.from('form_sections').select('*').order('display_order').order('created_at')
   ]);
@@ -267,14 +390,11 @@ async function loadAll() {
   renderSections();
 }
 
-// ============ إدارة الحقول ============
 function populateSectionSelects() {
-  // في نموذج الحقل
   const sel = document.getElementById('sectionSelect');
   sel.innerHTML = '<option value="">— بدون قسم —</option>' +
     sections.map(s => `<option value="${s.id}">${esc(s.name)}${s.is_active ? '' : ' (معطل)'}</option>`).join('');
-  
-  // في فلتر العرض
+
   const filter = document.getElementById('filterSection');
   const cur = filter.value;
   filter.innerHTML = '<option value="">كل الحقول</option>' +
@@ -283,6 +403,7 @@ function populateSectionSelects() {
   filter.value = cur;
 }
 
+// ============ الحقول ============
 function renderFields() {
   const tb = document.getElementById('fieldsTbody');
   const filterVal = document.getElementById('filterSection').value;
@@ -292,11 +413,10 @@ function renderFields() {
   else if (filterVal) visible = fields.filter(f => f.section_id === filterVal);
 
   if (visible.length === 0) {
-    tb.innerHTML = '<tr><td colspan="8" style="padding:30px;color:#999;text-align:center;">📭 لا توجد حقول</td></tr>';
+    tb.innerHTML = '<tr><td colspan="8" style="padding: 30px; color: #999; text-align: center;">📭 لا توجد حقول</td></tr>';
     return;
   }
 
-  // تجميع حسب القسم
   const groups = {};
   visible.forEach(f => {
     const key = f.section_id || '__none__';
@@ -304,7 +424,6 @@ function renderFields() {
     groups[key].push(f);
   });
 
-  // ترتيب الأقسام
   const sectionMap = Object.fromEntries(sections.map(s => [s.id, s]));
   const sortedKeys = Object.keys(groups).sort((a, b) => {
     if (a === '__none__') return -1;
@@ -318,44 +437,42 @@ function renderFields() {
     const sec = secId === '__none__' ? null : sectionMap[secId];
     const secName = sec ? sec.name : 'بدون قسم';
     const secIcon = sec ? (sec.is_active ? '📂' : '🚫') : '📄';
-    
+
     html += `<tr class="section-header-row">
       <td colspan="8">${secIcon} ${esc(secName)} <span class="count">${group.length} حقل</span></td>
     </tr>`;
-    
+
     group.forEach(f => {
-      const idx = fields.indexOf(f) + 1;
       html += `<tr>
-        <td>${idx}</td>
-        <td><strong>${esc(f.name)}</strong></td>
-        <td dir="ltr" style="color:#666;font-size:12px;">${esc(f.field_key)}</td>
-        <td>${f.type === 'text' ? 'نص' : 'قائمة'}</td>
+        <td>${fields.indexOf(f) + 1}</td>
+        <td style="text-align: right;"><strong>${esc(f.name)}</strong></td>
+        <td dir="ltr" style="color: #666; font-size: 12px;">${esc(f.field_key)}</td>
+        <td>${f.type === 'text' ? '📝 نص' : '🔽 قائمة'}</td>
         <td>
-          <button class="toggle-badge ${f.visible_for_student ? 'on' : 'off'}" 
-                  onclick="quickToggle('${f.id}','visible_for_student',${!f.visible_for_student})">
+          <button class="toggle-badge ${f.visible_for_student ? 'on' : 'off'}"
+                  onclick="quickToggle('${f.id}', 'visible_for_student', ${!f.visible_for_student})">
             ${f.visible_for_student ? '✅ ظاهر' : '❌ مخفي'}
           </button>
         </td>
         <td>
-          <button class="toggle-badge ${f.is_readonly ? 'readonly' : 'editable'}" 
-                  onclick="quickToggle('${f.id}','is_readonly',${!f.is_readonly})">
+          <button class="toggle-badge ${f.is_readonly ? 'readonly' : 'editable'}"
+                  onclick="quickToggle('${f.id}', 'is_readonly', ${!f.is_readonly})">
             ${f.is_readonly ? '🔒 للقراءة' : '✏️ يعدله الطالب'}
           </button>
         </td>
         <td>
-          <button class="toggle-badge ${f.is_required ? 'required' : 'optional'}" 
-                  onclick="quickToggle('${f.id}','is_required',${!f.is_required})">
+          <button class="toggle-badge ${f.is_required ? 'required' : 'optional'}"
+                  onclick="quickToggle('${f.id}', 'is_required', ${!f.is_required})">
             ${f.is_required ? '⭐ مطلوب' : '— اختياري'}
           </button>
         </td>
         <td>
-          <button class="btn btn-sm btn-yellow" onclick="editField('${f.id}')">✏️</button>
-          <button class="btn btn-sm btn-red" onclick="deleteField('${f.id}')">🗑️</button>
+          <button class="btn btn-sm btn-yellow" onclick="editField('${f.id}')" title="تعديل">✏️</button>
+          <button class="btn btn-sm btn-red" onclick="deleteField('${f.id}')" title="حذف">🗑️</button>
         </td>
       </tr>`;
     });
   });
-  
   tb.innerHTML = html;
 }
 
@@ -368,10 +485,10 @@ async function quickToggle(id, field, newValue) {
   renderFields();
 }
 
-function toggleFieldForm() { 
+function toggleFieldForm() {
   const w = document.getElementById('fieldFormWrap');
-  w.classList.toggle('show'); 
-  if (!w.classList.contains('show')) closeFieldForm(); 
+  w.classList.toggle('show');
+  if (!w.classList.contains('show')) closeFieldForm();
 }
 function closeFieldForm() {
   document.getElementById('fieldFormEl').reset();
@@ -400,15 +517,14 @@ function editField(id) {
   document.getElementById('fieldFormTitle').textContent = '✏️ تعديل حقل';
   document.getElementById('fieldFormWrap').classList.add('show');
   toggleOptions();
-  window.scrollTo({top: 0, behavior: 'smooth'});
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 async function saveField(e) {
   e.preventDefault();
   let sectionId = document.getElementById('sectionSelect').value || null;
   const newSecName = document.getElementById('newSectionName').value.trim();
-  
-  // إنشاء قسم جديد أثناء الحفظ
+
   if (newSecName) {
     const { data: newSec, error: secErr } = await SB.from('form_sections')
       .insert({ name: newSecName, display_order: sections.length })
@@ -416,7 +532,7 @@ async function saveField(e) {
     if (secErr) return Toast.show('خطأ في القسم: ' + secErr.message, 'error');
     sectionId = newSec.id;
   }
-  
+
   const data = {
     section_id: sectionId,
     name: document.getElementById('fName').value.trim(),
@@ -429,20 +545,19 @@ async function saveField(e) {
     is_readonly: document.getElementById('fReadonly').checked,
     visible_for_student: document.getElementById('fVisible').checked
   };
-  
+
   if (!data.name || !data.field_key) return Toast.show('املأ الحقول المطلوبة', 'warn');
 
   const { error } = editingFieldId
     ? await SB.from('dynamic_fields').update(data).eq('id', editingFieldId)
     : await SB.from('dynamic_fields').insert(data);
-    
   if (error) return Toast.show('خطأ: ' + error.message, 'error');
-  
+
   await SB.from('admin_logs').insert({
     admin_id: auth0.user.id, admin_email: auth0.user.email,
     action: editingFieldId ? 'تعديل حقل' : 'إضافة حقل', details: data.name
   });
-  
+
   Toast.show('✅ تم الحفظ');
   closeFieldForm();
   await loadAll();
@@ -461,14 +576,14 @@ async function deleteField(id) {
   await loadAll();
 }
 
-// ============ إدارة الأقسام ============
+// ============ الأقسام ============
 function renderSections() {
   const el = document.getElementById('sectionsList');
   if (sections.length === 0) {
-    el.innerHTML = '<div class="empty">📭 لا توجد أقسام</div>';
+    el.innerHTML = '<div class="empty"><span class="icon">📭</span>لا توجد أقسام</div>';
     return;
   }
-  
+
   el.innerHTML = sections.map(s => {
     const fieldCount = fields.filter(f => f.section_id === s.id).length;
     return `
@@ -476,16 +591,16 @@ function renderSections() {
         <div class="info">
           <div class="name">${s.is_active ? '📂' : '🚫'} ${esc(s.name)}</div>
           <div class="meta">
-            الترتيب: ${s.display_order} • 
-            ${fieldCount} حقل • 
-            الحالة: <strong>${s.is_active ? 'مفعل' : 'معطل'}</strong>
+            <span>📊 الترتيب: <strong>${s.display_order}</strong></span>
+            <span>📝 الحقول: <strong>${fieldCount}</strong></span>
+            <span>${s.is_active ? '✅ <strong>مفعل</strong>' : '⏸️ <strong>معطل</strong>'}</span>
           </div>
         </div>
         <div class="actions">
           <button class="btn btn-sm btn-blue" onclick="editSection('${s.id}')">✏️ تعديل</button>
-          <button class="btn btn-sm ${s.is_active ? 'btn-yellow' : 'btn-green'}" 
+          <button class="btn btn-sm ${s.is_active ? 'btn-yellow' : 'btn-green'}"
                   onclick="toggleSectionActive('${s.id}')">
-            ${s.is_active ? '🚫 تعطيل' : '✅ تفعيل'}
+            ${s.is_active ? '⏸️ تعطيل' : '✅ تفعيل'}
           </button>
           <button class="btn btn-sm btn-red" onclick="deleteSection('${s.id}')">🗑️ حذف</button>
         </div>
@@ -514,7 +629,7 @@ function editSection(id) {
   document.getElementById('sActive').checked = s.is_active;
   document.getElementById('sectionFormTitle').textContent = '✏️ تعديل قسم';
   document.getElementById('sectionFormWrap').classList.add('show');
-  window.scrollTo({top: 0, behavior: 'smooth'});
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 async function saveSection(e) {
@@ -525,18 +640,17 @@ async function saveSection(e) {
     is_active: document.getElementById('sActive').checked
   };
   if (!data.name) return Toast.show('اسم القسم مطلوب', 'warn');
-  
+
   const { error } = editingSectionId
     ? await SB.from('form_sections').update(data).eq('id', editingSectionId)
     : await SB.from('form_sections').insert(data);
-    
   if (error) return Toast.show('خطأ: ' + error.message, 'error');
-  
+
   await SB.from('admin_logs').insert({
     admin_id: auth0.user.id, admin_email: auth0.user.email,
     action: editingSectionId ? 'تعديل قسم' : 'إضافة قسم', details: data.name
   });
-  
+
   Toast.show('✅ تم الحفظ');
   closeSectionForm();
   await loadAll();
@@ -553,8 +667,8 @@ async function toggleSectionActive(id) {
 async function deleteSection(id) {
   const s = sections.find(x => x.id === id);
   const count = fields.filter(f => f.section_id === id).length;
-  const msg = count > 0 
-    ? `حذف قسم "${s.name}"؟ الحقول الـ${count} المرتبطة به ستصبح "بدون قسم" (لن تُحذف).`
+  const msg = count > 0
+    ? `حذف قسم "${s.name}"؟ الحقول الـ ${count} المرتبطة به ستصبح "بدون قسم" (لن تُحذف).`
     : `حذف قسم "${s.name}"؟`;
   if (!confirm(msg)) return;
   const { error } = await SB.from('form_sections').delete().eq('id', id);
