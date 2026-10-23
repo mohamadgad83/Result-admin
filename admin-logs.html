@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>سجل النشاطات</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="style.css">
+<style>
+.admin-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;padding-bottom:15px;border-bottom:2px solid #eee;margin-bottom:20px}
+.btn{padding:10px 18px;border:none;border-radius:8px;cursor:pointer;font-size:14px;text-decoration:none;display:inline-block;font-weight:600}
+.btn-gray{background:#6c757d;color:#fff}.btn-red{background:#dc3545;color:#fff}
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px}
+.filters input{padding:10px 14px;border:2px solid #e0e0e0;border-radius:10px;font-size:14px;flex:1;min-width:200px;font-family:inherit}
+.filters input:focus{outline:none;border-color:#1e3c72}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#1e3c72;color:#fff;padding:10px;text-align:right}
+td{padding:10px;border-bottom:1px solid #eee}
+tr:hover{background:#f8f9fa}
+.badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;background:#e0e7ff;color:#1e3c72}
+</style>
+</head>
+<body>
+<div class="container" style="max-width:1000px;">
+<div class="card">
+  <div class="admin-header">
+    <h1 style="margin:0;font-size:22px;">📋 سجل النشاطات</h1>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <a href="admin-dashboard.html" class="btn btn-gray">📊 لوحة التحكم</a>
+      <button class="btn btn-red" onclick="Auth.adminLogout()">🚪 خروج</button>
+    </div>
+  </div>
+  <div class="filters">
+    <input type="text" id="q" placeholder="🔍 بحث في النشاط أو التفاصيل..." oninput="render()">
+  </div>
+  <div style="overflow-x:auto;">
+    <table>
+      <thead><tr><th>#</th><th>الإجراء</th><th>التفاصيل</th><th>المستخدم</th><th>الوقت</th></tr></thead>
+      <tbody id="tbody"><tr><td colspan="5" style="padding:30px;text-align:center;color:#999;">⏳...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<script src="lib/supabase.js"></script>
+<script src="lib/auth.js"></script>
+<script src="lib/escape.js"></script>
+<script>
+let logs = [];
+(async () => {
+  const auth = await Auth.requireAdmin();
+  if (!auth) return;
+  const { data } = await SB.from('admin_logs').select('*').order('created_at', {ascending:false}).limit(500);
+  logs = data || [];
+  render();
+})();
+
+function render() {
+  const q = document.getElementById('q').value.toLowerCase();
+  const filtered = logs.filter(l => !q || (l.action||'').toLowerCase().includes(q) || (l.details||'').toLowerCase().includes(q));
+  const tb = document.getElementById('tbody');
+  if (filtered.length === 0) { tb.innerHTML = '<tr><td colspan="5" style="padding:30px;text-align:center;color:#999;">📭 لا نشاطات</td></tr>'; return; }
+  tb.innerHTML = filtered.map((l,i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td><span class="badge">${esc(l.action)}</span></td>
+      <td>${esc(l.details||'—')}</td>
+      <td style="font-size:12px;color:#666;">${esc(l.admin_email||'—')}</td>
+      <td style="font-size:12px;color:#999;white-space:nowrap;">${new Date(l.created_at).toLocaleString('ar-EG')}</td>
+    </tr>`).join('');
+}
+</script>
+</body>
+</html>
