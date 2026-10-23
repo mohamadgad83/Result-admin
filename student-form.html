@@ -1,818 +1,420 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل الرغبات - مدرسة دشنا الثانوية</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="style.css">
-    
-    <meta name="copyright" content="مدرسة دشنا الثانوية - جميع الحقوق محفوظة">
-    <meta name="author" content="محمد جاد - مسئول IT وسفير مادة البرمجة محافظة قنا">
-    
-    <style>
-        /* ===== الهيدر ===== */
-        .form-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #eee;
-            margin-bottom: 20px;
-        }
-        .form-header .title h1 {
-            color: #1e3c72;
-            font-size: 24px;
-            margin: 0;
-        }
-        .form-header .title p {
-            color: #666;
-            font-size: 14px;
-            margin: 5px 0 0;
-        }
-        .form-header .actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .btn-logout-student {
-            padding: 10px 20px;
-            background: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-        .btn-logout-student:hover {
-            background: #a71d2a;
-            transform: scale(1.02);
-        }
-        .btn-home {
-            padding: 10px 20px;
-            background: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .btn-home:hover {
-            background: #5a6268;
-            transform: scale(1.02);
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تسجيل الرغبات - مدرسة دشنا الثانوية</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="style.css">
 
-        /* ===== الإقرار ===== */
-        .declaration-section {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            padding: 25px;
-            border-radius: 16px;
-            margin: 25px 0;
-            border-right: 6px solid #1e3c72;
-            position: relative;
-            transition: border-color 0.3s ease;
-        }
-        .declaration-section::before {
-            content: "⚖️";
-            position: absolute;
-            top: -12px;
-            right: 20px;
-            font-size: 28px;
-            background: white;
-            padding: 0 10px;
-            border-radius: 50%;
-        }
-        .declaration-section h3 {
-            color: #1e3c72;
-            font-size: 20px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .declaration-section .declaration-text {
-            font-size: 15px;
-            line-height: 2.2;
-            color: #333;
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            margin: 10px 0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        .declaration-section .declaration-text strong {
-            color: #1e3c72;
-        }
-        .declaration-section .declaration-text .highlight {
-            color: #dc3545;
-            font-weight: 700;
-        }
-        .declaration-section .declaration-text .student-name-field {
-            display: inline-block;
-            min-width: 150px;
-            border-bottom: 2px dashed #1e3c72;
-            color: #1e3c72;
-            font-weight: 700;
-            font-size: 18px;
-        }
+<meta name="copyright" content="مدرسة دشنا الثانوية - جميع الحقوق محفوظة">
+<meta name="author" content="محمد جاد - مسئول IT وسفير مادة البرمجة محافظة قنا">
 
-        .admin-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin: 15px 0;
-            padding: 15px;
-            background: #e8f4fd;
-            border-radius: 12px;
-            border: 1px solid #b8d4e8;
-        }
-        .admin-info .admin-item {
-            text-align: center;
-            padding: 10px;
-        }
-        .admin-info .admin-item .title {
-            font-size: 13px;
-            color: #666;
-            display: block;
-        }
-        .admin-info .admin-item .name {
-            font-size: 18px;
-            font-weight: 700;
-            color: #1e3c72;
-            display: block;
-            margin-top: 3px;
-        }
-        .admin-info .admin-item .name .highlight-name {
-            color: #dc3545;
-        }
+<style>
+/* ===== الهيدر ===== */
+.form-header {
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 10px; padding-bottom: 15px;
+  border-bottom: 2px solid #eee; margin-bottom: 20px;
+}
+.form-header .title h1 { color: #1e3c72; font-size: 24px; margin: 0; }
+.form-header .title p { color: #666; font-size: 14px; margin: 5px 0 0; }
+.form-header .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn-logout-student, .btn-home {
+  padding: 10px 20px; color: #fff; border: none; border-radius: 8px;
+  cursor: pointer; font-size: 14px; font-weight: 600; text-decoration: none;
+  transition: all .3s; display: inline-block;
+}
+.btn-logout-student { background: #dc3545; }
+.btn-logout-student:hover { background: #a71d2a; }
+.btn-home { background: #6c757d; }
+.btn-home:hover { background: #5a6268; }
 
-        .btn-approve {
-            padding: 15px 40px;
-            background: #28a745;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .btn-approve:hover {
-            background: #1e7e34;
-            transform: scale(1.03);
-            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
-        }
-        .btn-approve.approved {
-            background: #1e3c72;
-        }
-        .btn-approve.approved:hover {
-            background: #0f2b4f;
-        }
-        .btn-approve .icon {
-            font-size: 22px;
-        }
+/* ===== شريط التقدم ===== */
+.progress-bar-wrap {
+  background: #f0f2f5; padding: 16px 20px; border-radius: 14px;
+  margin: 20px 0; border: 1px solid #e0e4e8;
+}
+.progress-bar-wrap .head {
+  display: flex; justify-content: space-between;
+  font-size: 13px; font-weight: 700; color: #1e3c72;
+  margin-bottom: 10px;
+}
+.progress-bar-wrap .track {
+  height: 10px; background: #e9ecef; border-radius: 20px;
+  overflow: hidden;
+}
+.progress-bar-wrap .fill {
+  height: 100%; background: linear-gradient(90deg, #1e3c72, #2a5298);
+  transition: width .4s ease; border-radius: 20px;
+}
+.progress-bar-wrap .sections-mini {
+  display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap;
+}
+.progress-bar-wrap .sec-chip {
+  padding: 3px 12px; font-size: 11px; border-radius: 12px;
+  background: #fff; border: 1px solid #d0d7de; color: #666; font-weight: 600;
+}
+.progress-bar-wrap .sec-chip.done {
+  background: #d4edda; border-color: #28a745; color: #155724;
+}
 
-        .declaration-approval {
-            margin-top: 15px;
-            padding: 15px;
-            background: #fff3cd;
-            border-radius: 12px;
-            border: 2px solid #ffc107;
-            text-align: center;
-        }
-        .declaration-approval p {
-            margin-bottom: 12px;
-            color: #856404;
-            font-size: 14px;
-        }
+/* ===== قسم (Section) ===== */
+.section-block {
+  margin: 24px 0; border-radius: 16px; overflow: hidden;
+  border: 1px solid #e0e4e8; background: #fff;
+  box-shadow: 0 2px 8px rgba(30,60,114,.06);
+  transition: box-shadow .3s;
+}
+.section-block:hover { box-shadow: 0 4px 16px rgba(30,60,114,.1); }
 
-        .approval-confirm {
-            display: none;
-            background: #d4edda;
-            padding: 15px;
-            border-radius: 12px;
-            border: 2px solid #28a745;
-            margin-top: 10px;
-            text-align: center;
-            color: #155724;
-            font-weight: 600;
-        }
-        .approval-confirm.show {
-            display: block;
-            animation: fadeIn 0.5s ease;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+.section-block .head {
+  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  color: #fff; padding: 16px 22px;
+  display: flex; align-items: center; gap: 12px;
+}
+.section-block .head .ico {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: rgba(255,255,255,.15);
+  display: grid; place-items: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.section-block .head h3 {
+  margin: 0; font-size: 17px; font-weight: 800;
+  letter-spacing: -.01em;
+}
+.section-block .head .counter {
+  margin-right: auto; font-size: 12px;
+  background: rgba(255,255,255,.2);
+  padding: 3px 12px; border-radius: 20px;
+  font-weight: 600;
+}
+.section-block .body {
+  padding: 22px 24px;
+}
 
-        .declaration-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #dee2e6;
-            font-size: 13px;
-            color: #6c757d;
-        }
-        .declaration-footer .signature-area {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-            width: 100%;
-        }
-        .declaration-footer .signature-item {
-            text-align: center;
-            min-width: 100px;
-        }
-        .declaration-footer .signature-item .line {
-            width: 120px;
-            border-top: 2px solid #999;
-            margin: 5px auto;
-        }
-        .declaration-footer .signature-item .label {
-            font-size: 12px;
-            color: #666;
-        }
-        .declaration-footer .signature-item .signature-name {
-            font-size: 13px;
-            font-weight: 600;
-            color: #1e3c72;
-            margin-top: 2px;
-        }
-        .declaration-footer .copyright-text {
-            font-size: 11px;
-            color: #999;
-            text-align: center;
-            width: 100%;
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid #eee;
-        }
-        .declaration-footer .copyright-text .developer-name {
-            color: #1e3c72;
-            font-weight: 700;
-        }
-        .declaration-footer .copyright-text .school-name {
-            color: #dc3545;
-            font-weight: 700;
-        }
+/* للحقول الافتراضية (بدون قسم) */
+.section-block.no-section {
+  border: none; box-shadow: none; background: transparent;
+  margin: 0;
+}
+.section-block.no-section .body {
+  padding: 0; background: transparent;
+}
 
-        /* ===== رسالة القفل ===== */
-        .locked-message {
-            background: #d4edda;
-            border: 2px solid #28a745;
-            border-radius: 16px;
-            padding: 30px;
-            margin: 20px 0;
-            text-align: center;
-        }
-        .locked-message .icon {
-            font-size: 60px;
-            display: block;
-            margin-bottom: 10px;
-        }
-        .locked-message h3 {
-            color: #155724;
-            font-size: 24px;
-            margin: 10px 0;
-        }
-        .locked-message p {
-            color: #155724;
-            font-size: 16px;
-            line-height: 1.8;
-        }
-        .locked-message .info-grid-locked {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 15px;
-            margin: 20px auto;
-            max-width: 600px;
-        }
-        .locked-message .info-grid-locked .info-item {
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        .locked-message .info-grid-locked .info-item .label {
-            font-size: 12px;
-            color: #666;
-            display: block;
-        }
-        .locked-message .info-grid-locked .info-item .value {
-            font-weight: 700;
-            color: #1e3c72;
-            font-size: 16px;
-            margin-top: 5px;
-            display: block;
-        }
-        .locked-message .btn-print-only {
-            display: inline-block;
-            padding: 15px 40px;
-            background: #1e3c72;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            text-decoration: none;
-            margin-top: 15px;
-            transition: all 0.3s ease;
-        }
-        .locked-message .btn-print-only:hover {
-            background: #0f2b4f;
-            transform: scale(1.05);
-        }
+/* ===== الحقول ===== */
+.form-group { margin-bottom: 18px; }
+.form-group label {
+  display: block; font-weight: 700; color: #333;
+  font-size: 14px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 6px;
+  flex-wrap: wrap;
+}
+.form-group label .admin-badge {
+  font-size: 10px; background: #17a2b8; color: #fff;
+  padding: 2px 9px; border-radius: 10px; font-weight: 600;
+}
+.form-control {
+  width: 100%; padding: 12px 16px;
+  border: 2px solid #e0e0e0; border-radius: 10px;
+  font-size: 15px; font-family: inherit;
+  transition: all .2s; background: #fff;
+}
+.form-control:focus { outline: none; border-color: #1e3c72; box-shadow: 0 0 0 4px rgba(30,60,114,.1); }
+.form-control:disabled {
+  background: #f0f0f0; cursor: not-allowed;
+  color: #555; border-color: #d0d0d0;
+}
 
-        /* ===== رسالة التحذير ===== */
-        .warning-confirm-box {
-            display: none;
-            background: #fff3cd;
-            border: 3px solid #ffc107;
-            border-radius: 16px;
-            padding: 25px;
-            margin: 20px 0;
-            text-align: center;
-            animation: fadeIn 0.5s ease;
-        }
-        .warning-confirm-box.show {
-            display: block;
-        }
-        .warning-confirm-box .icon {
-            font-size: 50px;
-            display: block;
-            margin-bottom: 10px;
-        }
-        .warning-confirm-box h3 {
-            color: #856404;
-            font-size: 20px;
-            margin-bottom: 10px;
-        }
-        .warning-confirm-box p {
-            color: #856404;
-            font-size: 16px;
-            line-height: 1.8;
-        }
-        .warning-confirm-box .warning-actions {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 15px;
-        }
-        .warning-confirm-box .btn-confirm {
-            padding: 12px 35px;
-            background: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .warning-confirm-box .btn-confirm:hover {
-            background: #a71d2a;
-            transform: scale(1.05);
-        }
-        .warning-confirm-box .btn-cancel-warning {
-            padding: 12px 35px;
-            background: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .warning-confirm-box .btn-cancel-warning:hover {
-            background: #5a6268;
-            transform: scale(1.05);
-        }
+/* ===== التشعيب والاختيار ===== */
+.selected-stream-display {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  padding: 14px 20px; border-radius: 12px;
+  border: 2px solid #28a745; margin: 15px 0;
+  text-align: center; font-size: 16px;
+  font-weight: 700; color: #155724; display: none;
+}
+.selected-stream-display.show { display: block; animation: fadeIn .3s ease; }
 
-        .declaration-warning {
-            animation: shakeWarning 0.5s ease;
-            border-right-color: #dc3545 !important;
-        }
-        @keyframes shakeWarning {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-        }
+/* ===== الإقرار ===== */
+.declaration-section {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  padding: 25px; border-radius: 16px; margin: 25px 0;
+  border-right: 6px solid #1e3c72; position: relative;
+}
+.declaration-section h3 {
+  color: #1e3c72; font-size: 20px; margin-bottom: 15px;
+}
+.declaration-text {
+  background: #fff; padding: 20px; border-radius: 12px;
+  font-size: 15px; line-height: 2.2; color: #333;
+}
+.declaration-approval {
+  margin-top: 15px; padding: 18px; text-align: center;
+  background: #fff3cd; border-radius: 12px; border: 2px solid #ffc107;
+}
+.btn-approve {
+  padding: 15px 40px; background: #28a745; color: #fff;
+  border: none; border-radius: 12px; font-size: 17px;
+  font-weight: 700; cursor: pointer; transition: all .3s;
+}
+.btn-approve.approved { background: #1e3c72; }
+.approval-confirm {
+  display: none; margin-top: 12px; padding: 12px;
+  background: #d4edda; border-radius: 10px; color: #155724;
+  font-weight: 700; border: 2px solid #28a745;
+}
+.approval-confirm.show { display: block; animation: fadeIn .3s ease; }
 
-        .selected-stream-display {
-            background: #d4edda;
-            padding: 12px 20px;
-            border-radius: 12px;
-            border: 2px solid #28a745;
-            margin: 10px 0;
-            text-align: center;
-            font-size: 16px;
-            font-weight: 600;
-            color: #155724;
-            display: none;
-        }
-        .selected-stream-display.show {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
+/* ===== تحذير الحفظ ===== */
+.warning-confirm-box {
+  display: none; background: #fff3cd; border: 3px solid #ffc107;
+  border-radius: 16px; padding: 25px; margin: 20px 0;
+  text-align: center;
+}
+.warning-confirm-box.show { display: block; }
+.warning-actions {
+  display: flex; gap: 15px; justify-content: center;
+  flex-wrap: wrap; margin-top: 15px;
+}
+.btn-confirm {
+  padding: 14px 35px; background: #dc3545; color: #fff;
+  border: none; border-radius: 12px; font-size: 17px;
+  font-weight: 700; cursor: pointer;
+}
+.btn-cancel-warning {
+  padding: 14px 35px; background: #6c757d; color: #fff;
+  border: none; border-radius: 12px; font-size: 17px;
+  font-weight: 700; cursor: pointer;
+}
 
-        .form-disabled {
-            opacity: 0.5;
-            pointer-events: none;
-        }
-        .form-disabled .btn-option,
-        .form-disabled .form-control,
-        .form-disabled .btn-approve,
-        .form-disabled .btn-option.active {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+/* ===== رسائل القفل ===== */
+.locked-message {
+  background: linear-gradient(135deg, #d4edda, #c3e6cb);
+  border: 2px solid #28a745; border-radius: 16px;
+  padding: 30px; margin: 20px 0; text-align: center;
+}
+.locked-message .icon { font-size: 60px; display: block; margin-bottom: 10px; }
+.locked-message h3 { color: #155724; font-size: 24px; margin: 10px 0; }
+.info-grid-locked {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px; margin: 20px 0;
+}
+.info-grid-locked .info-item {
+  background: #fff; padding: 12px; border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.05);
+}
+.info-grid-locked .label { font-size: 11px; color: #666; display: block; }
+.info-grid-locked .value {
+  font-weight: 700; color: #1e3c72; font-size: 15px; margin-top: 4px; display: block;
+}
+.btn-print-only, .btn-request {
+  display: inline-block; padding: 13px 30px; border-radius: 10px;
+  font-size: 15px; font-weight: 700; cursor: pointer;
+  text-decoration: none; margin: 8px 4px; transition: all .3s;
+  border: none;
+}
+.btn-print-only { background: #1e3c72; color: #fff; }
+.btn-request { background: #ffc107; color: #333; }
 
-        /* ===== طلب فتح التعديل (إضافي) ===== */
-        .btn-request {
-            display: inline-block;
-            padding: 12px 30px;
-            background: #ffc107;
-            color: #333;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            margin: 10px 5px;
-            transition: all 0.3s;
-        }
-        .btn-request:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 15px rgba(255,193,7,0.4);
-        }
-        .btn-request:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
+/* ===== Modal طلب الفتح ===== */
+.request-modal {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.5); z-index: 9999;
+  align-items: center; justify-content: center; padding: 20px;
+}
+.request-modal.show { display: flex; }
+.request-modal .modal-content {
+  background: #fff; max-width: 500px; width: 100%;
+  padding: 30px; border-radius: 20px; position: relative;
+  box-shadow: 0 10px 40px rgba(0,0,0,.3);
+}
+.request-modal h3 { color: #1e3c72; margin: 0 0 15px; }
+.request-modal textarea {
+  width: 100%; padding: 12px; border: 2px solid #e0e0e0;
+  border-radius: 10px; font-family: inherit; min-height: 100px;
+  resize: vertical; font-size: 15px;
+}
+.request-modal textarea:focus { outline: none; border-color: #1e3c72; }
+.request-modal .actions {
+  display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;
+}
+.request-modal .actions button {
+  flex: 1; min-width: 100px; padding: 12px;
+  border: none; border-radius: 10px;
+  font-weight: 700; cursor: pointer; font-size: 15px;
+}
+.btn-submit { background: #28a745; color: #fff; }
+.btn-cancel-modal { background: #6c757d; color: #fff; }
+.request-error {
+  color: #dc3545; font-size: 13px; display: none; margin: 10px 0;
+  padding: 10px; background: #fee; border-radius: 8px;
+}
 
-        .request-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 9999;
-            align-items: center;
-            justify-content: center;
-        }
-        .request-modal.show {
-            display: flex;
-            animation: fadeIn 0.3s ease;
-        }
-        .request-modal .modal-content {
-            background: white;
-            max-width: 500px;
-            width: 90%;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            position: relative;
-        }
-        .request-modal .modal-content .close-btn {
-            position: absolute;
-            top: 10px;
-            left: 15px;
-            background: none;
-            border: none;
-            font-size: 28px;
-            cursor: pointer;
-            color: #999;
-        }
-        .request-modal .modal-content .close-btn:hover {
-            color: #333;
-        }
-        .request-modal .modal-content textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            font-size: 15px;
-            font-family: inherit;
-            resize: vertical;
-            transition: border-color 0.3s;
-        }
-        .request-modal .modal-content textarea:focus {
-            outline: none;
-            border-color: #1e3c72;
-        }
-        .request-modal .modal-content .error-msg {
-            color: #dc3545;
-            font-size: 13px;
-            display: none;
-            margin: 10px 0;
-        }
-        .request-modal .modal-content .actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-            flex-wrap: wrap;
-        }
-        .request-modal .modal-content .actions .btn-submit {
-            flex: 1;
-            padding: 12px;
-            background: #28a745;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .request-modal .modal-content .actions .btn-submit:hover {
-            background: #1e7e34;
-        }
-        .request-modal .modal-content .actions .btn-cancel {
-            padding: 12px 25px;
-            background: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .request-modal .modal-content .actions .btn-cancel:hover {
-            background: #5a6268;
-        }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
-        @media (max-width: 600px) {
-            .form-header {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .form-header .actions {
-                justify-content: stretch;
-            }
-            .form-header .actions .btn-logout-student,
-            .form-header .actions .btn-home {
-                flex: 1;
-                text-align: center;
-            }
-            .admin-info {
-                grid-template-columns: 1fr;
-            }
-            .declaration-footer .signature-area {
-                flex-direction: column;
-                gap: 15px;
-            }
-            .declaration-footer .signature-item .line {
-                width: 100px;
-            }
-            .declaration-section .declaration-text {
-                font-size: 14px;
-                padding: 15px;
-            }
-            .btn-approve {
-                padding: 12px 25px;
-                font-size: 16px;
-                width: 100%;
-                justify-content: center;
-            }
-            .warning-confirm-box .warning-actions {
-                flex-direction: column;
-                align-items: center;
-            }
-            .warning-confirm-box .btn-confirm,
-            .warning-confirm-box .btn-cancel-warning {
-                width: 100%;
-            }
-            .locked-message .info-grid-locked {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+/* ===== أزرار الحفظ ===== */
+#formActions {
+  display: flex; flex-direction: column; gap: 10px; margin-top: 25px;
+}
+.btn-success, .btn-primary {
+  width: 100%; padding: 16px; border-radius: 12px;
+  font-size: 17px; font-weight: 700; cursor: pointer;
+  border: none; transition: all .3s; text-align: center;
+  text-decoration: none; display: block;
+}
+.btn-success { background: #28a745; color: #fff; }
+.btn-success:hover { background: #1e7e34; transform: scale(1.01); }
+.btn-primary { background: #1e3c72; color: #fff; }
+.btn-primary:hover { background: #0f2b4f; }
+
+/* موبايل */
+@media (max-width: 600px) {
+  .form-header { flex-direction: column; align-items: stretch; }
+  .form-header .actions { justify-content: stretch; }
+  .form-header .actions > * { flex: 1; text-align: center; }
+  .section-block .body { padding: 18px; }
+  .section-block .head { padding: 14px 18px; }
+  .section-block .head h3 { font-size: 15px; }
+  .section-block .head .ico { width: 32px; height: 32px; font-size: 17px; }
+  .btn-approve { width: 100%; padding: 14px 20px; font-size: 15px; }
+  .info-grid-locked { grid-template-columns: 1fr; }
+}
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="card">
-            <!-- ===== الهيدر مع زر خروج ===== -->
-            <div class="form-header">
-                <div class="title">
-                    <h1>🏫 مدرسة دشنا الثانوية</h1>
-                    <p>نظام تسجيل رغبات الصف الثاني الثانوي - العام الدراسي 2025/2026</p>
-                </div>
-                <div class="actions">
-                    <a href="index.html" class="btn-home">🏠 الرئيسية</a>
-                    <button onclick="logoutStudent()" class="btn-logout-student">🚪 خروج</button>
-                </div>
-            </div>
-
-            <!-- بيانات الطالب -->
-            <div class="student-info" id="studentInfo"></div>
-
-            <!-- التشعيب المختار -->
-            <div class="selected-stream-display" id="selectedStreamDisplay">
-                🎯 التشعيب المختار: <span id="selectedStreamText">لا يوجد</span>
-            </div>
-
-            <!-- رسالة القفل -->
-            <div id="statusMsg"></div>
-
-            <!-- النموذج -->
-            <form id="studentForm" class="form">
-                <div id="formContent">
-                    <!-- التشعيب -->
-                    <div class="form-group">
-                        <label>التشعيب *</label>
-                        <div class="btn-group">
-                            <button type="button" class="btn-option" data-value="ثانوي" onclick="selectStream('ثانوي')">
-                                🎓 ثانوي
-                            </button>
-                            <button type="button" class="btn-option" data-value="بكالوريا" onclick="selectStream('بكالوريا')">
-                                📚 بكالوريا
-                            </button>
-                        </div>
-                        <input type="hidden" id="stream" name="stream" required>
-                    </div>
-
-                    <!-- التخصص (ثانوي) -->
-                    <div id="specializationGroup" style="display:none;">
-                        <div class="form-group">
-                            <label>التخصص *</label>
-                            <div class="btn-group">
-                                <button type="button" class="btn-option" data-value="علمي" onclick="selectSpecialization('علمي')">
-                                    🔬 علمي
-                                </button>
-                                <button type="button" class="btn-option" data-value="أدبي" onclick="selectSpecialization('أدبي')">
-                                    📝 أدبي
-                                </button>
-                            </div>
-                            <input type="hidden" id="specialization" name="specialization">
-                        </div>
-                    </div>
-
-                    <!-- المسار والمادة (بكالوريا) -->
-                    <div id="trackGroup" style="display:none;">
-                        <div class="form-group">
-                            <label>المسار *</label>
-                            <select id="track" name="track" class="form-control" onchange="updateSubjects()">
-                                <option value="">اختر المسار</option>
-                                <option value="مسار الطب وعلوم الحياة">مسار الطب وعلوم الحياة</option>
-                                <option value="مسار الهندسة وعلوم الحاسب">مسار الهندسة وعلوم الحاسب</option>
-                                <option value="مسار الأعمال">مسار الأعمال</option>
-                                <option value="مسار الآداب والفنون">مسار الآداب والفنون</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label>المادة الاختيارية *</label>
-                            <select id="optionalSubject" name="optionalSubject" class="form-control">
-                                <option value="">اختر المادة</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- الحقول الديناميكية -->
-                    <div id="dynamicFields"></div>
-
-                    <!-- ===== الإقرار ===== -->
-                    <div class="declaration-section" id="declarationSection">
-                        <h3>📋 إقرار وتعهد</h3>
-                        
-                        <div class="declaration-text">
-                            <p style="margin-bottom:10px;">
-                                <strong>أنا الطالب/ة:</strong> 
-                                <span class="student-name-field" id="declarationStudentName">__________</span>
-                            </p>
-                            
-                            <p style="margin-bottom:10px;">
-                                <strong>أقر وأتعهد بما يلي:</strong>
-                            </p>
-                            
-                            <ol style="padding-right:25px;margin:10px 0;">
-                                <li>جميع البيانات المدخلة <strong>صحيحة ودقيقة</strong>، وأتحمل <span class="highlight">المسؤولية الكاملة</span> عن أي معلومات غير صحيحة.</li>
-                                <li>اختياراتي للتشعيب والتخصص <strong>تخضع لشروط القبول</strong> بالمدرسة.</li>
-                                <li>أوافق على <strong>تخزين ومعالجة</strong> بياناتي في نظام المدرسة.</li>
-                                <li>أقر بأنني <strong>اطلعت على سياسة الخصوصية</strong> وشروط الاستخدام.</li>
-                            </ol>
-                        </div>
-
-                        <!-- معلومات المسؤولين -->
-                        <div class="admin-info">
-                            <div class="admin-item">
-                                <span class="title">👤 وكيل شئون الطلاب</span>
-                                <span class="name"><span class="highlight-name">عاطف أبوالعباس</span></span>
-                            </div>
-                            <div class="admin-item">
-                                <span class="title">👨‍🏫 مدير المدرسة</span>
-                                <span class="name"><span class="highlight-name">عبدالرحمن فهمي</span></span>
-                            </div>
-                        </div>
-
-                        <!-- زر الموافقة -->
-                        <div class="declaration-approval">
-                            <p>👆 اضغط على الزر للموافقة على الإقرار والتعهد</p>
-                            <button type="button" class="btn-approve" id="approveBtn" onclick="approveDeclaration()">
-                                <span class="icon">✅</span> 
-                                <span id="approveText">أوافق على الإقرار والتعهد</span>
-                            </button>
-                            <div class="approval-confirm" id="approvalConfirm">
-                                ✅ تمت الموافقة على الإقرار
-                            </div>
-                        </div>
-
-                        <!-- التواقيع -->
-                        <div class="declaration-footer">
-                            <div class="signature-area">
-                                <div class="signature-item">
-                                    <div class="line"></div>
-                                    <div class="label">توقيع الطالب</div>
-                                </div>
-                                <div class="signature-item">
-                                    <div class="line"></div>
-                                    <div class="label">توقيع ولي الأمر</div>
-                                </div>
-                                <div class="signature-item">
-                                    <div class="line"></div>
-                                    <div class="label">وكيل شئون الطلاب</div>
-                                    <div class="signature-name">عاطف أبوالعباس</div>
-                                </div>
-                                <div class="signature-item">
-                                    <div class="line"></div>
-                                    <div class="label">مدير المدرسة</div>
-                                    <div class="signature-name">عبدالرحمن فهمي</div>
-                                </div>
-                            </div>
-                            
-                            <!-- حقوق النشر -->
-                            <div class="copyright-text">
-                                <p>
-                                    <span style="font-size:14px;">©</span> 
-                                    <span class="school-name">مدرسة دشنا الثانوية</span> - جميع الحقوق محفوظة 
-                                    <span id="yearDisplay"></span>
-                                </p>
-                                <p style="font-size:10px;color:#bbb;">
-                                    Developed by: <span class="developer-name">محمد جاد</span> - 
-                                    مسئول IT وسفير مادة البرمجة محافظة قنا
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ===== رسالة التحذير قبل الحفظ ===== -->
-                    <div class="warning-confirm-box" id="warningConfirmBox">
-                        <span class="icon">⚠️</span>
-                        <h3>تنبيه هام!</h3>
-                        <p>
-                            <strong>بعد الضغط على "تأكيد الحفظ" لن تتمكن من تعديل أو تغيير أي بيانات.</strong>
-                            <br>
-                            يرجى التأكد من صحة جميع البيانات قبل المتابعة.
-                        </p>
-                        <div class="warning-actions">
-                            <button type="button" class="btn-cancel-warning" onclick="cancelWarning()">
-                                🔙 العودة للمراجعة
-                            </button>
-                            <button type="button" class="btn-confirm" onclick="confirmSave()">
-                                ✅ تأكيد الحفظ النهائي
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- رسائل الخطأ والنجاح -->
-                    <div id="formError" class="error-msg" style="display:none;"></div>
-                    <div id="formSuccess" class="success-msg" style="display:none;">✅ تم حفظ البيانات بنجاح!</div>
-
-                    <!-- الأزرار -->
-                    <div id="formActions">
-                        <button type="button" class="btn-success" id="saveBtn" onclick="showWarning()">
-                            💾 حفظ وتقديم الطلب
-                        </button>
-                        <a href="student-pdf.html" class="btn-primary" id="pdfBtn" style="display:none;">📄 طباعة PDF</a>
-                    </div>
-                </div>
-            </form>
-        </div>
+<div class="container">
+  <div class="card">
+    <div class="form-header">
+      <div class="title">
+        <h1>🏫 مدرسة دشنا الثانوية</h1>
+        <p>استمارة تسجيل الرغبات - العام الدراسي 2025/2026</p>
+      </div>
+      <div class="actions">
+        <a href="index.html" class="btn-home">🏠 الرئيسية</a>
+        <button onclick="logoutStudent()" class="btn-logout-student">🚪 خروج</button>
+      </div>
     </div>
 
+    <div class="student-info" id="studentInfo"></div>
+    <div class="selected-stream-display" id="selectedStreamDisplay">
+      🎯 التشعيب المختار: <span id="selectedStreamText">—</span>
+    </div>
+    <div id="statusMsg"></div>
+
+    <form id="studentForm" class="form">
+      <div id="formContent">
+
+        <!-- شريط التقدم -->
+        <div class="progress-bar-wrap" id="progressWrap" style="display:none;">
+          <div class="head">
+            <span>📋 اكتمال الاستمارة</span>
+            <span id="progressPct">0%</span>
+          </div>
+          <div class="track"><div class="fill" id="progressFill" style="width:0%"></div></div>
+          <div class="sections-mini" id="sectionsMini"></div>
         </div>
 
-   <script src="lib/supabase.js"></script>
+        <!-- التشعيب -->
+        <div class="form-group">
+          <label>التشعيب *</label>
+          <div class="btn-group">
+            <button type="button" class="btn-option" data-value="ثانوي" onclick="selectStream('ثانوي')">🎓 ثانوي</button>
+            <button type="button" class="btn-option" data-value="بكالوريا" onclick="selectStream('بكالوريا')">📚 بكالوريا</button>
+          </div>
+          <input type="hidden" id="stream" name="stream" required>
+        </div>
+
+        <!-- التخصص (ثانوي) -->
+        <div id="specializationGroup" style="display:none;">
+          <div class="form-group">
+            <label>التخصص *</label>
+            <div class="btn-group">
+              <button type="button" class="btn-option" data-value="علمي" onclick="selectSpecialization('علمي')">🔬 علمي</button>
+              <button type="button" class="btn-option" data-value="أدبي" onclick="selectSpecialization('أدبي')">📝 أدبي</button>
+            </div>
+            <input type="hidden" id="specialization" name="specialization">
+          </div>
+        </div>
+
+        <!-- المسار (بكالوريا) -->
+        <div id="trackGroup" style="display:none;">
+          <div class="form-group">
+            <label>المسار *</label>
+            <select id="track" name="track" class="form-control" onchange="updateSubjects()">
+              <option value="">اختر المسار</option>
+              <option value="مسار الطب وعلوم الحياة">مسار الطب وعلوم الحياة</option>
+              <option value="مسار الهندسة وعلوم الحاسب">مسار الهندسة وعلوم الحاسب</option>
+              <option value="مسار الأعمال">مسار الأعمال</option>
+              <option value="مسار الآداب والفنون">مسار الآداب والفنون</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>المادة الاختيارية *</label>
+            <select id="optionalSubject" name="optionalSubject" class="form-control">
+              <option value="">اختر المادة</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- الحقول الديناميكية (مقسمة لأقسام) -->
+        <div id="dynamicFields"></div>
+
+        <!-- الإقرار -->
+        <div class="declaration-section" id="declarationSection">
+          <h3>📋 إقرار وتعهد</h3>
+          <div class="declaration-text">
+            <p>أنا الطالب/ة: <strong id="declarationStudentName">—</strong></p>
+            <p>أقر بأن جميع البيانات المدخلة <strong>صحيحة ودقيقة</strong>، وأتحمل المسؤولية الكاملة عن أي معلومات غير صحيحة.</p>
+            <p>وأوافق على تخزين ومعالجة بياناتي في نظام المدرسة.</p>
+          </div>
+          <div class="declaration-approval">
+            <p style="color:#856404; margin:0 0 12px; font-size:14px;">👆 اضغط للموافقة على الإقرار</p>
+            <button type="button" class="btn-approve" id="approveBtn" onclick="approveDeclaration()">
+              <span id="approveText">✅ أوافق على الإقرار</span>
+            </button>
+            <div class="approval-confirm" id="approvalConfirm">✅ تمت الموافقة</div>
+          </div>
+        </div>
+
+        <!-- تحذير الحفظ -->
+        <div class="warning-confirm-box" id="warningConfirmBox">
+          <span style="font-size:50px;">⚠️</span>
+          <h3 style="color:#856404;">تنبيه هام!</h3>
+          <p style="color:#856404;">بعد الضغط على "تأكيد الحفظ" لن تتمكن من تعديل أو تغيير أي بيانات.</p>
+          <div class="warning-actions">
+            <button type="button" class="btn-cancel-warning" onclick="cancelWarning()">🔙 العودة للمراجعة</button>
+            <button type="button" class="btn-confirm" onclick="confirmSave()">✅ تأكيد الحفظ النهائي</button>
+          </div>
+        </div>
+
+        <div id="formActions">
+          <button type="button" class="btn-success" id="saveBtn" onclick="showWarning()">💾 حفظ وتقديم الطلب</button>
+          <a href="student-pdf.html" class="btn-primary" id="pdfBtn" style="display:none;">📄 طباعة PDF</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal طلب فتح التعديل -->
+<div class="request-modal" id="requestModal">
+  <div class="modal-content">
+    <h3>📩 طلب فتح التعديل</h3>
+    <p style="color:#666; font-size:14px; margin:0 0 12px;">يرجى كتابة سبب واضح للطلب</p>
+    <textarea id="requestReason" placeholder="مثال: أخطأت في اختيار التخصص وأريد تصحيحه..."></textarea>
+    <div class="request-error" id="requestError"></div>
+    <div class="actions">
+      <button class="btn-submit" onclick="submitRequest()">📤 إرسال</button>
+      <button class="btn-cancel-modal" onclick="closeRequestModal()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<script src="lib/supabase.js"></script>
 <script src="lib/auth.js"></script>
 <script src="lib/toast.js"></script>
 <script src="lib/escape.js"></script>
@@ -822,61 +424,29 @@ let studentData = null, fieldsData = [], dynamicValues = {}, isLocked = false;
 let isDeclarationApproved = false, isSaving = false, requestStatus = null;
 
 const tracks = {
-  'مسار الطب وعلوم الحياة': ['فيزياء','رياضيات'],
-  'مسار الهندسة وعلوم الحاسب': ['كيمياء','برمجة'],
-  'مسار الأعمال': ['إدارة أعمال','محاسبة'],
-  'مسار الآداب والفنون': ['لغة ثانية فرنسي','لغة ثانية ألماني','علم نفس']
+  'مسار الطب وعلوم الحياة': ['فيزياء', 'رياضيات'],
+  'مسار الهندسة وعلوم الحاسب': ['كيمياء', 'برمجة'],
+  'مسار الأعمال': ['إدارة أعمال', 'محاسبة'],
+  'مسار الآداب والفنون': ['لغة ثانية فرنسي', 'لغة ثانية ألماني', 'علم نفس']
 };
 
-document.getElementById('yearDisplay').textContent = new Date().getFullYear();
-function logoutStudent() { if (confirm('تأكيد الخروج؟')) Auth.studentLogout(); }
-
-function selectStream(v) {
-  if (isLocked) return;
-  document.getElementById('stream').value = v;
-  document.querySelectorAll('.btn-option[data-value="ثانوي"],.btn-option[data-value="بكالوريا"]')
-    .forEach(el => el.classList.toggle('active', el.dataset.value === v));
-  document.getElementById('selectedStreamDisplay').classList.add('show');
-  document.getElementById('selectedStreamText').textContent = v === 'ثانوي' ? '🎓 ثانوي' : '📚 بكالوريا';
-  document.getElementById('specializationGroup').style.display = v === 'ثانوي' ? 'block' : 'none';
-  document.getElementById('trackGroup').style.display = v === 'بكالوريا' ? 'block' : 'none';
-  if (v === 'بكالوريا') {
-    document.getElementById('track').value = '';
-    document.getElementById('optionalSubject').innerHTML = '<option value="">اختر المادة</option>';
-  }
-}
-function selectSpecialization(v) {
-  if (isLocked) return;
-  document.getElementById('specialization').value = v;
-  document.querySelectorAll('.btn-option[data-value="علمي"],.btn-option[data-value="أدبي"]')
-    .forEach(el => el.classList.toggle('active', el.dataset.value === v));
-}
-function updateSubjects() {
-  const track = document.getElementById('track').value;
-  const sel = document.getElementById('optionalSubject');
-  sel.innerHTML = '<option value="">اختر المادة</option>';
-  (tracks[track] || []).forEach(s => sel.innerHTML += `<option value="${esc(s)}">${esc(s)}</option>`);
-}
-function approveDeclaration() {
-  if (isLocked) return;
-  isDeclarationApproved = !isDeclarationApproved;
-  document.getElementById('approveBtn').classList.toggle('approved', isDeclarationApproved);
-  document.getElementById('approveText').textContent = isDeclarationApproved ? '✅ تمت الموافقة' : 'أوافق على الإقرار والتعهد';
-  document.getElementById('approvalConfirm').classList.toggle('show', isDeclarationApproved);
-  document.getElementById('declarationSection').style.borderRightColor = isDeclarationApproved ? '#28a745' : '#1e3c72';
+function logoutStudent() {
+  if (confirm('هل أنت متأكد من الخروج؟')) Auth.studentLogout();
 }
 
+// ============ تحميل البيانات ============
 async function loadData() {
   try {
-    const [{data:s,error:e1}, {data:f}, {data:r}] = await Promise.all([
+    const [{ data: s, error: e1 }, { data: f }, { data: r }] = await Promise.all([
       SB.rpc('student_get_data', { p_token: token }),
       SB.rpc('student_get_fields', { p_token: token }),
       SB.rpc('student_get_responses', { p_token: token })
     ]);
     if (e1 || !s) { Auth.studentLogout(); return; }
+
     studentData = s;
     fieldsData = f || [];
-    (r || []).forEach(x => dynamicValues[x.field_id] = x.value);
+    (r || []).forEach(x => { dynamicValues[x.field_id] = x.value; });
     isLocked = s.is_locked && s.submitted_at;
 
     document.getElementById('studentInfo').innerHTML = `
@@ -891,13 +461,15 @@ async function loadData() {
       document.getElementById('saveBtn').style.display = 'none';
       document.getElementById('pdfBtn').style.display = 'block';
       document.getElementById('formContent').classList.add('form-disabled');
-      showLocked(s, false);
+      document.getElementById('progressWrap').style.display = 'none';
+      showLocked(s);
       return;
     }
 
+    // تعبئة التشعيب المحفوظ
     if (s.stream) {
-      selectStream(s.stream);
-      if (s.stream === 'ثانوي' && s.specialization) selectSpecialization(s.specialization);
+      selectStream(s.stream, true);
+      if (s.stream === 'ثانوي' && s.specialization) selectSpecialization(s.specialization, true);
       if (s.stream === 'بكالوريا' && s.track) {
         document.getElementById('track').value = s.track;
         updateSubjects();
@@ -906,49 +478,209 @@ async function loadData() {
     }
 
     renderFields();
+    setupProgress();
   } catch (err) {
     console.error(err);
     Toast.show('خطأ في تحميل البيانات', 'error');
   }
 }
 
+// ============ الاختيارات ============
+function selectStream(v, silent = false) {
+  if (isLocked) return;
+  document.getElementById('stream').value = v;
+  document.querySelectorAll('.btn-option[data-value="ثانوي"], .btn-option[data-value="بكالوريا"]')
+    .forEach(el => el.classList.toggle('active', el.dataset.value === v));
+  document.getElementById('selectedStreamDisplay').classList.add('show');
+  document.getElementById('selectedStreamText').textContent = v === 'ثانوي' ? '🎓 ثانوي' : '📚 بكالوريا';
+  document.getElementById('specializationGroup').style.display = v === 'ثانوي' ? 'block' : 'none';
+  document.getElementById('trackGroup').style.display = v === 'بكالوريا' ? 'block' : 'none';
+  if (v === 'بكالوريا' && !silent) {
+    document.getElementById('track').value = '';
+    document.getElementById('optionalSubject').innerHTML = '<option value="">اختر المادة</option>';
+  }
+}
+
+function selectSpecialization(v, silent = false) {
+  if (isLocked) return;
+  document.getElementById('specialization').value = v;
+  document.querySelectorAll('.btn-option[data-value="علمي"], .btn-option[data-value="أدبي"]')
+    .forEach(el => el.classList.toggle('active', el.dataset.value === v));
+}
+
+function updateSubjects() {
+  const track = document.getElementById('track').value;
+  const sel = document.getElementById('optionalSubject');
+  sel.innerHTML = '<option value="">اختر المادة</option>';
+  (tracks[track] || []).forEach(s => sel.innerHTML += `<option value="${esc(s)}">${esc(s)}</option>`);
+}
+
+function approveDeclaration() {
+  if (isLocked) return;
+  isDeclarationApproved = !isDeclarationApproved;
+  document.getElementById('approveBtn').classList.toggle('approved', isDeclarationApproved);
+  document.getElementById('approveText').textContent = isDeclarationApproved ? '✅ تمت الموافقة' : '✅ أوافق على الإقرار';
+  document.getElementById('approvalConfirm').classList.toggle('show', isDeclarationApproved);
+  document.getElementById('declarationSection').style.borderRightColor = isDeclarationApproved ? '#28a745' : '#1e3c72';
+}
+
+// ============ رسم الحقول مقسمة لأقسام ============
 function renderFields() {
   const c = document.getElementById('dynamicFields');
-  c.innerHTML = fieldsData.map(f => {
-    const val = dynamicValues[f.id] || '';
-    if (f.type === 'select') {
-      const opts = (f.options || []).map(o => `<option value="${esc(o)}" ${val===o?'selected':''}>${esc(o)}</option>`).join('');
-      return `<div class="form-group"><label>${esc(f.name)} ${f.is_required?'*':''}</label>
-        <select class="form-control" onchange="dynamicValues['${f.id}']=this.value">
-          <option value="">اختر...</option>${opts}
-        </select></div>`;
+  if (!fieldsData.length) { c.innerHTML = ''; return; }
+
+  // تجميع حسب القسم (باستخدام section_name و section_id)
+  const groups = {};
+  fieldsData.forEach(f => {
+    const key = f.section_id || '__none__';
+    if (!groups[key]) groups[key] = { name: f.section_name, order: f.section_order ?? 999, fields: [] };
+    groups[key].fields.push(f);
+  });
+
+  // ترتيب الأقسام حسب section_order
+  const sortedKeys = Object.keys(groups).sort((a, b) => {
+    if (a === '__none__') return -1;
+    if (b === '__none__') return 1;
+    return (groups[a].order || 999) - (groups[b].order || 999);
+  });
+
+  let html = '';
+  sortedKeys.forEach(key => {
+    const g = groups[key];
+    const noSection = key === '__none__';
+    const icon = noSection ? '' : pickSectionIcon(g.name);
+    const requiredCount = g.fields.filter(f => f.is_required && !f.is_readonly).length;
+    const doneCount = g.fields.filter(f => (dynamicValues[f.id] || '').trim() !== '').length;
+
+    if (!noSection) {
+      html += `<div class="section-block" data-section-id="${key}">
+        <div class="head">
+          <div class="ico">${icon}</div>
+          <h3>${esc(g.name || 'قسم')}</h3>
+          <span class="counter">${doneCount}/${g.fields.length}</span>
+        </div>
+        <div class="body">`;
+      g.fields.forEach(f => html += renderField(f));
+      html += `</div></div>`;
+    } else {
+      html += `<div class="section-block no-section"><div class="body">`;
+      g.fields.forEach(f => html += renderField(f));
+      html += `</div></div>`;
     }
-    return `<div class="form-group"><label>${esc(f.name)} ${f.is_required?'*':''}</label>
-      <input type="text" class="form-control" value="${esc(val)}" onchange="dynamicValues['${f.id}']=this.value">
-    </div>`;
+  });
+
+  c.innerHTML = html;
+}
+
+function pickSectionIcon(name) {
+  if (!name) return '📄';
+  if (/اتصال|موبايل|هاتف|عنوان|تواصل/.test(name)) return '📞';
+  if (/مكنص|كمبيوتر|حاسب|login/i.test(name)) return '💻';
+  if (/والد|أسرة|ولي|عائلة/.test(name)) return '👨‍👩‍👧';
+  if (/بيانات|شخصية|أساس/.test(name)) return '📋';
+  if (/دراس|أكاديم|مدرس/.test(name)) return '📚';
+  return '📂';
+}
+
+function renderField(f) {
+  const val = dynamicValues[f.id] || '';
+  const ro = !!f.is_readonly;
+  const disabledAttr = ro ? 'disabled' : '';
+  const onChange = ro ? '' : `onchange="onFieldChange('${f.id}', this.value)"`;
+  const badge = ro ? ' <span class="admin-badge">🔒 من الإدارة</span>' : '';
+  const star = f.is_required && !ro ? ' <span style="color:#dc3545;">*</span>' : '';
+
+  const label = `<label>${esc(f.name)}${star}${badge}</label>`;
+
+  if (f.type === 'select') {
+    const opts = (f.options || []).map(o =>
+      `<option value="${esc(o)}" ${val === o ? 'selected' : ''}>${esc(o)}</option>`
+    ).join('');
+    return `<div class="form-group">${label}
+      <select class="form-control" ${disabledAttr} ${onChange}>
+        <option value="">${ro ? '—' : 'اختر...'}</option>${opts}
+      </select></div>`;
+  }
+
+  return `<div class="form-group">${label}
+    <input type="text" class="form-control" value="${esc(val)}" ${disabledAttr} ${onChange}>
+  </div>`;
+}
+
+function onFieldChange(id, value) {
+  dynamicValues[id] = value;
+  updateProgress();
+}
+
+// ============ شريط التقدم ============
+function setupProgress() {
+  const editable = fieldsData.filter(f => !f.is_readonly);
+  if (editable.length === 0) return;
+  document.getElementById('progressWrap').style.display = 'block';
+  updateProgress();
+}
+
+function updateProgress() {
+  const editable = fieldsData.filter(f => !f.is_readonly);
+  if (editable.length === 0) return;
+
+  const filled = editable.filter(f => (dynamicValues[f.id] || '').trim() !== '').length;
+  const pct = Math.round((filled / editable.length) * 100);
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  // رقائق الأقسام
+  const groups = {};
+  editable.forEach(f => {
+    const key = f.section_id || '__none__';
+    if (!groups[key]) groups[key] = { name: f.section_name || 'بدون قسم', fields: [] };
+    groups[key].fields.push(f);
+  });
+
+  document.getElementById('sectionsMini').innerHTML = Object.entries(groups).map(([k, g]) => {
+    const done = g.fields.every(f => (dynamicValues[f.id] || '').trim() !== '');
+    return `<span class="sec-chip ${done ? 'done' : ''}">${done ? '✅' : '⏳'} ${esc(g.name)}</span>`;
   }).join('');
 }
 
+// ============ الحفظ ============
 function showWarning() {
   if (!isDeclarationApproved) {
     Toast.show('يجب الموافقة على الإقرار أولاً', 'error');
-    document.getElementById('declarationSection').scrollIntoView({behavior:'smooth'});
+    document.getElementById('declarationSection').scrollIntoView({ behavior: 'smooth' });
     return;
   }
+
   const stream = document.getElementById('stream').value;
   if (!stream) return Toast.show('اختر التشعيب', 'error');
   if (stream === 'ثانوي' && !document.getElementById('specialization').value)
     return Toast.show('اختر التخصص', 'error');
-  if (stream === 'بكالوريا' && (!document.getElementById('track').value || !document.getElementById('optionalSubject').value))
-    return Toast.show('اختر المسار والمادة', 'error');
+  if (stream === 'بكالوريا') {
+    if (!document.getElementById('track').value) return Toast.show('اختر المسار', 'error');
+    if (!document.getElementById('optionalSubject').value) return Toast.show('اختر المادة', 'error');
+  }
+
+  // تحقق من الحقول المطلوبة
+  const missing = [];
+  fieldsData.forEach(f => {
+    if (f.is_required && !f.is_readonly && !(dynamicValues[f.id] || '').trim()) {
+      missing.push(f.name);
+    }
+  });
+  if (missing.length > 0) {
+    Toast.show('❌ حقول مطلوبة: ' + missing.join('، '), 'error', 5000);
+    return;
+  }
+
   document.getElementById('warningConfirmBox').classList.add('show');
-  document.getElementById('warningConfirmBox').scrollIntoView({behavior:'smooth', block:'center'});
+  document.getElementById('warningConfirmBox').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 function cancelWarning() { document.getElementById('warningConfirmBox').classList.remove('show'); }
 
 async function confirmSave() {
   if (isSaving) return;
   isSaving = true;
+
   const stream = document.getElementById('stream').value;
   const spec = document.getElementById('specialization').value || null;
   const track = document.getElementById('track').value || null;
@@ -956,10 +688,12 @@ async function confirmSave() {
   const resp = Object.entries(dynamicValues).map(([field_id, value]) => ({ field_id, value }));
 
   const btn = document.getElementById('saveBtn');
-  btn.disabled = true; btn.textContent = '⏳ جاري الحفظ...';
+  btn.disabled = true;
+  btn.textContent = '⏳ جاري الحفظ...';
 
   const { data, error } = await SB.rpc('student_submit', {
-    p_token: token, p_stream: stream,
+    p_token: token,
+    p_stream: stream,
     p_specialization: stream === 'ثانوي' ? spec : null,
     p_track: stream === 'بكالوريا' ? track : null,
     p_optional_subject: stream === 'بكالوريا' ? opt : null,
@@ -968,31 +702,36 @@ async function confirmSave() {
 
   if (error || !data?.ok) {
     Toast.show(data?.error || error?.message || 'فشل الحفظ', 'error');
-    btn.disabled = false; btn.textContent = '💾 حفظ وتقديم الطلب';
+    btn.disabled = false;
+    btn.textContent = '💾 حفظ وتقديم الطلب';
     isSaving = false;
     return;
   }
+
   Toast.show('✅ تم التقديم بنجاح', 'success');
-  setTimeout(() => location.reload(), 800);
+  setTimeout(() => location.reload(), 900);
 }
 
-async function showLocked(s, justSaved) {
+// ============ القفل وطلب الفتح ============
+async function showLocked(s) {
   const { data: req } = await SB.rpc('student_get_reopen_status', { p_token: token });
   requestStatus = req;
+  const canRequest = !req || req.status === 'rejected';
 
   document.getElementById('statusMsg').innerHTML = `
     <div class="locked-message">
-      <span class="icon">${justSaved ? '✅' : '🔒'}</span>
-      <h3>${justSaved ? 'تم التقديم بنجاح!' : 'تم تسجيل الرغبات مسبقاً'}</h3>
+      <span class="icon">🔒</span>
+      <h3>تم تسجيل الرغبات مسبقاً</h3>
       <p>${s.submitted_at ? '📅 ' + new Date(s.submitted_at).toLocaleString('ar-EG') : ''}</p>
       ${req ? `
-        <div style="margin:15px 0;padding:15px;border-radius:12px;background:${
-          req.status==='pending'?'#fff3cd':req.status==='approved'?'#d4edda':'#f8d7da'};">
-          <strong>${req.status==='pending'?'⏳ قيد الانتظار':req.status==='approved'?'✅ تمت الموافقة':'❌ مرفوض'}</strong>
-          ${req.admin_response ? `<div style="margin-top:6px;font-size:13px;">${esc(req.admin_response)}</div>` : ''}
+        <div style="margin:15px auto; max-width:500px; padding:15px; border-radius:12px; background:${
+          req.status === 'pending' ? '#fff3cd' : req.status === 'approved' ? '#d4edda' : '#f8d7da'
+        };">
+          <strong>${req.status === 'pending' ? '⏳ قيد الانتظار' : req.status === 'approved' ? '✅ تمت الموافقة' : '❌ مرفوض'}</strong>
+          ${req.admin_response ? `<div style="margin-top:8px; font-size:13px;">${esc(req.admin_response)}</div>` : ''}
         </div>` : ''}
-      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:15px;">
-        ${!req || req.status === 'rejected' ? `<button onclick="showRequestModal()" class="btn-request">📩 طلب فتح التعديل</button>` : ''}
+      <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:15px;">
+        ${canRequest ? '<button class="btn-request" onclick="showRequestModal()">📩 طلب فتح التعديل</button>' : ''}
         <a href="student-pdf.html" class="btn-print-only">📄 طباعة PDF</a>
       </div>
     </div>`;
@@ -1009,7 +748,9 @@ async function submitRequest() {
   const reason = document.getElementById('requestReason').value.trim();
   const err = document.getElementById('requestError');
   if (reason.length < 10) {
-    err.textContent = '❌ السبب قصير جداً'; err.style.display = 'block'; return;
+    err.textContent = '❌ السبب قصير جداً (10 أحرف على الأقل)';
+    err.style.display = 'block';
+    return;
   }
   const { data, error } = await SB.rpc('student_request_reopen', { p_token: token, p_reason: reason });
   if (error || !data?.ok) {
@@ -1019,9 +760,10 @@ async function submitRequest() {
   }
   closeRequestModal();
   Toast.show('✅ تم إرسال الطلب', 'success');
-  location.reload();
+  setTimeout(() => location.reload(), 900);
 }
 
 loadData();
-</script></body>
+</script>
+</body>
 </html>
