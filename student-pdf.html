@@ -271,160 +271,92 @@
         </div>
     </div>
 
-    <script>
-        const SUPABASE_URL = '{{SUPABASE_URL}}'
-        const SUPABASE_ANON_KEY = '{{SUPABASE_ANON_KEY}}'
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-        window.supabase = supabaseClient
+    <script src="lib/supabase.js"></script>
+<script src="lib/auth.js"></script>
+<script src="lib/escape.js"></script>
+<script>
+async function loadData() {
+  const params = new URLSearchParams(location.search);
+  const printId = params.get('print');
+  const studentToken = Auth.getStudentToken();
+  let student, fields, responses;
 
-        let studentData = null
-        let fieldsData = []
-        let dynamicResponses = {}
+  if (printId && !studentToken) {
+    const auth = await Auth.requireAdmin();
+    if (!auth) return;
+    ({data:student} = await SB.from('students').select('*').eq('id', printId).single());
+    ({data:fields} = await SB.from('dynamic_fields').select('*').eq('visible_for_student', true).order('display_order'));
+    ({data:responses} = await SB.from('student_dynamic_responses').select('field_id,value').eq('student_id', printId));
+    if (student) student.national_id = '****' + String(student.national_id||'').slice(-4);
+  } else {
+    if (!studentToken) { location.href = 'index.html'; return; }
+    const [{data:s},{data:f},{data:r}] = await Promise.all([
+      SB.rpc('student_get_data', { p_token: studentToken }),
+      SB.rpc('student_get_fields', { p_token: studentToken }),
+      SB.rpc('student_get_responses', { p_token: studentToken })
+    ]);
+    student = s;
+    if (student) student.national_id = student.national_id_masked;
+    fields = f; responses = r;
+  }
 
-        async function loadData() {
-            const urlParams = new URLSearchParams(window.location.search)
-            const printId = urlParams.get('print')
-            const studentId = printId || sessionStorage.getItem('studentId')
+  if (!student) { alert('لم يتم العثور على البيانات'); return; }
+  const map = {};
+  (responses || []).forEach(x => map[x.field_id] = x.value);
 
-            if (!studentId) {
-                window.location.href = 'index.html'
-                return
-            }
+  document.getElementById('studentNameDisplay').textContent = '👨‍🎓 ' + student.full_name;
+  document.getElementById('studentInfoDisplay').textContent =
+    'كود: ' + student.student_code + ' | الرقم القومي: ' + (student.national_id || '—');
+  document.getElementById('declNameInPDF').textContent = student.full_name;
 
-            try {
-                const { data: student } = await supabase
-                    .from('students')
-                    .select('*')
-                    .eq('id', studentId)
-                    .single()
+  let html = '<div class="info-grid">';
+  html += `<div class="info-item"><span class="label">التشعيب</span><span class="value">${esc(student.stream||'-')}</span></div>`;
+  if (student.stream === 'ثانوي')
+    html += `<div class="info-item"><span class="label">التخصص</span><span class="value">${esc(student.specialization||'-')}</span></div>`;
+  if (student.stream === 'بكالوريا') {
+    html += `<div class="info-item"><span class="label">المسار</span><span class="value">${esc(student.track||'-')}</span></div>`;
+    html += `<div class="info-item"><span class="label">المادة الاختيارية</span><span class="value">${esc(student.optional_subject||'-')}</span></div>`;
+  }
+  (fields||[]).forEach(f => {
+    html += `<div class="info-item"><span class="label">${esc(f.name)}</span><span class="value">${esc(map[f.id]||'—')}</span></div>`;
+  });
+  html += '</div>';
+  if (student.submitted_at)
+    html += `<div style="text-align:center;margin-top:15px;padding:10px;background:#d4edda;border-radius:8px;color:#155724;">✅ تم التقديم في: ${new Date(student.submitted_at).toLocaleString('ar-EG')}</div>`;
 
-                if (!student) throw new Error('Student not found')
-                studentData = student
+  document.getElementById('dataDisplay').innerHTML = html;
+  document.getElementById('printDate').textContent = new Date().toLocaleDateString('ar-EG');
+  document.getElementById('yearDisplay').textContent = new Date().getFullYear();
+  document.getElementById('loadingMsg').style.display = 'none';
+  document.getElementById('pdfContent').style.display = 'block';
+}
 
-                const { data: fields } = await supabase
-                    .from('dynamic_fields')
-                    .select('*')
-                    .eq('visible_for_student', true)
-                    .order('display_order', { ascending: true })
+async function generatePDF() {
+  const btn = document.querySelector('.btn-group-actions .btn-success');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري التجهيز...'; }
+  try {
+    const canvas = await html2canvas(document.getElementById('previewCard'), { scale: 2, useCORS: true, backgroundColor: '#fff', logging: false });
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pw = doc.internal.pageSize.getWidth();
+    const ph = doc.internal.pageSize.getHeight();
+    const imgData = canvas.toDataURL('image/png');
+    const margin = 10, iw = pw - margin*2, ih = (canvas.height*iw)/canvas.width;
+    let left = ih, pos = margin;
+    doc.addImage(imgData, 'PNG', margin, pos, iw, ih);
+    left -= (ph - margin*2);
+    while (left > 0) {
+      pos = left - ih + margin;
+      doc.addPage();
+      doc.addImage(imgData, 'PNG', margin, pos, iw, ih);
+      left -= (ph - margin*2);
+    }
+    doc.save(`رغبات_${Date.now()}.pdf`);
+  } catch (err) { alert('فشل إنشاء PDF'); }
+  finally { if (btn) { btn.disabled = false; btn.textContent = '📄 تحميل PDF'; } }
+}
 
-                if (fields) fieldsData = fields
-
-                const { data: responses } = await supabase
-                    .from('student_dynamic_responses')
-                    .select('field_id, value')
-                    .eq('student_id', studentId)
-
-                if (responses) {
-                    responses.forEach(r => {
-                        dynamicResponses[r.field_id] = r.value
-                    })
-                }
-
-                displayData()
-
-                document.getElementById('loadingMsg').style.display = 'none'
-                document.getElementById('pdfContent').style.display = 'block'
-
-            } catch (err) {
-                console.error('Error:', err)
-                alert('حدث خطأ في تحميل البيانات')
-            }
-        }
-
-        function displayData() {
-            document.getElementById('studentNameDisplay').textContent = '👨‍🎓 ' + studentData.full_name
-            document.getElementById('studentInfoDisplay').textContent = 
-                'كود: ' + studentData.student_code + ' | الرقم القومي: ' + studentData.national_id
-            document.getElementById('declNameInPDF').textContent = studentData.full_name
-
-            let html = '<div class="info-grid">'
-            html += `
-                <div class="info-item"><span class="label">التشعيب</span><span class="value">${studentData.stream || '-'}</span></div>
-            `
-
-            if (studentData.stream === 'ثانوي') {
-                html += `<div class="info-item"><span class="label">التخصص</span><span class="value">${studentData.specialization || '-'}</span></div>`
-            } else if (studentData.stream === 'بكالوريا') {
-                html += `<div class="info-item"><span class="label">المسار</span><span class="value">${studentData.track || '-'}</span></div>`
-                html += `<div class="info-item"><span class="label">المادة الاختيارية</span><span class="value">${studentData.optional_subject || '-'}</span></div>`
-            }
-
-            fieldsData.forEach(field => {
-                const value = dynamicResponses[field.id] || ''
-                html += `<div class="info-item"><span class="label">${field.name}</span><span class="value">${value || '—'}</span></div>`
-            })
-
-            html += '</div>'
-
-            if (studentData.submitted_at) {
-                html += `
-                    <div style="text-align:center;margin-top:15px;padding:10px;background:#d4edda;border-radius:8px;color:#155724;">
-                        ✅ تم التقديم في: ${new Date(studentData.submitted_at).toLocaleDateString('ar-EG')}
-                    </div>
-                `
-            }
-
-            document.getElementById('dataDisplay').innerHTML = html
-            document.getElementById('printDate').textContent = new Date().toLocaleDateString('ar-EG')
-            document.getElementById('yearDisplay').textContent = new Date().getFullYear()
-        }
-
-        async function generatePDF() {
-            if (!studentData) return
-
-            const btn = document.querySelector('.btn-group-actions .btn-success')
-            const originalText = btn ? btn.textContent : ''
-            if (btn) {
-                btn.disabled = true
-                btn.textContent = '⏳ جاري التجهيز...'
-            }
-
-            try {
-                const previewEl = document.getElementById('previewCard')
-                const canvas = await html2canvas(previewEl, {
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor: '#ffffff',
-                    logging: false
-                })
-
-                const imgData = canvas.toDataURL('image/png')
-                const { jsPDF } = window.jspdf
-                const doc = new jsPDF('p', 'mm', 'a4')
-                const pageWidth = doc.internal.pageSize.getWidth()
-                const pageHeight = doc.internal.pageSize.getHeight()
-
-                const margin = 10
-                const imgWidth = pageWidth - margin * 2
-                const imgHeight = (canvas.height * imgWidth) / canvas.width
-
-                let heightLeft = imgHeight
-                let position = margin
-
-                doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight)
-                heightLeft -= (pageHeight - margin * 2)
-
-                while (heightLeft > 0) {
-                    position = heightLeft - imgHeight + margin
-                    doc.addPage()
-                    doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight)
-                    heightLeft -= (pageHeight - margin * 2)
-                }
-
-                doc.save(`تسجيل_رغبات_${studentData.full_name}_${new Date().toISOString().split('T')[0]}.pdf`)
-
-            } catch (err) {
-                console.error('Error:', err)
-                alert('حدث خطأ أثناء إنشاء PDF')
-            } finally {
-                if (btn) {
-                    btn.disabled = false
-                    btn.textContent = originalText
-                }
-            }
-        }
-
-        loadData()
-    </script>
+loadData();
+</script>
 </body>
 </html>
