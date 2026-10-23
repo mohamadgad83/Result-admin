@@ -1,3 +1,14 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دخول الأدمن - مدرسة دشنا الثانوية</title>
+
+<!-- ✅ المكتبة الأساسية من CDN (لازم تكون الأول) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="style.css">
+</head>
 <body>
 <div class="container">
   <div class="card login-card">
@@ -6,49 +17,68 @@
       <h1>لوحة التحكم</h1>
       <p class="subtitle">مدرسة دشنا الثانوية</p>
     </div>
+
     <form id="loginForm" class="form">
       <div class="form-group">
         <label>البريد الإلكتروني</label>
-        <input type="email" id="email" class="form-control" required dir="ltr">
+        <input type="email" id="email" class="form-control" placeholder="admin@school.com" required dir="ltr">
       </div>
+
       <div class="form-group">
         <label>كلمة المرور</label>
-        <input type="password" id="password" class="form-control" required dir="ltr">
+        <input type="password" id="password" class="form-control" placeholder="********" required dir="ltr">
       </div>
+
       <div id="errorMsg" class="error-msg" style="display:none;"></div>
+
       <button type="submit" class="btn-primary" id="btn">🚪 دخول</button>
     </form>
-    <div class="text-center mt-3"><a href="index.html" class="link">العودة للصفحة الرئيسية</a></div>
+
+    <div class="text-center mt-3">
+      <a href="index.html" class="link">العودة للصفحة الرئيسية</a>
+    </div>
   </div>
 </div>
+
+<!-- ✅ ملفات المكتبة (بعد CDN) -->
 <script src="lib/supabase.js"></script>
+
+<!-- ✅ كود الصفحة -->
 <script>
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const err = document.getElementById('errorMsg');
   const btn = document.getElementById('btn');
   err.style.display = 'none';
-  btn.disabled = true; btn.textContent = 'جاري التحقق...';
+  btn.disabled = true;
+  btn.textContent = 'جاري التحقق...';
 
-  const { data, error } = await SB.auth.signInWithPassword({
-    email: document.getElementById('email').value.trim(),
-    password: document.getElementById('password').value
-  });
-  if (error || !data.user) {
-    err.textContent = 'البريد أو كلمة المرور غير صحيحة';
+  try {
+    const { data, error } = await SB.auth.signInWithPassword({
+      email: document.getElementById('email').value.trim(),
+      password: document.getElementById('password').value
+    });
+
+    if (error || !data.user) throw new Error('البريد أو كلمة المرور غير صحيحة');
+
+    const { data: admin, error: adminErr } = await SB.from('admins')
+      .select('id')
+      .eq('id', data.user.id)
+      .maybeSingle();
+
+    if (adminErr || !admin) {
+      await SB.auth.signOut();
+      throw new Error('ليس لديك صلاحية الدخول كأدمن');
+    }
+
+    window.location.href = 'admin-dashboard.html';
+  } catch (err2) {
+    err.textContent = '❌ ' + (err2.message || 'حدث خطأ أثناء الدخول');
     err.style.display = 'block';
-    btn.disabled = false; btn.textContent = '🚪 دخول';
-    return;
+    btn.disabled = false;
+    btn.textContent = '🚪 دخول';
   }
-  const { data: admin } = await SB.from('admins').select('id').eq('id', data.user.id).maybeSingle();
-  if (!admin) {
-    await SB.auth.signOut();
-    err.textContent = 'ليس لديك صلاحية الدخول كأدمن';
-    err.style.display = 'block';
-    btn.disabled = false; btn.textContent = '🚪 دخول';
-    return;
-  }
-  location.href = 'admin-dashboard.html';
 });
 </script>
 </body>
+</html>
