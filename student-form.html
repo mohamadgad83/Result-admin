@@ -126,6 +126,27 @@
   color: #555; border-color: #d0d0d0;
 }
 
+/* أزرار الاختيار (للتشعيب/التخصص) */
+.btn-option:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+/* رسالة القفل */
+.locked-fields-header {
+  display: none;
+  margin: 24px 0 12px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  color: #fff;
+  border-radius: 12px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 16px;
+  box-shadow: 0 4px 12px rgba(30,60,114,.2);
+}
+.locked-fields-header.show { display: block; }
+
 /* ===== التشعيب والاختيار ===== */
 .selected-stream-display {
   background: linear-gradient(135deg, #d4edda, #c3e6cb);
@@ -360,6 +381,11 @@
           </div>
         </div>
 
+        <!-- عنوان البيانات المسجلة (يظهر فقط عند القفل) -->
+        <div class="locked-fields-header" id="lockedFieldsHeader">
+          📋 بياناتك المسجلة (للقراءة فقط)
+        </div>
+
         <!-- الحقول الديناميكية (مقسمة لأقسام) -->
         <div id="dynamicFields"></div>
 
@@ -449,6 +475,7 @@ async function loadData() {
     (r || []).forEach(x => { dynamicValues[x.field_id] = x.value; });
     isLocked = s.is_locked && s.submitted_at;
 
+    // عرض بيانات الطالب الأساسية
     document.getElementById('studentInfo').innerHTML = `
       <div class="grid-3">
         <div><span class="label">الاسم</span><span class="value">${esc(s.full_name)}</span></div>
@@ -457,27 +484,49 @@ async function loadData() {
       </div>`;
     document.getElementById('declarationStudentName').textContent = s.full_name;
 
-    if (isLocked) {
-      document.getElementById('saveBtn').style.display = 'none';
-      document.getElementById('pdfBtn').style.display = 'block';
-      document.getElementById('formContent').classList.add('form-disabled');
-      document.getElementById('progressWrap').style.display = 'none';
-      showLocked(s);
-      return;
-    }
-
-    // تعبئة التشعيب المحفوظ
+    // ============ استعادة الاختيارات (يعمل مع القفل والفتح) ============
     if (s.stream) {
       selectStream(s.stream, true);
-      if (s.stream === 'ثانوي' && s.specialization) selectSpecialization(s.specialization, true);
+      if (s.stream === 'ثانوي' && s.specialization) {
+        selectSpecialization(s.specialization, true);
+      }
       if (s.stream === 'بكالوريا' && s.track) {
         document.getElementById('track').value = s.track;
         updateSubjects();
-        if (s.optional_subject) setTimeout(() => document.getElementById('optionalSubject').value = s.optional_subject, 100);
+        if (s.optional_subject) {
+          setTimeout(() => {
+            document.getElementById('optionalSubject').value = s.optional_subject;
+          }, 100);
+        }
       }
     }
 
+    // ============ رسم الحقول (يعمل في الحالتين) ============
     renderFields();
+
+    // ============ معالجة حالة القفل ============
+    if (isLocked) {
+      // إخفاء أزرار التعديل
+      document.getElementById('saveBtn').style.display = 'none';
+      document.getElementById('pdfBtn').style.display = 'block';
+      document.getElementById('progressWrap').style.display = 'none';
+
+      // إخفاء الإقرار وتحذير الحفظ (لأنه تم التقديم)
+      document.getElementById('declarationSection').style.display = 'none';
+      document.getElementById('warningConfirmBox').style.display = 'none';
+
+      // إظهار عنوان "بياناتك المسجلة"
+      document.getElementById('lockedFieldsHeader').classList.add('show');
+
+      // تعطيل كل عناصر الاختيار
+      disableAllInputs();
+
+      // عرض رسالة القفل
+      await showLocked(s);
+      return;
+    }
+
+    // ============ حالة عدم القفل ============
     setupProgress();
   } catch (err) {
     console.error(err);
@@ -485,16 +534,34 @@ async function loadData() {
   }
 }
 
+// ============ تعطيل كل عناصر الاختيار ============
+function disableAllInputs() {
+  // تعطيل أزرار التشعيب والتخصص
+  document.querySelectorAll('.btn-option').forEach(b => {
+    b.disabled = true;
+    b.style.cursor = 'not-allowed';
+  });
+  // تعطيل قوائم الاختيار
+  ['track', 'optionalSubject'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = true;
+  });
+}
+
 // ============ الاختيارات ============
 function selectStream(v, silent = false) {
-  if (isLocked) return;
+  // منع المستخدم من التغيير عند القفل، لكن نسمح بالاستعادة البرمجية
+  if (isLocked && !silent) return;
+
   document.getElementById('stream').value = v;
   document.querySelectorAll('.btn-option[data-value="ثانوي"], .btn-option[data-value="بكالوريا"]')
     .forEach(el => el.classList.toggle('active', el.dataset.value === v));
+
   document.getElementById('selectedStreamDisplay').classList.add('show');
   document.getElementById('selectedStreamText').textContent = v === 'ثانوي' ? '🎓 ثانوي' : '📚 بكالوريا';
   document.getElementById('specializationGroup').style.display = v === 'ثانوي' ? 'block' : 'none';
   document.getElementById('trackGroup').style.display = v === 'بكالوريا' ? 'block' : 'none';
+
   if (v === 'بكالوريا' && !silent) {
     document.getElementById('track').value = '';
     document.getElementById('optionalSubject').innerHTML = '<option value="">اختر المادة</option>';
@@ -502,7 +569,8 @@ function selectStream(v, silent = false) {
 }
 
 function selectSpecialization(v, silent = false) {
-  if (isLocked) return;
+  if (isLocked && !silent) return;
+
   document.getElementById('specialization').value = v;
   document.querySelectorAll('.btn-option[data-value="علمي"], .btn-option[data-value="أدبي"]')
     .forEach(el => el.classList.toggle('active', el.dataset.value === v));
@@ -512,7 +580,9 @@ function updateSubjects() {
   const track = document.getElementById('track').value;
   const sel = document.getElementById('optionalSubject');
   sel.innerHTML = '<option value="">اختر المادة</option>';
-  (tracks[track] || []).forEach(s => sel.innerHTML += `<option value="${esc(s)}">${esc(s)}</option>`);
+  (tracks[track] || []).forEach(s => {
+    sel.innerHTML += `<option value="${esc(s)}">${esc(s)}</option>`;
+  });
 }
 
 function approveDeclaration() {
@@ -529,7 +599,7 @@ function renderFields() {
   const c = document.getElementById('dynamicFields');
   if (!fieldsData.length) { c.innerHTML = ''; return; }
 
-  // تجميع حسب القسم (باستخدام section_name و section_id)
+  // تجميع حسب القسم
   const groups = {};
   fieldsData.forEach(f => {
     const key = f.section_id || '__none__';
@@ -537,7 +607,7 @@ function renderFields() {
     groups[key].fields.push(f);
   });
 
-  // ترتيب الأقسام حسب section_order
+  // ترتيب الأقسام
   const sortedKeys = Object.keys(groups).sort((a, b) => {
     if (a === '__none__') return -1;
     if (b === '__none__') return 1;
@@ -549,7 +619,6 @@ function renderFields() {
     const g = groups[key];
     const noSection = key === '__none__';
     const icon = noSection ? '' : pickSectionIcon(g.name);
-    const requiredCount = g.fields.filter(f => f.is_required && !f.is_readonly).length;
     const doneCount = g.fields.filter(f => (dynamicValues[f.id] || '').trim() !== '').length;
 
     if (!noSection) {
@@ -584,10 +653,12 @@ function pickSectionIcon(name) {
 
 function renderField(f) {
   const val = dynamicValues[f.id] || '';
-  const ro = !!f.is_readonly;
+  const isFieldReadonly = !!f.is_readonly;
+  // معطل إذا كان الحقل للقراءة فقط أو الاستمارة مقفلة
+  const ro = isFieldReadonly || isLocked;
   const disabledAttr = ro ? 'disabled' : '';
   const onChange = ro ? '' : `onchange="onFieldChange('${f.id}', this.value)"`;
-  const badge = ro ? ' <span class="admin-badge">🔒 من الإدارة</span>' : '';
+  const badge = isFieldReadonly ? ' <span class="admin-badge">🔒 من الإدارة</span>' : '';
   const star = f.is_required && !ro ? ' <span style="color:#dc3545;">*</span>' : '';
 
   const label = `<label>${esc(f.name)}${star}${badge}</label>`;
@@ -629,7 +700,6 @@ function updateProgress() {
   document.getElementById('progressPct').textContent = pct + '%';
   document.getElementById('progressFill').style.width = pct + '%';
 
-  // رقائق الأقسام
   const groups = {};
   editable.forEach(f => {
     const key = f.section_id || '__none__';
@@ -645,6 +715,8 @@ function updateProgress() {
 
 // ============ الحفظ ============
 function showWarning() {
+  if (isLocked) return;
+
   if (!isDeclarationApproved) {
     Toast.show('يجب الموافقة على الإقرار أولاً', 'error');
     document.getElementById('declarationSection').scrollIntoView({ behavior: 'smooth' });
@@ -675,10 +747,11 @@ function showWarning() {
   document.getElementById('warningConfirmBox').classList.add('show');
   document.getElementById('warningConfirmBox').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
+
 function cancelWarning() { document.getElementById('warningConfirmBox').classList.remove('show'); }
 
 async function confirmSave() {
-  if (isSaving) return;
+  if (isSaving || isLocked) return;
   isSaving = true;
 
   const stream = document.getElementById('stream').value;
@@ -742,6 +815,7 @@ function showRequestModal() {
   document.getElementById('requestReason').value = '';
   document.getElementById('requestError').style.display = 'none';
 }
+
 function closeRequestModal() { document.getElementById('requestModal').classList.remove('show'); }
 
 async function submitRequest() {
