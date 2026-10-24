@@ -132,10 +132,22 @@ const SCHEMAS = {
       { key: 'name', label: 'الاسم', aliases: ['اسم الحقل','name'], required: true, type: 'text' },
       { key: 'field_key', label: 'المفتاح', aliases: ['key','field_key'], required: true, type: 'text' },
       { key: 'type', label: 'النوع (text/select)', aliases: ['النوع','type'], required: true, type: 'text', default: 'text' },
+      { key: 'section_name', label: 'اسم القسم', aliases: ['القسم','section'], type: 'text' },
       { key: 'options', label: 'الخيارات (فاصلة)', aliases: ['الخيارات','options'], type: 'array' },
       { key: 'is_required', label: 'مطلوب (نعم/لا)', aliases: ['مطلوب','required'], type: 'boolean', default: false },
-      { key: 'visible_for_student', label: 'ظاهر للطالب (نعم/لا)', aliases: ['ظاهر','visible'], type: 'boolean', default: true },
-      { key: 'display_order', label: 'الترتيب', aliases: ['order'], type: 'number', default: 0 }
+      { key: 'is_readonly', label: 'للقراءة فقط (نعم/لا)', aliases: ['للقراءة فقط','readonly'], type: 'boolean', default: false },
+      { key: 'visible_for_student', label: 'ظاهر (نعم/لا)', aliases: ['ظاهر','visible'], type: 'boolean', default: true },
+      { key: 'display_order', label: 'ترتيب الحقل', aliases: ['الترتيب','order'], type: 'number', default: 0 }
+    ]
+  },
+  sections: {
+    label: 'الأقسام',
+    table: 'form_sections',
+    match: 'name',
+    columns: [
+      { key: 'name', label: 'اسم القسم', aliases: ['القسم','name'], required: true, type: 'text' },
+      { key: 'display_order', label: 'الترتيب', aliases: ['order'], type: 'number', default: 0 },
+      { key: 'is_active', label: 'مفعّل (نعم/لا)', aliases: ['active'], type: 'boolean', default: true }
     ]
   }
 };
@@ -262,56 +274,155 @@ async function doImport() {
 
   let success = 0, failed = 0, skipped = 0;
   const errors = [];
-  const converted = [];
+  let converted = [];
 
+  // ==========================================================
+  // 1) تحويل الصفوف حسب الـ Schema
+  // ==========================================================
   for (let i = 0; i < parsedRows.length; i++) {
     try {
-      converted.push({ idx: i+2, data: convertRow(parsedRows[i], sc) });
+      converted.push({ idx: i + 2, data: convertRow(parsedRows[i], sc) });
     } catch (err) {
       failed++;
-      errors.push(`صف ${i+2}: ${err.message}`);
+      errors.push(`صف ${i + 2}: ${err.message}`);
     }
   }
 
+  // ==========================================================
+  // 2) معالجة خاصة لجدول "الحقول الديناميكية":
+  //    تحويل section_name → section_id
+  //    وإنشاء الأقسام الجديدة تلقائياً
+  // ==========================================================
+  if (currentSchema === 'fields') {
+    try {
+      // جلب الأقسام الموجودة حالياً
+      const { data: existingSecs, error: fetchErr } = await SB
+        .from('form_sections')
+        .select('id, name');
+      if (fetchErr) throw new Error('فشل جلب الأقسام: ' + fetchErr.message);
+
+      // خريطة: اسم القسم → ID
+      const secMap = Object.fromEntries(
+        (existingSecs || []).map(s => [s.name.trim(), s.id])
+      );
+
+      // جمع أسماء الأقسام الجديدة المطلوب إنشاؤها
+      const newSectionsSet = new Set();
+      converted.forEach(c => {
+        const name = (c.data.section_name || '').trim();
+        if (name && !secMap[name]) newSectionsSet.add(name);
+      });
+
+      // إنشاء الأقسام الجديدة (إن وجدت)
+      if (newSectionsSet.size > 0) {
+        const startOrder = existingSecs?.length || 0;
+        const toInsert = [...newSectionsSet].map((name, i) => ({
+          name: name,
+          display_order: startOrder + i,
+          is_active: true
+        }));
+
+        const { data: created, error: createErr } = await SB
+          .from('form_sections')
+          .insert(toInsert)
+          .select();
+
+        if (createErr) {
+          throw new Error('فشل إنشاء أقسام جديدة: ' + createErr.message);
+        }
+
+        // تحديث الخريطة بالأقسام المُنشأة
+        (created || []).forEach(s => { secMap[s.name.trim()] = s.id; });
+      }
+
+      // تحويل section_name → section_id في كل صف
+      converted = converted.map(c => {
+        const name = (c.data.section_name || '').trim();
+        delete c.data.section_name; // حذف الحقل النصي (غير موجود في الجدول)
+
+        if (name && secMap[name]) {
+          c.data.section_id = secMap[name];
+        } else {
+          c.data.section_id = null; // بدون قسم
+        }
+        return c;
+      });
+
+    } catch (err) {
+      // فشل التحضير - إيقاف الاستيراد
+      btn.disabled = false;
+      progress.classList.remove('show');
+      return Toast.show('❌ ' + err.message, 'error', 6000);
+    }
+  }
+
+  // ==========================================================
+  // 3) الاستيراد على دفعات (chunks of 100)
+  // ==========================================================
   const CHUNK = 100;
   for (let i = 0; i < converted.length; i += CHUNK) {
     const chunk = converted.slice(i, i + CHUNK);
     try {
       if (mode === 'upsert') {
-        const { error } = await SB.from(sc.table).upsert(chunk.map(c => c.data), { onConflict: sc.match });
+        const { error } = await SB
+          .from(sc.table)
+          .upsert(chunk.map(c => c.data), { onConflict: sc.match });
         if (error) throw error;
         success += chunk.length;
       } else {
+        // إضافة فقط - صف صف لاكتشاف المكرر
         for (const c of chunk) {
           const { error } = await SB.from(sc.table).insert(c.data);
-          if (!error) success++;
-          else if (error.code === '23505') skipped++;
-          else { failed++; errors.push(`صف ${c.idx}: ${error.message}`); }
+          if (!error) {
+            success++;
+          } else if (error.code === '23505') {
+            skipped++; // مكرر
+          } else {
+            failed++;
+            errors.push(`صف ${c.idx}: ${error.message}`);
+          }
         }
       }
     } catch (err) {
       failed += chunk.length;
-      errors.push(`دفعة ${Math.floor(i/CHUNK)+1}: ${err.message}`);
+      errors.push(`دفعة ${Math.floor(i / CHUNK) + 1}: ${err.message}`);
     }
-    bar.style.width = Math.min(100, Math.round((i+CHUNK)/converted.length*100)) + '%';
+    bar.style.width = Math.min(100, Math.round((i + CHUNK) / converted.length * 100)) + '%';
   }
 
-  await SB.from('admin_logs').insert({
-    admin_id: auth0.user.id, admin_email: auth0.user.email,
-    action: `استيراد ${sc.label}`,
-    details: `نجح: ${success}، فشل: ${failed}، تخطي: ${skipped}`
-  });
+  // ==========================================================
+  // 4) تسجيل النشاط
+  // ==========================================================
+  try {
+    await SB.from('admin_logs').insert({
+      admin_id: auth0.user.id,
+      admin_email: auth0.user.email,
+      action: `استيراد ${sc.label}`,
+      details: `نجح: ${success}، فشل: ${failed}، تخطي: ${skipped}`
+    });
+  } catch (e) {
+    console.warn('تعذر تسجيل النشاط:', e);
+  }
 
+  // ==========================================================
+  // 5) عرض النتائج
+  // ==========================================================
   const res = document.getElementById('result');
-  res.className = `result show ${failed===0?'success':success>0?'partial':'error'}`;
+  res.className = `result show ${failed === 0 ? 'success' : success > 0 ? 'partial' : 'error'}`;
   res.innerHTML = `
     <div class="stats-grid">
       <div class="stat-box"><div class="num" style="color:#28a745;">${success}</div><div class="lbl">✅ نجح</div></div>
       <div class="stat-box"><div class="num" style="color:#dc3545;">${failed}</div><div class="lbl">❌ فشل</div></div>
       <div class="stat-box"><div class="num" style="color:#ffc107;">${skipped}</div><div class="lbl">⏭️ تخطي</div></div>
     </div>
-    ${errors.length > 0 ? `<details style="margin-top:10px;"><summary style="cursor:pointer;font-weight:600;">الأخطاء (${errors.length})</summary>
-      <ul style="max-height:200px;overflow:auto;margin-top:8px;font-size:13px;">${errors.slice(0,50).map(e=>`<li>${esc(e)}</li>`).join('')}</ul></details>` : ''}
+    ${errors.length > 0 ? `
+      <details style="margin-top:10px;">
+        <summary style="cursor:pointer;font-weight:600;">الأخطاء (${errors.length})</summary>
+        <ul style="max-height:200px;overflow:auto;margin-top:8px;font-size:13px;">
+          ${errors.slice(0, 50).map(e => `<li>${esc(e)}</li>`).join('')}
+        </ul>
+      </details>
+    ` : ''}
   `;
 
   btn.disabled = false;
