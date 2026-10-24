@@ -19,8 +19,7 @@
 <style>
 :root{
   --navy:#1e3c72;--navy-2:#2a5298;--navy-dark:#0F2C56;
-  --gold:#ffc107;--gold-2:#FFD54F;--cyan:#17a2b8;
-  --green:#28a745;--red:#dc3545;
+  --gold:#ffc107;--cyan:#17a2b8;--green:#28a745;--red:#dc3545;
   --ink:#0F172A;--muted:#64748B;--line:#E2E8F0;--bg:#F4F7FB;
   --radius:18px;--radius-lg:24px;
   --shadow-sm:0 2px 8px rgba(30,60,114,.06);
@@ -33,15 +32,7 @@ body{font-family:'Cairo',system-ui,sans-serif;background:var(--bg);color:var(--i
 a{text-decoration:none;color:inherit}
 button{font-family:inherit;cursor:pointer}
 .container-inner{width:min(1200px,92%);margin:0 auto}
-
-body::before{
-  content:"";position:fixed;inset:0;z-index:-1;
-  background:
-    radial-gradient(ellipse 60% 50% at 90% 10%, rgba(42,82,152,.10), transparent 55%),
-    radial-gradient(ellipse 50% 50% at 10% 90%, rgba(255,193,7,.08), transparent 55%),
-    var(--bg);
-  pointer-events:none;
-}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(ellipse 60% 50% at 90% 10%, rgba(42,82,152,.10), transparent 55%),radial-gradient(ellipse 50% 50% at 10% 90%, rgba(255,193,7,.08), transparent 55%),var(--bg);pointer-events:none}
 
 .top-nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--line);padding:12px 0}
 .top-nav .container-inner{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
@@ -74,10 +65,7 @@ body::before{
 
 .form-group{margin-bottom:16px;position:relative}
 .form-group label{display:block;font-size:.78rem;font-weight:700;color:var(--navy);margin-bottom:6px;display:flex;align-items:center;gap:6px}
-.form-group label .badge{
-  font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;
-  background:rgba(23,162,184,.12);color:var(--cyan);
-}
+.form-group label .badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(23,162,184,.12);color:var(--cyan)}
 .input-wrap{position:relative}
 .input-wrap .icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none;opacity:.5}
 .input-wrap input{width:100%;padding:13px 44px 13px 44px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:15px;font-weight:500;background:#F8FAFC;color:var(--ink);transition:all .2s}
@@ -87,11 +75,7 @@ body::before{
 .input-wrap .toggle-pw.visible{display:block}
 .input-wrap .toggle-pw:hover{opacity:1}
 
-.hint-text{
-  font-size:11px;color:var(--muted);margin-top:6px;
-  display:flex;align-items:flex-start;gap:4px;line-height:1.6;
-}
-.hint-text .dot-sep{color:var(--cyan);font-weight:900}
+.hint-text{font-size:11px;color:var(--muted);margin-top:6px;display:flex;align-items:flex-start;gap:4px;line-height:1.6}
 
 .btn-login{width:100%;padding:14px;margin-top:6px;background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .25s;box-shadow:0 10px 24px rgba(30,60,114,.28)}
 .btn-login:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 14px 32px rgba(30,60,114,.35)}
@@ -105,7 +89,6 @@ body::before{
 .auth-warning{margin-top:16px;padding:12px 14px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;font-size:.78rem;color:#92400E;line-height:1.7}
 .auth-warning strong{color:var(--red)}
 
-/* Dashboard */
 .dash-header{text-align:center;margin-bottom:16px;padding-bottom:16px;border-bottom:2px dashed var(--line)}
 .avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#f59e0b);color:#fff;font-size:26px;font-weight:900;display:grid;place-items:center;margin:0 auto 12px;box-shadow:0 10px 24px rgba(255,193,7,.35);letter-spacing:1px}
 .dash-header h2{font-size:1.15rem;font-weight:900;color:var(--navy);margin-bottom:4px}
@@ -115,19 +98,21 @@ body::before{
 .status-pill.status-open{background:#d4edda;color:#155724;border:1px solid #28a745}
 .status-pill.status-locked{background:#cce5ff;color:#004085;border:1px solid #17a2b8}
 
-/* Login preference row */
-.pref-row{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:10px 14px;background:#F0F9FF;border:1px solid #BAE6FD;
-  border-radius:10px;margin-bottom:14px;font-size:12px;
+.login-method-box{
+  padding:12px 16px;border-radius:12px;margin-bottom:14px;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  font-size:12px;font-weight:700;
 }
-.pref-row.has-pw{background:#ECFDF5;border-color:#A7F3D0}
-.pref-row .pref-text{font-weight:700;color:var(--navy);display:flex;align-items:center;gap:6px}
-.pref-row button{
-  background:none;border:none;color:var(--cyan);font-size:12px;font-weight:800;
-  cursor:pointer;padding:4px 8px;border-radius:6px;
+.login-method-box.method-national{background:#EFF6FF;border:1px solid #BFDBFE;color:#1E40AF}
+.login-method-box.method-password{background:#ECFDF5;border:1px solid #A7F3D0;color:#047857}
+.login-method-box .info-text{flex:1;line-height:1.5}
+.login-method-box .small-note{font-size:10px;font-weight:500;opacity:.8;display:block;margin-top:2px}
+.login-method-box button{
+  padding:6px 12px;border:none;border-radius:8px;font-size:11px;font-weight:800;
+  cursor:pointer;background:rgba(255,255,255,.7);color:inherit;white-space:nowrap;
+  transition:all .2s;
 }
-.pref-row button:hover{background:rgba(23,162,184,.1)}
+.login-method-box button:hover{background:#fff}
 
 .dash-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
 .dash-info-item{background:#F8FAFC;border:1px solid var(--line);padding:10px 12px;border-radius:10px}
@@ -145,7 +130,6 @@ body::before{
 .dash-refresh{text-align:center;margin-top:12px;font-size:11px;color:var(--muted);cursor:pointer}
 .dash-refresh:hover{color:var(--navy);text-decoration:underline}
 
-/* Info Side */
 .info-side{display:flex;flex-direction:column;gap:24px}
 .principal-card{background:#fff;border-radius:var(--radius-lg);padding:28px;box-shadow:var(--shadow);border:1px solid var(--line);position:relative;overflow:hidden}
 .principal-card::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--navy),var(--gold),var(--navy))}
@@ -182,75 +166,27 @@ body::before{
 .footer .principal{font-size:.78rem;color:rgba(255,255,255,.65)}
 .footer .principal .nm{color:#fff;font-weight:800}
 
-/* ===== Modal ===== */
-.modal-overlay{
-  display:none;position:fixed;inset:0;z-index:9999;
-  background:rgba(0,0,0,.55);backdrop-filter:blur(4px);
-  align-items:center;justify-content:center;padding:20px;
-}
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px}
 .modal-overlay.show{display:flex;animation:fadeIn .2s}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.modal-card{
-  background:#fff;border-radius:20px;padding:30px 26px;
-  max-width:480px;width:100%;position:relative;
-  box-shadow:0 20px 60px rgba(0,0,0,.3);
-  animation:slideUp .3s;
-  max-height:90vh;overflow-y:auto;
-}
+.modal-card{background:#fff;border-radius:20px;padding:30px 26px;max-width:460px;width:100%;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:slideUp .3s;max-height:90vh;overflow-y:auto}
 @keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
-.modal-card .close-x{
-  position:absolute;top:14px;left:16px;
-  background:none;border:none;font-size:22px;color:#999;
-  cursor:pointer;line-height:1;padding:4px;
-}
+.modal-card .close-x{position:absolute;top:14px;left:16px;background:none;border:none;font-size:22px;color:#999;cursor:pointer;line-height:1;padding:4px}
 .modal-card .close-x:hover{color:var(--red)}
 .modal-header{text-align:center;margin-bottom:18px}
-.modal-icon{
-  width:60px;height:60px;border-radius:16px;
-  background:linear-gradient(135deg,#FFD54F,var(--gold));
-  display:grid;place-items:center;font-size:28px;
-  margin:0 auto 12px;box-shadow:0 10px 28px rgba(255,193,7,.4);
-}
+.modal-icon{width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,#FFD54F,var(--gold));display:grid;place-items:center;font-size:28px;margin:0 auto 12px;box-shadow:0 10px 28px rgba(255,193,7,.4)}
 .modal-card h3{font-size:1.15rem;font-weight:900;color:var(--navy);margin-bottom:4px;text-align:center}
 .modal-card p{font-size:.85rem;color:var(--muted);text-align:center;margin-bottom:16px;line-height:1.7}
 
-/* Radio Cards */
-.radio-cards{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
-.radio-card{
-  display:flex;align-items:center;gap:12px;
-  padding:14px 16px;border:2px solid var(--line);
-  border-radius:12px;cursor:pointer;transition:all .2s;
-  background:#fff;
+.warn-block{
+  padding:14px 16px;border-radius:12px;
+  background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;
+  font-size:13px;line-height:1.7;margin-bottom:16px;
 }
-.radio-card:hover{border-color:var(--navy-2);background:#F8FAFC}
-.radio-card.selected{border-color:var(--navy);background:#F0F7FF;box-shadow:0 4px 12px rgba(30,60,114,.1)}
-.radio-card input{display:none}
-.radio-card .radio-circle{
-  width:20px;height:20px;border-radius:50%;
-  border:2px solid var(--line);flex-shrink:0;
-  display:grid;place-items:center;
-  transition:all .2s;
-}
-.radio-card.selected .radio-circle{
-  border-color:var(--navy);background:var(--navy);
-}
-.radio-card.selected .radio-circle::after{
-  content:"";width:8px;height:8px;border-radius:50%;background:#fff;
-}
-.radio-card .radio-info{flex:1}
-.radio-card .radio-title{font-size:14px;font-weight:800;color:var(--navy);margin-bottom:2px}
-.radio-card .radio-desc{font-size:12px;color:var(--muted)}
-.radio-card .radio-icon{font-size:22px}
+.warn-block strong{display:block;margin-bottom:4px}
 
-.pw-section{
-  display:none;
-  background:#F0F7FF;border:1px solid #BAE6FD;border-radius:12px;
-  padding:16px;margin-bottom:16px;
-}
-.pw-section.show{display:block}
-.pw-section .form-group{margin-bottom:12px}
-.pw-section .form-group:last-child{margin-bottom:0}
-
+.modal-card .form-group{margin-bottom:12px}
 .modal-card .error-msg{margin:8px 0;font-size:.8rem}
 .modal-actions{display:flex;gap:8px;margin-top:16px}
 .modal-actions button{flex:1;padding:12px;border:none;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;transition:all .2s}
@@ -314,7 +250,7 @@ body::before{
           <div class="auth-header">
             <div class="auth-icon">🔐</div>
             <h2>تسجيل الدخول</h2>
-            <p>ادخل بياناتك للوصول إلى حسابك</p>
+            <p id="loginSubtext">ادخل بياناتك للوصول إلى حسابك</p>
           </div>
 
           <form id="loginForm" novalidate>
@@ -328,22 +264,21 @@ body::before{
 
             <div class="form-group">
               <label for="credential">
-                <span id="credLabel">الرقم القومي أو كلمة السر</span>
-                <span class="badge" id="credBadge" style="display:none;"></span>
+                <span id="credLabel">الرقم القومي</span>
+                <span class="badge" id="credBadge" style="display:none;">مطلوب</span>
               </label>
               <div class="input-wrap">
                 <span class="icon">🔑</span>
-                <input type="text" id="credential" placeholder="14 رقم أو كلمة السر" required dir="ltr" autocomplete="off">
+                <input type="text" id="credential" placeholder="14 رقم" required dir="ltr" autocomplete="off">
                 <button type="button" class="toggle-pw" id="credToggle" onclick="toggleCredential()">👁️</button>
               </div>
-              <div class="hint-text" id="credHint">
+              <div class="hint-text">
                 <span>💡</span>
-                <span id="credHintText">أدخل رقمك القومي (14 رقم) أو كلمة السر إن كنت قد أنشأتها</span>
+                <span id="credHintText">أدخل رقمك القومي (14 رقم)</span>
               </div>
             </div>
 
             <div id="errorMsg" class="error-msg"></div>
-            <div id="infoMsg" class="info-msg"></div>
 
             <button type="submit" class="btn-login" id="loginBtn">
               <span>🚪</span> دخول إلى النظام
@@ -367,10 +302,9 @@ body::before{
             <span class="status-pill status-open" id="dashStatus">—</span>
           </div>
 
-          <!-- Login Preference Row -->
-          <div class="pref-row" id="prefRow">
-            <span class="pref-text" id="prefText">🔐 طريقة الدخول: —</span>
-            <button id="prefManageBtn" onclick="openPreferenceModal()">تغيير</button>
+          <!-- Login Method Box -->
+          <div class="login-method-box" id="loginMethodBox">
+            <!-- dynamic content -->
           </div>
 
           <div class="dash-info-grid">
@@ -415,7 +349,7 @@ body::before{
         <div class="feature-card">
           <div class="icon">🔑</div>
           <h4>دخول آمن</h4>
-          <p>أنشئ كلمة سر خاصة لحسابك</p>
+          <p>كلمة سر خاصة أو الرقم القومي</p>
         </div>
         <div class="feature-card">
           <div class="icon">📄</div>
@@ -435,12 +369,12 @@ body::before{
           <div class="step-item">
             <div class="step-num">1</div>
             <h5>ادخل بياناتك</h5>
-            <p>كود + رقم قومي أو كلمة سر</p>
+            <p>كود + رقم قومي</p>
           </div>
           <div class="step-item">
             <div class="step-num">2</div>
-            <h5>اختر طريقة دخولك</h5>
-            <p>رقم قومي أو كلمة سر</p>
+            <h5>أنشئ كلمة سر</h5>
+            <p>اختيارية لدخول أسرع</p>
           </div>
           <div class="step-item">
             <div class="step-num">3</div>
@@ -469,61 +403,45 @@ body::before{
   </div>
 </footer>
 
-<!-- ===== Modal: Login Preference ===== -->
-<div class="modal-overlay" id="prefModal">
+<!-- ===== Modal: Set Password ===== -->
+<div class="modal-overlay" id="passwordModal">
   <div class="modal-card">
-    <button class="close-x" onclick="closePreferenceModal()">×</button>
+    <button class="close-x" onclick="closePasswordModal()">×</button>
     <div class="modal-header">
-      <div class="modal-icon">⚙️</div>
-      <h3>طريقة الدخول المفضلة</h3>
-      <p>اختر الطريقة التي تفضّل استخدامها للدخول</p>
+      <div class="modal-icon">🔑</div>
+      <h3>إنشاء كلمة سر</h3>
+      <p>ستُستخدم للدخول بدلاً من الرقم القومي في المرات القادمة</p>
     </div>
 
-    <div class="radio-cards">
-      <label class="radio-card" data-method="national_id" onclick="selectPref('national_id')">
-        <span class="radio-icon">🆔</span>
-        <div class="radio-info">
-          <div class="radio-title">الرقم القومي</div>
-          <div class="radio-desc">ادخل رقمك القومي (14 رقم) — متاح دائماً</div>
-        </div>
-        <span class="radio-circle"></span>
-      </label>
-
-      <label class="radio-card" data-method="password" onclick="selectPref('password')">
-        <span class="radio-icon">🔑</span>
-        <div class="radio-info">
-          <div class="radio-title">كلمة السر</div>
-          <div class="radio-desc">أكثر خصوصية وسرعة (يتطلب إنشاء كلمة سر)</div>
-        </div>
-        <span class="radio-circle"></span>
-      </label>
+    <div class="warn-block">
+      <strong>⚠️ تنبيه مهم:</strong>
+      بمجرد إنشاء كلمة السر، لن تتمكن من الدخول بالرقم القومي مرة أخرى.
+      لو نسيت كلمة السر، يجب التواصل مع إدارة المدرسة لإعادة التعيين.
     </div>
 
-    <!-- Password Setup Section (يظهر عند اختيار كلمة سر) -->
-    <div class="pw-section" id="pwSection">
-      <div class="form-group">
-        <label for="newPassword">كلمة السر</label>
-        <div class="input-wrap">
-          <span class="icon">🔑</span>
-          <input type="password" id="newPassword" placeholder="6 أحرف على الأقل" dir="ltr" minlength="6">
-          <button type="button" class="toggle-pw visible" onclick="togglePwInput('newPassword', this)">👁️</button>
-        </div>
-      </div>
-      <div class="form-group">
-        <label for="confirmPassword">تأكيد كلمة السر</label>
-        <div class="input-wrap">
-          <span class="icon">🔑</span>
-          <input type="password" id="confirmPassword" placeholder="أعد كتابة كلمة السر" dir="ltr" minlength="6">
-          <button type="button" class="toggle-pw visible" onclick="togglePwInput('confirmPassword', this)">👁️</button>
-        </div>
+    <div class="form-group">
+      <label for="newPassword">كلمة السر</label>
+      <div class="input-wrap">
+        <span class="icon">🔑</span>
+        <input type="password" id="newPassword" placeholder="6 أحرف على الأقل" dir="ltr" minlength="6">
+        <button type="button" class="toggle-pw visible" onclick="togglePasswordField('newPassword', this)">👁️</button>
       </div>
     </div>
 
-    <div id="prefErrorMsg" class="error-msg"></div>
+    <div class="form-group">
+      <label for="confirmPassword">تأكيد كلمة السر</label>
+      <div class="input-wrap">
+        <span class="icon">🔑</span>
+        <input type="password" id="confirmPassword" placeholder="أعد كتابة كلمة السر" dir="ltr" minlength="6">
+        <button type="button" class="toggle-pw visible" onclick="togglePasswordField('confirmPassword', this)">👁️</button>
+      </div>
+    </div>
+
+    <div id="pwErrorMsg" class="error-msg"></div>
 
     <div class="modal-actions">
-      <button class="btn-primary" id="prefSaveBtn" onclick="savePreference()">💾 حفظ</button>
-      <button class="btn-skip" onclick="closePreferenceModal()">إلغاء</button>
+      <button class="btn-primary" id="pwSaveBtn" onclick="savePassword()">💾 إنشاء كلمة السر</button>
+      <button class="btn-skip" onclick="closePasswordModal()">لاحقاً</button>
     </div>
   </div>
 </div>
@@ -534,9 +452,7 @@ body::before{
 <script>
 let currentStudent = null;
 let authToken = null;
-let selectedPrefMethod = 'national_id';
 
-// ===== Init =====
 document.getElementById('yearDisplay').textContent = new Date().getFullYear();
 
 (async function init() {
@@ -550,7 +466,7 @@ document.getElementById('yearDisplay').textContent = new Date().getFullYear();
   await tryLoadDashboard();
 })();
 
-// ===== تطبيق التفضيل المحفوظ على placeholder =====
+// تطبيق التفضيل المحفوظ على placeholder (للعرض فقط)
 function applySavedPreference() {
   const savedPref = localStorage.getItem('studentPrefLogin') || 'national_id';
   updateLoginField(savedPref);
@@ -560,30 +476,24 @@ function updateLoginField(pref) {
   const label = document.getElementById('credLabel');
   const input = document.getElementById('credential');
   const hint = document.getElementById('credHintText');
-  const badge = document.getElementById('credBadge');
   const toggle = document.getElementById('credToggle');
 
   if (pref === 'password') {
     label.textContent = 'كلمة السر';
     input.placeholder = 'كلمة السر';
     input.type = 'password';
-    hint.innerHTML = 'أدخل كلمة السر التي أنشأتها سابقاً';
-    badge.textContent = 'المفضّل';
-    badge.style.display = 'inline-block';
+    hint.textContent = 'أدخل كلمة السر التي أنشأتها سابقاً';
     toggle.classList.add('visible');
     toggle.textContent = '👁️';
   } else {
     label.textContent = 'الرقم القومي';
     input.placeholder = '14 رقم';
     input.type = 'text';
-    hint.innerHTML = 'أدخل رقمك القومي (14 رقم)';
-    badge.textContent = 'المفضّل';
-    badge.style.display = 'inline-block';
+    hint.textContent = 'أدخل رقمك القومي (14 رقم)';
     toggle.classList.remove('visible');
   }
 }
 
-// ===== Dashboard =====
 async function tryLoadDashboard() {
   try {
     const { data, error } = await SB.rpc('student_get_data', { p_token: authToken });
@@ -630,7 +540,6 @@ function showDashboard(student) {
     document.getElementById('dashDOB').textContent = '—';
   }
 
-  // Status
   const isLocked = student.is_locked && student.submitted_at;
   const statusEl = document.getElementById('dashStatus');
   const actionBtn = document.getElementById('dashAction');
@@ -650,31 +559,45 @@ function showDashboard(student) {
     actionBtn.onclick = () => { location.href = 'student-form.html'; };
   }
 
-  // Preference row
-  const pref = student.preferred_login || 'national_id';
-  const hasPw = student.has_password;
-  const prefRow = document.getElementById('prefRow');
-  const prefText = document.getElementById('prefText');
+  // ===== Login Method Box =====
+  renderLoginMethodBox(student);
 
-  if (pref === 'password' && hasPw) {
-    prefRow.classList.add('has-pw');
-    prefText.innerHTML = '🔑 طريقة الدخول المفضلة: <strong>كلمة السر</strong>';
-  } else {
-    prefRow.classList.remove('has-pw');
-    prefText.innerHTML = '🆔 طريقة الدخول المفضلة: <strong>الرقم القومي</strong>' +
-      (hasPw ? '' : ' <span style="font-size:10px;color:var(--muted);">(يمكنك إنشاء كلمة سر)</span>');
-  }
+  // حفظ التفضيل في localStorage
+  localStorage.setItem('studentPrefLogin', student.login_method || 'national_id');
 
-  // Store preference in localStorage for login placeholder
-  localStorage.setItem('studentPrefLogin', pref === 'password' && hasPw ? 'password' : 'national_id');
-
-  // Logout
   document.getElementById('dashLogout').onclick = () => {
     if (confirm('هل أنت متأكد من الخروج؟')) {
       clearSession();
       location.reload();
     }
   };
+}
+
+function renderLoginMethodBox(student) {
+  const box = document.getElementById('loginMethodBox');
+  const method = student.login_method || 'national_id';
+  const hasPw = student.has_password;
+
+  if (method === 'password' && hasPw) {
+    // ===== الحالة: يملك كلمة سر =====
+    box.className = 'login-method-box method-password';
+    box.innerHTML = `
+      <div class="info-text">
+        🔑 <strong>الدخول بكلمة السر</strong>
+        <span class="small-note">لإعادة التعيين أو العودة للرقم القومي، تواصل مع الإدارة</span>
+      </div>
+    `;
+  } else {
+    // ===== الحالة: لا يملك كلمة سر (دخول بالرقم القومي) =====
+    box.className = 'login-method-box method-national';
+    box.innerHTML = `
+      <div class="info-text">
+        🆔 <strong>الدخول بالرقم القومي</strong>
+        <span class="small-note">يمكنك إنشاء كلمة سر لدخول أسرع وأكثر خصوصية</span>
+      </div>
+      <button onclick="openPasswordModal()">إنشاء كلمة سر</button>
+    `;
+  }
 }
 
 async function refreshDashboard() {
@@ -720,33 +643,22 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
     if (error) throw error;
     if (!data || !data.ok) {
-      err.textContent = '❌ ' + (data?.error || 'بيانات الدخول غير صحيحة');
+      err.innerHTML = '❌ ' + (data?.error || 'بيانات الدخول غير صحيحة') +
+        '<br><small style="font-size:11px;font-weight:500;color:#b91c1c;">تأكد من استخدام طريقة الدخول الصحيحة (رقم قومي أو كلمة سر حسب إعدادك)</small>';
       err.classList.add('show');
       btn.disabled = false;
       btn.innerHTML = '<span>🚪</span> دخول إلى النظام';
       return;
     }
 
-    // حفظ الجلسة
     sessionStorage.setItem('studentToken', data.token);
     sessionStorage.setItem('studentId', data.student.id);
     sessionStorage.setItem('studentName', data.student.full_name);
     authToken = data.token;
-
-    // حفظ التفضيل في localStorage لاستخدامه في الدخول القادم
-    const pref = data.student.preferred_login || 'national_id';
-    const hasPw = data.student.has_password;
-    localStorage.setItem('studentPrefLogin', pref === 'password' && hasPw ? 'password' : 'national_id');
+    localStorage.setItem('studentPrefLogin', data.student.login_method || 'national_id');
 
     await tryLoadDashboard();
     Toast.show('✅ أهلاً ' + data.student.full_name, 'success');
-
-    // أول دخول بدون كلمة سر → اقترح الاختيار
-    if (!hasPw) {
-      setTimeout(() => {
-        openPreferenceModal(true);
-      }, 700);
-    }
 
   } catch (err2) {
     console.error(err2);
@@ -757,7 +669,6 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   }
 });
 
-// ===== Toggle credential visibility =====
 function toggleCredential() {
   const input = document.getElementById('credential');
   const btn = document.getElementById('credToggle');
@@ -770,7 +681,7 @@ function toggleCredential() {
   }
 }
 
-function togglePwInput(id, btn) {
+function togglePasswordField(id, btn) {
   const input = document.getElementById(id);
   if (input.type === 'password') {
     input.type = 'text';
@@ -781,174 +692,83 @@ function togglePwInput(id, btn) {
   }
 }
 
-// ===== Preference Modal =====
-function openPreferenceModal(isFirstTime) {
+// ===== Password Modal =====
+function openPasswordModal() {
   if (!currentStudent) return;
-
-  const hasPw = currentStudent.has_password;
-  const currentPref = currentStudent.preferred_login || 'national_id';
-
-  // Select current preference
-  selectPref(hasPw ? currentPref : 'national_id');
-
-  // If no password yet, show info
-  if (!hasPw) {
-    document.getElementById('prefModal').querySelector('p').textContent =
-      'يمكنك إنشاء كلمة سر الآن للدخول بها لاحقاً، أو البقاء على الرقم القومي';
-  }
-
   document.getElementById('newPassword').value = '';
   document.getElementById('confirmPassword').value = '';
   document.getElementById('newPassword').type = 'password';
   document.getElementById('confirmPassword').type = 'password';
-  document.getElementById('prefErrorMsg').classList.remove('show');
-
-  document.getElementById('prefModal').classList.add('show');
+  document.getElementById('pwErrorMsg').classList.remove('show');
+  document.getElementById('passwordModal').classList.add('show');
+  setTimeout(() => document.getElementById('newPassword').focus(), 100);
 }
 
-function closePreferenceModal() {
-  document.getElementById('prefModal').classList.remove('show');
+function closePasswordModal() {
+  document.getElementById('passwordModal').classList.remove('show');
 }
 
-function selectPref(method) {
-  selectedPrefMethod = method;
-  document.querySelectorAll('.radio-card').forEach(c => {
-    c.classList.toggle('selected', c.dataset.method === method);
-  });
-  const pwSection = document.getElementById('pwSection');
-  if (method === 'password') {
-    pwSection.classList.add('show');
-  } else {
-    pwSection.classList.remove('show');
-  }
-}
+async function savePassword() {
+  const pw1 = document.getElementById('newPassword').value;
+  const pw2 = document.getElementById('confirmPassword').value;
+  const err = document.getElementById('pwErrorMsg');
+  const btn = document.getElementById('pwSaveBtn');
 
-async function savePreference() {
-  const err = document.getElementById('prefErrorMsg');
-  const btn = document.getElementById('prefSaveBtn');
   err.classList.remove('show');
 
-  if (!currentStudent) return;
+  if (!pw1 || pw1.length < 6) {
+    err.textContent = '❌ كلمة السر يجب أن تكون 6 أحرف على الأقل';
+    err.classList.add('show');
+    return;
+  }
 
-  // إذا اختار كلمة سر
-  if (selectedPrefMethod === 'password') {
-    const pw1 = document.getElementById('newPassword').value;
-    const pw2 = document.getElementById('confirmPassword').value;
-    const hasPw = currentStudent.has_password;
+  if (pw1 !== pw2) {
+    err.textContent = '❌ كلمتا السر غير متطابقتين';
+    err.classList.add('show');
+    return;
+  }
 
-    // إذا لم يكن لديه كلمة سر → يجب إنشاء واحدة
-    if (!hasPw) {
-      if (!pw1 || pw1.length < 6) {
-        err.textContent = '❌ كلمة السر يجب أن تكون 6 أحرف على الأقل';
-        err.classList.add('show');
-        return;
-      }
-      if (pw1 !== pw2) {
-        err.textContent = '❌ كلمتا السر غير متطابقتين';
-        err.classList.add('show');
-        return;
-      }
-    } else if (pw1) {
-      // لديه كلمة سر ويريد تغييرها (اختياري)
-      if (pw1.length < 6) {
-        err.textContent = '❌ كلمة السر يجب أن تكون 6 أحرف على الأقل';
-        err.classList.add('show');
-        return;
-      }
-      if (pw1 !== pw2) {
-        err.textContent = '❌ كلمتا السر غير متطابقتين';
-        err.classList.add('show');
-        return;
-      }
-    }
+  btn.disabled = true;
+  btn.textContent = '⏳ جاري الحفظ...';
 
-    btn.disabled = true;
-    btn.textContent = '⏳ جاري الحفظ...';
+  try {
+    const { data, error } = await SB.rpc('student_set_password', {
+      p_token: authToken,
+      p_password: pw1
+    });
 
-    try {
-      // إنشاء كلمة سر إذا لزم
-      if ((!hasPw && pw1) || (hasPw && pw1)) {
-        const { data: pwRes, error: pwErr } = await SB.rpc('student_set_password', {
-          p_token: authToken,
-          p_password: pw1
-        });
-        if (pwErr || !pwRes?.ok) {
-          err.textContent = '❌ ' + (pwRes?.error || pwErr?.message || 'فشل حفظ كلمة السر');
-          err.classList.add('show');
-          btn.disabled = false;
-          btn.textContent = '💾 حفظ';
-          return;
-        }
-      }
-
-      // حفظ التفضيل
-      const { data: prefRes, error: prefErr } = await SB.rpc('student_set_preferred_login', {
-        p_token: authToken,
-        p_method: 'password'
-      });
-      if (prefErr || !prefRes?.ok) {
-        err.textContent = '❌ ' + (prefRes?.error || prefErr?.message);
-        err.classList.add('show');
-        btn.disabled = false;
-        btn.textContent = '💾 حفظ';
-        return;
-      }
-
-      Toast.show('✅ تم الحفظ — الدخول القادم بكلمة السر', 'success', 3000);
-      closePreferenceModal();
-      await tryLoadDashboard();
-
-    } catch (e) {
-      err.textContent = '❌ حدث خطأ';
+    if (error || !data?.ok) {
+      err.textContent = '❌ ' + (data?.error || error?.message || 'فشل الحفظ');
       err.classList.add('show');
       btn.disabled = false;
-      btn.textContent = '💾 حفظ';
+      btn.textContent = '💾 إنشاء كلمة السر';
+      return;
     }
-  } else {
-    // اختار الرقم القومي
-    btn.disabled = true;
-    btn.textContent = '⏳ جاري الحفظ...';
 
-    try {
-      const { data, error } = await SB.rpc('student_set_preferred_login', {
-        p_token: authToken,
-        p_method: 'national_id'
-      });
-      if (error || !data?.ok) {
-        err.textContent = '❌ ' + (data?.error || error?.message);
-        err.classList.add('show');
-        btn.disabled = false;
-        btn.textContent = '💾 حفظ';
-        return;
-      }
+    Toast.show('✅ تم إنشاء كلمة السر — الدخول القادم بكلمة السر', 'success', 3000);
+    closePasswordModal();
+    await tryLoadDashboard();
 
-      Toast.show('✅ تم الحفظ — الدخول القادم بالرقم القومي', 'success', 3000);
-      closePreferenceModal();
-      await tryLoadDashboard();
-
-    } catch (e) {
-      err.textContent = '❌ حدث خطأ';
-      err.classList.add('show');
-      btn.disabled = false;
-      btn.textContent = '💾 حفظ';
-    }
+  } catch (err2) {
+    console.error(err2);
+    err.textContent = '❌ حدث خطأ أثناء الحفظ';
+    err.classList.add('show');
+    btn.disabled = false;
+    btn.textContent = '💾 إنشاء كلمة السر';
   }
 }
 
-// ===== اختصار سريع لصفحة الأدمن (Ctrl + M) =====
+// اختصار الأدمن
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm') {
     e.preventDefault();
     if (typeof Toast !== 'undefined') {
       Toast.show('🔐 جاري فتح بوابة الأدمن...', 'info', 900);
     }
-    setTimeout(() => {
-      location.href = 'admin-login.html';
-    }, 400);
+    setTimeout(() => { location.href = 'admin-login.html'; }, 400);
   }
 });
 
-// ===== مسح رسائل الخطأ عند الكتابة =====
 document.getElementById('studentCode').addEventListener('input', () => {
   document.getElementById('errorMsg').classList.remove('show');
 });
