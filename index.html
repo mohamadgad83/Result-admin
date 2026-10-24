@@ -18,42 +18,22 @@
 
 <style>
 :root{
-  --navy:#1e3c72;
-  --navy-2:#2a5298;
-  --navy-dark:#0F2C56;
-  --gold:#ffc107;
-  --gold-2:#FFD54F;
-  --cyan:#17a2b8;
-  --green:#28a745;
-  --red:#dc3545;
-  --ink:#0F172A;
-  --muted:#64748B;
-  --line:#E2E8F0;
-  --bg:#F4F7FB;
-  --white:#ffffff;
-  --radius:18px;
-  --radius-lg:24px;
+  --navy:#1e3c72;--navy-2:#2a5298;--navy-dark:#0F2C56;
+  --gold:#ffc107;--gold-2:#FFD54F;--cyan:#17a2b8;
+  --green:#28a745;--red:#dc3545;
+  --ink:#0F172A;--muted:#64748B;--line:#E2E8F0;--bg:#F4F7FB;
+  --radius:18px;--radius-lg:24px;
   --shadow-sm:0 2px 8px rgba(30,60,114,.06);
   --shadow:0 8px 24px rgba(30,60,114,.10);
   --shadow-lg:0 20px 50px rgba(30,60,114,.16);
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{
-  font-family:'Cairo',system-ui,sans-serif;
-  background:var(--bg);
-  color:var(--ink);
-  line-height:1.7;
-  min-height:100vh;
-  -webkit-font-smoothing:antialiased;
-  position:relative;
-  overflow-x:hidden;
-}
+body{font-family:'Cairo',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;min-height:100vh;-webkit-font-smoothing:antialiased;position:relative;overflow-x:hidden}
 a{text-decoration:none;color:inherit}
 button{font-family:inherit;cursor:pointer}
 .container-inner{width:min(1200px,92%);margin:0 auto}
 
-/* خلفية */
 body::before{
   content:"";position:fixed;inset:0;z-index:-1;
   background:
@@ -63,347 +43,223 @@ body::before{
   pointer-events:none;
 }
 
-/* ===== Top Nav ===== */
-.top-nav{
-  position:sticky;top:0;z-index:50;
-  background:rgba(255,255,255,.92);
-  backdrop-filter:blur(20px) saturate(180%);
-  -webkit-backdrop-filter:blur(20px) saturate(180%);
-  border-bottom:1px solid var(--line);
-  padding:12px 0;
-}
-.top-nav .container-inner{
-  display:flex;justify-content:space-between;align-items:center;gap:16px;
-  flex-wrap:wrap;
-}
+.top-nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border-bottom:1px solid var(--line);padding:12px 0}
+.top-nav .container-inner{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
 .logo-wrap{display:flex;align-items:center;gap:12px;user-select:none}
-.logo-icon{
-  width:44px;height:44px;border-radius:12px;
-  background:linear-gradient(135deg,var(--navy),var(--navy-2));
-  display:grid;place-items:center;font-size:22px;
-  box-shadow:0 4px 12px rgba(30,60,114,.25);
-}
+.logo-icon{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--navy),var(--navy-2));display:grid;place-items:center;font-size:22px;box-shadow:0 4px 12px rgba(30,60,114,.25)}
 .logo-title{font-size:15px;font-weight:800;color:var(--navy);line-height:1.2}
 .logo-sub{font-size:11px;color:var(--muted);font-weight:600}
 
-/* ===== Hero Strip ===== */
-.hero-strip{
-  background:linear-gradient(135deg,var(--navy-dark) 0%,var(--navy) 50%,var(--navy-2) 100%);
-  color:#fff;padding:36px 0;position:relative;overflow:hidden;
-  border-bottom:4px solid var(--gold);
-}
-.hero-strip::before{
-  content:"";position:absolute;inset:0;
-  background-image:radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px);
-  background-size:24px 24px;pointer-events:none;
-}
-.hero-strip::after{
-  content:"";position:absolute;width:400px;height:400px;border-radius:50%;
-  background:radial-gradient(circle,rgba(255,193,7,.28),transparent 70%);
-  top:-200px;left:-100px;filter:blur(60px);pointer-events:none;
-}
+.hero-strip{background:linear-gradient(135deg,var(--navy-dark) 0%,var(--navy) 50%,var(--navy-2) 100%);color:#fff;padding:36px 0;position:relative;overflow:hidden;border-bottom:4px solid var(--gold)}
+.hero-strip::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px);background-size:24px 24px;pointer-events:none}
+.hero-strip::after{content:"";position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(255,193,7,.28),transparent 70%);top:-200px;left:-100px;filter:blur(60px);pointer-events:none}
 .hero-strip .container-inner{position:relative;z-index:1}
-.hero-badge{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:6px 16px;border-radius:50px;
-  background:rgba(255,255,255,.12);
-  border:1px solid rgba(255,255,255,.2);
-  font-size:.75rem;font-weight:700;color:#fff;
-  margin-bottom:14px;
-}
-.hero-badge .dot{
-  width:7px;height:7px;border-radius:50%;background:#4ADE80;
-  box-shadow:0 0 0 4px rgba(74,222,128,.25);
-  animation:blink 2s infinite;
-}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:50px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);font-size:.75rem;font-weight:700;color:#fff;margin-bottom:14px}
+.hero-badge .dot{width:7px;height:7px;border-radius:50%;background:#4ADE80;box-shadow:0 0 0 4px rgba(74,222,128,.25);animation:blink 2s infinite}
 @keyframes blink{50%{opacity:.4}}
-.hero-strip h1{
-  font-size:clamp(1.4rem,2.6vw,2rem);font-weight:900;
-  letter-spacing:-.01em;line-height:1.3;margin-bottom:6px;
-}
-.hero-strip h1 .gold{
-  background:linear-gradient(120deg,#FFD54F,var(--gold));
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-}
-.hero-strip p{
-  color:rgba(255,255,255,.85);font-size:.95rem;
-  max-width:600px;
-}
+.hero-strip h1{font-size:clamp(1.4rem,2.6vw,2rem);font-weight:900;letter-spacing:-.01em;line-height:1.3;margin-bottom:6px}
+.hero-strip h1 .gold{background:linear-gradient(120deg,#FFD54F,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-strip p{color:rgba(255,255,255,.85);font-size:.95rem;max-width:600px}
 
-/* ===== Main Grid ===== */
 .main-grid{padding:36px 0}
-.main-grid .container-inner{
-  display:grid;
-  grid-template-columns:420px 1fr;
-  gap:28px;
-  align-items:start;
-}
+.main-grid .container-inner{display:grid;grid-template-columns:440px 1fr;gap:28px;align-items:start}
 
-/* ===== Auth Card ===== */
-.auth-card{
-  background:#fff;border-radius:var(--radius-lg);
-  padding:32px 28px;
-  box-shadow:var(--shadow-lg);
-  border:1px solid rgba(226,232,240,.9);
-  position:sticky;top:90px;
-  overflow:hidden;
-}
-.auth-card::before{
-  content:"";position:absolute;top:0;left:0;right:0;height:4px;
-  background:linear-gradient(90deg,var(--navy),var(--navy-2),var(--gold));
-}
-.auth-header{text-align:center;margin-bottom:24px}
-.auth-icon{
-  width:64px;height:64px;border-radius:18px;
-  background:linear-gradient(135deg,var(--navy),var(--navy-2));
-  display:grid;place-items:center;margin:0 auto 14px;
-  font-size:28px;box-shadow:0 12px 28px rgba(30,60,114,.28);
-  position:relative;
-}
-.auth-icon::after{
-  content:"";position:absolute;inset:4px;border-radius:14px;
-  border:1px solid rgba(255,193,7,.4);
-}
+.auth-card{background:#fff;border-radius:var(--radius-lg);padding:32px 28px;box-shadow:var(--shadow-lg);border:1px solid rgba(226,232,240,.9);position:sticky;top:90px;overflow:hidden}
+.auth-card::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--navy),var(--navy-2),var(--gold))}
+.auth-header{text-align:center;margin-bottom:20px}
+.auth-icon{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,var(--navy),var(--navy-2));display:grid;place-items:center;margin:0 auto 14px;font-size:28px;box-shadow:0 12px 28px rgba(30,60,114,.28);position:relative}
+.auth-icon::after{content:"";position:absolute;inset:4px;border-radius:14px;border:1px solid rgba(255,193,7,.4)}
 .auth-header h2{font-size:1.3rem;font-weight:900;color:var(--navy);margin-bottom:4px}
 .auth-header p{color:var(--muted);font-size:.85rem}
 
 .form-group{margin-bottom:16px;position:relative}
-.form-group label{
-  display:block;font-size:.78rem;font-weight:700;
-  color:var(--navy);margin-bottom:6px;
+.form-group label{display:block;font-size:.78rem;font-weight:700;color:var(--navy);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.form-group label .badge{
+  font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;
+  background:rgba(23,162,184,.12);color:var(--cyan);
 }
 .input-wrap{position:relative}
-.input-wrap .icon{
-  position:absolute;right:14px;top:50%;transform:translateY(-50%);
-  font-size:18px;pointer-events:none;opacity:.5;
-}
-.input-wrap input{
-  width:100%;padding:13px 44px 13px 16px;
-  border:1.5px solid var(--line);border-radius:12px;
-  font-family:inherit;font-size:15px;font-weight:500;
-  background:#F8FAFC;color:var(--ink);
-  transition:all .2s;
-}
-.input-wrap input:focus{
-  outline:none;border-color:var(--navy-2);background:#fff;
-  box-shadow:0 0 0 4px rgba(42,82,152,.12);
-}
+.input-wrap .icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:18px;pointer-events:none;opacity:.5}
+.input-wrap input{width:100%;padding:13px 44px 13px 44px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:15px;font-weight:500;background:#F8FAFC;color:var(--ink);transition:all .2s}
+.input-wrap input:focus{outline:none;border-color:var(--navy-2);background:#fff;box-shadow:0 0 0 4px rgba(42,82,152,.12)}
 .input-wrap input::placeholder{color:#94A3B8;font-weight:400}
+.input-wrap .toggle-pw{position:absolute;left:12px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:16px;cursor:pointer;opacity:.6;padding:4px;display:none}
+.input-wrap .toggle-pw.visible{display:block}
+.input-wrap .toggle-pw:hover{opacity:1}
 
-.btn-login{
-  width:100%;padding:14px;margin-top:6px;
-  background:linear-gradient(135deg,var(--navy),var(--navy-2));
-  color:#fff;border:none;border-radius:12px;
-  font-size:1rem;font-weight:800;
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  transition:all .25s;box-shadow:0 10px 24px rgba(30,60,114,.28);
+.hint-text{
+  font-size:11px;color:var(--muted);margin-top:6px;
+  display:flex;align-items:flex-start;gap:4px;line-height:1.6;
 }
+.hint-text .dot-sep{color:var(--cyan);font-weight:900}
+
+.btn-login{width:100%;padding:14px;margin-top:6px;background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#fff;border:none;border-radius:12px;font-size:1rem;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .25s;box-shadow:0 10px 24px rgba(30,60,114,.28)}
 .btn-login:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 14px 32px rgba(30,60,114,.35)}
 .btn-login:disabled{opacity:.6;cursor:not-allowed}
 
-.error-msg,.info-msg{
-  padding:12px 16px;border-radius:10px;font-size:.85rem;
-  font-weight:600;margin:12px 0;display:none;
-}
+.error-msg,.info-msg{padding:12px 16px;border-radius:10px;font-size:.85rem;font-weight:600;margin:12px 0;display:none}
 .error-msg{background:#FEF2F2;color:#991B1B;border:1px solid #FECACA}
 .info-msg{background:#ECFEFF;color:#155E75;border:1px solid #A5F3FC}
 .error-msg.show,.info-msg.show{display:block}
 
-.auth-warning{
-  margin-top:16px;padding:12px 14px;
-  background:#FFFBEB;border:1px solid #FDE68A;
-  border-radius:10px;font-size:.78rem;color:#92400E;
-  line-height:1.7;
-}
+.auth-warning{margin-top:16px;padding:12px 14px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;font-size:.78rem;color:#92400E;line-height:1.7}
 .auth-warning strong{color:var(--red)}
 
-/* ===== Dashboard ===== */
-.dash-header{
-  text-align:center;margin-bottom:20px;
-  padding-bottom:20px;border-bottom:2px dashed var(--line);
-}
-.avatar{
-  width:72px;height:72px;border-radius:50%;
-  background:linear-gradient(135deg,var(--gold),#f59e0b);
-  color:#fff;font-size:26px;font-weight:900;
-  display:grid;place-items:center;margin:0 auto 12px;
-  box-shadow:0 10px 24px rgba(255,193,7,.35);
-  letter-spacing:1px;
-}
+/* Dashboard */
+.dash-header{text-align:center;margin-bottom:16px;padding-bottom:16px;border-bottom:2px dashed var(--line)}
+.avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#f59e0b);color:#fff;font-size:26px;font-weight:900;display:grid;place-items:center;margin:0 auto 12px;box-shadow:0 10px 24px rgba(255,193,7,.35);letter-spacing:1px}
 .dash-header h2{font-size:1.15rem;font-weight:900;color:var(--navy);margin-bottom:4px}
 .dash-header p{font-size:.8rem;color:var(--muted)}
 
-.status-pill{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:7px 16px;border-radius:50px;
-  font-size:12px;font-weight:800;
-  margin-bottom:16px;
-}
+.status-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:50px;font-size:12px;font-weight:800;margin-bottom:14px}
 .status-pill.status-open{background:#d4edda;color:#155724;border:1px solid #28a745}
 .status-pill.status-locked{background:#cce5ff;color:#004085;border:1px solid #17a2b8}
 
-.dash-info-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:10px;
-  margin-bottom:18px;
+/* Login preference row */
+.pref-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;background:#F0F9FF;border:1px solid #BAE6FD;
+  border-radius:10px;margin-bottom:14px;font-size:12px;
 }
-.dash-info-item{
-  background:#F8FAFC;border:1px solid var(--line);
-  padding:10px 12px;border-radius:10px;
+.pref-row.has-pw{background:#ECFDF5;border-color:#A7F3D0}
+.pref-row .pref-text{font-weight:700;color:var(--navy);display:flex;align-items:center;gap:6px}
+.pref-row button{
+  background:none;border:none;color:var(--cyan);font-size:12px;font-weight:800;
+  cursor:pointer;padding:4px 8px;border-radius:6px;
 }
-.dash-info-item .lbl{
-  font-size:10px;color:var(--muted);
-  font-weight:700;display:block;margin-bottom:2px;
-}
-.dash-info-item .val{
-  font-size:13px;color:var(--navy);
-  font-weight:800;display:block;
-  word-break:break-word;
-}
+.pref-row button:hover{background:rgba(23,162,184,.1)}
 
-.dash-action{
-  width:100%;padding:14px;margin-bottom:8px;
-  border:none;border-radius:12px;
-  font-size:.95rem;font-weight:800;
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  transition:all .25s;cursor:pointer;
-}
-.dash-action.btn-primary{
-  background:linear-gradient(135deg,var(--green),#1e7e34);
-  color:#fff;box-shadow:0 10px 24px rgba(40,167,69,.28);
-}
+.dash-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.dash-info-item{background:#F8FAFC;border:1px solid var(--line);padding:10px 12px;border-radius:10px}
+.dash-info-item .lbl{font-size:10px;color:var(--muted);font-weight:700;display:block;margin-bottom:2px}
+.dash-info-item .val{font-size:13px;color:var(--navy);font-weight:800;display:block;word-break:break-word}
+
+.dash-action{width:100%;padding:14px;margin-bottom:8px;border:none;border-radius:12px;font-size:.95rem;font-weight:800;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .25s;cursor:pointer}
+.dash-action.btn-primary{background:linear-gradient(135deg,var(--green),#1e7e34);color:#fff;box-shadow:0 10px 24px rgba(40,167,69,.28)}
 .dash-action.btn-primary:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(40,167,69,.4)}
-.dash-action.btn-secondary{
-  background:linear-gradient(135deg,var(--navy),var(--navy-2));
-  color:#fff;box-shadow:0 10px 24px rgba(30,60,114,.28);
-}
+.dash-action.btn-secondary{background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#fff;box-shadow:0 10px 24px rgba(30,60,114,.28)}
 .dash-action.btn-secondary:hover{transform:translateY(-2px)}
-.dash-action.btn-outline{
-  background:#fff;color:var(--red);border:1.5px solid var(--red);
-}
+.dash-action.btn-outline{background:#fff;color:var(--red);border:1.5px solid var(--red)}
 .dash-action.btn-outline:hover{background:#FEF2F2}
 
-.dash-refresh{
-  text-align:center;margin-top:12px;
-  font-size:11px;color:var(--muted);
-  cursor:pointer;
-}
+.dash-refresh{text-align:center;margin-top:12px;font-size:11px;color:var(--muted);cursor:pointer}
 .dash-refresh:hover{color:var(--navy);text-decoration:underline}
 
-/* ===== Info Side ===== */
+/* Info Side */
 .info-side{display:flex;flex-direction:column;gap:24px}
-
-.principal-card{
-  background:#fff;border-radius:var(--radius-lg);
-  padding:28px;box-shadow:var(--shadow);
-  border:1px solid var(--line);
-  position:relative;overflow:hidden;
-}
-.principal-card::before{
-  content:"";position:absolute;top:0;left:0;right:0;height:4px;
-  background:linear-gradient(90deg,var(--navy),var(--gold),var(--navy));
-}
-.principal-tag{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:4px 12px;border-radius:50px;
-  background:rgba(30,60,114,.08);color:var(--navy);
-  font-size:.7rem;font-weight:800;letter-spacing:1px;
-  margin-bottom:12px;
-}
+.principal-card{background:#fff;border-radius:var(--radius-lg);padding:28px;box-shadow:var(--shadow);border:1px solid var(--line);position:relative;overflow:hidden}
+.principal-card::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--navy),var(--gold),var(--navy))}
+.principal-tag{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:50px;background:rgba(30,60,114,.08);color:var(--navy);font-size:.7rem;font-weight:800;letter-spacing:1px;margin-bottom:12px}
 .principal-card h3{font-size:1.1rem;font-weight:900;color:var(--navy);margin-bottom:2px}
 .principal-card .role{font-size:.82rem;color:var(--muted);font-weight:600;margin-bottom:14px}
-.principal-card .quote{
-  font-size:.92rem;color:#334155;line-height:1.9;
-  padding-right:16px;border-right:3px solid var(--gold);
-  font-weight:500;
-}
-.principal-card .quote .highlight{
-  color:var(--navy);font-weight:800;
-  background:linear-gradient(transparent 60%, rgba(255,193,7,.35) 60%);
-}
+.principal-card .quote{font-size:.92rem;color:#334155;line-height:1.9;padding-right:16px;border-right:3px solid var(--gold);font-weight:500}
+.principal-card .quote .highlight{color:var(--navy);font-weight:800;background:linear-gradient(transparent 60%, rgba(255,193,7,.35) 60%)}
 
-/* ===== Features Grid ===== */
-.features-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:14px;
-}
-.feature-card{
-  background:#fff;padding:20px;border-radius:var(--radius);
-  border:1px solid var(--line);text-align:center;
-  transition:all .25s;box-shadow:var(--shadow-sm);
-}
-.feature-card:hover{
-  transform:translateY(-4px);
-  box-shadow:var(--shadow);
-  border-color:transparent;
-}
-.feature-card .icon{
-  width:48px;height:48px;border-radius:14px;
-  background:linear-gradient(135deg,#EAF0FB,#DCE6F7);
-  display:grid;place-items:center;font-size:22px;
-  margin:0 auto 12px;transition:.3s;
-}
-.feature-card:hover .icon{
-  background:linear-gradient(135deg,var(--navy),var(--navy-2));
-  transform:scale(1.08) rotate(-5deg);
-  box-shadow:0 8px 20px rgba(30,60,114,.28);
-}
+.features-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.feature-card{background:#fff;padding:20px;border-radius:var(--radius);border:1px solid var(--line);text-align:center;transition:all .25s;box-shadow:var(--shadow-sm)}
+.feature-card:hover{transform:translateY(-4px);box-shadow:var(--shadow);border-color:transparent}
+.feature-card .icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#EAF0FB,#DCE6F7);display:grid;place-items:center;font-size:22px;margin:0 auto 12px;transition:.3s}
+.feature-card:hover .icon{background:linear-gradient(135deg,var(--navy),var(--navy-2));transform:scale(1.08) rotate(-5deg);box-shadow:0 8px 20px rgba(30,60,114,.28)}
 .feature-card h4{font-size:.92rem;font-weight:800;color:var(--navy);margin-bottom:4px}
 .feature-card p{font-size:.78rem;color:var(--muted);line-height:1.6}
 
-/* ===== Steps Card ===== */
-.steps-card{
-  background:#fff;border-radius:var(--radius-lg);
-  padding:28px;box-shadow:var(--shadow);
-  border:1px solid var(--line);
-}
-.steps-card h3{
-  font-size:1.05rem;font-weight:900;color:var(--navy);
-  margin-bottom:18px;display:flex;align-items:center;gap:8px;
-}
+.steps-card{background:#fff;border-radius:var(--radius-lg);padding:28px;box-shadow:var(--shadow);border:1px solid var(--line)}
+.steps-card h3{font-size:1.05rem;font-weight:900;color:var(--navy);margin-bottom:18px;display:flex;align-items:center;gap:8px}
 .steps-list{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
-.step-item{
-  position:relative;text-align:center;
-  padding-top:30px;
-}
-.step-num{
-  position:absolute;top:0;right:50%;transform:translateX(50%);
-  width:36px;height:36px;border-radius:50%;
-  background:linear-gradient(135deg,var(--navy),var(--navy-2));
-  color:#fff;font-weight:900;font-size:14px;
-  display:grid;place-items:center;
-  box-shadow:0 6px 16px rgba(30,60,114,.3);
-}
+.step-item{position:relative;text-align:center;padding-top:30px}
+.step-num{position:absolute;top:0;right:50%;transform:translateX(50%);width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#fff;font-weight:900;font-size:14px;display:grid;place-items:center;box-shadow:0 6px 16px rgba(30,60,114,.3)}
 .step-item h5{font-size:.85rem;font-weight:800;color:var(--navy);margin-bottom:4px}
 .step-item p{font-size:.75rem;color:var(--muted);line-height:1.6}
 
-/* ===== Footer ===== */
-.footer{
-  margin-top:40px;padding:30px 20px 20px;
-  background:linear-gradient(135deg,var(--navy-dark),var(--navy),var(--navy-2));
-  color:rgba(255,255,255,.75);text-align:center;
-  border-top:3px solid var(--gold);position:relative;
-}
-.footer::before{
-  content:"";position:absolute;inset:0;
-  background-image:radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px);
-  background-size:20px 20px;pointer-events:none;
-}
+.footer{margin-top:40px;padding:30px 20px 20px;background:linear-gradient(135deg,var(--navy-dark),var(--navy),var(--navy-2));color:rgba(255,255,255,.75);text-align:center;border-top:3px solid var(--gold);position:relative}
+.footer::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.05) 1px, transparent 1px);background-size:20px 20px;pointer-events:none}
 .footer .container-inner{position:relative;z-index:1}
 .footer .copyright{font-size:.85rem;font-weight:600;color:#fff;margin-bottom:8px}
-.footer .copyright .school{
-  background:linear-gradient(120deg,#FFD54F,var(--gold));
-  -webkit-background-clip:text;background-clip:text;color:transparent;
-  font-weight:800;
-}
+.footer .copyright .school{background:linear-gradient(120deg,#FFD54F,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800}
 .footer .credits{font-size:.78rem;color:rgba(255,255,255,.65);margin-bottom:6px}
 .footer .credits .role{color:var(--gold);font-weight:700}
 .footer .credits .name{color:#fff;font-weight:700}
 .footer .principal{font-size:.78rem;color:rgba(255,255,255,.65)}
 .footer .principal .nm{color:#fff;font-weight:800}
 
-/* ===== Spinner ===== */
-@keyframes spin{to{transform:rotate(360deg)}}
+/* ===== Modal ===== */
+.modal-overlay{
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;padding:20px;
+}
+.modal-overlay.show{display:flex;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-card{
+  background:#fff;border-radius:20px;padding:30px 26px;
+  max-width:480px;width:100%;position:relative;
+  box-shadow:0 20px 60px rgba(0,0,0,.3);
+  animation:slideUp .3s;
+  max-height:90vh;overflow-y:auto;
+}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-card .close-x{
+  position:absolute;top:14px;left:16px;
+  background:none;border:none;font-size:22px;color:#999;
+  cursor:pointer;line-height:1;padding:4px;
+}
+.modal-card .close-x:hover{color:var(--red)}
+.modal-header{text-align:center;margin-bottom:18px}
+.modal-icon{
+  width:60px;height:60px;border-radius:16px;
+  background:linear-gradient(135deg,#FFD54F,var(--gold));
+  display:grid;place-items:center;font-size:28px;
+  margin:0 auto 12px;box-shadow:0 10px 28px rgba(255,193,7,.4);
+}
+.modal-card h3{font-size:1.15rem;font-weight:900;color:var(--navy);margin-bottom:4px;text-align:center}
+.modal-card p{font-size:.85rem;color:var(--muted);text-align:center;margin-bottom:16px;line-height:1.7}
 
-/* ===== Responsive ===== */
+/* Radio Cards */
+.radio-cards{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.radio-card{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 16px;border:2px solid var(--line);
+  border-radius:12px;cursor:pointer;transition:all .2s;
+  background:#fff;
+}
+.radio-card:hover{border-color:var(--navy-2);background:#F8FAFC}
+.radio-card.selected{border-color:var(--navy);background:#F0F7FF;box-shadow:0 4px 12px rgba(30,60,114,.1)}
+.radio-card input{display:none}
+.radio-card .radio-circle{
+  width:20px;height:20px;border-radius:50%;
+  border:2px solid var(--line);flex-shrink:0;
+  display:grid;place-items:center;
+  transition:all .2s;
+}
+.radio-card.selected .radio-circle{
+  border-color:var(--navy);background:var(--navy);
+}
+.radio-card.selected .radio-circle::after{
+  content:"";width:8px;height:8px;border-radius:50%;background:#fff;
+}
+.radio-card .radio-info{flex:1}
+.radio-card .radio-title{font-size:14px;font-weight:800;color:var(--navy);margin-bottom:2px}
+.radio-card .radio-desc{font-size:12px;color:var(--muted)}
+.radio-card .radio-icon{font-size:22px}
+
+.pw-section{
+  display:none;
+  background:#F0F7FF;border:1px solid #BAE6FD;border-radius:12px;
+  padding:16px;margin-bottom:16px;
+}
+.pw-section.show{display:block}
+.pw-section .form-group{margin-bottom:12px}
+.pw-section .form-group:last-child{margin-bottom:0}
+
+.modal-card .error-msg{margin:8px 0;font-size:.8rem}
+.modal-actions{display:flex;gap:8px;margin-top:16px}
+.modal-actions button{flex:1;padding:12px;border:none;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;transition:all .2s}
+.modal-actions .btn-primary{background:linear-gradient(135deg,var(--green),#1e7e34);color:#fff}
+.modal-actions .btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(40,167,69,.35)}
+.modal-actions .btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.modal-actions .btn-skip{background:#F1F5F9;color:var(--muted);border:1px solid var(--line)}
+.modal-actions .btn-skip:hover{background:#E2E8F0}
+
 @media(max-width:900px){
   .main-grid .container-inner{grid-template-columns:1fr}
   .auth-card{position:static}
@@ -419,11 +275,11 @@ body::before{
   .hero-strip h1{font-size:1.3rem}
   .logo-title{font-size:13px}
 }
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 
-<!-- ===== Top Nav ===== -->
 <nav class="top-nav">
   <div class="container-inner">
     <div class="logo-wrap">
@@ -433,11 +289,9 @@ body::before{
         <div class="logo-sub">نظام الخدمات الطلابية</div>
       </div>
     </div>
-    <!-- ✅ زر الأدمن محذوف — للوصول استخدم Ctrl+M -->
   </div>
 </nav>
 
-<!-- ===== Hero Strip ===== -->
 <section class="hero-strip">
   <div class="container-inner">
     <div class="hero-badge">
@@ -449,11 +303,9 @@ body::before{
   </div>
 </section>
 
-<!-- ===== Main ===== -->
 <main class="main-grid">
   <div class="container-inner">
 
-    <!-- Left: Login / Dashboard -->
     <aside class="auth-side">
       <div class="auth-card" id="authCard">
 
@@ -475,10 +327,18 @@ body::before{
             </div>
 
             <div class="form-group">
-              <label for="nationalId">الرقم القومي</label>
+              <label for="credential">
+                <span id="credLabel">الرقم القومي أو كلمة السر</span>
+                <span class="badge" id="credBadge" style="display:none;"></span>
+              </label>
               <div class="input-wrap">
-                <span class="icon">🆔</span>
-                <input type="text" id="nationalId" placeholder="14 رقم" required dir="ltr" inputmode="numeric" autocomplete="off" maxlength="14">
+                <span class="icon">🔑</span>
+                <input type="text" id="credential" placeholder="14 رقم أو كلمة السر" required dir="ltr" autocomplete="off">
+                <button type="button" class="toggle-pw" id="credToggle" onclick="toggleCredential()">👁️</button>
+              </div>
+              <div class="hint-text" id="credHint">
+                <span>💡</span>
+                <span id="credHintText">أدخل رقمك القومي (14 رقم) أو كلمة السر إن كنت قد أنشأتها</span>
               </div>
             </div>
 
@@ -507,23 +367,17 @@ body::before{
             <span class="status-pill status-open" id="dashStatus">—</span>
           </div>
 
+          <!-- Login Preference Row -->
+          <div class="pref-row" id="prefRow">
+            <span class="pref-text" id="prefText">🔐 طريقة الدخول: —</span>
+            <button id="prefManageBtn" onclick="openPreferenceModal()">تغيير</button>
+          </div>
+
           <div class="dash-info-grid">
-            <div class="dash-info-item">
-              <span class="lbl">الصف</span>
-              <span class="val" id="dashGrade">—</span>
-            </div>
-            <div class="dash-info-item">
-              <span class="lbl">النوع</span>
-              <span class="val" id="dashGender">—</span>
-            </div>
-            <div class="dash-info-item">
-              <span class="lbl">تاريخ الميلاد</span>
-              <span class="val" id="dashDOB">—</span>
-            </div>
-            <div class="dash-info-item">
-              <span class="lbl">المحافظة</span>
-              <span class="val" id="dashGovernorate">—</span>
-            </div>
+            <div class="dash-info-item"><span class="lbl">الصف</span><span class="val" id="dashGrade">—</span></div>
+            <div class="dash-info-item"><span class="lbl">النوع</span><span class="val" id="dashGender">—</span></div>
+            <div class="dash-info-item"><span class="lbl">تاريخ الميلاد</span><span class="val" id="dashDOB">—</span></div>
+            <div class="dash-info-item"><span class="lbl">المحافظة</span><span class="val" id="dashGovernorate">—</span></div>
             <div class="dash-info-item" style="grid-column:1/-1;">
               <span class="lbl">الرقم القومي</span>
               <span class="val" id="dashNationalId" dir="ltr">—</span>
@@ -539,9 +393,7 @@ body::before{
       </div>
     </aside>
 
-    <!-- Right: Info -->
     <section class="info-side">
-
       <div class="principal-card">
         <span class="principal-tag">⭐ كلمة مدير المدرسة</span>
         <h3>أ. عاطف أبوالعباس</h3>
@@ -561,14 +413,14 @@ body::before{
           <p>املأ استمارتك واختر تشعيبك بسهولة</p>
         </div>
         <div class="feature-card">
+          <div class="icon">🔑</div>
+          <h4>دخول آمن</h4>
+          <p>أنشئ كلمة سر خاصة لحسابك</p>
+        </div>
+        <div class="feature-card">
           <div class="icon">📄</div>
           <h4>طباعة PDF</h4>
           <p>احصل على نسخة رسمية من استمارتك</p>
-        </div>
-        <div class="feature-card">
-          <div class="icon">🔒</div>
-          <h4>تأمين البيانات</h4>
-          <p>بياناتك محفوظة ومشفرة بالكامل</p>
         </div>
         <div class="feature-card">
           <div class="icon">📩</div>
@@ -583,27 +435,25 @@ body::before{
           <div class="step-item">
             <div class="step-num">1</div>
             <h5>ادخل بياناتك</h5>
-            <p>كود الطالب + الرقم القومي</p>
+            <p>كود + رقم قومي أو كلمة سر</p>
           </div>
           <div class="step-item">
             <div class="step-num">2</div>
-            <h5>املأ الاستمارة</h5>
-            <p>اختر التشعيب وعبّئ الحقول</p>
+            <h5>اختر طريقة دخولك</h5>
+            <p>رقم قومي أو كلمة سر</p>
           </div>
           <div class="step-item">
             <div class="step-num">3</div>
-            <h5>حمّل PDF</h5>
-            <p>احفظ نسخة رسمية من بياناتك</p>
+            <h5>عبّئ الاستمارة</h5>
+            <p>وحمّل نسخة PDF رسمية</p>
           </div>
         </div>
       </div>
-
     </section>
 
   </div>
 </main>
 
-<!-- ===== Footer ===== -->
 <footer class="footer">
   <div class="container-inner">
     <div class="copyright">
@@ -619,13 +469,72 @@ body::before{
   </div>
 </footer>
 
-<!-- Scripts -->
+<!-- ===== Modal: Login Preference ===== -->
+<div class="modal-overlay" id="prefModal">
+  <div class="modal-card">
+    <button class="close-x" onclick="closePreferenceModal()">×</button>
+    <div class="modal-header">
+      <div class="modal-icon">⚙️</div>
+      <h3>طريقة الدخول المفضلة</h3>
+      <p>اختر الطريقة التي تفضّل استخدامها للدخول</p>
+    </div>
+
+    <div class="radio-cards">
+      <label class="radio-card" data-method="national_id" onclick="selectPref('national_id')">
+        <span class="radio-icon">🆔</span>
+        <div class="radio-info">
+          <div class="radio-title">الرقم القومي</div>
+          <div class="radio-desc">ادخل رقمك القومي (14 رقم) — متاح دائماً</div>
+        </div>
+        <span class="radio-circle"></span>
+      </label>
+
+      <label class="radio-card" data-method="password" onclick="selectPref('password')">
+        <span class="radio-icon">🔑</span>
+        <div class="radio-info">
+          <div class="radio-title">كلمة السر</div>
+          <div class="radio-desc">أكثر خصوصية وسرعة (يتطلب إنشاء كلمة سر)</div>
+        </div>
+        <span class="radio-circle"></span>
+      </label>
+    </div>
+
+    <!-- Password Setup Section (يظهر عند اختيار كلمة سر) -->
+    <div class="pw-section" id="pwSection">
+      <div class="form-group">
+        <label for="newPassword">كلمة السر</label>
+        <div class="input-wrap">
+          <span class="icon">🔑</span>
+          <input type="password" id="newPassword" placeholder="6 أحرف على الأقل" dir="ltr" minlength="6">
+          <button type="button" class="toggle-pw visible" onclick="togglePwInput('newPassword', this)">👁️</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="confirmPassword">تأكيد كلمة السر</label>
+        <div class="input-wrap">
+          <span class="icon">🔑</span>
+          <input type="password" id="confirmPassword" placeholder="أعد كتابة كلمة السر" dir="ltr" minlength="6">
+          <button type="button" class="toggle-pw visible" onclick="togglePwInput('confirmPassword', this)">👁️</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="prefErrorMsg" class="error-msg"></div>
+
+    <div class="modal-actions">
+      <button class="btn-primary" id="prefSaveBtn" onclick="savePreference()">💾 حفظ</button>
+      <button class="btn-skip" onclick="closePreferenceModal()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
 <script src="lib/supabase.js"></script>
 <script src="lib/auth.js"></script>
 <script src="lib/toast.js"></script>
 <script>
 let currentStudent = null;
 let authToken = null;
+let selectedPrefMethod = 'national_id';
 
 // ===== Init =====
 document.getElementById('yearDisplay').textContent = new Date().getFullYear();
@@ -633,15 +542,48 @@ document.getElementById('yearDisplay').textContent = new Date().getFullYear();
 (async function init() {
   const token = sessionStorage.getItem('studentToken');
   if (!token) {
+    applySavedPreference();
     showLogin();
     return;
   }
-
   authToken = token;
   await tryLoadDashboard();
 })();
 
-// ===== تحميل الداشبورد =====
+// ===== تطبيق التفضيل المحفوظ على placeholder =====
+function applySavedPreference() {
+  const savedPref = localStorage.getItem('studentPrefLogin') || 'national_id';
+  updateLoginField(savedPref);
+}
+
+function updateLoginField(pref) {
+  const label = document.getElementById('credLabel');
+  const input = document.getElementById('credential');
+  const hint = document.getElementById('credHintText');
+  const badge = document.getElementById('credBadge');
+  const toggle = document.getElementById('credToggle');
+
+  if (pref === 'password') {
+    label.textContent = 'كلمة السر';
+    input.placeholder = 'كلمة السر';
+    input.type = 'password';
+    hint.innerHTML = 'أدخل كلمة السر التي أنشأتها سابقاً';
+    badge.textContent = 'المفضّل';
+    badge.style.display = 'inline-block';
+    toggle.classList.add('visible');
+    toggle.textContent = '👁️';
+  } else {
+    label.textContent = 'الرقم القومي';
+    input.placeholder = '14 رقم';
+    input.type = 'text';
+    hint.innerHTML = 'أدخل رقمك القومي (14 رقم)';
+    badge.textContent = 'المفضّل';
+    badge.style.display = 'inline-block';
+    toggle.classList.remove('visible');
+  }
+}
+
+// ===== Dashboard =====
 async function tryLoadDashboard() {
   try {
     const { data, error } = await SB.rpc('student_get_data', { p_token: authToken });
@@ -659,18 +601,15 @@ async function tryLoadDashboard() {
   }
 }
 
-// ===== عرض Login =====
 function showLogin() {
   document.getElementById('loginView').style.display = 'block';
   document.getElementById('dashboardView').style.display = 'none';
 }
 
-// ===== عرض Dashboard =====
 function showDashboard(student) {
   document.getElementById('loginView').style.display = 'none';
   document.getElementById('dashboardView').style.display = 'block';
 
-  // Avatar initials
   const initials = (student.full_name || 'ط')
     .split(' ').map(w => w.charAt(0)).slice(0, 2).join('');
   document.getElementById('dashInitials').textContent = initials || 'ط';
@@ -682,16 +621,11 @@ function showDashboard(student) {
   document.getElementById('dashGovernorate').textContent = student.governorate || '—';
   document.getElementById('dashNationalId').textContent = student.national_id_masked || '—';
 
-  // DOB
   if (student.date_of_birth) {
     try {
       document.getElementById('dashDOB').textContent =
-        new Date(student.date_of_birth).toLocaleDateString('ar-EG', {
-          year: 'numeric', month: 'long', day: 'numeric'
-        });
-    } catch (e) {
-      document.getElementById('dashDOB').textContent = student.date_of_birth;
-    }
+        new Date(student.date_of_birth).toLocaleDateString('ar-EG', { year:'numeric', month:'long', day:'numeric' });
+    } catch (e) { document.getElementById('dashDOB').textContent = student.date_of_birth; }
   } else {
     document.getElementById('dashDOB').textContent = '—';
   }
@@ -716,6 +650,24 @@ function showDashboard(student) {
     actionBtn.onclick = () => { location.href = 'student-form.html'; };
   }
 
+  // Preference row
+  const pref = student.preferred_login || 'national_id';
+  const hasPw = student.has_password;
+  const prefRow = document.getElementById('prefRow');
+  const prefText = document.getElementById('prefText');
+
+  if (pref === 'password' && hasPw) {
+    prefRow.classList.add('has-pw');
+    prefText.innerHTML = '🔑 طريقة الدخول المفضلة: <strong>كلمة السر</strong>';
+  } else {
+    prefRow.classList.remove('has-pw');
+    prefText.innerHTML = '🆔 طريقة الدخول المفضلة: <strong>الرقم القومي</strong>' +
+      (hasPw ? '' : ' <span style="font-size:10px;color:var(--muted);">(يمكنك إنشاء كلمة سر)</span>');
+  }
+
+  // Store preference in localStorage for login placeholder
+  localStorage.setItem('studentPrefLogin', pref === 'password' && hasPw ? 'password' : 'national_id');
+
   // Logout
   document.getElementById('dashLogout').onclick = () => {
     if (confirm('هل أنت متأكد من الخروج؟')) {
@@ -725,7 +677,6 @@ function showDashboard(student) {
   };
 }
 
-// ===== تحديث يدوي =====
 async function refreshDashboard() {
   if (!authToken) return;
   Toast.show('🔄 جاري التحديث...', 'info', 1500);
@@ -733,7 +684,6 @@ async function refreshDashboard() {
   Toast.show('✅ تم التحديث', 'success', 1500);
 }
 
-// ===== مسح الجلسة =====
 function clearSession() {
   sessionStorage.removeItem('studentToken');
   sessionStorage.removeItem('studentId');
@@ -742,20 +692,20 @@ function clearSession() {
   authToken = null;
 }
 
-// ===== نموذج الدخول =====
+// ===== Login =====
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const code = document.getElementById('studentCode').value.trim();
-  const nid = document.getElementById('nationalId').value.trim();
-  const errorMsg = document.getElementById('errorMsg');
+  const cred = document.getElementById('credential').value.trim();
+  const err = document.getElementById('errorMsg');
   const btn = document.getElementById('loginBtn');
 
-  errorMsg.classList.remove('show');
+  err.classList.remove('show');
 
-  if (!code || nid.length !== 14) {
-    errorMsg.textContent = '❌ يرجى إدخال كود الطالب والرقم القومي (14 رقم)';
-    errorMsg.classList.add('show');
+  if (!code || !cred) {
+    err.textContent = '❌ يرجى إدخال كود الطالب والبيانات المطلوبة';
+    err.classList.add('show');
     return;
   }
 
@@ -763,11 +713,15 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   btn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;"></span> جاري التحقق...';
 
   try {
-    const { data, error } = await SB.rpc('student_login', { p_code: code, p_national_id: nid });
+    const { data, error } = await SB.rpc('student_login_unified', {
+      p_code: code,
+      p_credential: cred
+    });
+
     if (error) throw error;
     if (!data || !data.ok) {
-      errorMsg.textContent = '❌ ' + (data?.error || 'بيانات الدخول غير صحيحة');
-      errorMsg.classList.add('show');
+      err.textContent = '❌ ' + (data?.error || 'بيانات الدخول غير صحيحة');
+      err.classList.add('show');
       btn.disabled = false;
       btn.innerHTML = '<span>🚪</span> دخول إلى النظام';
       return;
@@ -775,37 +729,214 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
     // حفظ الجلسة
     sessionStorage.setItem('studentToken', data.token);
-    sessionStorage.setItem('studentName', data.student.full_name);
     sessionStorage.setItem('studentId', data.student.id);
-
-    // تحديث الـ token في المتغير
+    sessionStorage.setItem('studentName', data.student.full_name);
     authToken = data.token;
 
-    // تحميل الداشبورد في نفس الصفحة
-    await tryLoadDashboard();
+    // حفظ التفضيل في localStorage لاستخدامه في الدخول القادم
+    const pref = data.student.preferred_login || 'national_id';
+    const hasPw = data.student.has_password;
+    localStorage.setItem('studentPrefLogin', pref === 'password' && hasPw ? 'password' : 'national_id');
 
+    await tryLoadDashboard();
     Toast.show('✅ أهلاً ' + data.student.full_name, 'success');
 
-  } catch (err) {
-    console.error(err);
-    errorMsg.textContent = '❌ حدث خطأ أثناء محاولة الدخول';
-    errorMsg.classList.add('show');
+    // أول دخول بدون كلمة سر → اقترح الاختيار
+    if (!hasPw) {
+      setTimeout(() => {
+        openPreferenceModal(true);
+      }, 700);
+    }
+
+  } catch (err2) {
+    console.error(err2);
+    err.textContent = '❌ حدث خطأ أثناء محاولة الدخول';
+    err.classList.add('show');
     btn.disabled = false;
     btn.innerHTML = '<span>🚪</span> دخول إلى النظام';
   }
 });
 
-// ===== مسح شاشة الدخول عند تغيير الكود =====
-document.getElementById('studentCode').addEventListener('input', () => {
-  document.getElementById('errorMsg').classList.remove('show');
-});
-document.getElementById('nationalId').addEventListener('input', () => {
-  document.getElementById('errorMsg').classList.remove('show');
-});
+// ===== Toggle credential visibility =====
+function toggleCredential() {
+  const input = document.getElementById('credential');
+  const btn = document.getElementById('credToggle');
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁️';
+  }
+}
 
-// ===== 🔐 اختصار سريع لصفحة الأدمن (Ctrl + M) =====
+function togglePwInput(id, btn) {
+  const input = document.getElementById(id);
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁️';
+  }
+}
+
+// ===== Preference Modal =====
+function openPreferenceModal(isFirstTime) {
+  if (!currentStudent) return;
+
+  const hasPw = currentStudent.has_password;
+  const currentPref = currentStudent.preferred_login || 'national_id';
+
+  // Select current preference
+  selectPref(hasPw ? currentPref : 'national_id');
+
+  // If no password yet, show info
+  if (!hasPw) {
+    document.getElementById('prefModal').querySelector('p').textContent =
+      'يمكنك إنشاء كلمة سر الآن للدخول بها لاحقاً، أو البقاء على الرقم القومي';
+  }
+
+  document.getElementById('newPassword').value = '';
+  document.getElementById('confirmPassword').value = '';
+  document.getElementById('newPassword').type = 'password';
+  document.getElementById('confirmPassword').type = 'password';
+  document.getElementById('prefErrorMsg').classList.remove('show');
+
+  document.getElementById('prefModal').classList.add('show');
+}
+
+function closePreferenceModal() {
+  document.getElementById('prefModal').classList.remove('show');
+}
+
+function selectPref(method) {
+  selectedPrefMethod = method;
+  document.querySelectorAll('.radio-card').forEach(c => {
+    c.classList.toggle('selected', c.dataset.method === method);
+  });
+  const pwSection = document.getElementById('pwSection');
+  if (method === 'password') {
+    pwSection.classList.add('show');
+  } else {
+    pwSection.classList.remove('show');
+  }
+}
+
+async function savePreference() {
+  const err = document.getElementById('prefErrorMsg');
+  const btn = document.getElementById('prefSaveBtn');
+  err.classList.remove('show');
+
+  if (!currentStudent) return;
+
+  // إذا اختار كلمة سر
+  if (selectedPrefMethod === 'password') {
+    const pw1 = document.getElementById('newPassword').value;
+    const pw2 = document.getElementById('confirmPassword').value;
+    const hasPw = currentStudent.has_password;
+
+    // إذا لم يكن لديه كلمة سر → يجب إنشاء واحدة
+    if (!hasPw) {
+      if (!pw1 || pw1.length < 6) {
+        err.textContent = '❌ كلمة السر يجب أن تكون 6 أحرف على الأقل';
+        err.classList.add('show');
+        return;
+      }
+      if (pw1 !== pw2) {
+        err.textContent = '❌ كلمتا السر غير متطابقتين';
+        err.classList.add('show');
+        return;
+      }
+    } else if (pw1) {
+      // لديه كلمة سر ويريد تغييرها (اختياري)
+      if (pw1.length < 6) {
+        err.textContent = '❌ كلمة السر يجب أن تكون 6 أحرف على الأقل';
+        err.classList.add('show');
+        return;
+      }
+      if (pw1 !== pw2) {
+        err.textContent = '❌ كلمتا السر غير متطابقتين';
+        err.classList.add('show');
+        return;
+      }
+    }
+
+    btn.disabled = true;
+    btn.textContent = '⏳ جاري الحفظ...';
+
+    try {
+      // إنشاء كلمة سر إذا لزم
+      if ((!hasPw && pw1) || (hasPw && pw1)) {
+        const { data: pwRes, error: pwErr } = await SB.rpc('student_set_password', {
+          p_token: authToken,
+          p_password: pw1
+        });
+        if (pwErr || !pwRes?.ok) {
+          err.textContent = '❌ ' + (pwRes?.error || pwErr?.message || 'فشل حفظ كلمة السر');
+          err.classList.add('show');
+          btn.disabled = false;
+          btn.textContent = '💾 حفظ';
+          return;
+        }
+      }
+
+      // حفظ التفضيل
+      const { data: prefRes, error: prefErr } = await SB.rpc('student_set_preferred_login', {
+        p_token: authToken,
+        p_method: 'password'
+      });
+      if (prefErr || !prefRes?.ok) {
+        err.textContent = '❌ ' + (prefRes?.error || prefErr?.message);
+        err.classList.add('show');
+        btn.disabled = false;
+        btn.textContent = '💾 حفظ';
+        return;
+      }
+
+      Toast.show('✅ تم الحفظ — الدخول القادم بكلمة السر', 'success', 3000);
+      closePreferenceModal();
+      await tryLoadDashboard();
+
+    } catch (e) {
+      err.textContent = '❌ حدث خطأ';
+      err.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = '💾 حفظ';
+    }
+  } else {
+    // اختار الرقم القومي
+    btn.disabled = true;
+    btn.textContent = '⏳ جاري الحفظ...';
+
+    try {
+      const { data, error } = await SB.rpc('student_set_preferred_login', {
+        p_token: authToken,
+        p_method: 'national_id'
+      });
+      if (error || !data?.ok) {
+        err.textContent = '❌ ' + (data?.error || error?.message);
+        err.classList.add('show');
+        btn.disabled = false;
+        btn.textContent = '💾 حفظ';
+        return;
+      }
+
+      Toast.show('✅ تم الحفظ — الدخول القادم بالرقم القومي', 'success', 3000);
+      closePreferenceModal();
+      await tryLoadDashboard();
+
+    } catch (e) {
+      err.textContent = '❌ حدث خطأ';
+      err.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = '💾 حفظ';
+    }
+  }
+}
+
+// ===== اختصار سريع لصفحة الأدمن (Ctrl + M) =====
 document.addEventListener('keydown', (e) => {
-  // Ctrl + M أو Cmd + M (Mac)
   if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm') {
     e.preventDefault();
     if (typeof Toast !== 'undefined') {
@@ -815,6 +946,14 @@ document.addEventListener('keydown', (e) => {
       location.href = 'admin-login.html';
     }, 400);
   }
+});
+
+// ===== مسح رسائل الخطأ عند الكتابة =====
+document.getElementById('studentCode').addEventListener('input', () => {
+  document.getElementById('errorMsg').classList.remove('show');
+});
+document.getElementById('credential').addEventListener('input', () => {
+  document.getElementById('errorMsg').classList.remove('show');
 });
 </script>
 
