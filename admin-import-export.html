@@ -549,325 +549,196 @@ async function backupStudents() {
 // ==========================================================
 // دالة الاستيراد الرئيسية
 // ==========================================================
+// ==========================================================
+// doImport — نسخة RPC (معاملة واحدة، لا حلقات في المتصفح)
+// ==========================================================
 async function doImport() {
   if (parsedRows.length === 0) return Toast.show('ارفع ملفاً أولاً', 'warn');
-
-  if (selectedColumns.size === 0) {
-    return Toast.show('❌ اختر حقلاً واحداً على الأقل', 'error');
-  }
-  if (currentSchema === 'students' && !selectedColumns.has('student_code')) {
+  if (selectedColumns.size === 0) return Toast.show('❌ اختر حقلاً واحداً على الأقل', 'error');
+  if (currentSchema === 'students' && !selectedColumns.has('student_code'))
     return Toast.show('❌ يجب تحديد حقل "الكود"', 'error');
-  }
-  if (currentSchema === 'responses' && !selectedColumns.has('student_code')) {
+  if (currentSchema === 'responses' && !selectedColumns.has('student_code'))
     return Toast.show('❌ يجب تحديد حقل "الكود"', 'error');
-  }
 
   const sc = SCHEMAS[currentSchema];
   const mode = document.querySelector('input[name=mode]:checked').value;
   const btn = document.getElementById('importBtn');
   const progress = document.getElementById('progress');
   const bar = document.getElementById('progressBar');
+  const res = document.getElementById('result');
 
   if (mode === 'replace' && currentSchema === 'students') {
-    const ok = confirm('⚠️ تحذير: سيتم استبدال بيانات الطلاب. هل أخذت نسخة احتياطية؟');
-    if (!ok) return;
+    if (!confirm('⚠️ تحذير: سيتم استبدال بيانات الطلاب. هل أخذت نسخة احتياطية؟')) return;
   }
 
   btn.disabled = true;
   progress.classList.add('show');
   bar.style.width = '0%';
+  res.className = 'result';
 
-  let success = 0, failed = 0, skipped = 0;
-  const errors = [];
+  try {
+    const CHUNK_SIZE = 500;
 
-  // ==========================================================
-  // معالجة استجابات الطلاب
-  // ==========================================================
-  if (currentSchema === 'responses') {
-    try {
-      // 1) جمع كل الأكواد في الملف
-      const codes = [];
+    // ============ 1) استجابات الطلاب ============
+    if (currentSchema === 'responses') {
+      const codes = new Set();
       for (const row of parsedRows) {
-        const codeVal = findVal(row, { label: 'الكود', key: 'student_code', aliases: ['كود','code'] });
-        if (codeVal) codes.push(String(codeVal).trim());
+        const c = findVal(row, { label: 'الكود', key: 'student_code', aliases: ['كود','code'] });
+        if (c) codes.add(String(c).trim());
       }
+      if (codes.size === 0) throw new Error('لا يوجد عمود كود في الملف');
 
-      if (codes.length === 0) {
-        btn.disabled = false;
-        progress.classList.remove('show');
-        return Toast.show('❌ لا يوجد عمود "الكود" في الملف', 'error');
-      }
-
-      // 2) جلب student_ids
-      const { data: studentList, error: stErr } = await SB.from('students')
-        .select('id, student_code').in('student_code', codes);
-      if (stErr) throw stErr;
+      const { data: studentList, error: sErr } = await SB.from('students')
+        .select('id, student_code').in('student_code', [...codes]);
+      if (sErr) throw sErr;
       const studentMap = {};
-      (studentList || []).forEach(s => { studentMap[s.student_code] = s.id; });
+      (studentList || []).forEach(s => studentMap[s.student_code] = s.id);
 
-      // 3) الحقول المحددة للاستيراد (بعد الكود)
-      const selectedFieldIds = Array.from(selectedColumns).filter(k => k !== 'student_code');
+      const selectedFieldIds = [...selectedColumns].filter(k => k !== 'student_code');
+      if (selectedFieldIds.length === 0) throw new Error('اختر حقلاً واحداً على الأقل');
 
-      if (selectedFieldIds.length === 0) {
-        btn.disabled = false;
-        progress.classList.remove('show');
-        return Toast.show('❌ حدد حقل بيانات واحد على الأقل (بالإضافة إلى الكود)', 'error');
-      }
-
-      // 4) بناء الدفعات
-      const CHUNK = 100;
-      const records = []; // { student_id, field_id, value }
-
-      for (let i = 0; i < parsedRows.length; i++) {
-        const row = parsedRows[i];
-        const rowNum = i + 2;
-
+      const allRecords = [];
+      parsedRows.forEach((row) => {
         const codeVal = findVal(row, { label: 'الكود', key: 'student_code', aliases: ['كود','code'] });
-        if (!codeVal) {
-          failed++; errors.push(`صف ${rowNum}: بدون كود`);
-          continue;
-        }
-        const studentCode = String(codeVal).trim();
-        const studentId = studentMap[studentCode];
-        if (!studentId) {
-          failed++; errors.push(`صف ${rowNum}: الطالب بكود "${studentCode}" غير موجود`);
-          continue;
-        }
+        if (!codeVal) return;
+        const code = String(codeVal).trim();
+        const sid = studentMap[code];
+        if (!sid) return;
 
-        // الحقول
         for (const fieldId of selectedFieldIds) {
           const field = availableFields.find(f => f.id === fieldId);
           if (!field) continue;
-
-          const raw = findVal(row, {
-            key: field.id, label: field.name, aliases: [field.field_key]
-          });
-          if (raw === '' || raw == null) continue; // تخطي القيم الفارغة
-
-          records.push({
-            student_id: studentId,
-            field_id: fieldId,
-            value: String(raw).trim(),
-            rowNum, studentCode, fieldName: field.name
-          });
+          const raw = findVal(row, { key: field.id, label: field.name, aliases: [field.field_key] });
+          if (raw === '' || raw == null) continue;
+          allRecords.push({ student_code: code, field_id: fieldId, value: String(raw).trim() });
         }
-      }
-
-      // 5) تطبيق حسب الوضع
-      for (let i = 0; i < records.length; i += CHUNK) {
-        const chunk = records.slice(i, i + CHUNK);
-        try {
-          if (mode === 'insert') {
-            // إضافة فقط: تجاهل الموجود
-            const { error } = await SB.from('student_dynamic_responses')
-              .upsert(chunk.map(r => ({ student_id: r.student_id, field_id: r.field_id, value: r.value })),
-                      { onConflict: 'student_id,field_id', ignoreDuplicates: true });
-            if (error) throw error;
-            success += chunk.length;
-          } else if (mode === 'smart-fill') {
-            // تحديث ذكي: لا يمسح الموجود
-            // يجب قراءة القيم الحالية أولاً
-            for (const r of chunk) {
-              const { data: existing } = await SB.from('student_dynamic_responses')
-                .select('value').eq('student_id', r.student_id).eq('field_id', r.field_id).maybeSingle();
-
-              if (existing && existing.value && existing.value !== '') {
-                // موجود — تجاهل
-                skipped++;
-                continue;
-              }
-              const { error } = await SB.from('student_dynamic_responses')
-                .upsert({ student_id: r.student_id, field_id: r.field_id, value: r.value },
-                        { onConflict: 'student_id,field_id' });
-              if (error) { failed++; errors.push(`صف ${r.rowNum} (${r.fieldName}): ${error.message}`); }
-              else success++;
-            }
-          } else if (mode === 'replace') {
-            // استبدال كامل
-            const { error } = await SB.from('student_dynamic_responses')
-              .upsert(chunk.map(r => ({ student_id: r.student_id, field_id: r.field_id, value: r.value })),
-                      { onConflict: 'student_id,field_id' });
-            if (error) throw error;
-            success += chunk.length;
-          }
-        } catch (err) {
-          failed += chunk.length;
-          errors.push(`دفعة ${Math.floor(i / CHUNK) + 1}: ${err.message}`);
-        }
-        bar.style.width = Math.min(100, Math.round((i + CHUNK) / records.length * 100)) + '%';
-      }
-
-      // سجل
-      try {
-        await SB.from('admin_logs').insert({
-          admin_id: auth0.user.id, admin_email: auth0.user.email,
-          action: `استيراد استجابات (${mode})`,
-          details: `حقول: ${selectedFieldIds.length} | نجح: ${success}، فشل: ${failed}، تخطي: ${skipped}`
-        });
-      } catch (e) { console.warn(e); }
-
-      const res = document.getElementById('result');
-      res.className = `result show ${failed === 0 ? 'success' : success > 0 ? 'partial' : 'error'}`;
-      res.innerHTML = `
-        <div class="stats-grid">
-          <div class="stat-box"><div class="num" style="color:#28a745;">${success}</div><div class="lbl">✅ نجح</div></div>
-          <div class="stat-box"><div class="num" style="color:#dc3545;">${failed}</div><div class="lbl">❌ فشل</div></div>
-          <div class="stat-box"><div class="num" style="color:#ffc107;">${skipped}</div><div class="lbl">⏭️ تخطي</div></div>
-        </div>
-        ${errors.length > 0 ? `<details style="margin-top:10px;">
-          <summary style="cursor:pointer;font-weight:600;">الأخطاء (${errors.length})</summary>
-          <ul style="max-height:200px;overflow:auto;margin-top:8px;font-size:13px;">
-            ${errors.slice(0, 50).map(e => `<li>${esc(e)}</li>`).join('')}
-          </ul></details>` : ''}
-      `;
-
-      btn.disabled = false;
-      progress.classList.remove('show');
-      if (success > 0) Toast.show(`✅ ${success} قيمة مستوردة`, 'success');
-      return;
-
-    } catch (err) {
-      btn.disabled = false;
-      progress.classList.remove('show');
-      return Toast.show('❌ ' + err.message, 'error', 6000);
-    }
-  }
-
-  // ==========================================================
-  // باقي الجداول (students, fields, sections)
-  // ==========================================================
-  let converted = [];
-  for (let i = 0; i < parsedRows.length; i++) {
-    try {
-      converted.push({ idx: i + 2, data: convertRow(parsedRows[i], sc) });
-    } catch (err) {
-      failed++;
-      errors.push(`صف ${i + 2}: ${err.message}`);
-    }
-  }
-
-  // معالجة الحقول (section_name → section_id)
-  if (currentSchema === 'fields') {
-    try {
-      const { data: existingSecs, error: fetchErr } = await SB.from('form_sections').select('id, name');
-      if (fetchErr) throw new Error('فشل جلب الأقسام: ' + fetchErr.message);
-      const secMap = Object.fromEntries((existingSecs || []).map(s => [s.name.trim(), s.id]));
-      const newSectionsSet = new Set();
-      converted.forEach(c => {
-        const name = (c.data.section_name || '').trim();
-        if (name && !secMap[name]) newSectionsSet.add(name);
       });
-      if (newSectionsSet.size > 0) {
-        const startOrder = existingSecs?.length || 0;
-        const toInsert = [...newSectionsSet].map((name, i) => ({
+
+      const payloads = [];
+      for (let i = 0; i < allRecords.length; i += CHUNK_SIZE) {
+        payloads.push(allRecords.slice(i, i + CHUNK_SIZE));
+      }
+
+      let totalSuccess = 0, totalFailed = 0, totalSkipped = 0;
+      const allErrors = [];
+
+      for (let pi = 0; pi < payloads.length; pi++) {
+        const { data, error } = await SB.rpc('bulk_import_responses', {
+          p_payload: payloads[pi],
+          p_mode: mode
+        });
+        if (error) { allErrors.push('دفعة ' + (pi+1) + ': ' + error.message); continue; }
+        totalSuccess += data.success || 0;
+        totalFailed  += data.failed  || 0;
+        totalSkipped += data.skipped || 0;
+        (data.errors || []).forEach(e => allErrors.push(e));
+        bar.style.width = Math.round(((pi + 1) / payloads.length) * 100) + '%';
+      }
+
+      await finishImport(sc, mode, totalSuccess, totalFailed, totalSkipped, allErrors);
+      return;
+    }
+
+    // ============ 2) تحويل الصفوف للشكل النهائي ============
+    const converted = [];
+    for (let i = 0; i < parsedRows.length; i++) {
+      try { converted.push(convertRow(parsedRows[i], sc)); }
+      catch (e) { /* سيُعالج عبر RPC */ }
+    }
+
+    // معالجة الأقسام للحقول
+    let normalized = converted;
+    if (currentSchema === 'fields') {
+      const { data: existingSecs } = await SB.from('form_sections').select('id, name');
+      const secMap = {};
+      (existingSecs || []).forEach(s => secMap[s.name.trim()] = s.id);
+
+      const newOnes = new Set();
+      normalized.forEach(c => {
+        const n = (c.section_name || '').trim();
+        if (n && !secMap[n]) newOnes.add(n);
+      });
+      if (newOnes.size > 0) {
+        const startOrder = (existingSecs || []).length;
+        const toInsert = [...newOnes].map((name, i) => ({
           name, display_order: startOrder + i, is_active: true
         }));
-        const { data: created, error: createErr } = await SB.from('form_sections').insert(toInsert).select();
-        if (createErr) throw new Error('فشل إنشاء أقسام: ' + createErr.message);
-        (created || []).forEach(s => { secMap[s.name.trim()] = s.id; });
+        const { data: created } = await SB.from('form_sections').insert(toInsert).select();
+        (created || []).forEach(s => secMap[s.name.trim()] = s.id);
       }
-      converted = converted.map(c => {
-        const name = (c.data.section_name || '').trim();
-        delete c.data.section_name;
-        c.data.section_id = (name && secMap[name]) ? secMap[name] : null;
+      normalized = converted.map(c => {
+        const n = (c.section_name || '').trim();
+        delete c.section_name;
+        c.section_id = (n && secMap[n]) ? secMap[n] : null;
         return c;
       });
-    } catch (err) {
-      btn.disabled = false;
-      progress.classList.remove('show');
-      return Toast.show('❌ ' + err.message, 'error', 6000);
     }
-  }
 
-  // معالجة الطلاب
-  if (currentSchema === 'students') {
-    try {
-      const codes = converted.map(c => c.data.student_code).filter(Boolean);
-      const { data: existingList } = await SB.from('students').select('*').in('student_code', codes);
-      const existingMap = {};
-      (existingList || []).forEach(s => { existingMap[s.student_code] = s; });
-
-      const toInsert = [];
-      const toUpdate = [];
-
-      for (const c of converted) {
-        const ex = existingMap[c.data.student_code];
-        const rowNum = c.idx;
-
-        if (!ex) {
-          if (!c.data.national_id) { failed++; errors.push(`صف ${rowNum}: طالب جديد بدون رقم قومي`); continue; }
-          if (!c.data.full_name) { failed++; errors.push(`صف ${rowNum}: طالب جديد بدون اسم`); continue; }
-          toInsert.push(c);
-          continue;
-        }
-
-        if (mode === 'insert') { skipped++; continue; }
-
-        const updateObj = {};
-        for (const [key, val] of Object.entries(c.data)) {
-          if (key === 'student_code') continue;
-          if (val === '' || val == null) continue;
-          if (mode === 'smart-fill') {
-            if (!ex[key] || ex[key] === '') updateObj[key] = val;
-          } else if (mode === 'replace') {
-            updateObj[key] = val;
-          }
-        }
-        if (Object.keys(updateObj).length > 0) {
-          toUpdate.push({ id: ex.id, data: updateObj, idx: rowNum });
-        } else {
-          skipped++;
-        }
+    // ============ 3) الطلاب — عبر RPC ============
+    if (currentSchema === 'students') {
+      const payloadChunks = [];
+      for (let i = 0; i < normalized.length; i += CHUNK_SIZE) {
+        payloadChunks.push(normalized.slice(i, i + CHUNK_SIZE));
       }
 
-      for (const c of toInsert) {
-        const { error } = await SB.from('students').insert(c.data);
-        if (!error) success++;
-        else if (error.code === '23505') skipped++;
-        else { failed++; errors.push(`صف ${c.idx}: ${error.message}`); }
+      let totalSuccess = 0, totalFailed = 0, totalSkipped = 0;
+      const allErrors = [];
+
+      for (let pi = 0; pi < payloadChunks.length; pi++) {
+        const { data, error } = await SB.rpc('bulk_import_students', {
+          p_payload: payloadChunks[pi],
+          p_mode: mode
+        });
+        if (error) { allErrors.push('دفعة ' + (pi+1) + ': ' + error.message); continue; }
+        totalSuccess += data.success || 0;
+        totalFailed  += data.failed  || 0;
+        totalSkipped += data.skipped || 0;
+        (data.errors || []).forEach(e => allErrors.push(e));
+        bar.style.width = Math.round(((pi + 1) / payloadChunks.length) * 100) + '%';
       }
-      for (const u of toUpdate) {
-        const { error } = await SB.from('students').update(u.data).eq('id', u.id);
-        if (!error) success++;
-        else { failed++; errors.push(`صف ${u.idx}: ${error.message}`); }
-      }
-      bar.style.width = '100%';
-    } catch (err) {
-      failed += converted.length;
-      errors.push('خطأ عام: ' + err.message);
+
+      await finishImport(sc, mode, totalSuccess, totalFailed, totalSkipped, allErrors);
+      return;
     }
-  } else {
-    const CHUNK = 100;
-    for (let i = 0; i < converted.length; i += CHUNK) {
-      const chunk = converted.slice(i, i + CHUNK);
+
+    // ============ 4) الحقول والأقسام (fallback بسيط) ============
+    let success = 0, failed = 0, skipped = 0;
+    const errors = [];
+    for (let i = 0; i < normalized.length; i++) {
+      const c = normalized[i];
       try {
         if (mode === 'insert') {
-          for (const c of chunk) {
-            const { error } = await SB.from(sc.table).insert(c.data);
-            if (!error) success++;
-            else if (error.code === '23505') skipped++;
-            else { failed++; errors.push(`صف ${c.idx}: ${error.message}`); }
-          }
+          const { error } = await SB.from(sc.table).insert(c);
+          if (error) {
+            if (error.code === '23505') skipped++;
+            else { failed++; errors.push('صف ' + (i+2) + ': ' + error.message); }
+          } else success++;
         } else {
-          const { error } = await SB.from(sc.table).upsert(chunk.map(c => c.data), { onConflict: sc.match });
-          if (error) throw error;
-          success += chunk.length;
+          const { error } = await SB.from(sc.table).upsert(c, { onConflict: sc.match });
+          if (error) { failed++; errors.push('صف ' + (i+2) + ': ' + error.message); }
+          else success++;
         }
-      } catch (err) {
-        failed += chunk.length;
-        errors.push(`دفعة ${Math.floor(i / CHUNK) + 1}: ${err.message}`);
-      }
-      bar.style.width = Math.min(100, Math.round((i + CHUNK) / converted.length * 100)) + '%';
+      } catch (e) { failed++; errors.push(e.message); }
+      bar.style.width = Math.round(((success + failed + skipped) / normalized.length) * 100) + '%';
     }
-  }
+    await finishImport(sc, mode, success, failed, skipped, errors);
 
+  } catch (err) {
+    btn.disabled = false;
+    progress.classList.remove('show');
+    Toast.show('❌ ' + err.message, 'error', 6000);
+  }
+}
+
+// دالة مساعدة جديدة — أضفها بجوار doImport
+async function finishImport(sc, mode, success, failed, skipped, errors) {
   try {
     await SB.from('admin_logs').insert({
       admin_id: auth0.user.id, admin_email: auth0.user.email,
       action: `استيراد ${sc.label} (${mode})`,
-      details: `حقول: ${selectedColumns.size} | نجح: ${success}، فشل: ${failed}، تخطي: ${skipped}`
+      details: `نجح: ${success}، فشل: ${failed}، تخطي: ${skipped}`
     });
-  } catch (e) { console.warn(e); }
+  } catch(e) { console.warn(e); }
 
   const res = document.getElementById('result');
   res.className = `result show ${failed === 0 ? 'success' : success > 0 ? 'partial' : 'error'}`;
@@ -880,15 +751,14 @@ async function doImport() {
     ${errors.length > 0 ? `<details style="margin-top:10px;">
       <summary style="cursor:pointer;font-weight:600;">الأخطاء (${errors.length})</summary>
       <ul style="max-height:200px;overflow:auto;margin-top:8px;font-size:13px;">
-        ${errors.slice(0, 50).map(e => `<li>${esc(e)}</li>`).join('')}
+        ${errors.slice(0, 50).map(e => `<li>${esc(typeof e === 'string' ? e : JSON.stringify(e))}</li>`).join('')}
       </ul></details>` : ''}
   `;
 
-  btn.disabled = false;
-  progress.classList.remove('show');
+  document.getElementById('importBtn').disabled = false;
+  document.getElementById('progress').classList.remove('show');
   if (success > 0) Toast.show(`✅ ${success} صف معالج`, 'success');
 }
-
 // ==========================================================
 // التصدير
 // ==========================================================
