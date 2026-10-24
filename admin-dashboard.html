@@ -116,7 +116,7 @@ let authInfo = null;
   if (!authInfo) return;
   document.getElementById('adminInfo').textContent = '👑 ' + authInfo.user.email;
   await loadAll();
-  setupRealtime();
+  _setupRealtime();
 })();
 
 async function loadAll() {
@@ -151,7 +151,6 @@ async function loadAll() {
     document.getElementById('pendingRequests').textContent = pendingReopen || 0;
     document.getElementById('pendingEditRequests').textContent = pendingEdit || 0;
 
-    // إضافة شارة نبض إذا فيه طلبات معلقة
     const pendingEditCard = document.getElementById('pendingEditRequests').parentElement;
     if (pendingEdit > 0 && !pendingEditCard.querySelector('.pulse')) {
       const p = document.createElement('span');
@@ -162,7 +161,6 @@ async function loadAll() {
       if (p) p.remove();
     }
 
-    // جدول آخر الطلاب
     const recEl = document.getElementById('recent');
     if (!recent || recent.length === 0) {
       recEl.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">📭 لا يوجد طلاب</div>';
@@ -239,7 +237,6 @@ function loadGradeChart(gradeData) {
     grades[g] = (grades[g] || 0) + 1;
   });
 
-  // ترتيب منطقي للصفوف (الأول → الثاني → الثالث)
   const gradeOrder = ['الأول الثانوي', 'الثاني الثانوي', 'الثالث الثانوي'];
   const sortedLabels = Object.keys(grades).sort((a, b) => {
     const ai = gradeOrder.indexOf(a);
@@ -289,8 +286,9 @@ async function loadActivities() {
     </div>`).join('');
 }
 
-// ============ الإشعارات الفورية (Realtime) ============
-function setupRealtime() {
+// ============ الإشعارات الفورية (Realtime) — محسّنة ============
+function _setupRealtime() {
+  if (realtimeChannel) return; // لا تنشئ مرتين
   try {
     realtimeChannel = SB.channel('dashboard_realtime')
       .on('postgres_changes',
@@ -311,8 +309,9 @@ function setupRealtime() {
       )
       .subscribe((status) => {
         console.log('📡 Realtime status:', status);
-        if (status === 'SUBSCRIBED') {
-          document.getElementById('realtimeBadge').style.display = 'inline-flex';
+        const badge = document.getElementById('realtimeBadge');
+        if (status === 'SUBSCRIBED' && badge) {
+          badge.style.display = 'inline-flex';
         }
       });
   } catch (e) {
@@ -320,11 +319,26 @@ function setupRealtime() {
   }
 }
 
-window.addEventListener('beforeunload', () => {
-  if (realtimeChannel) {
-    try { SB.removeChannel(realtimeChannel); } catch (e) {}
+function _cleanupRealtime() {
+  if (!realtimeChannel) return;
+  try { SB.removeChannel(realtimeChannel); } catch(e) {}
+  realtimeChannel = null;
+  const badge = document.getElementById('realtimeBadge');
+  if (badge) badge.style.display = 'none';
+}
+
+// تنظيف عند إخفاء التبويب (موبايل/سطح مكتب) — يوفّر حصة الاتصالات
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    _cleanupRealtime();
+  } else if (document.visibilityState === 'visible') {
+    _setupRealtime();
   }
 });
+
+// تنظيف إضافي عند إغلاق الصفحة
+window.addEventListener('beforeunload', _cleanupRealtime);
+window.addEventListener('pagehide', _cleanupRealtime);
 </script>
 </body>
 </html>
