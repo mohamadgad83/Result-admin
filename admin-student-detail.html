@@ -1,29 +1,42 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>تفاصيل الطالب</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="style.css">
 <style>
 .admin-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;padding-bottom:15px;border-bottom:2px solid #eee;margin-bottom:20px}
 .btn{padding:10px 18px;border:none;border-radius:8px;cursor:pointer;font-size:14px;text-decoration:none;display:inline-block;font-weight:600;transition:all .2s}
-.btn-gray{background:#6c757d;color:#fff}.btn-red{background:#dc3545;color:#fff}
-.btn-blue{background:#17a2b8;color:#fff}.btn-green{background:#28a745;color:#fff}
+.btn-gray{background:#6c757d;color:#fff}
+.btn-red{background:#dc3545;color:#fff}
+.btn-blue{background:#17a2b8;color:#fff}
+.btn-green{background:#28a745;color:#fff}
 .btn-yellow{background:#ffc107;color:#333}
+.btn-sm{padding:6px 12px;font-size:12px}
 .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:20px 0}
 .detail-card{background:#f8f9fa;padding:20px;border-radius:12px}
-.detail-card h3{color:#1e3c72;margin:0 0 15px;padding-bottom:8px;border-bottom:2px solid #1e3c72}
-.row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee}
+.detail-card h3{color:#1e3c72;margin:0 0 15px;padding-bottom:8px;border-bottom:2px solid #1e3c72;font-size:16px}
+.row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee;gap:10px}
 .row:last-child{border-bottom:none}
-.row .lbl{color:#666;font-size:14px}
-.row .val{font-weight:600;color:#1e3c72}
-@media(max-width:600px){.detail-grid{grid-template-columns:1fr}}
+.row .lbl{color:#666;font-size:14px;flex-shrink:0}
+.row .val{font-weight:600;color:#1e3c72;text-align:left;word-break:break-word}
+.edit-request-card{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:14px;margin-bottom:10px;border-right:4px solid #ffc107}
+.edit-request-card.approved{border-right-color:#28a745;background:#f0fff4}
+.edit-request-card.rejected{border-right-color:#dc3545;background:#fff5f5}
+.edit-request-card .title{font-weight:700;color:#1e3c72;font-size:14px;margin-bottom:6px}
+.edit-request-card .change{font-size:13px;margin:6px 0}
+.edit-request-card .change .old{color:#dc3545;text-decoration:line-through}
+.edit-request-card .change .new{color:#28a745;font-weight:700}
+.edit-request-card .status{display:inline-block;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:600;margin-bottom:6px}
+.edit-request-card .status.pending{background:#fff3cd;color:#856404}
+.edit-request-card .status.approved{background:#d4edda;color:#155724}
+.edit-request-card .status.rejected{background:#f8d7da;color:#721c24}
+@media(max-width:700px){.detail-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<div class="container" style="max-width:900px;">
+<div class="container" style="max-width:950px;">
 <div class="card">
   <div class="admin-header">
     <h1 style="margin:0;font-size:22px;">👨‍🎓 تفاصيل الطالب</h1>
@@ -48,6 +61,11 @@
       </div>
     </div>
 
+    <div class="detail-card" id="editRequestsCard" style="display:none;margin-top:20px;">
+      <h3>📩 طلبات التعديل الخاصة بهذا الطالب</h3>
+      <div id="editRequestsInfo"></div>
+    </div>
+
     <div class="detail-card" id="fieldsCard" style="display:none;margin-top:20px;">
       <h3>📝 الحقول الديناميكية</h3>
       <div id="fieldsInfo"></div>
@@ -61,7 +79,7 @@
 <script src="lib/toast.js"></script>
 <script src="lib/escape.js"></script>
 <script>
-let student = null, fields = [], responses = {}, auth0 = null;
+let student = null, fields = [], responses = {}, editRequests = [], auth0 = null;
 
 (async () => {
   auth0 = await Auth.requireAdmin();
@@ -76,9 +94,9 @@ async function load(id) {
   if (!s) { Toast.show('الطالب غير موجود', 'error'); return; }
   student = s;
 
-  // جلب الحقول مع اسم القسم وترتيبه
   const { data: f } = await SB.from('dynamic_fields')
     .select('*, form_sections(name, display_order)')
+    .eq('visible_for_student', true)
     .order('display_order');
 
   fields = (f || []).map(x => ({
@@ -87,11 +105,13 @@ async function load(id) {
     section_order: x.form_sections?.display_order ?? 999
   }));
 
-  // جلب استجابات الطالب
   const { data: r } = await SB.from('student_dynamic_responses')
-    .select('field_id,value')
-    .eq('student_id', id);
+    .select('field_id,value').eq('student_id', id);
   (r || []).forEach(x => { responses[x.field_id] = x.value; });
+
+  const { data: er } = await SB.from('edit_requests')
+    .select('*').eq('student_id', id).order('requested_at', { ascending: false });
+  editRequests = er || [];
 
   render();
   document.getElementById('loading').style.display = 'none';
@@ -102,11 +122,15 @@ function render() {
   const s = student;
   const masked = '****' + String(s.national_id || '').slice(-4);
 
-  // 1) المعلومات الأساسية
   document.getElementById('basicInfo').innerHTML = `
     <div class="row"><span class="lbl">الاسم</span><span class="val">${esc(s.full_name)}</span></div>
     <div class="row"><span class="lbl">الكود</span><span class="val" dir="ltr">${esc(s.student_code)}</span></div>
     <div class="row"><span class="lbl">الرقم القومي</span><span class="val" dir="ltr">${esc(masked)}</span></div>
+    <div class="row"><span class="lbl">الصف</span><span class="val">${esc(s.grade || '-')}</span></div>
+    <div class="row"><span class="lbl">حالة القيد</span><span class="val">${esc(s.enrollment_status || '-')}</span></div>
+    <div class="row"><span class="lbl">النوع</span><span class="val">${esc(s.gender || '-')}</span></div>
+    <div class="row"><span class="lbl">تاريخ الميلاد</span><span class="val">${s.date_of_birth ? new Date(s.date_of_birth).toLocaleDateString('ar-EG') : '-'}</span></div>
+    <div class="row"><span class="lbl">المحافظة</span><span class="val">${esc(s.governorate || '-')}</span></div>
     <div class="row"><span class="lbl">التشعيب</span><span class="val">${esc(s.stream || '-')}</span></div>
     ${s.stream === 'ثانوي' ? `<div class="row"><span class="lbl">التخصص</span><span class="val">${esc(s.specialization || '-')}</span></div>` : ''}
     ${s.stream === 'بكالوريا' ? `
@@ -115,7 +139,6 @@ function render() {
     <div class="row"><span class="lbl">تاريخ التقديم</span><span class="val">${s.submitted_at ? new Date(s.submitted_at).toLocaleString('ar-EG') : '-'}</span></div>
   `;
 
-  // 2) الحالة والإجراءات
   document.getElementById('statusInfo').innerHTML = `
     <div class="row"><span class="lbl">الحالة</span><span class="val">${s.is_locked ? '✅ مقفل' : '🔓 مفتوح'}</span></div>
     <div style="margin-top:15px;display:flex;gap:10px;flex-wrap:wrap;">
@@ -126,40 +149,52 @@ function render() {
     </div>
   `;
 
-  // 3) الحقول الديناميكية (مجمعة حسب القسم) ← الكود الذي طلبته
+  // طلبات التعديل
+  if (editRequests.length > 0) {
+    document.getElementById('editRequestsCard').style.display = 'block';
+    const labels = { pending: '⏳ معلق', approved: '✅ موافق', rejected: '❌ مرفوض' };
+    document.getElementById('editRequestsInfo').innerHTML = editRequests.map(r => `
+      <div class="edit-request-card ${r.status}">
+        <span class="status ${r.status}">${labels[r.status]}</span>
+        <div class="title">${esc(r.field_label)}</div>
+        <div class="change">
+          <span class="old">${esc(r.old_value || '—')}</span>
+          → <span class="new">${esc(r.new_value)}</span>
+        </div>
+        <div style="font-size:12px;color:#666;margin-top:4px;">📝 ${esc(r.reason)}</div>
+        ${r.admin_response ? `<div style="font-size:12px;color:#555;margin-top:6px;padding:6px;background:#e8f4fd;border-radius:6px;">📩 ${esc(r.admin_response)}</div>` : ''}
+        <div style="font-size:11px;color:#999;margin-top:4px;">${new Date(r.requested_at).toLocaleString('ar-EG')}</div>
+        ${r.status === 'pending' ? `
+          <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn btn-sm btn-green" onclick="respondEditRequest('${r.id}','approved')">✅ موافقة</button>
+            <button class="btn btn-sm btn-red" onclick="respondEditRequest('${r.id}','rejected')">❌ رفض</button>
+          </div>` : ''}
+      </div>
+    `).join('');
+  }
+
+  // الحقول الديناميكية
   if (fields.length > 0) {
     document.getElementById('fieldsCard').style.display = 'block';
-
-    // تجميع حسب القسم
     const groups = {};
     fields.forEach(f => {
       const key = f.section_id || '__none__';
-      if (!groups[key]) {
-        groups[key] = {
-          name: f.section_name || 'بدون قسم',
-          order: f.section_order ?? 999,
-          fields: []
-        };
-      }
+      if (!groups[key]) groups[key] = { name: f.section_name || 'بدون قسم', order: f.section_order ?? 999, fields: [] };
       groups[key].fields.push(f);
     });
-
-    // ترتيب الأقسام: بدون قسم أولاً، ثم حسب section_order
     const sortedKeys = Object.keys(groups).sort((a, b) => {
       if (a === '__none__') return -1;
       if (b === '__none__') return 1;
       return (groups[a].order || 999) - (groups[b].order || 999);
     });
-
     let html = '';
     sortedKeys.forEach(key => {
       const g = groups[key];
-      html += `<h4 style="color:#1e3c72; margin:15px 0 8px; border-bottom:2px solid #eee; padding-bottom:5px;">📂 ${esc(g.name)}</h4>`;
+      html += `<h4 style="color:#1e3c72;margin:15px 0 8px;border-bottom:2px solid #eee;padding-bottom:5px;">📂 ${esc(g.name)}</h4>`;
       g.fields.forEach(f => {
         html += `<div class="row"><span class="lbl">${esc(f.name)}</span><span class="val">${esc(responses[f.id] || '—')}</span></div>`;
       });
     });
-
     document.getElementById('fieldsInfo').innerHTML = html;
   }
 }
@@ -182,6 +217,36 @@ async function toggleLock() {
   if (!newLock) student.submitted_at = null;
   Toast.show('✅ تم التحديث');
   render();
+}
+
+async function respondEditRequest(id, action) {
+  const req = editRequests.find(r => r.id === id);
+  if (!req) return;
+  if (!confirm(action === 'approved' ? 'الموافقة وتطبيق التعديل؟' : 'رفض الطلب؟')) return;
+
+  try {
+    if (action === 'approved') {
+      if (req.target_type === 'core') {
+        const { error: e1 } = await SB.from('students').update({ [req.field_key]: req.new_value }).eq('id', req.student_id);
+        if (e1) throw e1;
+      } else if (req.target_type === 'dynamic' && req.field_id) {
+        const { error: e2 } = await SB.from('student_dynamic_responses').upsert({
+          student_id: req.student_id, field_id: req.field_id, value: req.new_value
+        }, { onConflict: 'student_id,field_id' });
+        if (e2) throw e2;
+      }
+    }
+    const { error: e3 } = await SB.from('edit_requests').update({
+      status: action,
+      responded_at: new Date().toISOString(),
+      admin_id: auth0.user.id
+    }).eq('id', id);
+    if (e3) throw e3;
+    Toast.show(`✅ ${action === 'approved' ? 'تمت الموافقة' : 'تم الرفض'}`);
+    setTimeout(() => location.reload(), 800);
+  } catch (err) {
+    Toast.show('خطأ: ' + err.message, 'error');
+  }
 }
 </script>
 </body>
