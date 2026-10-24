@@ -45,7 +45,6 @@ body {
 
 .container { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
 
-/* ============ Header ============ */
 .page-header {
   background: linear-gradient(135deg, var(--navy-dark), var(--navy), var(--navy-2));
   color: #fff;
@@ -91,7 +90,6 @@ body {
 .btn-header.btn-logout { background: var(--red); color: #fff; }
 .btn-header.btn-logout:hover { background: #a71d2a; }
 
-/* ============ Sticky Progress Bar ============ */
 .progress-sticky {
   position: sticky; top: 0; z-index: 40;
   background: #fff;
@@ -138,7 +136,6 @@ body {
   background: #d4edda; border-color: var(--green); color: #155724;
 }
 
-/* ============ Cards ============ */
 .card {
   background: #fff;
   border-radius: var(--radius);
@@ -177,12 +174,8 @@ body {
   background: #cce5ff; color: #004085;
   display: inline-flex; align-items: center; gap: 4px;
 }
-.badge-count {
-  background: var(--navy); color: #fff;
-}
 .card-body { padding: 22px; }
 
-/* ============ Core Info Card ============ */
 .info-groups {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -217,7 +210,6 @@ body {
 }
 .info-row .val[dir="ltr"] { font-family: 'Courier New', monospace; }
 
-/* ============ Info Actions Bar ============ */
 .info-actions {
   display: flex; justify-content: center;
   margin-top: 18px;
@@ -238,7 +230,6 @@ body {
   box-shadow: 0 6px 16px rgba(23,162,184,.35);
 }
 
-/* ============ Stream Selection (Big Cards) ============ */
 .stream-choices {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -283,7 +274,6 @@ body {
 }
 .stream-choice.active .title { color: var(--navy-dark); }
 
-/* Smaller option buttons (for specialization) */
 .btn-group {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -314,7 +304,6 @@ body {
   opacity: .6; cursor: not-allowed;
 }
 
-/* ============ Form Groups ============ */
 .form-group { margin-bottom: 16px; }
 .form-group:last-child { margin-bottom: 0; }
 .form-group > label {
@@ -348,7 +337,6 @@ body {
   color: var(--muted); border-color: #e5e7eb;
 }
 
-/* ============ Locked Message ============ */
 .locked-message {
   background: linear-gradient(135deg, #d4edda, #b8e0c0);
   border: 2px solid var(--green);
@@ -386,7 +374,6 @@ body {
 }
 .btn-request:hover { transform: translateY(-1px); }
 
-/* ============ Selected Stream Badge ============ */
 .selected-stream-display {
   display: none;
   background: linear-gradient(135deg, #e8f0fb, #d0e4f7);
@@ -400,7 +387,6 @@ body {
 }
 .selected-stream-display.show { display: block; }
 
-/* ============ Dynamic Section Block ============ */
 .section-block {
   margin-bottom: 20px;
   border-radius: var(--radius);
@@ -442,7 +428,6 @@ body {
   padding: 0; background: transparent;
 }
 
-/* ============ Locked Fields Header ============ */
 .locked-fields-header {
   display: none;
   margin: 0 0 16px;
@@ -455,7 +440,6 @@ body {
 }
 .locked-fields-header.show { display: block; }
 
-/* ============ Declaration ============ */
 .declaration-section {
   background: linear-gradient(135deg, #f8fafc, #eef2f7);
   padding: 24px;
@@ -505,7 +489,6 @@ body {
 }
 .approval-confirm.show { display: block; }
 
-/* ============ Warning Confirm Box ============ */
 .warning-confirm-box {
   display: none;
   background: #fff8e1;
@@ -538,7 +521,6 @@ body {
 }
 .btn-cancel-warning:hover { background: #5a6268; }
 
-/* ============ Form Actions ============ */
 #formActions {
   display: flex; flex-direction: column; gap: 10px;
   margin-top: 20px;
@@ -570,7 +552,6 @@ body {
 }
 .btn-primary:hover { transform: translateY(-2px); }
 
-/* ============ Request Modals ============ */
 .request-modal {
   display: none; position: fixed; inset: 0;
   background: rgba(0,0,0,.55);
@@ -641,7 +622,6 @@ body {
   border-right: 3px solid var(--red);
 }
 
-/* ============ Loading Skeleton ============ */
 .loading-container {
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
@@ -660,48 +640,36 @@ body {
   color: var(--muted); font-weight: 700; font-size: 14px;
 }
 
-/* ============ Responsive ============ */
 @media (max-width: 640px) {
   .page-header { padding: 16px 0; }
   .header-title h1 { font-size: 18px; }
   .header-title p { font-size: 12px; }
   .header-actions .btn-header { padding: 8px 14px; font-size: 12px; }
-
   .container { padding: 0 12px; }
   .card-header { padding: 14px 16px; }
   .card-header h2 { font-size: 15px; }
   .card-header .icon { width: 30px; height: 30px; font-size: 15px; }
   .card-body { padding: 16px; }
-
   .info-groups { grid-template-columns: 1fr; gap: 12px; }
   .info-row { padding: 6px 0; }
   .info-row .val { font-size: 12px; }
-
   .stream-choices { grid-template-columns: 1fr; gap: 10px; }
   .stream-choice { padding: 20px 16px; }
   .stream-choice .icon { font-size: 32px; }
   .stream-choice .title { font-size: 14px; }
-
   .section-block .head { padding: 12px 16px; }
   .section-block .head h3 { font-size: 14px; }
   .section-block .body { padding: 16px; }
-
   .btn-approve { width: 100%; padding: 13px 20px; font-size: 15px; }
   .btn-confirm, .btn-cancel-warning { flex: 1; min-width: 120px; font-size: 14px; padding: 12px 16px; }
-
   .progress-sticky { padding: 10px 12px; }
   .progress-info .label { font-size: 11px; }
   .progress-info .pct { font-size: 14px; }
 }
 
-/* ============ Print ============ */
 @media print {
-  .page-header,
-  .progress-sticky,
-  .header-actions,
-  .declaration-approval,
-  #formActions,
-  .info-actions { display: none !important; }
+  .page-header, .progress-sticky, .header-actions,
+  .declaration-approval, #formActions, .info-actions { display: none !important; }
   body { background: #fff; padding: 0; }
   .card { box-shadow: none; border: 1px solid #ddd; }
 }
@@ -709,7 +677,6 @@ body {
 </head>
 <body>
 
-<!-- ============ Header ============ -->
 <header class="page-header">
   <div class="container">
     <div class="header-content">
@@ -727,16 +694,13 @@ body {
 
 <div class="container">
 
-  <!-- ============ Loading ============ -->
   <div id="loadingContainer" class="loading-container">
     <div class="loading-spinner"></div>
     <p>⏳ جاري تحميل بياناتك...</p>
   </div>
 
-  <!-- ============ Content ============ -->
   <div id="mainContent" style="display:none;">
 
-    <!-- ============ Sticky Progress Bar ============ -->
     <div class="progress-sticky" id="progressWrap">
       <div class="progress-info">
         <span class="label">📋 اكتمال الاستمارة</span>
@@ -748,10 +712,8 @@ body {
       <div class="sections-mini" id="sectionsMini"></div>
     </div>
 
-    <!-- ============ Status Message (for locked) ============ -->
     <div id="statusMsg"></div>
 
-    <!-- ============ Core Info Card ============ -->
     <div class="card" id="coreInfoCard">
       <div class="card-header">
         <h2>
@@ -770,7 +732,6 @@ body {
       </div>
     </div>
 
-    <!-- ============ Academic Choices Card ============ -->
     <div class="card" id="academicCard">
       <div class="card-header">
         <h2>
@@ -784,7 +745,6 @@ body {
           🎯 التشعيب: <span id="selectedStreamText">—</span>
         </div>
 
-        <!-- Stream Selection -->
         <div class="form-group" id="streamGroup">
           <label>التشعيب <span class="req-star">*</span></label>
           <div class="stream-choices">
@@ -802,7 +762,6 @@ body {
           <input type="hidden" id="stream" name="stream" required>
         </div>
 
-        <!-- Specialization (for ثانوي) -->
         <div id="specializationGroup" style="display:none;">
           <div class="form-group">
             <label>التخصص <span class="req-star">*</span></label>
@@ -814,7 +773,6 @@ body {
           </div>
         </div>
 
-        <!-- Track & Optional (for بكالوريا) -->
         <div id="trackGroup" style="display:none;">
           <div class="form-group">
             <label>المسار <span class="req-star">*</span></label>
@@ -837,15 +795,12 @@ body {
       </div>
     </div>
 
-    <!-- ============ Dynamic Fields Header ============ -->
     <div class="locked-fields-header" id="lockedFieldsHeader">
       📋 البيانات الإضافية (للقراءة فقط)
     </div>
 
-    <!-- ============ Dynamic Fields ============ -->
     <div id="dynamicFields"></div>
 
-    <!-- ============ Declaration ============ -->
     <div class="declaration-section" id="declarationSection">
       <h3>📋 إقرار وتعهد</h3>
       <div class="declaration-text">
@@ -862,7 +817,6 @@ body {
       </div>
     </div>
 
-    <!-- ============ Warning Confirm ============ -->
     <div class="warning-confirm-box" id="warningConfirmBox">
       <div class="warn-icon">⚠️</div>
       <h3>تنبيه هام!</h3>
@@ -873,7 +827,6 @@ body {
       </div>
     </div>
 
-    <!-- ============ Actions ============ -->
     <div id="formActions">
       <button type="button" class="btn-success" id="saveBtn" onclick="showWarning()">💾 حفظ وتقديم الطلب</button>
       <a href="student-pdf.html" class="btn-primary" id="pdfBtn" style="display:none;">📄 طباعة PDF</a>
@@ -882,7 +835,6 @@ body {
   </div>
 </div>
 
-<!-- ============ Request Reopen Modal ============ -->
 <div class="request-modal" id="requestModal">
   <div class="modal-content">
     <h3>📩 طلب فتح التعديل</h3>
@@ -896,7 +848,6 @@ body {
   </div>
 </div>
 
-<!-- ============ Request Edit Modal ============ -->
 <div class="request-modal" id="editRequestModal">
   <div class="modal-content">
     <h3>📩 طلب تعديل بيانات</h3>
@@ -966,52 +917,71 @@ function cfgOf(key) {
   return {
     field_key: raw.field_key || key,
     is_readonly: raw.is_readonly === true,
-    is_visible: raw.is_visible !== false,   // ← المفتاح: يعرض إلا عند FALSE صريح
+    is_visible: raw.is_visible !== false,
     is_required: raw.is_required === true,
   };
 }
 
+// ==========================================================
+// loadData — نسخة دفاعية (بدون .catch على SB.rpc)
+// ==========================================================
 async function loadData() {
   try {
-    const [{ data: s, error: e1 }, { data: f }, { data: r }, cfgRes] = await Promise.all([
+    // 1) البيانات الأساسية (لازم تنجح)
+    const [mainRes, fieldsRes, responsesRes] = await Promise.all([
       SB.rpc('student_get_data', { p_token: token }),
       SB.rpc('student_get_fields', { p_token: token }),
-      SB.rpc('student_get_responses', { p_token: token }),
-      SB.rpc('student_get_core_config').catch(err => {
-        console.warn('core_config RPC failed:', err);
-        return { data: [] };
-      })
+      SB.rpc('student_get_responses', { p_token: token })
     ]);
-    if (e1 || !s) { Auth.studentLogout(); return; }
+
+    if (mainRes.error || !mainRes.data) {
+      console.error('[loadData] student_get_data failed:', mainRes.error);
+      Auth.studentLogout();
+      return;
+    }
+
+    // 2) إعدادات الحقول الأساسية (اختياري — فشلها لا يوقف الصفحة)
+    let cfgArr = [];
+    try {
+      const cfgRes = await SB.rpc('student_get_core_config');
+      if (cfgRes.error) {
+        console.warn('[loadData] core config RPC error (using defaults):', cfgRes.error);
+      } else if (Array.isArray(cfgRes.data)) {
+        cfgArr = cfgRes.data;
+      }
+    } catch (cfgErr) {
+      console.warn('[loadData] core config exception (using defaults):', cfgErr);
+    }
+
+    // 3) تجهيز البيانات
+    const s = mainRes.data;
+    const f = fieldsRes.data;
+    const r = responsesRes.data;
 
     studentData = s;
     fieldsData = f || [];
     (r || []).forEach(x => { dynamicValues[x.field_id] = x.value; });
     isLocked = s.is_locked && s.submitted_at;
 
-    // بناء خريطة الإعداد
     coreConfig = {};
-    (cfgRes?.data || []).forEach(c => { coreConfig[c.field_key] = c; });
+    cfgArr.forEach(c => { if (c && c.field_key) coreConfig[c.field_key] = c; });
 
-    // Debug (يمكن إزالته لاحقاً)
     console.log('[CFG] coreConfig:', coreConfig);
-    console.log('[CFG] hidden fields:', Object.keys(coreConfig).filter(k => coreConfig[k].is_visible === false));
+    console.log('[CFG] hidden:', Object.keys(coreConfig).filter(k => coreConfig[k].is_visible === false));
 
     isFirstGrade   = (s.grade === 'الأول الثانوي');
     isStreamLocked = (s.stream_locked === true);
 
+    // 4) عرض البيانات الأساسية
     renderCoreInfo(s);
     document.getElementById('declarationStudentName').textContent = s.full_name;
 
-    // ==========================================================
-    // منطق التشعيب
-    // ==========================================================
+    // 5) منطق التشعيب
     const streamCfg = cfgOf('stream');
     const specCfg   = cfgOf('specialization');
     const trackCfg  = cfgOf('track');
     const optCfg    = cfgOf('optional_subject');
 
-    // إخفاء بطاقة التشعيب بالكامل لو التشعيب مخفي
     const academicCard = document.getElementById('academicCard');
     const allAcademicHidden =
       streamCfg.is_visible === false &&
@@ -1062,7 +1032,6 @@ async function loadData() {
       }
     }
 
-    // إخفاء التخصص/المسار/المادة لو إعداداتها FALSE صريح
     if (specCfg.is_visible === false) {
       document.getElementById('specializationGroup').style.display = 'none';
     }
@@ -1075,12 +1044,33 @@ async function loadData() {
       if (optFG) optFG.style.display = 'none';
     }
 
+    // 6) منطق الإقرار
+    const declCfg = cfgOf('declaration');
+    const declSection = document.getElementById('declarationSection');
+
+    if (declCfg.is_visible === false) {
+      declSection.style.display = 'none';
+      isDeclarationApproved = true;
+    } else if (declCfg.is_required === false) {
+      isDeclarationApproved = true;
+      const approvalBox = document.querySelector('.declaration-approval');
+      if (approvalBox) {
+        approvalBox.innerHTML = `
+          <p style="color:#0c5460;margin:0;font-size:13px;font-weight:700;background:#e8f4fd;padding:12px;border-radius:10px;border:2px dashed #17a2b8;">
+            ℹ️ الإقرار للاطلاع — لا يلزم اتخاذ إجراء، يمكنك الحفظ مباشرة
+          </p>
+        `;
+      }
+    }
+
+    // 7) الحقول الديناميكية
     renderFields();
 
-    // إظهار المحتوى الرئيسي وإخفاء اللودر
+    // 8) إظهار المحتوى
     document.getElementById('loadingContainer').style.display = 'none';
     document.getElementById('mainContent').style.display = 'block';
 
+    // 9) حالة القفل
     if (isLocked) {
       document.getElementById('saveBtn').style.display = 'none';
       document.getElementById('pdfBtn').style.display = 'block';
@@ -1094,15 +1084,23 @@ async function loadData() {
 
     document.getElementById('coreActions').style.display = 'block';
     setupProgress();
+
   } catch (err) {
-    console.error(err);
-    document.getElementById('loadingContainer').innerHTML =
-      '<p style="color:#dc3545;">❌ حدث خطأ في تحميل البيانات<br><small>' + esc(err.message || '') + '</small></p>';
+    console.error('[LOAD ERROR]', err);
+    const errorMsg = err?.message || String(err) || 'خطأ غير معروف';
+    document.getElementById('loadingContainer').innerHTML = `
+      <div style="padding:24px;text-align:center;">
+        <p style="font-size:44px;margin:0;">❌</p>
+        <p style="color:#dc3545;font-size:16px;font-weight:800;margin:8px 0;">حدث خطأ في تحميل البيانات</p>
+        <pre style="color:#666;font-size:11px;background:#f8f9fa;padding:12px;border-radius:8px;direction:ltr;text-align:left;font-family:monospace;white-space:pre-wrap;word-break:break-all;max-width:600px;margin:12px auto;">${esc(errorMsg)}</pre>
+        <p style="color:#999;font-size:11px;">افتح Console (F12) للمزيد من التفاصيل</p>
+        <button onclick="location.reload()" style="margin-top:12px;padding:10px 24px;background:#1e3c72;color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;cursor:pointer;">🔄 إعادة المحاولة</button>
+      </div>
+    `;
   }
 }
 
 function renderCoreInfo(s) {
-  // تقسيم للبيانات في مجموعات
   const groups = { identity: [], academic: [], personal: [] };
 
   const add = (group, key, label, val) => {
@@ -1112,7 +1110,6 @@ function renderCoreInfo(s) {
   };
 
   add('identity', 'full_name', 'الاسم', esc(s.full_name));
-  // الكود والرقم القومي دائماً ظاهران (لا يوجد لهما إعداد)
   groups.identity.push({ label: 'كود الطالب', val: esc(s.student_code), ltr: true });
   groups.identity.push({ label: 'الرقم القومي', val: esc(s.national_id_masked), ltr: true });
 
@@ -1177,7 +1174,6 @@ function selectStream(v, silent = false) {
   document.getElementById('selectedStreamDisplay').classList.add('show');
   document.getElementById('selectedStreamText').textContent = v === 'ثانوي' ? '🎓 ثانوي' : '📚 بكالوريا';
 
-  // إظهار/إخفاء حسب الاختيار
   const showSpec = v === 'ثانوي' && cfgOf('specialization').is_visible !== false;
   const showTrack = v === 'بكالوريا' && cfgOf('track').is_visible !== false;
 
@@ -1212,6 +1208,11 @@ function updateSubjects() {
 
 function approveDeclaration() {
   if (isLocked) return;
+
+  const declCfg = cfgOf('declaration');
+  if (declCfg.is_visible === false) return;
+  if (declCfg.is_required === false) return;
+
   isDeclarationApproved = !isDeclarationApproved;
   document.getElementById('approveBtn').classList.toggle('approved', isDeclarationApproved);
   document.getElementById('approveText').textContent = isDeclarationApproved ? '✅ تمت الموافقة' : '✅ أوافق على الإقرار';
@@ -1335,7 +1336,11 @@ function updateProgress() {
 
 function showWarning() {
   if (isLocked) return;
-  if (!isDeclarationApproved) {
+
+  const declCfg = cfgOf('declaration');
+  const declRequired = declCfg.is_visible !== false && declCfg.is_required === true;
+
+  if (declRequired && !isDeclarationApproved) {
     Toast.show('يجب الموافقة على الإقرار أولاً', 'error');
     document.getElementById('declarationSection').scrollIntoView({ behavior: 'smooth' });
     return;
@@ -1441,6 +1446,7 @@ function showRequestModal() {
   document.getElementById('requestReason').value = '';
   document.getElementById('requestError').style.display = 'none';
 }
+
 function closeRequestModal() {
   document.getElementById('requestModal').classList.remove('show');
 }
