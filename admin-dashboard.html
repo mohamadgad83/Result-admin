@@ -57,6 +57,10 @@ tr:hover{background:#f8f9fa}
       <div class="stat-card orange"><div class="num" id="unlockedStudents">-</div><div class="lbl">مفتوح للتعديل</div></div>
       <div class="stat-card purple"><div class="num" id="todayStudents">-</div><div class="lbl">سجلوا اليوم</div></div>
       <div class="stat-card teal"><div class="num" id="totalFields">-</div><div class="lbl">حقول ديناميكية</div></div>
+      <div class="stat-card teal" style="cursor:pointer;" onclick="location.href='admin-edit-requests.html'">
+  <div class="num" id="pendingEditRequests">-</div>
+  <div class="lbl">طلبات تعديل معلقة</div>
+</div>
       <div class="stat-card orange" style="cursor:pointer;" onclick="location.href='admin-requests.html'"><div class="num" id="pendingRequests">-</div><div class="lbl">طلبات فتح</div></div>
     </div>
 
@@ -133,7 +137,10 @@ async function loadAll() {
     Toast.show('خطأ في تحميل الإحصائيات', 'error');
   }
 }
-
+const { count: editPending } = await SB.from('edit_requests')
+  .select('*', { count: 'exact', head: true })
+  .eq('status', 'pending');
+document.getElementById('pendingEditRequests').textContent = editPending || 0;
 async function loadCharts() {
   const { data: students } = await SB.from('students').select('stream,specialization');
   if (!students || students.length === 0) return;
