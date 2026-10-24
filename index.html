@@ -53,7 +53,7 @@ a{text-decoration:none;color:inherit}
 button{font-family:inherit;cursor:pointer}
 .container-inner{width:min(1200px,92%);margin:0 auto}
 
-/* ===== خلفية ===== */
+/* خلفية */
 body::before{
   content:"";position:fixed;inset:0;z-index:-1;
   background:
@@ -76,7 +76,7 @@ body::before{
   display:flex;justify-content:space-between;align-items:center;gap:16px;
   flex-wrap:wrap;
 }
-.logo-wrap{display:flex;align-items:center;gap:12px}
+.logo-wrap{display:flex;align-items:center;gap:12px;user-select:none}
 .logo-icon{
   width:44px;height:44px;border-radius:12px;
   background:linear-gradient(135deg,var(--navy),var(--navy-2));
@@ -85,13 +85,6 @@ body::before{
 }
 .logo-title{font-size:15px;font-weight:800;color:var(--navy);line-height:1.2}
 .logo-sub{font-size:11px;color:var(--muted);font-weight:600}
-.nav-btn{
-  padding:9px 18px;border:1.5px solid var(--line);
-  border-radius:10px;font-size:13px;font-weight:700;
-  color:var(--navy);background:#fff;
-  transition:all .2s;display:inline-flex;align-items:center;gap:6px;
-}
-.nav-btn:hover{border-color:var(--navy);background:#f0f7ff}
 
 /* ===== Hero Strip ===== */
 .hero-strip{
@@ -146,7 +139,7 @@ body::before{
   align-items:start;
 }
 
-/* ===== Left: Auth/Dashboard ===== */
+/* ===== Auth Card ===== */
 .auth-card{
   background:#fff;border-radius:var(--radius-lg);
   padding:32px 28px;
@@ -159,8 +152,6 @@ body::before{
   content:"";position:absolute;top:0;left:0;right:0;height:4px;
   background:linear-gradient(90deg,var(--navy),var(--navy-2),var(--gold));
 }
-
-/* Login Card */
 .auth-header{text-align:center;margin-bottom:24px}
 .auth-icon{
   width:64px;height:64px;border-radius:18px;
@@ -226,7 +217,7 @@ body::before{
 }
 .auth-warning strong{color:var(--red)}
 
-/* ===== Dashboard (after login) ===== */
+/* ===== Dashboard ===== */
 .dash-header{
   text-align:center;margin-bottom:20px;
   padding-bottom:20px;border-bottom:2px dashed var(--line);
@@ -298,10 +289,9 @@ body::before{
 }
 .dash-refresh:hover{color:var(--navy);text-decoration:underline}
 
-/* ===== Right: Info Side ===== */
+/* ===== Info Side ===== */
 .info-side{display:flex;flex-direction:column;gap:24px}
 
-/* Principal Card */
 .principal-card{
   background:#fff;border-radius:var(--radius-lg);
   padding:28px;box-shadow:var(--shadow);
@@ -331,7 +321,7 @@ body::before{
   background:linear-gradient(transparent 60%, rgba(255,193,7,.35) 60%);
 }
 
-/* Features Grid */
+/* ===== Features Grid ===== */
 .features-grid{
   display:grid;grid-template-columns:1fr 1fr;gap:14px;
 }
@@ -359,7 +349,7 @@ body::before{
 .feature-card h4{font-size:.92rem;font-weight:800;color:var(--navy);margin-bottom:4px}
 .feature-card p{font-size:.78rem;color:var(--muted);line-height:1.6}
 
-/* Steps Card */
+/* ===== Steps Card ===== */
 .steps-card{
   background:#fff;border-radius:var(--radius-lg);
   padding:28px;box-shadow:var(--shadow);
@@ -410,17 +400,8 @@ body::before{
 .footer .principal{font-size:.78rem;color:rgba(255,255,255,.65)}
 .footer .principal .nm{color:#fff;font-weight:800}
 
-/* ===== Skeleton ===== */
-.skeleton{
-  background:linear-gradient(90deg,#e2e8f0 25%,#f1f5f9 50%,#e2e8f0 75%);
-  background-size:200% 100%;
-  animation:loading 1.5s infinite;
-  border-radius:6px;
-}
-@keyframes loading{
-  0%{background-position:200% 0}
-  100%{background-position:-200% 0}
-}
+/* ===== Spinner ===== */
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* ===== Responsive ===== */
 @media(max-width:900px){
@@ -437,7 +418,6 @@ body::before{
   .hero-strip{padding:24px 0}
   .hero-strip h1{font-size:1.3rem}
   .logo-title{font-size:13px}
-  .nav-btn{padding:7px 12px;font-size:11px}
 }
 </style>
 </head>
@@ -453,7 +433,7 @@ body::before{
         <div class="logo-sub">نظام الخدمات الطلابية</div>
       </div>
     </div>
-    <a href="admin-login.html" class="nav-btn">👑 للأدمن</a>
+    <!-- ✅ زر الأدمن محذوف — للوصول استخدم Ctrl+M -->
   </div>
 </nav>
 
@@ -562,7 +542,6 @@ body::before{
     <!-- Right: Info -->
     <section class="info-side">
 
-      <!-- Principal Card -->
       <div class="principal-card">
         <span class="principal-tag">⭐ كلمة مدير المدرسة</span>
         <h3>أ. عاطف أبوالعباس</h3>
@@ -575,7 +554,6 @@ body::before{
         </p>
       </div>
 
-      <!-- Features Grid -->
       <div class="features-grid">
         <div class="feature-card">
           <div class="icon">📝</div>
@@ -599,7 +577,6 @@ body::before{
         </div>
       </div>
 
-      <!-- Steps Card -->
       <div class="steps-card">
         <h3>🎯 كيف تبدأ؟</h3>
         <div class="steps-list">
@@ -772,11 +749,9 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
   const code = document.getElementById('studentCode').value.trim();
   const nid = document.getElementById('nationalId').value.trim();
   const errorMsg = document.getElementById('errorMsg');
-  const infoMsg = document.getElementById('infoMsg');
   const btn = document.getElementById('loginBtn');
 
   errorMsg.classList.remove('show');
-  infoMsg.classList.remove('show');
 
   if (!code || nid.length !== 14) {
     errorMsg.textContent = '❌ يرجى إدخال كود الطالب والرقم القومي (14 رقم)';
@@ -827,11 +802,21 @@ document.getElementById('studentCode').addEventListener('input', () => {
 document.getElementById('nationalId').addEventListener('input', () => {
   document.getElementById('errorMsg').classList.remove('show');
 });
-</script>
 
-<style>
-@keyframes spin{to{transform:rotate(360deg)}}
-</style>
+// ===== 🔐 اختصار سريع لصفحة الأدمن (Ctrl + M) =====
+document.addEventListener('keydown', (e) => {
+  // Ctrl + M أو Cmd + M (Mac)
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm') {
+    e.preventDefault();
+    if (typeof Toast !== 'undefined') {
+      Toast.show('🔐 جاري فتح بوابة الأدمن...', 'info', 900);
+    }
+    setTimeout(() => {
+      location.href = 'admin-login.html';
+    }, 400);
+  }
+});
+</script>
 
 </body>
 </html>
