@@ -64,7 +64,6 @@
   color: #1e3c72;
   font-size: 16px;
 }
-
 .pdf-preview .core-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -138,14 +137,8 @@
   font-size: 12px;
   color: #666;
 }
-.pdf-copyright .developer {
-  color: #1e3c72;
-  font-weight: 600;
-}
-.pdf-copyright .school {
-  color: #dc3545;
-  font-weight: 700;
-}
+.pdf-copyright .developer { color: #1e3c72; font-weight: 600; }
+.pdf-copyright .school { color: #dc3545; font-weight: 700; }
 
 .btn-group-actions {
   display: flex;
@@ -207,8 +200,8 @@
       <div id="studentsContainer"></div>
 
       <div class="btn-group-actions no-print">
-        <button onclick="generatePDF()" class="btn-success" id="downloadBtn">📄 تحميل PDF</button>
-        <button onclick="window.print()" class="btn-primary">🖨️ طباعة</button>
+        <button onclick="window.print()" class="btn-success" style="background:#6f42c1;">🖨️ طباعة (موصى به)</button>
+        <button onclick="generatePDF()" class="btn-primary" id="downloadBtn">📄 تحميل PDF</button>
         <a href="student-form.html" class="btn-primary" id="backBtn" style="text-decoration:none;text-align:center;">🔙 العودة</a>
       </div>
     </div>
@@ -231,7 +224,6 @@ async function loadData() {
 
   try {
     if (printParam && !studentToken) {
-      // مسار الأدمن
       const auth = await Auth.requireAdmin();
       if (!auth) return;
 
@@ -247,7 +239,6 @@ async function loadData() {
         return;
       }
     } else if (studentToken) {
-      // مسار الطالب
       await loadAsStudent(studentToken);
     } else {
       window.location.href = 'index.html';
@@ -257,7 +248,6 @@ async function loadData() {
     renderAll();
     document.getElementById('loadingMsg').style.display = 'none';
     document.getElementById('pdfContent').style.display = 'block';
-
   } catch (err) {
     console.error('Error:', err);
     alert('حدث خطأ في تحميل البيانات: ' + (err.message || ''));
@@ -289,7 +279,6 @@ async function loadBulk(ids) {
 
   loadedFields = f || [];
 
-  // ترتيب الطلاب بنفس ترتيب الـ ids
   const studentMap = {};
   (students || []).forEach(s => { studentMap[s.id] = s; });
   loadedStudents = ids.map(id => studentMap[id]).filter(Boolean);
@@ -332,7 +321,7 @@ function renderAll() {
 
   if (isBulkMode) {
     banner.style.display = 'block';
-    banner.innerHTML = `📋 طباعة <strong>${loadedStudents.length}</strong> طالب — يمكنك طباعة الكل أو تحميل PDF من الأسفل`;
+    banner.innerHTML = `📋 طباعة <strong>${loadedStudents.length}</strong> طالب — يُفضّل استخدام زر "🖨️ طباعة (موصى به)" للسرعة وتوفير الذاكرة`;
     backBtn.href = 'admin-students.html';
     backBtn.textContent = '🔙 العودة للطلاب';
   } else {
@@ -342,9 +331,8 @@ function renderAll() {
   }
 
   let html = '';
-  loadedStudents.forEach((student, idx) => {
+  loadedStudents.forEach((student) => {
     const s = { ...student };
-    // إخفاء الرقم القومي (آخر 4 أرقام فقط)
     s.national_id = '****' + String(student.national_id || '').slice(-4);
 
     html += `<div class="pdf-preview ${isBulkMode ? 'bulk-card' : ''}" data-student-id="${s.id}" data-student-name="${esc(s.full_name)}">`;
@@ -357,7 +345,6 @@ function renderAll() {
 function renderStudentCardContent(s, responses) {
   let html = '';
 
-  // Header
   html += `
     <div class="header">
       <div class="school-name">🎓 مدرسة دشنا الثانوية</div>
@@ -367,7 +354,6 @@ function renderStudentCardContent(s, responses) {
     </div>
   `;
 
-  // Core grid
   html += '<div class="core-grid">';
   html += `<div class="item"><span class="lbl">الصف</span><span class="val">${esc(s.grade || '-')}</span></div>`;
   html += `<div class="item"><span class="lbl">حالة القيد</span><span class="val">${esc(s.enrollment_status || '-')}</span></div>`;
@@ -377,7 +363,6 @@ function renderStudentCardContent(s, responses) {
   html += `<div class="item"><span class="lbl">التشعيب</span><span class="val">${esc(s.stream || '-')}</span></div>`;
   html += '</div>';
 
-  // Academic info
   html += '<div class="info-grid">';
   if (s.stream === 'ثانوي') {
     html += `<div class="info-item"><span class="label">التخصص</span><span class="value">${esc(s.specialization || '-')}</span></div>`;
@@ -386,18 +371,15 @@ function renderStudentCardContent(s, responses) {
     html += `<div class="info-item"><span class="label">المادة الاختيارية</span><span class="value">${esc(s.optional_subject || '-')}</span></div>`;
   }
 
-  // Dynamic fields
   loadedFields.forEach(field => {
     html += `<div class="info-item"><span class="label">${esc(field.name)}</span><span class="value">${esc(responses[field.id] || '—')}</span></div>`;
   });
   html += '</div>';
 
-  // Submitted at
   if (s.submitted_at) {
     html += `<div style="text-align:center;margin-top:15px;padding:10px;background:#d4edda;border-radius:8px;color:#155724;">✅ تم التقديم في: ${new Date(s.submitted_at).toLocaleString('ar-EG')}</div>`;
   }
 
-  // Declaration
   html += `
     <div class="pdf-declaration">
       <h4>📋 إقرار وتعهد</h4>
@@ -411,7 +393,6 @@ function renderStudentCardContent(s, responses) {
     </div>
   `;
 
-  // Print date + copyright
   html += `
     <div style="text-align:center;font-size:12px;color:#999;margin:10px 0;">📅 تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</div>
     <div class="pdf-copyright">
@@ -423,10 +404,21 @@ function renderStudentCardContent(s, responses) {
   return html;
 }
 
+// ==========================================================
+// generatePDF — نسخة محسّنة للذاكرة (Sequential + Free Memory)
+// ==========================================================
 async function generatePDF() {
   const btn = document.getElementById('downloadBtn');
   const originalText = btn ? btn.textContent : '';
   if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري التجهيز...'; }
+
+  // حد أمان: أكثر من 20 طالب → استخدم طباعة المتصفح
+  if (isBulkMode && loadedStudents.length > 20) {
+    if (btn) { btn.disabled = false; btn.textContent = originalText; }
+    alert('للطباعة الجماعية لأكثر من 20 طالب، استخدم زر "🖨️ طباعة (موصى به)" — أسرع وأخف بكثير.\nسيتم تحويلك الآن.');
+    window.print();
+    return;
+  }
 
   try {
     const cards = document.querySelectorAll('.pdf-preview');
@@ -434,17 +426,25 @@ async function generatePDF() {
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageWidth  = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 10;
     const imgWidth = pageWidth - margin * 2;
 
+    // === معالجة تسلسلية: صفحة واحدة كل مرة + تحرير الذاكرة فوراً ===
     for (let i = 0; i < cards.length; i++) {
-      const canvas = await html2canvas(cards[i], {
-        scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false
+      const card = cards[i];
+
+      const canvas = await html2canvas(card, {
+        scale: 1.5,             // 1.5 بدل 2 → توفير 44% ذاكرة
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        removeContainer: true,
+        imageTimeout: 10000
       });
 
-      const imgData = canvas.toDataURL('image/png');
+      const imgData = canvas.toDataURL('image/jpeg', 0.85); // JPEG أوفر من PNG
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
       if (i > 0) doc.addPage();
@@ -452,24 +452,29 @@ async function generatePDF() {
       let heightLeft = imgHeight;
       let position = margin;
 
-      doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+      doc.addImage(imgData, 'JPEG', margin, position, imgWidth, imgHeight);
       heightLeft -= (pageHeight - margin * 2);
 
       while (heightLeft > 0) {
         position = heightLeft - imgHeight + margin;
         doc.addPage();
-        doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+        doc.addImage(imgData, 'JPEG', margin, position, imgWidth, imgHeight);
         heightLeft -= (pageHeight - margin * 2);
       }
+
+      // تحرير الذاكرة فوراً
+      canvas.width = 0;
+      canvas.height = 0;
+
+      // إتاحة الفرصة للمتصفح (GC + UI)
+      await new Promise(r => setTimeout(r, 60));
+
+      if (btn) btn.textContent = `⏳ ${i+1}/${cards.length}...`;
     }
 
-    let filename;
-    if (isBulkMode) {
-      filename = `تسجيل_رغبات_${loadedStudents.length}_طالب_${new Date().toISOString().split('T')[0]}.pdf`;
-    } else {
-      const safeName = (loadedStudents[0]?.full_name || 'طالب').replace(/\s+/g, '_');
-      filename = `تسجيل_رغبات_${safeName}_${new Date().toISOString().split('T')[0]}.pdf`;
-    }
+    const filename = isBulkMode
+      ? `تسجيل_رغبات_${loadedStudents.length}_طالب_${new Date().toISOString().split('T')[0]}.pdf`
+      : `تسجيل_رغبات_${(loadedStudents[0]?.full_name || 'طالب').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
 
     doc.save(filename);
   } catch (err) {
