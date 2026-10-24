@@ -79,7 +79,6 @@ async function load(id) {
   // جلب الحقول مع اسم القسم وترتيبه
   const { data: f } = await SB.from('dynamic_fields')
     .select('*, form_sections(name, display_order)')
-    .eq('visible_for_student', true)
     .order('display_order');
 
   fields = (f || []).map(x => ({
