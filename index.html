@@ -616,38 +616,48 @@ function clearSession() {
   authToken = null;
 }
 
-// ===== Login =====
+// ==========================================================
+// Login Handler — نسخة مصححة (بدون TDZ)
+// ==========================================================
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  // ✅ تحقق من الرقم القومي (فقط عند الدخول بالرقم القومي)
+
+  // 1) قراءة القيم أولاً (كلها const في مكان واحد قبل أي استخدام)
+  const code      = document.getElementById('studentCode').value.trim();
+  const cred      = document.getElementById('credential').value.trim();
+  const err       = document.getElementById('errorMsg');
+  const btn       = document.getElementById('loginBtn');
   const credLabel = document.getElementById('credLabel').textContent.trim();
-  if (credLabel === 'الرقم القومي' || credLabel === 'رقم قومي') {
-    if (cred.length === 14 && /^\d+$/.test(cred)) {
-      const check = Validation.egyptianNationalId(cred);
-      if (!check.valid) {
-        err.textContent = '❌ ' + check.error;
-        err.classList.add('show');
-        return;
-      }
-    }
-    // إذا لم يكن 14 رقماً، الخادم سيتكفل بالرفض
-  }
-  const code = document.getElementById('studentCode').value.trim();
-  const cred = document.getElementById('credential').value.trim();
-  const err = document.getElementById('errorMsg');
-  const btn = document.getElementById('loginBtn');
 
   err.classList.remove('show');
 
+  // 2) تحقق الحقول الفارغة
   if (!code || !cred) {
     err.textContent = '❌ يرجى إدخال كود الطالب والبيانات المطلوبة';
     err.classList.add('show');
     return;
   }
 
+  // 3) تحقق الرقم القومي (فقط في وضع الرقم القومي)
+  if (credLabel === 'الرقم القومي' || credLabel === 'رقم قومي') {
+    if (cred.length === 14 && /^\d+$/.test(cred)) {
+      if (typeof Validation !== 'undefined') {
+        const check = Validation.egyptianNationalId(cred);
+        if (!check.valid) {
+          err.textContent = '❌ ' + check.error;
+          err.classList.add('show');
+          return;
+        }
+      }
+    }
+    // إذا لم يكن 14 رقماً، الخادم سيتكفل بالرفض
+  }
+
+  // 4) تعطيل الزر وتغيير النص
   btn.disabled = true;
   btn.innerHTML = '<span style="display:inline-block;width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite;"></span> جاري التحقق...';
 
+  // 5) استدعاء RPC
   try {
     const { data, error } = await SB.rpc('student_login_unified', {
       p_code: code,
