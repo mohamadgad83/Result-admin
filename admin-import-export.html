@@ -193,19 +193,26 @@
 // ==========================================================
 const SCHEMAS = {
   students: {
-    label: 'الطلاب',
-    table: 'students',
-    match: 'student_code',
-    columns: [
-      { key: 'student_code', label: 'الكود', aliases: ['كود الطالب','كود','code'], required: true, type: 'text' },
-      { key: 'national_id', label: 'الرقم القومي', aliases: ['رقم قومي','nationalid'], required: true, type: 'text' },
-      { key: 'full_name', label: 'الاسم', aliases: ['اسم الطالب','name'], required: true, type: 'text' },
-      { key: 'stream', label: 'التشعيب', aliases: ['stream'], type: 'text', default: 'ثانوي' },
-      { key: 'specialization', label: 'التخصص', aliases: ['specialization'], type: 'text' },
-      { key: 'track', label: 'المسار', aliases: ['track'], type: 'text' },
-      { key: 'optional_subject', label: 'المادة الاختيارية', aliases: ['المادة','optional'], type: 'text' }
-    ]
-  },
+  label: 'الطلاب',
+  table: 'students',
+  match: 'student_code',
+  columns: [
+    { key: 'student_code', label: 'الكود', aliases: ['كود الطالب','كود','code'], required: true, type: 'text' },
+    { key: 'national_id', label: 'الرقم القومي', aliases: ['رقم قومي','nationalid'], required: true, type: 'text' },
+    { key: 'full_name', label: 'الاسم', aliases: ['اسم الطالب','name'], required: true, type: 'text' },
+    { key: 'grade', label: 'الصف', aliases: ['grade'], type: 'text' },
+    { key: 'enrollment_status', label: 'حالة القيد', aliases: ['status','حالة'], type: 'text', default: 'مقيد' },
+    // gender و date_of_birth و governorate يتم استخراجهم تلقائياً من الرقم القومي
+    // لكن يمكن إدخالهم يدوياً إذا أردت
+    { key: 'gender', label: 'النوع', aliases: ['جنس','gender'], type: 'text' },
+    { key: 'date_of_birth', label: 'تاريخ الميلاد (YYYY-MM-DD)', aliases: ['تاريخ ميلاد','birthdate','dob'], type: 'text' },
+    { key: 'governorate', label: 'المحافظة', aliases: ['محافظة','governorate'], type: 'text' },
+    { key: 'stream', label: 'التشعيب', aliases: ['stream'], type: 'text', default: 'ثانوي' },
+    { key: 'specialization', label: 'التخصص', aliases: ['specialization'], type: 'text' },
+    { key: 'track', label: 'المسار', aliases: ['track'], type: 'text' },
+    { key: 'optional_subject', label: 'المادة الاختيارية', aliases: ['المادة','optional'], type: 'text' }
+  ]
+}
   fields: {
     label: 'الحقول الديناميكية',
     table: 'dynamic_fields',
