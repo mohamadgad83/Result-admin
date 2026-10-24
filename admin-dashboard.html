@@ -17,6 +17,8 @@
 .stat-card.red{background:linear-gradient(135deg,#dc3545,#e83e8c)}
 .stat-card .num{font-size:28px;font-weight:800;position:relative;z-index:1}
 .stat-card .lbl{font-size:13px;opacity:.9;position:relative;z-index:1}
+.stat-card .pulse{position:absolute;top:8px;right:8px;width:10px;height:10px;border-radius:50%;background:#ffc107;box-shadow:0 0 0 4px rgba(255,193,7,.3);animation:pulse 1.5s infinite}
+@keyframes pulse{50%{opacity:.4;transform:scale(1.2)}}
 .quick-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:20px 0}
 .quick-action{padding:16px 12px;background:#f8f9fa;border-radius:12px;text-align:center;text-decoration:none;color:#1e3c72;border:2px solid transparent;transition:.2s}
 .quick-action:hover{border-color:#1e3c72;background:#f0f7ff;transform:translateY(-2px)}
@@ -27,45 +29,48 @@
 .btn-logout{padding:8px 18px;background:#dc3545;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600}
 .btn-back{padding:8px 16px;background:#6c757d;color:#fff;border:none;border-radius:8px;cursor:pointer;text-decoration:none;display:inline-block;font-size:13px}
 .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.charts-grid.three{grid-template-columns:1fr 1fr 1fr}
 .chart-card{background:#fff;padding:16px;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);border:1px solid #eee}
 .chart-card h4{color:#1e3c72;margin:0 0 12px;text-align:center;font-size:14px}
+.chart-card canvas{max-height:220px}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{background:#f8f9fa;color:#333;padding:10px;text-align:right;border-bottom:2px solid #e9ecef}
 td{padding:10px;border-bottom:1px solid #f0f0f0}
 tr:hover{background:#f8f9fa}
 .section{background:#fff;border-radius:14px;padding:20px;margin:20px 0;border:1px solid #eee}
 .section h4{color:#1e3c72;margin:0 0 15px}
-@media(max-width:768px){.charts-grid{grid-template-columns:1fr}}
+.badge-live{display:inline-flex;align-items:center;gap:6px;font-size:11px;background:#d4edda;color:#155724;padding:4px 12px;border-radius:20px;font-weight:600}
+.badge-live .dot{width:8px;height:8px;border-radius:50%;background:#28a745;animation:pulse 2s infinite}
+@media(max-width:768px){.charts-grid,.charts-grid.three{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<div class="container" style="max-width:1100px;">
+<div class="container" style="max-width:1200px;">
   <div class="card">
     <div class="admin-header">
       <div>
         <h1 style="margin:0;font-size:22px;">📊 لوحة التحكم</h1>
         <div style="color:#666;font-size:13px;margin-top:5px;" id="adminInfo">...</div>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <span class="badge-live" id="realtimeBadge" style="display:none;"><span class="dot"></span> مباشر</span>
         <button class="btn-refresh" onclick="loadAll()">🔄 تحديث</button>
         <a href="index.html" class="btn-back">🏠 الرئيسية</a>
         <button class="btn-logout" onclick="Auth.adminLogout()">🚪 خروج</button>
       </div>
     </div>
 
-    <div class="stats-grid" id="statsGrid">
+    <div class="stats-grid">
       <div class="stat-card"><div class="num" id="totalStudents">-</div><div class="lbl">إجمالي الطلاب</div></div>
       <div class="stat-card green"><div class="num" id="lockedStudents">-</div><div class="lbl">مسجلين (مقفل)</div></div>
       <div class="stat-card orange"><div class="num" id="unlockedStudents">-</div><div class="lbl">مفتوح للتعديل</div></div>
       <div class="stat-card purple"><div class="num" id="todayStudents">-</div><div class="lbl">سجلوا اليوم</div></div>
       <div class="stat-card teal"><div class="num" id="totalFields">-</div><div class="lbl">حقول ديناميكية</div></div>
       <div class="stat-card red" style="cursor:pointer;" onclick="location.href='admin-edit-requests.html'">
-        <div class="num" id="pendingEditRequests">-</div>
-        <div class="lbl">طلبات تعديل حقول</div>
+        <div class="num" id="pendingEditRequests">-</div><div class="lbl">طلبات تعديل حقول</div>
       </div>
       <div class="stat-card orange" style="cursor:pointer;" onclick="location.href='admin-requests.html'">
-        <div class="num" id="pendingRequests">-</div>
-        <div class="lbl">طلبات فتح استمارة</div>
+        <div class="num" id="pendingRequests">-</div><div class="lbl">طلبات فتح استمارة</div>
       </div>
     </div>
 
@@ -79,9 +84,10 @@ tr:hover{background:#f8f9fa}
       <a href="admin-logs.html" class="quick-action"><span class="icon">📋</span><span class="title">سجل النشاط</span></a>
     </div>
 
-    <div class="charts-grid">
+    <div class="charts-grid three">
       <div class="chart-card"><h4>📊 توزيع التشعيبات</h4><canvas id="streamChart"></canvas></div>
       <div class="chart-card"><h4>📊 توزيع التخصصات</h4><canvas id="specChart"></canvas></div>
+      <div class="chart-card"><h4>📊 توزيع الصفوف</h4><canvas id="gradeChart"></canvas></div>
     </div>
 
     <div class="section">
@@ -102,17 +108,19 @@ tr:hover{background:#f8f9fa}
 <script src="lib/escape.js"></script>
 <script>
 let charts = {};
+let realtimeChannel = null;
+let authInfo = null;
 
 (async () => {
-  const auth = await Auth.requireAdmin();
-  if (!auth) return;
-  document.getElementById('adminInfo').textContent = '👑 ' + auth.user.email;
-  loadAll();
+  authInfo = await Auth.requireAdmin();
+  if (!authInfo) return;
+  document.getElementById('adminInfo').textContent = '👑 ' + authInfo.user.email;
+  await loadAll();
+  setupRealtime();
 })();
 
 async function loadAll() {
   try {
-    // ✅ كل الاستعلامات داخل Promise.all (بما فيها edit_requests)
     const [
       { count: total },
       { count: locked },
@@ -120,7 +128,9 @@ async function loadAll() {
       { count: today },
       { count: pendingReopen },
       { count: pendingEdit },
-      { data: recent }
+      { data: recent },
+      { data: gradeData },
+      { data: streamData }
     ] = await Promise.all([
       SB.from('students').select('*', { count: 'exact', head: true }),
       SB.from('students').select('*', { count: 'exact', head: true }).eq('is_locked', true),
@@ -128,7 +138,9 @@ async function loadAll() {
       SB.from('students').select('*', { count: 'exact', head: true }).gte('created_at', new Date(new Date().setHours(0,0,0,0)).toISOString()),
       SB.from('reopen_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
       SB.from('edit_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-      SB.from('students').select('full_name,student_code,stream,created_at,is_locked').order('created_at', { ascending: false }).limit(5)
+      SB.from('students').select('full_name,student_code,stream,created_at,is_locked').order('created_at', { ascending: false }).limit(5),
+      SB.from('students').select('grade'),
+      SB.from('students').select('stream,specialization')
     ]);
 
     document.getElementById('totalStudents').textContent = total || 0;
@@ -139,6 +151,18 @@ async function loadAll() {
     document.getElementById('pendingRequests').textContent = pendingReopen || 0;
     document.getElementById('pendingEditRequests').textContent = pendingEdit || 0;
 
+    // إضافة شارة نبض إذا فيه طلبات معلقة
+    const pendingEditCard = document.getElementById('pendingEditRequests').parentElement;
+    if (pendingEdit > 0 && !pendingEditCard.querySelector('.pulse')) {
+      const p = document.createElement('span');
+      p.className = 'pulse';
+      pendingEditCard.appendChild(p);
+    } else if (pendingEdit === 0) {
+      const p = pendingEditCard.querySelector('.pulse');
+      if (p) p.remove();
+    }
+
+    // جدول آخر الطلاب
     const recEl = document.getElementById('recent');
     if (!recent || recent.length === 0) {
       recEl.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">📭 لا يوجد طلاب</div>';
@@ -153,7 +177,9 @@ async function loadAll() {
         </tr>`).join('')}
       </tbody></table>`;
     }
-    loadCharts();
+
+    loadCharts(streamData || []);
+    loadGradeChart(gradeData || []);
     loadActivities();
   } catch (err) {
     console.error(err);
@@ -161,26 +187,90 @@ async function loadAll() {
   }
 }
 
-async function loadCharts() {
-  const { data: students } = await SB.from('students').select('stream,specialization');
+function loadCharts(students) {
   if (!students || students.length === 0) return;
+
   const streams = {
     'ثانوي': students.filter(s => s.stream === 'ثانوي').length,
     'بكالوريا': students.filter(s => s.stream === 'بكالوريا').length
   };
+
   if (charts.stream) charts.stream.destroy();
   charts.stream = new Chart(document.getElementById('streamChart'), {
     type: 'doughnut',
-    data: { labels: ['ثانوي', 'بكالوريا'], datasets: [{ data: [streams['ثانوي'], streams['بكالوريا']], backgroundColor: ['#1e3c72', '#28a745'], borderWidth: 2, borderColor: '#fff' }] },
-    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    data: {
+      labels: ['ثانوي', 'بكالوريا'],
+      datasets: [{
+        data: [streams['ثانوي'], streams['بكالوريا']],
+        backgroundColor: ['#1e3c72', '#28a745'],
+        borderWidth: 2, borderColor: '#fff'
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
   });
+
   const sec = students.filter(s => s.stream === 'ثانوي');
-  const specs = { 'علمي': sec.filter(s => s.specialization === 'علمي').length, 'أدبي': sec.filter(s => s.specialization === 'أدبي').length };
+  const specs = {
+    'علمي': sec.filter(s => s.specialization === 'علمي').length,
+    'أدبي': sec.filter(s => s.specialization === 'أدبي').length
+  };
+
   if (charts.spec) charts.spec.destroy();
   charts.spec = new Chart(document.getElementById('specChart'), {
     type: 'pie',
-    data: { labels: ['علمي', 'أدبي'], datasets: [{ data: [specs['علمي'], specs['أدبي']], backgroundColor: ['#6f42c1', '#fd7e14'], borderWidth: 2, borderColor: '#fff' }] },
-    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    data: {
+      labels: ['علمي', 'أدبي'],
+      datasets: [{
+        data: [specs['علمي'], specs['أدبي']],
+        backgroundColor: ['#6f42c1', '#fd7e14'],
+        borderWidth: 2, borderColor: '#fff'
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
+  });
+}
+
+function loadGradeChart(gradeData) {
+  if (!gradeData || gradeData.length === 0) return;
+
+  const grades = {};
+  gradeData.forEach(s => {
+    const g = s.grade || 'غير محدد';
+    grades[g] = (grades[g] || 0) + 1;
+  });
+
+  // ترتيب منطقي للصفوف (الأول → الثاني → الثالث)
+  const gradeOrder = ['الأول الثانوي', 'الثاني الثانوي', 'الثالث الثانوي'];
+  const sortedLabels = Object.keys(grades).sort((a, b) => {
+    const ai = gradeOrder.indexOf(a);
+    const bi = gradeOrder.indexOf(b);
+    if (ai === -1 && bi === -1) return a.localeCompare(b);
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
+
+  const data = sortedLabels.map(l => grades[l]);
+  const colors = ['#1e3c72', '#28a745', '#ffc107', '#6f42c1', '#17a2b8', '#dc3545', '#fd7e14'];
+
+  if (charts.grade) charts.grade.destroy();
+  charts.grade = new Chart(document.getElementById('gradeChart'), {
+    type: 'bar',
+    data: {
+      labels: sortedLabels,
+      datasets: [{
+        data,
+        backgroundColor: sortedLabels.map((_, i) => colors[i % colors.length]),
+        borderRadius: 8,
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
   });
 }
 
@@ -198,6 +288,43 @@ async function loadActivities() {
       <span style="color:#999;font-size:11px;">${new Date(log.created_at).toLocaleString('ar-EG')}</span>
     </div>`).join('');
 }
+
+// ============ الإشعارات الفورية (Realtime) ============
+function setupRealtime() {
+  try {
+    realtimeChannel = SB.channel('dashboard_realtime')
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'edit_requests' },
+        payload => {
+          const name = payload.new?.field_label || 'طالب';
+          Toast.show('🔔 طلب تعديل جديد: ' + name, 'info', 6000);
+          loadAll();
+        }
+      )
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'reopen_requests' },
+        payload => {
+          const name = payload.new?.student_name || 'طالب';
+          Toast.show('🔔 طلب فتح استمارة من ' + name, 'info', 6000);
+          loadAll();
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Realtime status:', status);
+        if (status === 'SUBSCRIBED') {
+          document.getElementById('realtimeBadge').style.display = 'inline-flex';
+        }
+      });
+  } catch (e) {
+    console.warn('⚠️ Realtime غير متاح:', e);
+  }
+}
+
+window.addEventListener('beforeunload', () => {
+  if (realtimeChannel) {
+    try { SB.removeChannel(realtimeChannel); } catch (e) {}
+  }
+});
 </script>
 </body>
 </html>
