@@ -165,6 +165,8 @@ function render() {
       <td><strong>${esc(s.full_name)}</strong></td>
       <td dir="ltr">${esc(s.student_code)}</td>
       <td dir="ltr">${esc(masked)}</td>
+      <td>${esc(s.grade || '-')}</td>
+      <td>${esc(s.enrollment_status || '-')}</td>
       <td>${esc(s.stream||'-')}</td>
       <td><span class="badge ${locked?'locked':'unlocked'}">${locked?'🔒 مقفل':'🔓 مفتوح'}</span></td>
       <td>
