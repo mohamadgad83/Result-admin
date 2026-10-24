@@ -18,17 +18,14 @@
 .btn-purple{background:#6f42c1;color:#fff}.btn-purple:hover{background:#5a32a3}
 .btn-sm{padding:6px 12px;font-size:12px}
 
-/* Quick actions bar */
 .quick-bar{display:flex;gap:8px;flex-wrap:wrap;padding:14px 18px;background:linear-gradient(135deg,#f8fafc,#eef2f7);border:1px solid #e2e8f0;border-radius:14px;margin-bottom:20px;align-items:center}
 .quick-bar .title{font-size:12px;font-weight:800;color:#64748b;margin-left:8px}
 
-/* Alert box */
 .alert-box{padding:14px 18px;border-radius:12px;margin-bottom:16px;font-size:13px;font-weight:600;line-height:1.7;display:flex;gap:10px;align-items:flex-start}
 .alert-box.warning{background:#FFFBEB;border:1px solid #FDE68A;color:#92400E}
 .alert-box.info{background:#EFF6FF;border:1px solid #BFDBFE;color:#1E40AF}
 .alert-box .icon{font-size:18px;flex-shrink:0;margin-top:1px}
 
-/* Cards */
 .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:20px 0}
 .detail-card{background:#f8f9fa;padding:20px;border-radius:14px;border:1px solid #e9ecef;position:relative}
 .detail-card h3{color:#1e3c72;margin:0 0 15px;padding-bottom:10px;border-bottom:2px solid #1e3c72;font-size:16px;display:flex;align-items:center;gap:8px}
@@ -39,7 +36,6 @@
 .row .lbl{color:#666;font-size:14px;flex-shrink:0}
 .row .val{font-weight:700;color:#1e3c72;text-align:left;word-break:break-word;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 
-/* Status badge */
 .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:700}
 .badge.green{background:#d4edda;color:#155724}
 .badge.yellow{background:#fff3cd;color:#856404}
@@ -47,7 +43,6 @@
 .badge.purple{background:#e7e0f5;color:#4a2d8c}
 .badge.red{background:#f8d7da;color:#721c24}
 
-/* Login method card */
 .login-method-card{
   background:#fff;border-radius:14px;padding:18px;
   border:2px solid #e2e8f0;margin-bottom:16px;
@@ -72,7 +67,6 @@
 .login-method-card.method-password .action-btn{background:#dc3545;color:#fff}
 .login-method-card.method-password .action-btn:hover{background:#a71d2a;transform:translateY(-1px)}
 
-/* Edit requests */
 .edit-request-card{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:14px;margin-bottom:10px;border-right:4px solid #ffc107}
 .edit-request-card.approved{border-right-color:#28a745;background:#f0fff4}
 .edit-request-card.rejected{border-right-color:#dc3545;background:#fff5f5}
@@ -93,7 +87,6 @@
 .edit-requests-stats .stat.approved{background:#d4edda;color:#155724}
 .edit-requests-stats .stat.rejected{background:#f8d7da;color:#721c24}
 
-/* Dynamic fields */
 .fields-group{margin-bottom:20px}
 .fields-group:last-child{margin-bottom:0}
 .fields-group .group-header{
@@ -115,7 +108,6 @@
 .fields-group .field-row .val{color:#1e3c72;font-weight:700;text-align:left;word-break:break-word}
 .fields-group .field-row .empty{color:#bbb;font-style:italic}
 
-/* Modal */
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;padding:20px}
 .modal.show{display:flex;animation:fadeIn .2s}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -130,13 +122,11 @@
 .modal-actions .btn-cancel{background:#6c757d;color:#fff}
 .modal-actions .btn-cancel:hover{background:#5a6268}
 
-/* Loading */
 .loading-box{text-align:center;padding:60px 20px}
 .loading-box .spinner{width:40px;height:40px;border:4px solid #e9ecef;border-top-color:#1e3c72;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-box p{color:#666;font-weight:600}
 
-/* Empty state */
 .empty-state{text-align:center;padding:30px;color:#999;font-size:14px}
 .empty-state .icon{font-size:36px;display:block;margin-bottom:8px;opacity:.5}
 
@@ -264,7 +254,6 @@ let pendingAction = null;
 // ===== Load All Data =====
 async function load(id) {
   try {
-    // جلب الطالب
     const { data: s, error: sErr } = await SB.from('students').select('*').eq('id', id).single();
     if (sErr || !s) {
       Toast.show('الطالب غير موجود', 'error');
@@ -273,7 +262,6 @@ async function load(id) {
     }
     student = s;
 
-    // جلب الحقول الديناميكية
     const { data: f } = await SB.from('dynamic_fields')
       .select('*, form_sections(name, display_order)')
       .eq('visible_for_student', true)
@@ -285,12 +273,10 @@ async function load(id) {
       section_order: x.form_sections?.display_order ?? 999
     }));
 
-    // جلب الاستجابات
     const { data: r } = await SB.from('student_dynamic_responses')
       .select('field_id,value').eq('student_id', id);
     (r || []).forEach(x => { responses[x.field_id] = x.value; });
 
-    // جلب طلبات التعديل
     const { data: er } = await SB.from('edit_requests')
       .select('*').eq('student_id', id).order('requested_at', { ascending: false });
     editRequests = er || [];
@@ -312,17 +298,14 @@ function render() {
   const s = student;
   const masked = '****' + String(s.national_id || '').slice(-4);
 
-  // Header sub
   document.getElementById('headerSub').textContent = `${s.full_name || ''} • ${s.student_code || ''}`;
 
-  // Quick actions
   const btnLock = document.getElementById('btnToggleLock');
   btnLock.textContent = s.is_locked ? '🔓 فتح التعديل' : '🔒 قفل التعديل';
   btnLock.className = 'btn btn-sm ' + (s.is_locked ? 'btn-green' : 'btn-yellow');
 
   document.getElementById('btnPDF').href = `student-pdf.html?print=${s.id}`;
 
-  // Login Method Section
   renderLoginMethodSection(s);
 
   // Basic Info
@@ -343,7 +326,9 @@ function render() {
     ` : ''}
   `;
 
-  // Status Info
+  // ==========================================================
+  // ✅ Status Info — محدّث مع زر قفل التشعيب
+  // ==========================================================
   const lockBadge = s.is_locked
     ? '<span class="badge green">🔒 مقفل</span>'
     : '<span class="badge yellow">🔓 مفتوح</span>';
@@ -351,9 +336,30 @@ function render() {
     ? new Date(s.submitted_at).toLocaleString('ar-EG')
     : '—';
 
+  const canLockStream = s.grade !== 'الأول الثانوي';
+  const streamParts = [s.stream || '—'];
+  if (s.specialization) streamParts.push(s.specialization);
+  if (s.track) streamParts.push(s.track);
+  if (s.optional_subject) streamParts.push(s.optional_subject);
+
   document.getElementById('statusInfo').innerHTML = `
     <div class="row"><span class="lbl">حالة القفل</span><span class="val">${lockBadge}</span></div>
     <div class="row"><span class="lbl">تاريخ التقديم</span><span class="val">${submitDate}</span></div>
+    <div class="row">
+      <span class="lbl">التشعيب</span>
+      <span class="val">
+        ${esc(streamParts.join(' / '))}
+        ${canLockStream
+          ? `<button class="btn btn-sm ${s.stream_locked ? 'btn-yellow' : 'btn-green'}"
+                     onclick="toggleStreamLock()"
+                     title="${s.stream_locked ? 'فتح للتعديل' : 'قفل التشعيب'}">
+               ${s.stream_locked ? '🔓 فتح' : '🔒 قفل'}
+             </button>`
+          : '<span style="font-size:11px;color:#666;">(عام تلقائياً)</span>'
+        }
+        ${s.stream_locked ? '<span class="badge green" style="margin-right:4px;">🔒</span>' : ''}
+      </span>
+    </div>
     <div class="row"><span class="lbl">طريقة الدخول</span><span class="val">${
       s.login_method === 'password'
         ? '<span class="badge purple">🔑 كلمة سر</span>'
@@ -371,10 +377,7 @@ function render() {
     <div class="row"><span class="lbl">معرف الطالب (UUID)</span><span class="val" dir="ltr" style="font-size:11px;font-family:monospace;">${esc(s.id)}</span></div>
   `;
 
-  // Edit Requests
   renderEditRequests();
-
-  // Dynamic Fields
   renderFields();
 }
 
@@ -421,7 +424,6 @@ function renderEditRequests() {
   card.style.display = 'block';
   countEl.textContent = editRequests.length;
 
-  // Stats
   const pending = editRequests.filter(r => r.status === 'pending').length;
   const approved = editRequests.filter(r => r.status === 'approved').length;
   const rejected = editRequests.filter(r => r.status === 'rejected').length;
@@ -472,7 +474,6 @@ function renderFields() {
   card.style.display = 'block';
   countEl.textContent = fields.length;
 
-  // تجميع حسب القسم
   const groups = {};
   fields.forEach(f => {
     const key = f.section_id || '__none__';
@@ -530,18 +531,60 @@ async function toggleLock() {
 
     if (error) throw error;
 
-    await SB.from('admin_logs').insert({
-      admin_id: auth0.user.id,
-      admin_email: auth0.user.email,
-      action: `${action} طالب`,
-      details: `${action} ${s.full_name}`,
-      student_id: s.id,
-      student_name: s.full_name
-    });
+    try {
+      await SB.from('admin_logs').insert({
+        admin_id: auth0.user.id,
+        admin_email: auth0.user.email,
+        action: `${action} طالب`,
+        details: `${action} ${s.full_name}`,
+        student_id: s.id,
+        student_name: s.full_name
+      });
+    } catch(e) {}
 
     Toast.show(`✅ تم ${action} الطالب`);
+    await reloadStudent();
+  } catch (err) {
+    console.error(err);
+    Toast.show('خطأ: ' + err.message, 'error');
+  }
+}
 
-    // Reload
+// ==========================================================
+// ✅ قفل/فتح التشعيب
+// ==========================================================
+async function toggleStreamLock() {
+  if (!student) return;
+
+  if (student.grade === 'الأول الثانوي') {
+    return Toast.show('الصف الأول تلقائياً "عام" — لا يمكن قفله', 'info');
+  }
+  if (!student.stream) {
+    return Toast.show('حدد التشعيب أولاً قبل القفل (استخدم الاستيراد أو حدّث البيانات)', 'error');
+  }
+
+  const newVal = !student.stream_locked;
+  const action = newVal ? 'قفل' : 'فتح';
+
+  if (!confirm(`${action} التشعيب "${student.stream}"؟\n${newVal ? 'لن يستطيع الطالب تغييره بعد الآن.' : 'سيتمكن الطالب من تغييره.'}`)) return;
+
+  try {
+    const { error } = await SB.from('students')
+      .update({ stream_locked: newVal })
+      .eq('id', student.id);
+
+    if (error) throw error;
+
+    try {
+      await SB.from('admin_logs').insert({
+        admin_id: auth0.user.id, admin_email: auth0.user.email,
+        action: `${action} تشعيب`,
+        details: `${action} تشعيب ${student.stream} — ${student.full_name}`,
+        student_id: student.id, student_name: student.full_name
+      });
+    } catch(e) {}
+
+    Toast.show(newVal ? '✅ تم قفل التشعيب' : '✅ تم فتح التشعيب');
     await reloadStudent();
   } catch (err) {
     console.error(err);
@@ -592,19 +635,18 @@ async function resetLoginMethod() {
       return;
     }
 
-    // سجل النشاط
-    await SB.from('admin_logs').insert({
-      admin_id: auth0.user.id,
-      admin_email: auth0.user.email,
-      action: 'إعادة تعيين طريقة الدخول',
-      details: `${student.full_name} — من كلمة سر إلى رقم قومي`,
-      student_id: student.id,
-      student_name: student.full_name
-    });
+    try {
+      await SB.from('admin_logs').insert({
+        admin_id: auth0.user.id,
+        admin_email: auth0.user.email,
+        action: 'إعادة تعيين طريقة الدخول',
+        details: `${student.full_name} — من كلمة سر إلى رقم قومي`,
+        student_id: student.id,
+        student_name: student.full_name
+      });
+    } catch(e) {}
 
     Toast.show('✅ تم — الطالب سيدخل بالرقم القومي الآن', 'success', 3000);
-
-    // Reload
     await reloadStudent();
   } catch (err) {
     console.error(err);
@@ -624,7 +666,6 @@ async function respondEditRequest(id, action) {
   if (!confirm(msg)) return;
 
   try {
-    // تطبيق التعديل أولاً (إذا موافقة)
     if (action === 'approved') {
       if (req.target_type === 'core') {
         const updateData = { [req.field_key]: req.new_value };
@@ -640,7 +681,6 @@ async function respondEditRequest(id, action) {
       }
     }
 
-    // تحديث الطلب
     const { error: e3 } = await SB.from('edit_requests').update({
       status: action,
       responded_at: new Date().toISOString(),
@@ -648,19 +688,18 @@ async function respondEditRequest(id, action) {
     }).eq('id', id);
     if (e3) throw e3;
 
-    // سجل النشاط
-    await SB.from('admin_logs').insert({
-      admin_id: auth0.user.id,
-      admin_email: auth0.user.email,
-      action: action === 'approved' ? 'موافقة على تعديل' : 'رفض تعديل',
-      details: `${req.field_label}: ${req.old_value} → ${req.new_value}`,
-      student_id: req.student_id,
-      student_name: student.full_name
-    });
+    try {
+      await SB.from('admin_logs').insert({
+        admin_id: auth0.user.id,
+        admin_email: auth0.user.email,
+        action: action === 'approved' ? 'موافقة على تعديل' : 'رفض تعديل',
+        details: `${req.field_label}: ${req.old_value} → ${req.new_value}`,
+        student_id: req.student_id,
+        student_name: student.full_name
+      });
+    } catch(e) {}
 
     Toast.show(action === 'approved' ? '✅ تمت الموافقة والتحديث' : '❌ تم الرفض', 'success');
-
-    // Reload
     await reloadStudent();
   } catch (err) {
     console.error(err);
@@ -701,7 +740,6 @@ async function reloadStudent() {
   const id = student?.id;
   if (!id) return;
 
-  // إعادة تحميل بيانات الطالب فقط + الحقول + الطلبات
   const [{ data: s }, { data: r }, { data: er }] = await Promise.all([
     SB.from('students').select('*').eq('id', id).single(),
     SB.from('student_dynamic_responses').select('field_id,value').eq('student_id', id),
