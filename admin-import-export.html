@@ -23,6 +23,7 @@
 .panel{background:#f8f9fa;padding:22px;border-radius:14px;margin:15px 0;border:1px solid #e9ecef}
 .panel h3{margin:0 0 15px;color:#1e3c72;font-size:16px}
 .info-box{background:#fff8e1;padding:14px;border-radius:10px;margin:10px 0;font-size:13px;border-right:4px solid #ffc107;color:#856404;line-height:1.8}
+.info-box.green{background:#e8f5e9;border-right-color:#28a745;color:#2e7d32}
 .upload-area{display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding:20px;background:#fff;border:2px dashed #ccc;border-radius:12px;transition:border-color .2s}
 .upload-area:hover{border-color:#1e3c72}
 .upload-area input[type=file]{flex:1;min-width:200px;padding:10px;border:1px solid #ddd;border-radius:8px;background:#fafafa;font-family:inherit}
@@ -51,7 +52,7 @@
 .mode-row label{display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;color:#333}
 .mode-row input[type=radio]{width:16px;height:16px;cursor:pointer}
 
-/* منتقي الأعمدة */
+/* منتقي الحقول */
 .column-picker{margin:15px 0;padding:18px;background:#fff;border:2px solid #1e3c72;border-radius:12px}
 .column-picker .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px}
 .column-picker .head h4{margin:0;color:#1e3c72;font-size:16px}
@@ -68,6 +69,7 @@
 .column-pick .name .req-star{color:#dc3545;margin-right:3px}
 .column-pick .sample{font-size:11px;color:#999;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .column-pick .required-badge{font-size:9px;background:#1e3c72;color:#fff;padding:1px 6px;border-radius:8px;margin-right:4px}
+.column-pick .type-badge{font-size:9px;background:#17a2b8;color:#fff;padding:1px 6px;border-radius:8px;margin-right:4px}
 
 @keyframes fadeIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
 </style>
@@ -92,7 +94,8 @@
   <div id="panel-import">
     <div style="display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap;">
       <button class="tab active" onclick="selectSchema('students')" id="schema-students">👨‍🎓 الطلاب</button>
-      <button class="tab" onclick="selectSchema('fields')" id="schema-fields">📝 الحقول الديناميكية</button>
+      <button class="tab" onclick="selectSchema('responses')" id="schema-responses">📊 استجابات الطلاب</button>
+      <button class="tab" onclick="selectSchema('fields')" id="schema-fields">📝 الحقول</button>
       <button class="tab" onclick="selectSchema('sections')" id="schema-sections">📂 الأقسام</button>
     </div>
 
@@ -117,20 +120,16 @@
       </div>
       <div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
 
-      <!-- منتقي الأعمدة -->
+      <!-- منتقي الحقول -->
       <div class="column-picker" id="columnPicker" style="display:none;">
         <div class="head">
-          <h4>🔧 اختر الحقول التي تريد استيرادها</h4>
+          <h4 id="pickerTitle">🔧 اختر الحقول</h4>
           <div class="actions">
             <button onclick="toggleAllColumns(true)" style="background:#28a745;color:#fff;">✔️ الكل</button>
             <button onclick="toggleAllColumns(false)" style="background:#6c757d;color:#fff;">✖️ لا شيء</button>
           </div>
         </div>
-        <div class="hint">
-          💡 <strong>الحقول التي لن تحددها لن يتم تعديلها</strong> حتى لو كانت في الملف.
-          <br>
-          🔑 <strong>الكود</strong> إجباري للتعرف على الطلاب.
-        </div>
+        <div class="hint" id="pickerHint"></div>
         <div class="grid" id="columnPickerGrid"></div>
       </div>
 
@@ -146,9 +145,9 @@
       <p style="font-size:13px;color:#666;margin:0 0 15px;">تصدير كل البيانات إلى ملف Excel</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <button class="btn btn-green" style="padding:12px 25px;" onclick="exportData('students')">📥 تصدير الطلاب</button>
+        <button class="btn btn-blue" style="padding:12px 25px;" onclick="exportResponses()">📥 تصدير الاستجابات الكاملة</button>
         <button class="btn btn-blue" style="padding:12px 25px;" onclick="exportData('fields')">📥 تصدير الحقول</button>
         <button class="btn btn-blue" style="padding:12px 25px;" onclick="exportData('sections')">📥 تصدير الأقسام</button>
-        <button class="btn btn-purple" style="padding:12px 25px;" onclick="exportResponses()">📥 تصدير الاستجابات</button>
       </div>
     </div>
   </div>
@@ -184,6 +183,13 @@ const SCHEMAS = {
       { key: 'optional_subject', label: 'المادة الاختيارية', aliases: ['المادة','optional'], type: 'text' }
     ]
   },
+  // استجابات الطلاب: يتم بناؤها ديناميكياً من dynamic_fields
+  responses: {
+    label: 'استجابات الطلاب',
+    table: 'student_dynamic_responses',
+    match: null, // خاص
+    columns: [] // يُملأ تلقائياً
+  },
   fields: {
     label: 'الحقول الديناميكية',
     table: 'dynamic_fields',
@@ -216,6 +222,7 @@ let currentSchema = 'students';
 let parsedRows = [];
 let selectedColumns = new Set();
 let auth0 = null;
+let availableFields = []; // الحقول الديناميكية من DB
 
 // ==========================================================
 // التهيئة
@@ -223,7 +230,7 @@ let auth0 = null;
 (async () => {
   auth0 = await Auth.requireAdmin();
   if (!auth0) return;
-  selectSchema('students');
+  await selectSchema('students');
 })();
 
 function switchTab(t) {
@@ -233,21 +240,50 @@ function switchTab(t) {
   document.getElementById('tab-export').classList.toggle('active', t === 'export');
 }
 
-function selectSchema(s) {
+async function selectSchema(s) {
   currentSchema = s;
   parsedRows = [];
   selectedColumns.clear();
 
   document.getElementById('schema-students').classList.toggle('active', s === 'students');
+  document.getElementById('schema-responses').classList.toggle('active', s === 'responses');
   document.getElementById('schema-fields').classList.toggle('active', s === 'fields');
   document.getElementById('schema-sections').classList.toggle('active', s === 'sections');
 
-  const sc = SCHEMAS[s];
-  document.getElementById('infoBox').innerHTML = `
-    <strong>📋 ${sc.label}</strong><br>
-    الأعمدة المطلوبة: <strong>${sc.columns.filter(c=>c.required).map(c=>c.label).join('، ')}</strong><br>
-    الأعمدة الاختيارية: ${sc.columns.filter(c=>!c.required).map(c=>c.label).join('، ') || '—'}
-  `;
+  const infoBox = document.getElementById('infoBox');
+
+  // استجابات الطلاب: قراءة الحقول من DB
+  if (s === 'responses') {
+    await loadDynamicFields();
+    SCHEMAS.responses.columns = [
+      { key: 'student_code', label: 'الكود', aliases: ['كود','code'], required: true, type: 'text' },
+      ...availableFields.map(f => ({
+        key: f.id, // UUID الحقل
+        field_key: f.field_key,
+        label: f.name,
+        aliases: [f.name, f.field_key],
+        required: false,
+        type: f.type === 'select' ? 'text' : 'text',
+        is_readonly: f.is_readonly,
+        _field: f
+      }))
+    ];
+    infoBox.className = 'info-box green';
+    infoBox.innerHTML = `
+      <strong>📊 استجابات الطلاب</strong><br>
+      هذا التبويب لتعبئة بيانات الحقول الديناميكية لكل طالب.<br>
+      <strong>الكود</strong> إجباري. الحقول الأخرى اختيارية — اختر أي حقول تريد تعبئتها فقط.<br>
+      💡 <strong>مثال</strong>: تريد إضافة "الصف" لكل الطلاب — اختر حقل "الصف" فقط + الكود.
+    `;
+  } else {
+    const sc = SCHEMAS[s];
+    infoBox.className = 'info-box';
+    infoBox.innerHTML = `
+      <strong>📋 ${sc.label}</strong><br>
+      الأعمدة المطلوبة: <strong>${sc.columns.filter(c=>c.required).map(c=>c.label).join('، ')}</strong><br>
+      الأعمدة الاختيارية: ${sc.columns.filter(c=>!c.required).map(c=>c.label).join('، ') || '—'}
+    `;
+  }
 
   document.getElementById('preview').style.display = 'none';
   document.getElementById('columnPicker').style.display = 'none';
@@ -255,8 +291,31 @@ function selectSchema(s) {
   document.getElementById('fileInput').value = '';
 }
 
+async function loadDynamicFields() {
+  const { data, error } = await SB.from('dynamic_fields')
+    .select('*')
+    .order('display_order');
+  if (error) { Toast.show('خطأ في تحميل الحقول: ' + error.message, 'error'); return; }
+  availableFields = data || [];
+}
+
+// ==========================================================
+// تحميل النموذج
+// ==========================================================
 function downloadTemplate() {
   const sc = SCHEMAS[currentSchema];
+
+  if (currentSchema === 'responses') {
+    // حقل الكود + كل الحقول الديناميكية
+    const headers = ['الكود', ...availableFields.map(f => f.name)];
+    const sample = ['مثال الكود', ...availableFields.map(f => f.type === 'select' ? (f.options?.[0] || '') : `مثال ${f.name}`)];
+    const empty = headers.map(() => '');
+    Excel.download([headers, sample, empty, empty], `نموذج_${sc.label}.xlsx`, sc.label);
+    Toast.show('✅ تم تحميل النموذج — املأ الحقول التي تحتاجها فقط', 'info');
+    return;
+  }
+
+  // النماذج العادية
   const headers = sc.columns.map(c => c.label);
   const sample = sc.columns.map(c => c.default !== undefined ? String(c.default) : (c.required ? `مثال ${c.label}` : ''));
   Excel.download([headers, sample, sc.columns.map(()=>''), sc.columns.map(()=>'')],
@@ -279,7 +338,7 @@ document.getElementById('fileInput').addEventListener('change', async (e) => {
 });
 
 // ==========================================================
-// منتقي الأعمدة
+// منتقي الحقول
 // ==========================================================
 function renderColumnPicker() {
   const sc = SCHEMAS[currentSchema];
@@ -287,41 +346,93 @@ function renderColumnPicker() {
   const grid = document.getElementById('columnPickerGrid');
 
   selectedColumns.clear();
-  sc.columns.forEach(col => {
-    const hasData = parsedRows.some(r => {
-      const v = findVal(r, col);
-      return v !== '' && v != null;
-    });
-    if (hasData) selectedColumns.add(col.key);
-  });
 
-  // الكود إجباري
-  if (currentSchema === 'students' && selectedColumns.size > 0) {
-    selectedColumns.add('student_code');
-  }
-
-  grid.innerHTML = sc.columns.map(col => {
-    const isSelected = selectedColumns.has(col.key);
-    const samples = parsedRows.map(r => findVal(r, col)).filter(v => v !== '' && v != null);
-    const sample = samples[0] || '—';
-    const isLocked = (currentSchema === 'students' && col.key === 'student_code');
-
-    return `
-      <label class="column-pick ${isSelected ? 'selected' : ''}" data-key="${col.key}">
-        <input type="checkbox" ${isSelected ? 'checked' : ''}
-               ${isLocked ? 'disabled' : ''}
-               onchange="toggleColumn('${col.key}', this.checked)">
-        <div class="info">
-          <div class="name">
-            ${isLocked ? '<span class="required-badge">🔑</span>' : ''}
-            ${col.required && !isLocked ? '<span class="req-star">*</span>' : ''}
-            ${esc(col.label)}
-          </div>
-          <div class="sample" title="${esc(String(sample))}">مثال: ${esc(String(sample).substring(0, 18))}</div>
-        </div>
-      </label>
+  if (currentSchema === 'responses') {
+    document.getElementById('pickerTitle').textContent = '🔧 اختر الحقول التي تريد تعبئتها';
+    document.getElementById('pickerHint').innerHTML = `
+      💡 <strong>الحقول التي تحددها فقط سيتم تحديث قيمتها</strong> لكل الطلاب في الملف.
+      الحقل "الكود" إجباري لتحديد الطالب.
     `;
-  }).join('');
+
+    // الكود إجباري
+    selectedColumns.add('student_code');
+
+    // حدد الحقول التي بها بيانات في الملف فقط
+    availableFields.forEach(f => {
+      const hasData = parsedRows.some(r => {
+        const v = findVal(r, { key: f.id, label: f.name, aliases: [f.field_key] });
+        return v !== '' && v != null;
+      });
+      if (hasData) selectedColumns.add(f.id);
+    });
+
+    grid.innerHTML = sc.columns.map(col => {
+      const isSelected = selectedColumns.has(col.key);
+      const isLocked = col.key === 'student_code';
+      const field = col._field;
+      const samples = parsedRows.map(r => findVal(r, col)).filter(v => v !== '' && v != null);
+      const sample = samples[0] || '—';
+
+      return `
+        <label class="column-pick ${isSelected ? 'selected' : ''}" data-key="${col.key}">
+          <input type="checkbox" ${isSelected ? 'checked' : ''}
+                 ${isLocked ? 'disabled' : ''}
+                 onchange="toggleColumn('${col.key}', this.checked)">
+          <div class="info">
+            <div class="name">
+              ${isLocked ? '<span class="required-badge">🔑</span>' : ''}
+              ${field?.is_readonly ? '<span class="type-badge">🔒</span>' : ''}
+              ${esc(col.label)}
+            </div>
+            <div class="sample" title="${esc(String(sample))}">مثال: ${esc(String(sample).substring(0, 18))}</div>
+          </div>
+        </label>
+      `;
+    }).join('');
+
+  } else {
+    document.getElementById('pickerTitle').textContent = '🔧 اختر الحقول التي تريد استيرادها';
+    document.getElementById('pickerHint').innerHTML = `
+      💡 <strong>الحقول التي لن تحددها لن يتم تعديلها</strong> حتى لو كانت في الملف.
+      ${currentSchema === 'students' ? '🔑 <strong>الكود</strong> إجباري.' : ''}
+    `;
+
+    // اكتشاف تلقائي
+    sc.columns.forEach(col => {
+      const hasData = parsedRows.some(r => {
+        const v = findVal(r, col);
+        return v !== '' && v != null;
+      });
+      if (hasData) selectedColumns.add(col.key);
+    });
+
+    if (currentSchema === 'students' && selectedColumns.size > 0) {
+      selectedColumns.add('student_code');
+    }
+
+    grid.innerHTML = sc.columns.map(col => {
+      const isSelected = selectedColumns.has(col.key);
+      const isLocked = (currentSchema === 'students' && col.key === 'student_code');
+      const samples = parsedRows.map(r => findVal(r, col)).filter(v => v !== '' && v != null);
+      const sample = samples[0] || '—';
+
+      return `
+        <label class="column-pick ${isSelected ? 'selected' : ''}" data-key="${col.key}">
+          <input type="checkbox" ${isSelected ? 'checked' : ''}
+                 ${isLocked ? 'disabled' : ''}
+                 onchange="toggleColumn('${col.key}', this.checked)">
+          <div class="info">
+            <div class="name">
+              ${isLocked ? '<span class="required-badge">🔑</span>' : ''}
+              ${col.required && !isLocked ? '<span class="req-star">*</span>' : ''}
+              ${esc(col.label)}
+            </div>
+            <div class="sample" title="${esc(String(sample))}">مثال: ${esc(String(sample).substring(0, 18))}</div>
+          </div>
+        </label>
+      `;
+    }).join('');
+  }
 
   picker.style.display = 'block';
 }
@@ -447,6 +558,9 @@ async function doImport() {
   if (currentSchema === 'students' && !selectedColumns.has('student_code')) {
     return Toast.show('❌ يجب تحديد حقل "الكود"', 'error');
   }
+  if (currentSchema === 'responses' && !selectedColumns.has('student_code')) {
+    return Toast.show('❌ يجب تحديد حقل "الكود"', 'error');
+  }
 
   const sc = SCHEMAS[currentSchema];
   const mode = document.querySelector('input[name=mode]:checked').value;
@@ -465,8 +579,164 @@ async function doImport() {
 
   let success = 0, failed = 0, skipped = 0;
   const errors = [];
-  let converted = [];
 
+  // ==========================================================
+  // معالجة استجابات الطلاب
+  // ==========================================================
+  if (currentSchema === 'responses') {
+    try {
+      // 1) جمع كل الأكواد في الملف
+      const codes = [];
+      for (const row of parsedRows) {
+        const codeVal = findVal(row, { label: 'الكود', key: 'student_code', aliases: ['كود','code'] });
+        if (codeVal) codes.push(String(codeVal).trim());
+      }
+
+      if (codes.length === 0) {
+        btn.disabled = false;
+        progress.classList.remove('show');
+        return Toast.show('❌ لا يوجد عمود "الكود" في الملف', 'error');
+      }
+
+      // 2) جلب student_ids
+      const { data: studentList, error: stErr } = await SB.from('students')
+        .select('id, student_code').in('student_code', codes);
+      if (stErr) throw stErr;
+      const studentMap = {};
+      (studentList || []).forEach(s => { studentMap[s.student_code] = s.id; });
+
+      // 3) الحقول المحددة للاستيراد (بعد الكود)
+      const selectedFieldIds = Array.from(selectedColumns).filter(k => k !== 'student_code');
+
+      if (selectedFieldIds.length === 0) {
+        btn.disabled = false;
+        progress.classList.remove('show');
+        return Toast.show('❌ حدد حقل بيانات واحد على الأقل (بالإضافة إلى الكود)', 'error');
+      }
+
+      // 4) بناء الدفعات
+      const CHUNK = 100;
+      const records = []; // { student_id, field_id, value }
+
+      for (let i = 0; i < parsedRows.length; i++) {
+        const row = parsedRows[i];
+        const rowNum = i + 2;
+
+        const codeVal = findVal(row, { label: 'الكود', key: 'student_code', aliases: ['كود','code'] });
+        if (!codeVal) {
+          failed++; errors.push(`صف ${rowNum}: بدون كود`);
+          continue;
+        }
+        const studentCode = String(codeVal).trim();
+        const studentId = studentMap[studentCode];
+        if (!studentId) {
+          failed++; errors.push(`صف ${rowNum}: الطالب بكود "${studentCode}" غير موجود`);
+          continue;
+        }
+
+        // الحقول
+        for (const fieldId of selectedFieldIds) {
+          const field = availableFields.find(f => f.id === fieldId);
+          if (!field) continue;
+
+          const raw = findVal(row, {
+            key: field.id, label: field.name, aliases: [field.field_key]
+          });
+          if (raw === '' || raw == null) continue; // تخطي القيم الفارغة
+
+          records.push({
+            student_id: studentId,
+            field_id: fieldId,
+            value: String(raw).trim(),
+            rowNum, studentCode, fieldName: field.name
+          });
+        }
+      }
+
+      // 5) تطبيق حسب الوضع
+      for (let i = 0; i < records.length; i += CHUNK) {
+        const chunk = records.slice(i, i + CHUNK);
+        try {
+          if (mode === 'insert') {
+            // إضافة فقط: تجاهل الموجود
+            const { error } = await SB.from('student_dynamic_responses')
+              .upsert(chunk.map(r => ({ student_id: r.student_id, field_id: r.field_id, value: r.value })),
+                      { onConflict: 'student_id,field_id', ignoreDuplicates: true });
+            if (error) throw error;
+            success += chunk.length;
+          } else if (mode === 'smart-fill') {
+            // تحديث ذكي: لا يمسح الموجود
+            // يجب قراءة القيم الحالية أولاً
+            for (const r of chunk) {
+              const { data: existing } = await SB.from('student_dynamic_responses')
+                .select('value').eq('student_id', r.student_id).eq('field_id', r.field_id).maybeSingle();
+
+              if (existing && existing.value && existing.value !== '') {
+                // موجود — تجاهل
+                skipped++;
+                continue;
+              }
+              const { error } = await SB.from('student_dynamic_responses')
+                .upsert({ student_id: r.student_id, field_id: r.field_id, value: r.value },
+                        { onConflict: 'student_id,field_id' });
+              if (error) { failed++; errors.push(`صف ${r.rowNum} (${r.fieldName}): ${error.message}`); }
+              else success++;
+            }
+          } else if (mode === 'replace') {
+            // استبدال كامل
+            const { error } = await SB.from('student_dynamic_responses')
+              .upsert(chunk.map(r => ({ student_id: r.student_id, field_id: r.field_id, value: r.value })),
+                      { onConflict: 'student_id,field_id' });
+            if (error) throw error;
+            success += chunk.length;
+          }
+        } catch (err) {
+          failed += chunk.length;
+          errors.push(`دفعة ${Math.floor(i / CHUNK) + 1}: ${err.message}`);
+        }
+        bar.style.width = Math.min(100, Math.round((i + CHUNK) / records.length * 100)) + '%';
+      }
+
+      // سجل
+      try {
+        await SB.from('admin_logs').insert({
+          admin_id: auth0.user.id, admin_email: auth0.user.email,
+          action: `استيراد استجابات (${mode})`,
+          details: `حقول: ${selectedFieldIds.length} | نجح: ${success}، فشل: ${failed}، تخطي: ${skipped}`
+        });
+      } catch (e) { console.warn(e); }
+
+      const res = document.getElementById('result');
+      res.className = `result show ${failed === 0 ? 'success' : success > 0 ? 'partial' : 'error'}`;
+      res.innerHTML = `
+        <div class="stats-grid">
+          <div class="stat-box"><div class="num" style="color:#28a745;">${success}</div><div class="lbl">✅ نجح</div></div>
+          <div class="stat-box"><div class="num" style="color:#dc3545;">${failed}</div><div class="lbl">❌ فشل</div></div>
+          <div class="stat-box"><div class="num" style="color:#ffc107;">${skipped}</div><div class="lbl">⏭️ تخطي</div></div>
+        </div>
+        ${errors.length > 0 ? `<details style="margin-top:10px;">
+          <summary style="cursor:pointer;font-weight:600;">الأخطاء (${errors.length})</summary>
+          <ul style="max-height:200px;overflow:auto;margin-top:8px;font-size:13px;">
+            ${errors.slice(0, 50).map(e => `<li>${esc(e)}</li>`).join('')}
+          </ul></details>` : ''}
+      `;
+
+      btn.disabled = false;
+      progress.classList.remove('show');
+      if (success > 0) Toast.show(`✅ ${success} قيمة مستوردة`, 'success');
+      return;
+
+    } catch (err) {
+      btn.disabled = false;
+      progress.classList.remove('show');
+      return Toast.show('❌ ' + err.message, 'error', 6000);
+    }
+  }
+
+  // ==========================================================
+  // باقي الجداول (students, fields, sections)
+  // ==========================================================
+  let converted = [];
   for (let i = 0; i < parsedRows.length; i++) {
     try {
       converted.push({ idx: i + 2, data: convertRow(parsedRows[i], sc) });
@@ -476,7 +746,7 @@ async function doImport() {
     }
   }
 
-  // معالجة الحقول
+  // معالجة الحقول (section_name → section_id)
   if (currentSchema === 'fields') {
     try {
       const { data: existingSecs, error: fetchErr } = await SB.from('form_sections').select('id, name');
@@ -525,16 +795,8 @@ async function doImport() {
         const rowNum = c.idx;
 
         if (!ex) {
-          if (!c.data.national_id) {
-            failed++;
-            errors.push(`صف ${rowNum}: طالب جديد بدون رقم قومي`);
-            continue;
-          }
-          if (!c.data.full_name) {
-            failed++;
-            errors.push(`صف ${rowNum}: طالب جديد بدون اسم`);
-            continue;
-          }
+          if (!c.data.national_id) { failed++; errors.push(`صف ${rowNum}: طالب جديد بدون رقم قومي`); continue; }
+          if (!c.data.full_name) { failed++; errors.push(`صف ${rowNum}: طالب جديد بدون اسم`); continue; }
           toInsert.push(c);
           continue;
         }
@@ -575,7 +837,6 @@ async function doImport() {
       errors.push('خطأ عام: ' + err.message);
     }
   } else {
-    // جداول أخرى
     const CHUNK = 100;
     for (let i = 0; i < converted.length; i += CHUNK) {
       const chunk = converted.slice(i, i + CHUNK);
@@ -668,20 +929,22 @@ async function exportData(schemaKey) {
 }
 
 async function exportResponses() {
-  const { data: students } = await SB.from('students').select('id,student_code,full_name,grade,stream,specialization,track,optional_subject,is_locked,submitted_at');
+  const { data: students } = await SB.from('students').select('id,student_code,full_name,grade,enrollment_status,gender,date_of_birth,governorate,stream,specialization,track,optional_subject,is_locked,submitted_at');
   const { data: fields } = await SB.from('dynamic_fields').select('id,name').eq('visible_for_student', true).order('display_order');
   if (!students || students.length === 0) return Toast.show('لا بيانات', 'warn');
   const ids = students.map(s => s.id);
   const { data: responses } = await SB.from('student_dynamic_responses').select('student_id,field_id,value').in('student_id', ids);
   const map = {};
   (responses||[]).forEach(r => { (map[r.student_id] ??= {})[r.field_id] = r.value; });
-  const headers = ['#','الاسم','الكود','الصف','التشعيب','التخصص','المسار','المادة الاختيارية','الحالة','تاريخ التقديم',...(fields||[]).map(f=>f.name)];
+  const headers = ['#','الاسم','الكود','الصف','حالة القيد','النوع','تاريخ الميلاد','المحافظة','التشعيب','التخصص','المسار','المادة الاختيارية','الحالة','تاريخ التقديم',...(fields||[]).map(f=>f.name)];
   const rows = students.map((s,i) => [
-    i+1, s.full_name, s.student_code, s.grade||'', s.stream||'', s.specialization||'', s.track||'', s.optional_subject||'',
+    i+1, s.full_name, s.student_code, s.grade||'', s.enrollment_status||'', s.gender||'',
+    s.date_of_birth ? new Date(s.date_of_birth).toLocaleDateString('ar-EG') : '',
+    s.governorate||'', s.stream||'', s.specialization||'', s.track||'', s.optional_subject||'',
     s.is_locked?'مقفل':'مفتوح', s.submitted_at?new Date(s.submitted_at).toLocaleString('ar-EG'):'',
     ...(fields||[]).map(f => map[s.id]?.[f.id] || '')
   ]);
-  Excel.download([headers, ...rows], `استجابات_${new Date().toISOString().slice(0,10)}.xlsx`, 'استجابات');
+  Excel.download([headers, ...rows], `استجابات_كاملة_${new Date().toISOString().slice(0,10)}.xlsx`, 'استجابات');
   Toast.show(`✅ ${students.length} صف`, 'success');
 }
 </script>
