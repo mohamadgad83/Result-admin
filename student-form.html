@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تسجيل الرغبات - مدرسة دشنا الثانوية</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="style.css">
+<meta name="copyright" content="مدرسة دشنا الثانوية - جميع الحقوق محفوظة">
+<meta name="author" content="محمد جاد - مسئول IT وسفير مادة البرمجة محافظة قنا">
+
+<style>
+.form-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;padding-bottom:15px;border-bottom:2px solid #eee;margin-bottom:20px}
+.form-header .title h1{color:#1e3c72;font-size:24px;margin:0}
+.form-header .title p{color:#666;font-size:14px;margin:5px 0 0}
+.form-header .actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn-logout-student,.btn-home{padding:10px 20px;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;text-decoration:none;transition:all .3s;display:inline-block}
+.btn-logout-student{background:#dc3545}.btn-logout-student:hover{background:#a71d2a}
+.btn-home{background:#6c757d}.btn-home:hover{background:#5a6268}
+
+/* عرض الحقول الأساسية */
+.core-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;background:#f0f7ff;padding:18px;border-radius:14px;margin-bottom:18px;border:1px solid #d0e4f7}
+.core-info .item{display:flex;flex-direction:column;gap:3px}
+.core-info .item .lbl{font-size:11px;color:#666;font-weight:600}
+.core-info .item .val{font-size:14px;color:#1e3c72;font-weight:700}
+.core-actions{display:flex;gap:10px;justify-content:center;margin-bottom:20px}
+.btn-request-edit{padding:10px 22px;background:#17a2b8;color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:14px;transition:all .2s}
+.btn-request-edit:hover{background:#138496;transform:translateY(-1px)}
+
+/* شريط التقدم */
+.progress-bar-wrap{background:#f0f2f5;padding:16px 20px;border-radius:14px;margin:20px 0;border:1px solid #e0e4e8}
+.progress-bar-wrap .head{display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:#1e3c72;margin-bottom:10px}
+.progress-bar-wrap .track{height:10px;background:#e9ecef;border-radius:20px;overflow:hidden}
+.progress-bar-wrap .fill{height:100%;background:linear-gradient(90deg,#1e3c72,#2a5298);transition:width .4s ease;border-radius:20px}
+.progress-bar-wrap .sections-mini{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.progress-bar-wrap .sec-chip{padding:3px 12px;font-size:11px;border-radius:12px;background:#fff;border:1px solid #d0d7de;color:#666;font-weight:600}
+.progress-bar-wrap .sec-chip.done{background:#d4edda;border-color:#28a745;color:#155724}
+
+/* الأقسام */
+.section-block{margin:24px 0;border-radius:16px;overflow:hidden;border:1px solid #e0e4e8;background:#fff;box-shadow:0 2px 8px rgba(30,60,114,.06);transition:box-shadow .3s}
+.section-block:hover{box-shadow:0 4px 16px rgba(30,60,114,.1)}
+.section-block .head{background:linear-gradient(135deg,#1e3c72,#2a5298);color:#fff;padding:16px 22px;display:flex;align-items:center;gap:12px}
+.section-block .head .ico{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.15);display:grid;place-items:center;font-size:20px;flex-shrink:0}
+.section-block .head h3{margin:0;font-size:17px;font-weight:800}
+.section-block .head .counter{margin-right:auto;font-size:12px;background:rgba(255,255,255,.2);padding:3px 12px;border-radius:20px;font-weight:600}
+.section-block .body{padding:22px 24px}
+.section-block.no-section{border:none;box-shadow:none;background:transparent;margin:0}
+.section-block.no-section .body{padding:0;background:transparent}
+
+/* الحقول */
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-weight:700;color:#333;font-size:14px;margin-bottom:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.form-group label .admin-badge{font-size:10px;background:#17a2b8;color:#fff;padding:2px 9px;border-radius:10px;font-weight:600}
+.form-control{width:100%;padding:12px 16px;border:2px solid #e0e0e0;border-radius:10px;font-size:15px;font-family:inherit;transition:all .2s;background:#fff}
+.form-control:focus{outline:none;border-color:#1e3c72;box-shadow:0 0 0 4px rgba(30,60,114,.1)}
+.form-control:disabled{background:#f0f0f0;cursor:not-allowed;color:#555;border-color:#d0d0d0}
+.btn-option:disabled{opacity:.75;cursor:not-allowed}
+
+/* رسالة القفل */
+.locked-fields-header{display:none;margin:24px 0 12px;padding:16px 20px;background:linear-gradient(135deg,#1e3c72,#2a5298);color:#fff;border-radius:12px;text-align:center;font-weight:700;font-size:16px;box-shadow:0 4px 12px rgba(30,60,114,.2)}
+.locked-fields-header.show{display:block}
+.selected-stream-display{background:linear-gradient(135deg,#d4edda,#c3e6cb);padding:14px 20px;border-radius:12px;border:2px solid #28a745;margin:15px 0;text-align:center;font-size:16px;font-weight:700;color:#155724;display:none}
+.selected-stream-display.show{display:block}
+
+/* الإقرار */
+.declaration-section{background:linear-gradient(135deg,#f8f9fa,#e9ecef);padding:25px;border-radius:16px;margin:25px 0;border-right:6px solid #1e3c72;position:relative}
+.declaration-section h3{color:#1e3c72;font-size:20px;margin-bottom:15px}
+.declaration-text{background:#fff;padding:20px;border-radius:12px;font-size:15px;line-height:2.2;color:#333}
+.declaration-approval{margin-top:15px;padding:18px;text-align:center;background:#fff3cd;border-radius:12px;border:2px solid #ffc107}
+.btn-approve{padding:15px 40px;background:#28a745;color:#fff;border:none;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;transition:all .3s}
+.btn-approve.approved{background:#1e3c72}
+.approval-confirm{display:none;margin-top:12px;padding:12px;background:#d4edda;border-radius:10px;color:#155724;font-weight:700;border:2px solid #28a745}
+.approval-confirm.show{display:block}
+
+/* تحذير الحفظ */
+.warning-confirm-box{display:none;background:#fff3cd;border:3px solid #ffc107;border-radius:16px;padding:25px;margin:20px 0;text-align:center}
+.warning-confirm-box.show{display:block}
+.warning-actions{display:flex;gap:15px;justify-content:center;flex-wrap:wrap;margin-top:15px}
+.btn-confirm{padding:14px 35px;background:#dc3545;color:#fff;border:none;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer}
+.btn-cancel-warning{padding:14px 35px;background:#6c757d;color:#fff;border:none;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer}
+
+/* رسائل القفل */
+.locked-message{background:linear-gradient(135deg,#d4edda,#c3e6cb);border:2px solid #28a745;border-radius:16px;padding:30px;margin:20px 0;text-align:center}
+.locked-message .icon{font-size:60px;display:block;margin-bottom:10px}
+.locked-message h3{color:#155724;font-size:24px;margin:10px 0}
+.btn-print-only,.btn-request{display:inline-block;padding:13px 30px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;margin:8px 4px;transition:all .3s;border:none}
+.btn-print-only{background:#1e3c72;color:#fff}
+.btn-request{background:#ffc107;color:#333}
+
+/* Modal */
+.request-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;padding:20px}
+.request-modal.show{display:flex}
+.request-modal .modal-content{background:#fff;max-width:550px;width:100%;padding:30px;border-radius:20px;position:relative;box-shadow:0 10px 40px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto}
+.request-modal h3{color:#1e3c72;margin:0 0 15px}
+.request-modal textarea,.request-modal input,.request-modal select{width:100%;padding:12px;border:2px solid #e0e0e0;border-radius:10px;font-family:inherit;font-size:15px;margin-top:6px}
+.request-modal textarea:focus,.request-modal input:focus,.request-modal select:focus{outline:none;border-color:#1e3c72}
+.request-modal textarea{min-height:80px;resize:vertical}
+.request-modal .mg{margin-bottom:14px}
+.request-modal .mg label{display:block;font-weight:700;font-size:13px;color:#333;margin-bottom:4px}
+.request-modal .actions{display:flex;gap:10px;margin-top:15px;flex-wrap:wrap}
+.request-modal .actions button{flex:1;min-width:100px;padding:12px;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:15px}
+.btn-submit{background:#28a745;color:#fff}
+.btn-cancel-modal{background:#6c757d;color:#fff}
+.request-error{color:#dc3545;font-size:13px;display:none;margin:10px 0;padding:10px;background:#fee;border-radius:8px}
+
+/* أزرار الحفظ */
+#formActions{display:flex;flex-direction:column;gap:10px;margin-top:25px}
+.btn-success,.btn-primary{width:100%;padding:16px;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;border:none;transition:all .3s;text-align:center;text-decoration:none;display:block}
+.btn-success{background:#28a745;color:#fff}.btn-success:hover{background:#1e7e34}
+.btn-primary{background:#1e3c72;color:#fff}.btn-primary:hover{background:#0f2b4f}
+
+@media(max-width:600px){
+  .form-header{flex-direction:column;align-items:stretch}
+  .form-header .actions{justify-content:stretch}
+  .form-header .actions>*{flex:1;text-align:center}
+  .core-info{grid-template-columns:1fr 1fr}
+  .section-block .body{padding:18px}
+  .section-block .head{padding:14px 18px}
+  .btn-approve{width:100%;padding:14px 20px;font-size:15px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card">
+    <div class="form-header">
+      <div class="title">
+        <h1>🏫 مدرسة دشنا الثانوية</h1>
+        <p>استمارة تسجيل الرغبات - العام الدراسي 2025/2026</p>
+      </div>
+      <div class="actions">
+        <a href="index.html" class="btn-home">🏠 الرئيسية</a>
+        <button onclick="logoutStudent()" class="btn-logout-student">🚪 خروج</button>
+      </div>
+    </div>
+
+    <!-- عرض الحقول الأساسية -->
+    <div class="core-info" id="coreInfo"></div>
+    <div class="core-actions" id="coreActions" style="display:none;">
+      <button class="btn-request-edit" onclick="openEditRequestModal()">
+        📩 طلب تعديل على بياناتي
+      </button>
+    </div>
+
+    <div class="selected-stream-display" id="selectedStreamDisplay">
+      🎯 التشعيب: <span id="selectedStreamText">—</span>
+    </div>
+    <div id="statusMsg"></div>
+
+    <form id="studentForm" class="form">
+      <div id="formContent">
+        <div class="progress-bar-wrap" id="progressWrap" style="display:none;">
+          <div class="head">
+            <span>📋 اكتمال الاستمارة</span>
+            <span id="progressPct">0%</span>
+          </div>
+          <div class="track"><div class="fill" id="progressFill" style="width:0%"></div></div>
+          <div class="sections-mini" id="sectionsMini"></div>
+        </div>
+
+        <div class="form-group">
+          <label>التشعيب *</label>
+          <div class="btn-group">
+            <button type="button" class="btn-option" data-value="ثانوي" onclick="selectStream('ثانوي')">🎓 ثانوي</button>
+            <button type="button" class="btn-option" data-value="بكالوريا" onclick="selectStream('بكالوريا')">📚 بكالوريا</button>
+          </div>
+          <input type="hidden" id="stream" name="stream" required>
+        </div>
+
+        <div id="specializationGroup" style="display:none;">
+          <div class="form-group">
+            <label>التخصص *</label>
+            <div class="btn-group">
+              <button type="button" class="btn-option" data-value="علمي" onclick="selectSpecialization('علمي')">🔬 علمي</button>
+              <button type="button" class="btn-option" data-value="أدبي" onclick="selectSpecialization('أدبي')">📝 أدبي</button>
+            </div>
+            <input type="hidden" id="specialization" name="specialization">
+          </div>
+        </div>
+
+        <div id="trackGroup" style="display:none;">
+          <div class="form-group">
+            <label>المسار *</label>
+            <select id="track" name="track" class="form-control" onchange="updateSubjects()">
+              <option value="">اختر المسار</option>
+              <option value="مسار الطب وعلوم الحياة">مسار الطب وعلوم الحياة</option>
+              <option value="مسار الهندسة وعلوم الحاسب">مسار الهندسة وعلوم الحاسب</option>
+              <option value="مسار الأعمال">مسار الأعمال</option>
+              <option value="مسار الآداب والفنون">مسار الآداب والفنون</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>المادة الاختيارية *</label>
+            <select id="optionalSubject" name="optionalSubject" class="form-control">
+              <option value="">اختر المادة</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="locked-fields-header" id="lockedFieldsHeader">📋 بياناتك المسجلة (للقراءة فقط)</div>
+        <div id="dynamicFields"></div>
+
+        <div class="declaration-section" id="declarationSection">
+          <h3>📋 إقرار وتعهد</h3>
+          <div class="declaration-text">
+            <p>أنا الطالب/ة: <strong id="declarationStudentName">—</strong></p>
+            <p>أقر بأن جميع البيانات المدخلة <strong>صحيحة ودقيقة</strong>، وأتحمل المسؤولية الكاملة عن أي معلومات غير صحيحة.</p>
+            <p>وأوافق على تخزين ومعالجة بياناتي في نظام المدرسة.</p>
+          </div>
+          <div class="declaration-approval">
+            <p style="color:#856404;margin:0 0 12px;font-size:14px;">👆 اضغط للموافقة على الإقرار</p>
+            <button type="button" class="btn-approve" id="approveBtn" onclick="approveDeclaration()">
+              <span id="approveText">✅ أوافق على الإقرار</span>
+            </button>
+            <div class="approval-confirm" id="approvalConfirm">✅ تمت الموافقة</div>
+          </div>
+        </div>
+
+        <div class="warning-confirm-box" id="warningConfirmBox">
+          <span style="font-size:50px;">⚠️</span>
+          <h3 style="color:#856404;">تنبيه هام!</h3>
+          <p style="color:#856404;">بعد الضغط على "تأكيد الحفظ" لن تتمكن من تعديل أو تغيير أي بيانات.</p>
+          <div class="warning-actions">
+            <button type="button" class="btn-cancel-warning" onclick="cancelWarning()">🔙 العودة للمراجعة</button>
+            <button type="button" class="btn-confirm" onclick="confirmSave()">✅ تأكيد الحفظ النهائي</button>
+          </div>
+        </div>
+
+        <div id="formActions">
+          <button type="button" class="btn-success" id="saveBtn" onclick="showWarning()">💾 حفظ وتقديم الطلب</button>
+          <a href="student-pdf.html" class="btn-primary" id="pdfBtn" style="display:none;">📄 طباعة PDF</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal طلب فتح التعديل -->
+<div class="request-modal" id="requestModal">
+  <div class="modal-content">
+    <h3>📩 طلب فتح التعديل</h3>
+    <p style="color:#666;font-size:14px;margin:0 0 12px;">يرجى كتابة سبب واضح للطلب (10 أحرف على الأقل)</p>
+    <textarea id="requestReason" placeholder="مثال: أخطأت في اختيار التخصص..." required minlength="10"></textarea>
+    <div class="request-error" id="requestError"></div>
+    <div class="actions">
+      <button class="btn-submit" onclick="submitRequest()">📤 إرسال</button>
+      <button class="btn-cancel-modal" onclick="closeRequestModal()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal طلب تعديل حقل -->
+<div class="request-modal" id="editRequestModal">
+  <div class="modal-content">
+    <h3>📩 طلب تعديل بيانات</h3>
+    <p style="color:#666;font-size:14px;margin:0 0 12px;">اختر الحقل الذي تريد تعديله. سيُراجع الأدمن طلبك قبل التطبيق.</p>
+
+    <div class="mg">
+      <label>الحقل المطلوب تعديله *</label>
+      <select id="er_field" onchange="onErFieldChange()">
+        <option value="">— اختر الحقل —</option>
+      </select>
+    </div>
+
+    <div class="mg">
+      <label>القيمة الحالية</label>
+      <input type="text" id="er_old" readonly style="background:#f0f0f0;">
+    </div>
+
+    <div class="mg">
+      <label>القيمة الجديدة *</label>
+      <input type="text" id="er_new" placeholder="اكتب القيمة الصحيحة">
+    </div>
+
+    <div class="mg">
+      <label>سبب التعديل *</label>
+      <textarea id="er_reason" placeholder="اشرح سبب التعديل بوضوح (10 أحرف على الأقل)..." required minlength="10"></textarea>
+    </div>
+
+    <div id="er_error" class="request-error"></div>
+
+    <div class="actions">
+      <button class="btn-submit" onclick="submitEditRequest()">📤 إرسال الطلب</button>
+      <button class="btn-cancel-modal" onclick="closeEditRequestModal()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<script src="lib/supabase.js"></script>
+<script src="lib/auth.js"></script>
+<script src="lib/toast.js"></script>
+<script src="lib/escape.js"></script>
+<script src="lib/edit-request-fields.js"></script>
+<script>
+const token = Auth.requireStudent();
+let studentData = null, fieldsData = [], dynamicValues = {}, isLocked = false;
+let isDeclarationApproved = false, isSaving = false, requestStatus = null;
+let isFirstGrade = false;
+let isStreamLocked = false;
+
+const tracks = {
+  'مسار الطب وعلوم الحياة': ['فيزياء', 'رياضيات'],
+  'مسار الهندسة وعلوم الحاسب': ['كيمياء', 'برمجة'],
+  'مسار الأعمال': ['إدارة أعمال', 'محاسبة'],
+  'مسار الآداب والفنون': ['لغة ثانية فرنسي', 'لغة ثانية ألماني', 'علم نفس']
+};
+
+function logoutStudent() {
+  if (confirm('هل أنت متأكد من الخروج؟')) Auth.studentLogout();
+}
+
+async function loadData() {
+  try {
+    const [{ data: s, error: e1 }, { data: f }, { data: r }] = await Promise.all([
+      SB.rpc('student_get_data', { p_token: token }),
+      SB.rpc('student_get_fields', { p_token: token }),
+      SB.rpc('student_get_responses', { p_token: token })
+    ]);
+    if (e1 || !s) { Auth.studentLogout(); return; }
+
+    studentData = s;
+    fieldsData = f || [];
+    (r || []).forEach(x => { dynamicValues[x.field_id] = x.value; });
+    isLocked = s.is_locked && s.submitted_at;
+
+    // ✅ كشف حالة الصف والقفل
+    isFirstGrade   = (s.grade === 'الأول الثانوي');
+    isStreamLocked = (s.stream_locked === true);
+
+    renderCoreInfo(s);
+    document.getElementById('declarationStudentName').textContent = s.full_name;
+
+    // ✅ منطق التشعيب: 3 حالات
+    if (isFirstGrade) {
+      // الحالة 1: الصف الأول → عام تلقائياً
+      document.getElementById('stream').value = 'عام';
+      hideStreamControls();
+      showStreamBadge('🎓 عام (الصف الأول الثانوي)');
+    } else if (isStreamLocked) {
+      // الحالة 2: مقفل من الأدمن → عرض القيمة فقط
+      document.getElementById('stream').value = s.stream || '';
+      if (s.stream === 'ثانوي' && s.specialization) {
+        document.getElementById('specialization').value = s.specialization;
+      } else if (s.stream === 'بكالوريا' && s.track) {
+        document.getElementById('track').value = s.track;
+        updateSubjects();
+        if (s.optional_subject) {
+          setTimeout(() => {
+            const el = document.getElementById('optionalSubject');
+            if (el) el.value = s.optional_subject;
+          }, 100);
+        }
+      }
+      hideStreamControls();
+      const parts = [s.stream || '—'];
+      if (s.specialization) parts.push(s.specialization);
+      if (s.track) parts.push(s.track);
+      showStreamBadge('🔒 ' + parts.filter(Boolean).join(' / '));
+    } else if (s.stream) {
+      // الحالة 3: موجود من قبل لكن غير مقفل → عرض كاختيار طبيعي
+      selectStream(s.stream, true);
+      if (s.stream === 'ثانوي' && s.specialization) selectSpecialization(s.specialization, true);
+      if (s.stream === 'بكالوريا' && s.track) {
+        document.getElementById('track').value = s.track;
+        updateSubjects();
+        if (s.optional_subject) setTimeout(() => document.getElementById('optionalSubject').value = s.optional_subject, 100);
+      }
+    }
+
+    renderFields();
+
+    if (isLocked) {
+      document.getElementById('saveBtn').style.display = 'none';
+      document.getElementById('pdfBtn').style.display = 'block';
+      document.getElementById('progressWrap').style.display = 'none';
+      document.getElementById('declarationSection').style.display = 'none';
+      document.getElementById('lockedFieldsHeader').classList.add('show');
+      disableAllInputs();
+      await showLocked(s);
+      return;
+    }
+
+    // استمارة مفتوحة: زر طلب التعديل يظهر لأن الطالب قد يحتاج تصحيح
+    document.getElementById('coreActions').style.display = 'block';
+    setupProgress();
+  } catch (err) {
+    console.error(err);
+    Toast.show('خطأ في تحميل البيانات', 'error');
+  }
+}
+
+function renderCoreInfo(s) {
+  document.getElementById('coreInfo').innerHTML = `
+    <div class="item"><span class="lbl">الاسم</span><span class="val">${esc(s.full_name)}</span></div>
+    <div class="item"><span class="lbl">كود الطالب</span><span class="val" dir="ltr">${esc(s.student_code)}</span></div>
+    <div class="item"><span class="lbl">الرقم القومي</span><span class="val" dir="ltr">${esc(s.national_id_masked)}</span></div>
+    <div class="item"><span class="lbl">الصف</span><span class="val">${esc(s.grade || '—')}</span></div>
+    <div class="item"><span class="lbl">حالة القيد</span><span class="val">${esc(s.enrollment_status || '—')}</span></div>
+    <div class="item"><span class="lbl">النوع</span><span class="val">${esc(s.gender || '—')}</span></div>
+    <div class="item"><span class="lbl">تاريخ الميلاد</span><span class="val">${s.date_of_birth ? new Date(s.date_of_birth).toLocaleDateString('ar-EG') : '—'}</span></div>
+    <div class="item"><span class="lbl">المحافظة</span><span class="val">${esc(s.governorate || '—')}</span></div>
+  `;
+}
+
+function disableAllInputs() {
+  document.querySelectorAll('.btn-option').forEach(b => { b.disabled = true; b.style.cursor = 'not-allowed'; });
+  ['track', 'optionalSubject'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = true;
+  });
+}
+
+// ✅ دوال جديدة لمعالجة الصف الأول والقفل
+function hideStreamControls() {
+  document.querySelectorAll('.btn-option').forEach(b => b.style.display = 'none');
+  document.getElementById('specializationGroup').style.display = 'none';
+  document.getElementById('trackGroup').style.display = 'none';
+}
+
+function showStreamBadge(text) {
+  document.getElementById('selectedStreamDisplay').classList.add('show');
+  document.getElementById('selectedStreamText').textContent = text;
+}
+
+function selectStream(v, silent = false) {
+  if (isLocked && !silent) return;
+  if (isFirstGrade && !silent) return;
+  if (isStreamLocked && !silent) return;
+  document.getElementById('stream').value = v;
+  document.querySelectorAll('.btn-option[data-value="ثانوي"], .btn-option[data-value="بكالوريا"]')
+    .forEach(el => el.classList.toggle('active', el.dataset.value === v));
+  document.getElementById('selectedStreamDisplay').classList.add('show');
+  document.getElementById('selectedStreamText').textContent = v === 'ثانوي' ? '🎓 ثانوي' : '📚 بكالوريا';
+  document.getElementById('specializationGroup').style.display = v === 'ثانوي' ? 'block' : 'none';
+  document.getElementById('trackGroup').style.display = v === 'بكالوريا' ? 'block' : 'none';
+  if (v === 'بكالوريا' && !silent) {
+    document.getElementById('track').value = '';
+    document.getElementById('optionalSubject').innerHTML = '<option value="">اختر المادة</option>';
+  }
+}
+
+function selectSpecialization(v, silent = false) {
+  if (isLocked && !silent) return;
+  if (isFirstGrade && !silent) return;
+  if (isStreamLocked && !silent) return;
+  document.getElementById('specialization').value = v;
+  document.querySelectorAll('.btn-option[data-value="علمي"], .btn-option[data-value="أدبي"]')
+    .forEach(el => el.classList.toggle('active', el.dataset.value === v));
+}
+
+function updateSubjects() {
+  const track = document.getElementById('track').value;
+  const sel = document.getElementById('optionalSubject');
+  sel.innerHTML = '<option value="">اختر المادة</option>';
+  (tracks[track] || []).forEach(s => {
+    sel.innerHTML += `<option value="${esc(s)}">${esc(s)}</option>`;
+  });
+}
+
+function approveDeclaration() {
+  if (isLocked) return;
+  isDeclarationApproved = !isDeclarationApproved;
+  document.getElementById('approveBtn').classList.toggle('approved', isDeclarationApproved);
+  document.getElementById('approveText').textContent = isDeclarationApproved ? '✅ تمت الموافقة' : '✅ أوافق على الإقرار';
+  document.getElementById('approvalConfirm').classList.toggle('show', isDeclarationApproved);
+  document.getElementById('declarationSection').style.borderRightColor = isDeclarationApproved ? '#28a745' : '#1e3c72';
+}
+
+function renderFields() {
+  const c = document.getElementById('dynamicFields');
+  if (!fieldsData.length) { c.innerHTML = ''; return; }
+
+  const groups = {};
+  fieldsData.forEach(f => {
+    const key = f.section_id || '__none__';
+    if (!groups[key]) groups[key] = { name: f.section_name, order: f.section_order ?? 999, fields: [] };
+    groups[key].fields.push(f);
+  });
+
+  const sortedKeys = Object.keys(groups).sort((a, b) => {
+    if (a === '__none__') return -1;
+    if (b === '__none__') return 1;
+    return (groups[a].order || 999) - (groups[b].order || 999);
+  });
+
+  let html = '';
+  sortedKeys.forEach(key => {
+    const g = groups[key];
+    const noSection = key === '__none__';
+    const icon = noSection ? '' : pickSectionIcon(g.name);
+    const doneCount = g.fields.filter(f => (dynamicValues[f.id] || '').trim() !== '').length;
+
+    if (!noSection) {
+      html += `<div class="section-block" data-section-id="${key}">
+        <div class="head">
+          <div class="ico">${icon}</div>
+          <h3>${esc(g.name || 'قسم')}</h3>
+          <span class="counter">${doneCount}/${g.fields.length}</span>
+        </div>
+        <div class="body">`;
+      g.fields.forEach(f => html += renderField(f));
+      html += `</div></div>`;
+    } else {
+      html += `<div class="section-block no-section"><div class="body">`;
+      g.fields.forEach(f => html += renderField(f));
+      html += `</div></div>`;
+    }
+  });
+  c.innerHTML = html;
+}
+
+function pickSectionIcon(name) {
+  if (!name) return '📄';
+  if (/اتصال|موبايل|هاتف|عنوان|تواصل/.test(name)) return '📞';
+  if (/كيريو|qureo|منصة|مكنص|كمبيوتر|حاسب|login/i.test(name)) return '💻';
+  if (/والد|أسرة|ولي|عائلة/.test(name)) return '👨‍👩‍👧';
+  if (/بيانات|شخصية|أساس/.test(name)) return '📋';
+  if (/دراس|أكاديم|مدرس/.test(name)) return '📚';
+  return '📂';
+}
+
+function renderField(f) {
+  const val = dynamicValues[f.id] || '';
+  const isFieldReadonly = !!f.is_readonly;
+  const ro = isFieldReadonly || isLocked;
+  const disabledAttr = ro ? 'disabled' : '';
+  const onChange = ro ? '' : `onchange="onFieldChange('${f.id}', this.value)"`;
+  const badge = isFieldReadonly ? ' <span class="admin-badge">🔒 من الإدارة</span>' : '';
+  const star = f.is_required && !ro ? ' <span style="color:#dc3545;">*</span>' : '';
+  const label = `<label>${esc(f.name)}${star}${badge}</label>`;
+
+  if (f.type === 'select') {
+    const opts = (f.options || []).map(o => `<option value="${esc(o)}" ${val === o ? 'selected' : ''}>${esc(o)}</option>`).join('');
+    return `<div class="form-group">${label}
+      <select class="form-control" ${disabledAttr} ${onChange}>
+        <option value="">${ro ? '—' : 'اختر...'}</option>${opts}
+      </select></div>`;
+  }
+
+  return `<div class="form-group">${label}
+    <input type="text" class="form-control" value="${esc(val)}" ${disabledAttr} ${onChange}>
+  </div>`;
+}
+
+function onFieldChange(id, value) {
+  dynamicValues[id] = value;
+  updateProgress();
+}
+
+function setupProgress() {
+  const editable = fieldsData.filter(f => !f.is_readonly);
+  if (editable.length === 0) return;
+  document.getElementById('progressWrap').style.display = 'block';
+  updateProgress();
+}
+
+function updateProgress() {
+  const editable = fieldsData.filter(f => !f.is_readonly);
+  if (editable.length === 0) return;
+  const filled = editable.filter(f => (dynamicValues[f.id] || '').trim() !== '').length;
+  const pct = Math.round((filled / editable.length) * 100);
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  const groups = {};
+  editable.forEach(f => {
+    const key = f.section_id || '__none__';
+    if (!groups[key]) groups[key] = { name: f.section_name || 'بدون قسم', fields: [] };
+    groups[key].fields.push(f);
+  });
+
+  document.getElementById('sectionsMini').innerHTML = Object.entries(groups).map(([k, g]) => {
+    const done = g.fields.every(f => (dynamicValues[f.id] || '').trim() !== '');
+    return `<span class="sec-chip ${done ? 'done' : ''}">${done ? '✅' : '⏳'} ${esc(g.name)}</span>`;
+  }).join('');
+}
+
+function showWarning() {
+  if (isLocked) return;
+  if (!isDeclarationApproved) {
+    Toast.show('يجب الموافقة على الإقرار أولاً', 'error');
+    document.getElementById('declarationSection').scrollIntoView({ behavior: 'smooth' });
+    return;
+  }
+
+  const stream = document.getElementById('stream').value;
+
+  // ✅ تحقق حسب الحالة
+  if (isFirstGrade) {
+    if (stream !== 'عام') {
+      return Toast.show('خطأ: تشعيب الصف الأول يجب أن يكون "عام"', 'error');
+    }
+  } else if (!isStreamLocked) {
+    if (!stream) return Toast.show('اختر التشعيب', 'error');
+    if (stream === 'ثانوي' && !document.getElementById('specialization').value)
+      return Toast.show('اختر التخصص', 'error');
+    if (stream === 'بكالوريا') {
+      if (!document.getElementById('track').value) return Toast.show('اختر المسار', 'error');
+      if (!document.getElementById('optionalSubject').value) return Toast.show('اختر المادة', 'error');
+    }
+  }
+
+  const missing = [];
+  fieldsData.forEach(f => {
+    if (f.is_required && !f.is_readonly && !(dynamicValues[f.id] || '').trim()) missing.push(f.name);
+  });
+  if (missing.length > 0) {
+    Toast.show('❌ حقول مطلوبة: ' + missing.join('، '), 'error', 5000);
+    return;
+  }
+  document.getElementById('warningConfirmBox').classList.add('show');
+  document.getElementById('warningConfirmBox').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function cancelWarning() { document.getElementById('warningConfirmBox').classList.remove('show'); }
+
+async function confirmSave() {
+  if (isSaving || isLocked) return;
+  isSaving = true;
+
+  let stream = document.getElementById('stream').value;
+  let spec = document.getElementById('specialization').value || null;
+  let track = document.getElementById('track').value || null;
+  let opt = document.getElementById('optionalSubject').value || null;
+
+  // ✅ الصف الأول: إجبار 'عام'
+  if (isFirstGrade) {
+    stream = 'عام';
+    spec = null;
+    track = null;
+    opt = null;
+  }
+
+  const resp = Object.entries(dynamicValues).map(([field_id, value]) => ({ field_id, value }));
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ جاري الحفظ...';
+
+  const { data, error } = await SB.rpc('student_submit', {
+    p_token: token, p_stream: stream,
+    p_specialization: stream === 'ثانوي' ? spec : null,
+    p_track: stream === 'بكالوريا' ? track : null,
+    p_optional_subject: stream === 'بكالوريا' ? opt : null,
+    p_responses: resp
+  });
+
+  if (error || !data?.ok) {
+    Toast.show(data?.error || error?.message || 'فشل الحفظ', 'error');
+    btn.disabled = false;
+    btn.textContent = '💾 حفظ وتقديم الطلب';
+    isSaving = false;
+    return;
+  }
+  Toast.show('✅ تم التقديم بنجاح', 'success');
+  setTimeout(() => location.reload(), 900);
+}
+
+async function showLocked(s) {
+  const { data: req } = await SB.rpc('student_get_reopen_status', { p_token: token });
+  requestStatus = req;
+  const canRequest = !req || req.status === 'rejected';
+  document.getElementById('statusMsg').innerHTML = `
+    <div class="locked-message">
+      <span class="icon">🔒</span>
+      <h3>تم تسجيل الرغبات مسبقاً</h3>
+      <p>${s.submitted_at ? '📅 ' + new Date(s.submitted_at).toLocaleString('ar-EG') : ''}</p>
+      ${req ? `<div style="margin:15px auto;max-width:500px;padding:15px;border-radius:12px;background:${
+        req.status === 'pending' ? '#fff3cd' : req.status === 'approved' ? '#d4edda' : '#f8d7da'
+      };">
+        <strong>${req.status === 'pending' ? '⏳ قيد الانتظار' : req.status === 'approved' ? '✅ تمت الموافقة' : '❌ مرفوض'}</strong>
+        ${req.admin_response ? `<div style="margin-top:8px;font-size:13px;">${esc(req.admin_response)}</div>` : ''}
+      </div>` : ''}
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:15px;">
+        ${canRequest ? '<button class="btn-request" onclick="showRequestModal()">📩 طلب فتح التعديل</button>' : ''}
+        <a href="student-pdf.html" class="btn-print-only">📄 طباعة PDF</a>
+      </div>
+    </div>`;
+}
+
+function showRequestModal() {
+  document.getElementById('requestModal').classList.add('show');
+  document.getElementById('requestReason').value = '';
+  document.getElementById('requestError').style.display = 'none';
+}
+function closeRequestModal() { document.getElementById('requestModal').classList.remove('show'); }
+
+async function submitRequest() {
+  const reason = document.getElementById('requestReason').value.trim();
+  const err = document.getElementById('requestError');
+  if (reason.length < 10) {
+    err.textContent = '❌ السبب قصير جداً (10 أحرف على الأقل)';
+    err.style.display = 'block';
+    return;
+  }
+  const { data, error } = await SB.rpc('student_request_reopen', { p_token: token, p_reason: reason });
+  if (error || !data?.ok) {
+    err.textContent = '❌ ' + (data?.error || error?.message);
+    err.style.display = 'block';
+    return;
+  }
+  closeRequestModal();
+  Toast.show('✅ تم إرسال الطلب', 'success');
+  setTimeout(() => location.reload(), 900);
+}
+
+// ============ طلب تعديل حقل ============
+let editableFieldsList = [];
+
+function openEditRequestModal() {
+  if (!studentData) return;
+  editableFieldsList = buildEditableFieldsList(studentData, fieldsData, dynamicValues);
+  if (editableFieldsList.length === 0) {
+    Toast.show('لا توجد حقول قابلة لطلب التعديل', 'info');
+    return;
+  }
+  const sel = document.getElementById('er_field');
+  sel.innerHTML = '<option value="">— اختر الحقل —</option>' +
+    editableFieldsList.map((f, i) => `<option value="${i}">${esc(f.label)}</option>`).join('');
+  document.getElementById('er_old').value = '';
+  document.getElementById('er_new').value = '';
+  document.getElementById('er_reason').value = '';
+  document.getElementById('er_error').style.display = 'none';
+  document.getElementById('editRequestModal').classList.add('show');
+}
+
+function closeEditRequestModal() {
+  document.getElementById('editRequestModal').classList.remove('show');
+}
+
+function onErFieldChange() {
+  const idx = document.getElementById('er_field').value;
+  if (idx === '') { document.getElementById('er_old').value = ''; return; }
+  const f = editableFieldsList[parseInt(idx)];
+  document.getElementById('er_old').value = f.old_value || '—';
+  document.getElementById('er_new').value = '';
+}
+
+async function submitEditRequest() {
+  const idxStr = document.getElementById('er_field').value;
+  const err = document.getElementById('er_error');
+  err.style.display = 'none';
+  if (idxStr === '') { err.textContent = 'اختر الحقل'; err.style.display = 'block'; return; }
+  const f = editableFieldsList[parseInt(idxStr)];
+  const newVal = document.getElementById('er_new').value.trim();
+  const reason = document.getElementById('er_reason').value.trim();
+  if (!newVal) { err.textContent = 'القيمة الجديدة مطلوبة'; err.style.display = 'block'; return; }
+  if (reason.length < 10) { err.textContent = 'السبب قصير جداً (10 أحرف على الأقل)'; err.style.display = 'block'; return; }
+
+  const { data, error } = await SB.rpc('student_request_field_edit', {
+    p_token: token, p_field_key: f.key, p_field_label: f.label,
+    p_target_type: f.target_type, p_field_id: f.field_id,
+    p_old_value: f.old_value, p_new_value: newVal, p_reason: reason
+  });
+
+  if (error || !data?.ok) {
+    err.textContent = '❌ ' + (data?.error || error?.message);
+    err.style.display = 'block';
+    return;
+  }
+  closeEditRequestModal();
+  Toast.show('✅ تم إرسال الطلب، سيُراجع من الأدمن', 'success');
+}
+
+loadData();
+</script>
+</body>
+</html>
