@@ -771,23 +771,37 @@ async function savePassword() {
   }
 }
 
-// اختصار الأدمن
-document.addEventListener('keydown', (e) => {
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm') {
-    e.preventDefault();
-    if (typeof Toast !== 'undefined') {
-      Toast.show('🔐 جاري فتح بوابة الأدمن...', 'info', 900);
-    }
-    setTimeout(() => { location.href = 'admin-login.html'; }, 400);
-  }
-});
+// ==========================================================
+// وصول سرّي للأدمن — 5 نقرات متتالية على شعار المدرسة
+// لا يعرفه أحد، يعمل على الموبايل والكمبيوتر
+// ==========================================================
+(function setupAdminSecretAccess() {
+  const logo = document.querySelector('.logo-wrap');
+  if (!logo) return;
 
-document.getElementById('studentCode').addEventListener('input', () => {
-  document.getElementById('errorMsg').classList.remove('show');
-});
-document.getElementById('credential').addEventListener('input', () => {
-  document.getElementById('errorMsg').classList.remove('show');
-});
+  let clickCount = 0;
+  let clickTimer = null;
+
+  logo.style.cursor = 'pointer';
+  logo.style.userSelect = 'none';
+  logo.style.webkitUserSelect = 'none';
+  logo.style.tapHighlightColor = 'transparent';
+
+  logo.addEventListener('click', () => {
+    clickCount++;
+    clearTimeout(clickTimer);
+
+    // إعادة التصفير لو مرت 2 ثانية بين النقرات
+    clickTimer = setTimeout(() => { clickCount = 0; }, 2000);
+
+    // عند الوصول لـ 5 نقرات → انتقال لصفحة دخول الأدمن
+    if (clickCount >= 5) {
+      clickCount = 0;
+      clearTimeout(clickTimer);
+      location.href = 'admin-login.html';
+    }
+  });
+})();
 </script>
 
 </body>
