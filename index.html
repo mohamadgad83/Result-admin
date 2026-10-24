@@ -619,7 +619,19 @@ function clearSession() {
 // ===== Login =====
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-
+  // ✅ تحقق من الرقم القومي (فقط عند الدخول بالرقم القومي)
+  const credLabel = document.getElementById('credLabel').textContent.trim();
+  if (credLabel === 'الرقم القومي' || credLabel === 'رقم قومي') {
+    if (cred.length === 14 && /^\d+$/.test(cred)) {
+      const check = Validation.egyptianNationalId(cred);
+      if (!check.valid) {
+        err.textContent = '❌ ' + check.error;
+        err.classList.add('show');
+        return;
+      }
+    }
+    // إذا لم يكن 14 رقماً، الخادم سيتكفل بالرفض
+  }
   const code = document.getElementById('studentCode').value.trim();
   const cred = document.getElementById('credential').value.trim();
   const err = document.getElementById('errorMsg');
