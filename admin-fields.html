@@ -28,10 +28,10 @@
 .btn-purple { background: #6f42c1; color: #fff; }
 .btn-sm { padding: 5px 10px; font-size: 11px; }
 
-/* ===== Tabs ===== */
 .tabs {
   display: flex; gap: 4px; margin-bottom: 20px;
   border-bottom: 2px solid #eee; padding-bottom: 0;
+  flex-wrap: wrap;
 }
 .tab {
   padding: 14px 26px; border: none; background: transparent;
@@ -46,7 +46,6 @@
 .panel.active { display: block; animation: fadeIn .3s ease; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* ===== Banner ===== */
 .banner {
   background: #e8f4fd; padding: 14px 18px; border-radius: 10px;
   margin-bottom: 18px; font-size: 13px; color: #0c5460;
@@ -57,8 +56,11 @@
   display: inline-block; padding: 2px 10px; border-radius: 12px;
   font-size: 11px; font-weight: 700; margin: 0 2px;
 }
+.banner.warn {
+  background: #fff8e1; color: #856404; border-right-color: #ffc107;
+}
+.banner.warn strong { color: #856404; }
 
-/* ===== Form ===== */
 .field-form {
   display: none; background: linear-gradient(135deg, #f8f9fa, #eef2f7);
   padding: 24px; border-radius: 14px; margin: 20px 0;
@@ -99,7 +101,6 @@
 
 .divider { border: none; border-top: 1px dashed #ccc; margin: 18px 0; }
 
-/* ===== Table ===== */
 .table-wrap { overflow-x: auto; margin-top: 15px; }
 table {
   width: 100%; border-collapse: collapse; font-size: 13px;
@@ -113,21 +114,6 @@ th {
 td { padding: 12px 10px; border-bottom: 1px solid #f0f0f0; text-align: center; vertical-align: middle; }
 tr:hover td { background: #f8f9fa; }
 
-.section-header-row {
-  background: linear-gradient(90deg, #1e3c72, #2a5298) !important;
-}
-.section-header-row td {
-  color: #fff !important; font-weight: 800 !important;
-  font-size: 14px !important; padding: 14px 18px !important;
-  text-align: right !important;
-}
-.section-header-row .count {
-  font-size: 11px; background: rgba(255,255,255,.2);
-  padding: 2px 12px; border-radius: 12px;
-  margin-right: 10px; font-weight: 600;
-}
-
-/* Toggle badges */
 .toggle-badge {
   display: inline-flex; align-items: center; justify-content: center;
   padding: 5px 12px; border-radius: 20px; font-size: 11px;
@@ -142,7 +128,6 @@ tr:hover td { background: #f8f9fa; }
 .toggle-badge.required { background: #dc3545; color: #fff; }
 .toggle-badge.optional { background: #e2e3e5; color: #383d41; }
 
-/* ===== Section cards ===== */
 .section-card {
   background: #f8f9fa; padding: 20px;
   border-radius: 12px; margin-bottom: 12px;
@@ -167,7 +152,6 @@ tr:hover td { background: #f8f9fa; }
 .section-card .meta strong { color: #1e3c72; }
 .section-card .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
-/* Filter */
 .filter-row {
   display: flex; gap: 10px; align-items: center;
   margin: 18px 0; flex-wrap: wrap;
@@ -205,11 +189,12 @@ tr:hover td { background: #f8f9fa; }
     </div>
 
     <div class="tabs">
-      <button class="tab active" onclick="switchTab('fields')" id="tabFields">📋 الحقول</button>
+      <button class="tab active" onclick="switchTab('fields')" id="tabFields">📋 الحقول الديناميكية</button>
       <button class="tab" onclick="switchTab('sections')" id="tabSections">📂 الأقسام</button>
+      <button class="tab" onclick="switchTab('core')" id="tabCore">⚙️ الحقول الأساسية</button>
     </div>
 
-    <!-- ===== تبويب الحقول ===== -->
+    <!-- ===== تبويب الحقول الديناميكية ===== -->
     <div class="panel active" id="panelFields">
       <div class="banner">
         <strong>💡 تحكم فوري:</strong> اضغط على أي شارة في الجدول لتبديلها مباشرة —
@@ -222,7 +207,6 @@ tr:hover td { background: #f8f9fa; }
 
       <button class="btn btn-green" onclick="toggleFieldForm()" style="padding: 12px 22px;">➕ إضافة حقل جديد</button>
 
-      <!-- نموذج الحقل -->
       <div class="field-form" id="fieldFormWrap">
         <h3 id="fieldFormTitle">➕ إضافة حقل جديد</h3>
         <form id="fieldFormEl" onsubmit="saveField(event)">
@@ -288,7 +272,6 @@ tr:hover td { background: #f8f9fa; }
         </form>
       </div>
 
-      <!-- فلتر -->
       <div class="filter-row">
         <label>🔍 عرض:</label>
         <select id="filterSection" onchange="renderFields()">
@@ -354,6 +337,45 @@ tr:hover td { background: #f8f9fa; }
         <div class="empty"><span class="icon">⏳</span>جاري التحميل...</div>
       </div>
     </div>
+
+    <!-- ===== تبويب الحقول الأساسية ===== -->
+    <div class="panel" id="panelCore">
+      <div class="banner warn">
+        <strong>⚙️ الحقول الأساسية:</strong> هذه الحقول موجودة في جدول الطلاب نفسه (وليس في الحقول الديناميكية).
+        تحكم هنا يطبّق على <strong>كل الطلاب</strong>. اضغط على أي شارة في الجدول لتبديلها مباشرة.
+        <br>
+        <span class="chip" style="background:#d4edda;color:#155724;">✅ ظاهر</span>
+        <span class="chip" style="background:#f8d7da;color:#721c24;">❌ مخفي</span>
+        <span class="chip" style="background:#cce5ff;color:#004085;">🔒 مقفل (للقراءة فقط)</span>
+        <span class="chip" style="background:#fff3cd;color:#856404;">✏️ يعدله الطالب</span>
+        <span class="chip" style="background:#dc3545;color:#fff;">⭐ مطلوب</span>
+      </div>
+
+      <div class="banner">
+        <strong>💡 ملاحظات:</strong>
+        <br>• الحقول التي تظهر في الوقت الحالي كحقول قابلة للتعديل في الاستمارة: <strong>التشعيب، التخصص، المسار، المادة الاختيارية</strong>.
+        <br>• إذا فعّلت "يعدله الطالب" على حقل مثل "النوع" أو "تاريخ الميلاد" — لن يظهر كحقل قابل للتعديل تلقائياً (لأنه لا يوجد UI لذلك بعد). سيبقى للقراءة فقط.
+        <br>• الإعدادات هنا <strong>عالمية</strong>. للتحكم لكل طالب على حدة في التشعيب، استخدم صفحة تفاصيل الطالب.
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 40px;">#</th>
+              <th>الحقل</th>
+              <th>المفتاح</th>
+              <th>ظاهر للطالب</th>
+              <th>الصلاحية</th>
+              <th>مطلوب</th>
+            </tr>
+          </thead>
+          <tbody id="coreTbody">
+            <tr><td colspan="6" style="padding: 30px; color: #999;">⏳ جاري التحميل...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -362,20 +384,25 @@ tr:hover td { background: #f8f9fa; }
 <script src="lib/toast.js"></script>
 <script src="lib/escape.js"></script>
 <script>
-let fields = [], sections = [], auth0 = null;
+let fields = [], sections = [], coreFields = [], auth0 = null;
 let editingFieldId = null, editingSectionId = null;
 
 (async () => {
   auth0 = await Auth.requireAdmin();
   if (!auth0) return;
   await loadAll();
+  await loadCoreConfig();
 })();
 
 function switchTab(t) {
   document.getElementById('panelFields').classList.toggle('active', t === 'fields');
   document.getElementById('panelSections').classList.toggle('active', t === 'sections');
+  document.getElementById('panelCore').classList.toggle('active', t === 'core');
   document.getElementById('tabFields').classList.toggle('active', t === 'fields');
   document.getElementById('tabSections').classList.toggle('active', t === 'sections');
+  document.getElementById('tabCore').classList.toggle('active', t === 'core');
+
+  if (t === 'core') loadCoreConfig();
 }
 
 async function loadAll() {
@@ -403,7 +430,7 @@ function populateSectionSelects() {
   filter.value = cur;
 }
 
-// ============ الحقول ============
+// ============ الحقول الديناميكية ============
 function renderFields() {
   const tb = document.getElementById('fieldsTbody');
   const filterVal = document.getElementById('filterSection').value;
@@ -438,8 +465,11 @@ function renderFields() {
     const secName = sec ? sec.name : 'بدون قسم';
     const secIcon = sec ? (sec.is_active ? '📂' : '🚫') : '📄';
 
-    html += `<tr class="section-header-row">
-      <td colspan="8">${secIcon} ${esc(secName)} <span class="count">${group.length} حقل</span></td>
+    html += `<tr style="background:linear-gradient(90deg,#1e3c72,#2a5298);">
+      <td colspan="8" style="color:#fff;text-align:right;padding:14px 18px;font-weight:800;">
+        ${secIcon} ${esc(secName)}
+        <span style="font-size:11px;background:rgba(255,255,255,.2);padding:2px 12px;border-radius:12px;margin-right:10px;">${group.length} حقل</span>
+      </td>
     </tr>`;
 
     group.forEach(f => {
@@ -553,10 +583,12 @@ async function saveField(e) {
     : await SB.from('dynamic_fields').insert(data);
   if (error) return Toast.show('خطأ: ' + error.message, 'error');
 
-  await SB.from('admin_logs').insert({
-    admin_id: auth0.user.id, admin_email: auth0.user.email,
-    action: editingFieldId ? 'تعديل حقل' : 'إضافة حقل', details: data.name
-  });
+  try {
+    await SB.from('admin_logs').insert({
+      admin_id: auth0.user.id, admin_email: auth0.user.email,
+      action: editingFieldId ? 'تعديل حقل' : 'إضافة حقل', details: data.name
+    });
+  } catch(e) {}
 
   Toast.show('✅ تم الحفظ');
   closeFieldForm();
@@ -568,10 +600,12 @@ async function deleteField(id) {
   if (!confirm(`حذف "${f.name}"؟ سيتم حذف كل استجابات الطلاب المرتبطة به.`)) return;
   const { error } = await SB.from('dynamic_fields').delete().eq('id', id);
   if (error) return Toast.show('خطأ: ' + error.message, 'error');
-  await SB.from('admin_logs').insert({
-    admin_id: auth0.user.id, admin_email: auth0.user.email,
-    action: 'حذف حقل', details: f.name
-  });
+  try {
+    await SB.from('admin_logs').insert({
+      admin_id: auth0.user.id, admin_email: auth0.user.email,
+      action: 'حذف حقل', details: f.name
+    });
+  } catch(e) {}
   Toast.show('✅ تم الحذف');
   await loadAll();
 }
@@ -646,10 +680,12 @@ async function saveSection(e) {
     : await SB.from('form_sections').insert(data);
   if (error) return Toast.show('خطأ: ' + error.message, 'error');
 
-  await SB.from('admin_logs').insert({
-    admin_id: auth0.user.id, admin_email: auth0.user.email,
-    action: editingSectionId ? 'تعديل قسم' : 'إضافة قسم', details: data.name
-  });
+  try {
+    await SB.from('admin_logs').insert({
+      admin_id: auth0.user.id, admin_email: auth0.user.email,
+      action: editingSectionId ? 'تعديل قسم' : 'إضافة قسم', details: data.name
+    });
+  } catch(e) {}
 
   Toast.show('✅ تم الحفظ');
   closeSectionForm();
@@ -673,12 +709,98 @@ async function deleteSection(id) {
   if (!confirm(msg)) return;
   const { error } = await SB.from('form_sections').delete().eq('id', id);
   if (error) return Toast.show('خطأ: ' + error.message, 'error');
-  await SB.from('admin_logs').insert({
-    admin_id: auth0.user.id, admin_email: auth0.user.email,
-    action: 'حذف قسم', details: s.name
-  });
+  try {
+    await SB.from('admin_logs').insert({
+      admin_id: auth0.user.id, admin_email: auth0.user.email,
+      action: 'حذف قسم', details: s.name
+    });
+  } catch(e) {}
   Toast.show('✅ تم الحذف');
   await loadAll();
+}
+
+// ============ الحقول الأساسية ============
+async function loadCoreConfig() {
+  const tb = document.getElementById('coreTbody');
+  tb.innerHTML = '<tr><td colspan="6" style="padding:30px;text-align:center;color:#999;">⏳ جاري التحميل...</td></tr>';
+
+  const { data, error } = await SB.from('core_fields_config')
+    .select('*').order('display_order');
+
+  if (error) {
+    tb.innerHTML = `<tr><td colspan="6" style="padding:30px;text-align:center;color:#dc3545;">خطأ: ${esc(error.message)}</td></tr>`;
+    return;
+  }
+
+  coreFields = data || [];
+  renderCoreConfig();
+}
+
+function renderCoreConfig() {
+  const tb = document.getElementById('coreTbody');
+
+  if (coreFields.length === 0) {
+    tb.innerHTML = '<tr><td colspan="6" style="padding:30px;text-align:center;color:#999;">📭 لا توجد حقول أساسية (شغّل SQL الإعداد)</td></tr>';
+    return;
+  }
+
+  // أي الحقول لها UI فعلي في الاستمارة؟
+  const editableInUI = new Set(['stream', 'specialization', 'track', 'optional_subject']);
+
+  tb.innerHTML = coreFields.map((f, i) => {
+    const hasUI = editableInUI.has(f.field_key);
+    const note = hasUI ? '' : '<span style="font-size:10px;color:#999;display:block;">(لا يوجد UI حالياً — للعرض فقط)</span>';
+
+    return `<tr>
+      <td>${i + 1}</td>
+      <td style="text-align: right;">
+        <strong>${esc(f.label)}</strong>
+        ${note}
+      </td>
+      <td dir="ltr" style="color: #666; font-size: 12px; font-family: monospace;">${esc(f.field_key)}</td>
+      <td>
+        <button class="toggle-badge ${f.is_visible ? 'on' : 'off'}"
+                onclick="toggleCoreField('${f.field_key}', 'is_visible', ${!f.is_visible})">
+          ${f.is_visible ? '✅ ظاهر' : '❌ مخفي'}
+        </button>
+      </td>
+      <td>
+        <button class="toggle-badge ${f.is_readonly ? 'readonly' : 'editable'}"
+                onclick="toggleCoreField('${f.field_key}', 'is_readonly', ${!f.is_readonly})">
+          ${f.is_readonly ? '🔒 مقفل' : '✏️ يعدله الطالب'}
+        </button>
+      </td>
+      <td>
+        <button class="toggle-badge ${f.is_required ? 'required' : 'optional'}"
+                onclick="toggleCoreField('${f.field_key}', 'is_required', ${!f.is_required})">
+          ${f.is_required ? '⭐ مطلوب' : '— اختياري'}
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function toggleCoreField(fieldKey, prop, newVal) {
+  const { error } = await SB.from('core_fields_config')
+    .update({ [prop]: newVal, updated_at: new Date().toISOString() })
+    .eq('field_key', fieldKey);
+
+  if (error) return Toast.show('خطأ: ' + error.message, 'error');
+
+  const f = coreFields.find(x => x.field_key === fieldKey);
+  if (f) f[prop] = newVal;
+
+  // سجّل النشاط
+  try {
+    await SB.from('admin_logs').insert({
+      admin_id: auth0.user.id, admin_email: auth0.user.email,
+      action: `تعديل إعداد حقل أساسي`,
+      details: `${fieldKey} → ${prop} = ${newVal}`
+    });
+  } catch(e) {}
+
+  Toast.show('✅ تم التحديث', 'success', 1500);
+  renderCoreConfig();
 }
 </script>
 </body>
