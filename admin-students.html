@@ -19,6 +19,7 @@
 .btn-unlock{background:#28a745;color:#fff}.btn-unlock:hover{background:#1e7e34}
 .btn-lock{background:#dc3545;color:#fff}.btn-lock:hover{background:#a71d2a}
 .btn-export{background:#17a2b8;color:#fff}.btn-export:hover{background:#138496}
+.btn-print{background:#6f42c1;color:#fff}.btn-print:hover{background:#5a32a3}
 .btn-select{background:#6c757d;color:#fff}.btn-select:hover{background:#5a6268}
 .table-wrap{overflow-x:auto;margin:15px 0}
 table{width:100%;border-collapse:collapse;font-size:13px}
@@ -39,7 +40,7 @@ tr.selected{background:#e7f5ea}
 </style>
 </head>
 <body>
-<div class="container" style="max-width:1200px;">
+<div class="container" style="max-width:1250px;">
 <div class="card">
   <div class="admin-header">
     <h1 style="margin:0;font-size:22px;">👨‍🎓 إدارة الطلاب</h1>
@@ -59,11 +60,18 @@ tr.selected{background:#e7f5ea}
 
   <div class="search-bar">
     <input type="text" id="q" placeholder="🔍 بحث بالاسم/الكود/الرقم القومي" oninput="debouncedLoad()">
+    <select id="filterGrade" onchange="loadStudents()">
+      <option value="">كل الصفوف</option>
+    </select>
     <select id="filterStream" onchange="loadStudents()">
-      <option value="">كل التشعيبات</option><option value="ثانوي">ثانوي</option><option value="بكالوريا">بكالوريا</option>
+      <option value="">كل التشعيبات</option>
+      <option value="ثانوي">ثانوي</option>
+      <option value="بكالوريا">بكالوريا</option>
     </select>
     <select id="filterStatus" onchange="loadStudents()">
-      <option value="">كل الحالات</option><option value="locked">🔒 مقفل</option><option value="unlocked">🔓 مفتوح</option>
+      <option value="">كل الحالات</option>
+      <option value="locked">🔒 مقفل</option>
+      <option value="unlocked">🔓 مفتوح</option>
     </select>
     <button class="btn-back" onclick="resetFilters()">مسح</button>
   </div>
@@ -75,6 +83,7 @@ tr.selected{background:#e7f5ea}
     <button class="btn btn-unlock" onclick="bulkUnlock()">🔓 فتح</button>
     <button class="btn btn-lock" onclick="bulkLock()">🔒 قفل</button>
     <button class="btn btn-export" onclick="exportSelected()">📥 تصدير Excel</button>
+    <button class="btn btn-print" onclick="bulkPrintPDF()">🖨️ طباعة PDF</button>
   </div>
 
   <div class="table-wrap">
@@ -108,8 +117,24 @@ let auth0 = null;
 (async () => {
   auth0 = await Auth.requireAdmin();
   if (!auth0) return;
+  await populateGradeFilter();
   loadStudents();
 })();
+
+async function populateGradeFilter() {
+  const { data } = await SB.from('students').select('grade');
+  const grades = [...new Set((data || []).map(s => s.grade).filter(Boolean))].sort((a, b) => {
+    const order = ['الأول الثانوي', 'الثاني الثانوي', 'الثالث الثانوي'];
+    const ai = order.indexOf(a), bi = order.indexOf(b);
+    if (ai === -1 && bi === -1) return a.localeCompare(b);
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
+  const sel = document.getElementById('filterGrade');
+  sel.innerHTML = '<option value="">كل الصفوف</option>' +
+    grades.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
+}
 
 let debounceTimer;
 function debouncedLoad() { clearTimeout(debounceTimer); debounceTimer = setTimeout(() => { currentPage = 1; loadStudents(); }, 400); }
@@ -118,6 +143,8 @@ function buildQuery() {
   let q = SB.from('students').select('*', { count: 'exact' });
   const search = document.getElementById('q').value.trim();
   if (search) q = q.or(`full_name.ilike.%${search}%,student_code.ilike.%${search}%,national_id.ilike.%${search}%`);
+  const grade = document.getElementById('filterGrade').value;
+  if (grade) q = q.eq('grade', grade);
   const stream = document.getElementById('filterStream').value;
   if (stream) q = q.eq('stream', stream);
   const status = document.getElementById('filterStatus').value;
@@ -152,7 +179,6 @@ async function updateStats(total) {
 function render() {
   const tb = document.getElementById('tbody');
   if (allStudents.length === 0) {
-    // ✅ colspan صحيح = 10 أعمدة
     tb.innerHTML = '<tr><td colspan="10" style="padding:30px;text-align:center;color:#999;">📭 لا يوجد طلاب</td></tr>';
     return;
   }
@@ -254,6 +280,27 @@ async function exportSelected() {
   await logAction('تصدير', `${list.length} طالب`);
 }
 
+// ============ طباعة PDF جماعي ============
+async function bulkPrintPDF() {
+  if (selected.size === 0) {
+    return Toast.show('اختر طالباً واحداً على الأقل للطباعة', 'warn');
+  }
+
+  const ids = Array.from(selected);
+
+  if (ids.length > 50) {
+    return Toast.show('الحد الأقصى 50 طالب في المرة الواحدة', 'error');
+  }
+
+  Toast.show(`⏳ جاري تجهيز ${ids.length} طالب للطباعة...`, 'info');
+
+  // فتح صفحة PDF متعددة
+  const url = `student-pdf.html?print=${ids.join(',')}`;
+  window.open(url, '_blank');
+
+  await logAction('طباعة PDF جماعي', `${ids.length} طالب`);
+}
+
 async function logAction(action, details, studentId = null, studentName = null) {
   await SB.from('admin_logs').insert({
     admin_id: auth0.user.id, admin_email: auth0.user.email,
@@ -263,6 +310,7 @@ async function logAction(action, details, studentId = null, studentName = null) 
 
 function resetFilters() {
   document.getElementById('q').value = '';
+  document.getElementById('filterGrade').value = '';
   document.getElementById('filterStream').value = '';
   document.getElementById('filterStatus').value = '';
   currentPage = 1;
