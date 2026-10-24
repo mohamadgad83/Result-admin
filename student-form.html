@@ -262,16 +262,9 @@ body {
   opacity: .5; cursor: not-allowed;
   background: #f5f5f5;
 }
-.stream-choice .icon {
-  font-size: 40px; line-height: 1;
-}
-.stream-choice .title {
-  font-size: 16px; font-weight: 900;
-  color: var(--navy);
-}
-.stream-choice .desc {
-  font-size: 11px; color: var(--muted); font-weight: 500;
-}
+.stream-choice .icon { font-size: 40px; line-height: 1; }
+.stream-choice .title { font-size: 16px; font-weight: 900; color: var(--navy); }
+.stream-choice .desc { font-size: 11px; color: var(--muted); font-weight: 500; }
 .stream-choice.active .title { color: var(--navy-dark); }
 
 .btn-group {
@@ -301,7 +294,14 @@ body {
   color: #fff;
 }
 .btn-option:disabled {
-  opacity: .6; cursor: not-allowed;
+  opacity: .55; cursor: not-allowed;
+  background: #f8fafc;
+  color: var(--muted);
+}
+.btn-option.active:disabled {
+  background: linear-gradient(135deg, #94a3b8, #64748b);
+  color: #fff;
+  opacity: .7;
 }
 
 .form-group { margin-bottom: 16px; }
@@ -344,13 +344,8 @@ body {
   padding: 32px 24px; margin-bottom: 20px;
   text-align: center;
 }
-.locked-message .icon {
-  font-size: 60px; display: block; margin-bottom: 8px;
-}
-.locked-message h3 {
-  color: #155724; font-size: 22px; margin: 8px 0;
-  font-weight: 900;
-}
+.locked-message .icon { font-size: 60px; display: block; margin-bottom: 8px; }
+.locked-message h3 { color: #155724; font-size: 22px; margin: 8px 0; font-weight: 900; }
 .locked-message p { color: #155724; font-size: 14px; }
 .locked-actions {
   display: flex; gap: 10px; justify-content: center;
@@ -408,10 +403,7 @@ body {
   display: grid; place-items: center;
   font-size: 18px; flex-shrink: 0;
 }
-.section-block .head h3 {
-  margin: 0; font-size: 15px; font-weight: 800;
-  flex: 1;
-}
+.section-block .head h3 { margin: 0; font-size: 15px; font-weight: 800; flex: 1; }
 .section-block .head .counter {
   font-size: 11px;
   background: rgba(255,255,255,.2);
@@ -419,7 +411,6 @@ body {
   font-weight: 700;
 }
 .section-block .body { padding: 20px; }
-
 .section-block.no-section {
   border: none; box-shadow: none;
   background: transparent; margin-bottom: 0;
@@ -927,7 +918,7 @@ function cfgOf(key) {
 // ==========================================================
 async function loadData() {
   try {
-    // 1) البيانات الأساسية (لازم تنجح)
+    // 1) البيانات الأساسية
     const [mainRes, fieldsRes, responsesRes] = await Promise.all([
       SB.rpc('student_get_data', { p_token: token }),
       SB.rpc('student_get_fields', { p_token: token }),
@@ -940,7 +931,7 @@ async function loadData() {
       return;
     }
 
-    // 2) إعدادات الحقول الأساسية (اختياري — فشلها لا يوقف الصفحة)
+    // 2) إعدادات الحقول الأساسية (اختياري)
     let cfgArr = [];
     try {
       const cfgRes = await SB.rpc('student_get_core_config');
@@ -1043,6 +1034,9 @@ async function loadData() {
       const optFG = document.getElementById('optionalSubject')?.closest('.form-group');
       if (optFG) optFG.style.display = 'none';
     }
+
+    // ✅ تطبيق القفل على الحقول الفرعية
+    applyReadonlyToChildren();
 
     // 6) منطق الإقرار
     const declCfg = cfgOf('declaration');
@@ -1161,6 +1155,34 @@ function showStreamBadge(text) {
   document.getElementById('selectedStreamText').textContent = text;
 }
 
+// ✅ تطبيق القفل (is_readonly) على الحقول الفرعية
+function applyReadonlyToChildren() {
+  const specCfg  = cfgOf('specialization');
+  const trackCfg = cfgOf('track');
+  const optCfg   = cfgOf('optional_subject');
+
+  // أزرار التخصص
+  document.querySelectorAll('#specializationGroup .btn-option').forEach(b => {
+    const locked = specCfg.is_readonly === true || isStreamLocked || isLocked;
+    b.disabled = locked;
+    b.style.cursor = locked ? 'not-allowed' : 'pointer';
+  });
+
+  // قائمة المسار
+  const trackEl = document.getElementById('track');
+  if (trackEl) {
+    const locked = trackCfg.is_readonly === true || isStreamLocked || isLocked;
+    trackEl.disabled = locked;
+  }
+
+  // قائمة المادة الاختيارية
+  const optEl = document.getElementById('optionalSubject');
+  if (optEl) {
+    const locked = optCfg.is_readonly === true || isStreamLocked || isLocked;
+    optEl.disabled = locked;
+  }
+}
+
 function selectStream(v, silent = false) {
   if (isLocked && !silent) return;
   if (isFirstGrade && !silent) return;
@@ -1174,7 +1196,7 @@ function selectStream(v, silent = false) {
   document.getElementById('selectedStreamDisplay').classList.add('show');
   document.getElementById('selectedStreamText').textContent = v === 'ثانوي' ? '🎓 ثانوي' : '📚 بكالوريا';
 
-  const showSpec = v === 'ثانوي' && cfgOf('specialization').is_visible !== false;
+  const showSpec  = v === 'ثانوي' && cfgOf('specialization').is_visible !== false;
   const showTrack = v === 'بكالوريا' && cfgOf('track').is_visible !== false;
 
   document.getElementById('specializationGroup').style.display = showSpec ? 'block' : 'none';
@@ -1184,6 +1206,9 @@ function selectStream(v, silent = false) {
     document.getElementById('track').value = '';
     document.getElementById('optionalSubject').innerHTML = '<option value="">— اختر المادة —</option>';
   }
+
+  // ✅ تطبيق القفل على الحقول الفرعية
+  applyReadonlyToChildren();
 }
 
 function selectSpecialization(v, silent = false) {
@@ -1191,6 +1216,7 @@ function selectSpecialization(v, silent = false) {
   if (isFirstGrade && !silent) return;
   if (isStreamLocked && !silent) return;
   if (cfgOf('stream').is_readonly && !silent) return;
+  if (cfgOf('specialization').is_readonly && !silent) return;
 
   document.getElementById('specialization').value = v;
   document.querySelectorAll('.btn-option[data-value="علمي"], .btn-option[data-value="أدبي"]')
