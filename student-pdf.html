@@ -65,7 +65,6 @@
   font-size: 16px;
 }
 
-/* شريط الحقول الأساسية */
 .pdf-preview .core-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -162,11 +161,24 @@
   text-align: center;
 }
 
+.bulk-info-banner {
+  background: linear-gradient(135deg, #fff3cd, #ffe082);
+  border: 2px solid #ffc107;
+  border-radius: 12px;
+  padding: 14px 20px;
+  margin-bottom: 20px;
+  color: #856404;
+  font-weight: 600;
+  text-align: center;
+}
+
 @media print {
   .no-print { display: none !important; }
   .container { max-width: 100% !important; padding: 0 !important; }
   .card { box-shadow: none !important; border: 1px solid #ddd; }
   .pdf-preview { border: none !important; box-shadow: none !important; }
+  .bulk-card { page-break-after: always; }
+  .bulk-card:last-child { page-break-after: auto; }
 }
 @media (max-width: 600px) {
   .pdf-preview .info-grid { grid-template-columns: 1fr; }
@@ -191,70 +203,13 @@
     </div>
 
     <div id="pdfContent" style="display:none;">
-      <div class="pdf-preview" id="previewCard">
-        <div class="header">
-          <div class="school-name">🎓 مدرسة دشنا الثانوية</div>
-          <div class="school-sub">وزارة التربية والتعليم - مديرية التربية والتعليم بقنا</div>
-          <div class="student-name" id="studentNameDisplay"></div>
-          <div style="font-size:14px;color:#666;" id="studentInfoDisplay"></div>
-        </div>
-
-        <div id="dataDisplay"></div>
-
-        <div class="pdf-declaration">
-          <h4>📋 إقرار وتعهد</h4>
-          <p>
-            أنا الطالب/ة <strong id="declNameInPDF"></strong>، أقر بأن جميع البيانات المدخلة
-            صحيحة ودقيقة، وأتحمل المسؤولية الكاملة عن أي معلومات غير صحيحة.
-          </p>
-
-          <div class="signatures">
-            <div class="signature-box">
-              <div class="signature-line"></div>
-              <div class="signature-name">توقيع الطالب</div>
-            </div>
-            <div class="signature-box">
-              <div class="signature-line"></div>
-              <div class="signature-name">توقيع ولي الأمر</div>
-            </div>
-            <div class="signature-box">
-              <div class="signature-line"></div>
-              <div class="signature-name">
-                وكيل شئون الطلاب<br>
-                <span class="person-name">عاطف أبوالعباس</span>
-              </div>
-            </div>
-            <div class="signature-box">
-              <div class="signature-line"></div>
-              <div class="signature-name">
-                مدير المدرسة<br>
-                <span class="person-name">عبدالرحمن فهمي</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div style="text-align:center;font-size:12px;color:#999;margin:10px 0;">
-          📅 تاريخ الطباعة: <span id="printDate"></span>
-        </div>
-
-        <div class="pdf-copyright">
-          <p>
-            <span style="font-size:16px;">©</span>
-            <span class="school">مدرسة دشنا الثانوية</span> - جميع الحقوق محفوظة
-            <span id="yearDisplay"></span>
-          </p>
-          <p style="font-size:11px;color:#999;">
-            Developed by: <span class="developer">محمد جاد</span> -
-            مسئول IT وسفير مادة البرمجة محافظة قنا
-          </p>
-        </div>
-      </div>
+      <div id="bulkBanner" class="bulk-info-banner no-print" style="display:none;"></div>
+      <div id="studentsContainer"></div>
 
       <div class="btn-group-actions no-print">
-        <button onclick="generatePDF()" class="btn-success">📄 تحميل PDF</button>
+        <button onclick="generatePDF()" class="btn-success" id="downloadBtn">📄 تحميل PDF</button>
         <button onclick="window.print()" class="btn-primary">🖨️ طباعة</button>
-        <a href="student-form.html" class="btn-primary" style="text-decoration:none;text-align:center;">🔙 العودة</a>
+        <a href="student-form.html" class="btn-primary" id="backBtn" style="text-decoration:none;text-align:center;">🔙 العودة</a>
       </div>
     </div>
   </div>
@@ -264,68 +219,42 @@
 <script src="lib/auth.js"></script>
 <script src="lib/escape.js"></script>
 <script>
-let studentData = null;
-let fieldsData = [];
-let dynamicResponses = {};
+let isBulkMode = false;
+let loadedStudents = [];
+let loadedFields = [];
+let loadedResponsesMap = {};
 
 async function loadData() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const printId = urlParams.get('print');
+  const params = new URLSearchParams(window.location.search);
+  const printParam = params.get('print');
   const studentToken = Auth.getStudentToken();
 
-  let student, fields, responses;
-
   try {
-    if (printId && !studentToken) {
-      // مسار الأدمن: يتطلب جلسة أدمن
+    if (printParam && !studentToken) {
+      // مسار الأدمن
       const auth = await Auth.requireAdmin();
       if (!auth) return;
 
-      const { data: s } = await SB.from('students').select('*').eq('id', printId).single();
-      student = s;
+      const ids = printParam.split(',').map(s => s.trim()).filter(Boolean);
 
-      const { data: f } = await SB.from('dynamic_fields')
-        .select('*')
-        .eq('visible_for_student', true)
-        .order('display_order');
-      fields = f || [];
-
-      const { data: r } = await SB.from('student_dynamic_responses')
-        .select('field_id,value').eq('student_id', printId);
-      responses = r || [];
-
-      if (student) {
-        student.national_id = '****' + String(student.national_id || '').slice(-4);
+      if (ids.length > 1) {
+        await loadBulk(ids);
+      } else if (ids.length === 1) {
+        await loadSingle(ids[0]);
+      } else {
+        alert('لم يتم تحديد طالب');
+        window.location.href = 'admin-students.html';
+        return;
       }
-    } else {
+    } else if (studentToken) {
       // مسار الطالب
-      if (!studentToken) { window.location.href = 'index.html'; return; }
-
-      const [{ data: s }, { data: f }, { data: r }] = await Promise.all([
-        SB.rpc('student_get_data', { p_token: studentToken }),
-        SB.rpc('student_get_fields', { p_token: studentToken }),
-        SB.rpc('student_get_responses', { p_token: studentToken })
-      ]);
-
-      student = s;
-      if (student) student.national_id = student.national_id_masked;
-      fields = f || [];
-      responses = r || [];
-    }
-
-    if (!student) {
-      alert('لم يتم العثور على البيانات');
+      await loadAsStudent(studentToken);
+    } else {
       window.location.href = 'index.html';
       return;
     }
 
-    studentData = student;
-    fieldsData = fields;
-    dynamicResponses = {};
-    (responses || []).forEach(x => { dynamicResponses[x.field_id] = x.value; });
-
-    displayData();
-
+    renderAll();
     document.getElementById('loadingMsg').style.display = 'none';
     document.getElementById('pdfContent').style.display = 'block';
 
@@ -335,97 +264,214 @@ async function loadData() {
   }
 }
 
-function displayData() {
-  document.getElementById('studentNameDisplay').textContent = '👨‍🎓 ' + studentData.full_name;
-  document.getElementById('studentInfoDisplay').textContent =
-    'كود: ' + studentData.student_code + ' | الرقم القومي: ' + (studentData.national_id || '—');
-  document.getElementById('declNameInPDF').textContent = studentData.full_name;
+async function loadSingle(id) {
+  const { data: s } = await SB.from('students').select('*').eq('id', id).single();
+  if (!s) throw new Error('الطالب غير موجود');
 
-  // ============ الحقول الأساسية (الجديدة) ============
-  let html = '';
+  const { data: f } = await SB.from('dynamic_fields')
+    .select('*').eq('visible_for_student', true).order('display_order');
+  const { data: r } = await SB.from('student_dynamic_responses')
+    .select('field_id,value').eq('student_id', id);
 
-  // شريط الحقول الأساسية
-  html += '<div class="core-grid">';
-  html += `<div class="item"><span class="lbl">الصف</span><span class="val">${esc(studentData.grade || '-')}</span></div>`;
-  html += `<div class="item"><span class="lbl">حالة القيد</span><span class="val">${esc(studentData.enrollment_status || '-')}</span></div>`;
-  html += `<div class="item"><span class="lbl">النوع</span><span class="val">${esc(studentData.gender || '-')}</span></div>`;
-  html += `<div class="item"><span class="lbl">تاريخ الميلاد</span><span class="val">${studentData.date_of_birth ? new Date(studentData.date_of_birth).toLocaleDateString('ar-EG') : '-'}</span></div>`;
-  html += `<div class="item"><span class="lbl">المحافظة</span><span class="val">${esc(studentData.governorate || '-')}</span></div>`;
-  html += `<div class="item"><span class="lbl">التشعيب</span><span class="val">${esc(studentData.stream || '-')}</span></div>`;
-  html += '</div>';
+  loadedFields = f || [];
+  loadedStudents = [s];
+  loadedResponsesMap = { [id]: {} };
+  (r || []).forEach(x => { loadedResponsesMap[id][x.field_id] = x.value; });
+  isBulkMode = false;
+}
 
-  // ============ الحقول الأكاديمية والحقول الديناميكية ============
-  html += '<div class="info-grid">';
-  html += `<div class="info-item"><span class="label">التشعيب</span><span class="value">${esc(studentData.stream || '-')}</span></div>`;
+async function loadBulk(ids) {
+  const { data: students } = await SB.from('students').select('*').in('id', ids);
+  const { data: f } = await SB.from('dynamic_fields')
+    .select('*').eq('visible_for_student', true).order('display_order');
+  const { data: r } = await SB.from('student_dynamic_responses')
+    .select('student_id,field_id,value').in('student_id', ids);
 
-  if (studentData.stream === 'ثانوي') {
-    html += `<div class="info-item"><span class="label">التخصص</span><span class="value">${esc(studentData.specialization || '-')}</span></div>`;
-  } else if (studentData.stream === 'بكالوريا') {
-    html += `<div class="info-item"><span class="label">المسار</span><span class="value">${esc(studentData.track || '-')}</span></div>`;
-    html += `<div class="info-item"><span class="label">المادة الاختيارية</span><span class="value">${esc(studentData.optional_subject || '-')}</span></div>`;
-  }
+  loadedFields = f || [];
 
-  fieldsData.forEach(field => {
-    const value = dynamicResponses[field.id] || '';
-    html += `<div class="info-item"><span class="label">${esc(field.name)}</span><span class="value">${esc(value || '—')}</span></div>`;
+  // ترتيب الطلاب بنفس ترتيب الـ ids
+  const studentMap = {};
+  (students || []).forEach(s => { studentMap[s.id] = s; });
+  loadedStudents = ids.map(id => studentMap[id]).filter(Boolean);
+
+  if (loadedStudents.length === 0) throw new Error('لم يتم العثور على أي طالب');
+
+  loadedResponsesMap = {};
+  ids.forEach(id => { loadedResponsesMap[id] = {}; });
+  (r || []).forEach(x => {
+    if (!loadedResponsesMap[x.student_id]) loadedResponsesMap[x.student_id] = {};
+    loadedResponsesMap[x.student_id][x.field_id] = x.value;
   });
 
-  html += '</div>';
+  isBulkMode = true;
+}
 
-  // ============ تاريخ التقديم ============
-  if (studentData.submitted_at) {
-    html += `
-      <div style="text-align:center;margin-top:15px;padding:10px;background:#d4edda;border-radius:8px;color:#155724;">
-        ✅ تم التقديم في: ${new Date(studentData.submitted_at).toLocaleString('ar-EG')}
-      </div>
-    `;
+async function loadAsStudent(token) {
+  const [{ data: s }, { data: f }, { data: r }] = await Promise.all([
+    SB.rpc('student_get_data', { p_token: token }),
+    SB.rpc('student_get_fields', { p_token: token }),
+    SB.rpc('student_get_responses', { p_token: token })
+  ]);
+
+  if (!s) throw new Error('لم يتم العثور على البيانات');
+
+  const student = { ...s };
+  student.national_id = s.national_id_masked;
+
+  loadedFields = f || [];
+  loadedStudents = [student];
+  loadedResponsesMap = { [s.id]: {} };
+  (r || []).forEach(x => { loadedResponsesMap[s.id][x.field_id] = x.value; });
+  isBulkMode = false;
+}
+
+function renderAll() {
+  const container = document.getElementById('studentsContainer');
+  const banner = document.getElementById('bulkBanner');
+  const backBtn = document.getElementById('backBtn');
+
+  if (isBulkMode) {
+    banner.style.display = 'block';
+    banner.innerHTML = `📋 طباعة <strong>${loadedStudents.length}</strong> طالب — يمكنك طباعة الكل أو تحميل PDF من الأسفل`;
+    backBtn.href = 'admin-students.html';
+    backBtn.textContent = '🔙 العودة للطلاب';
+  } else {
+    banner.style.display = 'none';
+    backBtn.href = 'student-form.html';
+    backBtn.textContent = '🔙 العودة';
   }
 
-  document.getElementById('dataDisplay').innerHTML = html;
-  document.getElementById('printDate').textContent = new Date().toLocaleDateString('ar-EG');
-  document.getElementById('yearDisplay').textContent = new Date().getFullYear();
+  let html = '';
+  loadedStudents.forEach((student, idx) => {
+    const s = { ...student };
+    // إخفاء الرقم القومي (آخر 4 أرقام فقط)
+    s.national_id = '****' + String(student.national_id || '').slice(-4);
+
+    html += `<div class="pdf-preview ${isBulkMode ? 'bulk-card' : ''}" data-student-id="${s.id}" data-student-name="${esc(s.full_name)}">`;
+    html += renderStudentCardContent(s, loadedResponsesMap[s.id] || {});
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function renderStudentCardContent(s, responses) {
+  let html = '';
+
+  // Header
+  html += `
+    <div class="header">
+      <div class="school-name">🎓 مدرسة دشنا الثانوية</div>
+      <div class="school-sub">وزارة التربية والتعليم - مديرية التربية والتعليم بقنا</div>
+      <div class="student-name">👨‍🎓 ${esc(s.full_name)}</div>
+      <div style="font-size:14px;color:#666;">كود: ${esc(s.student_code)} | الرقم القومي: ${esc(s.national_id || '—')}</div>
+    </div>
+  `;
+
+  // Core grid
+  html += '<div class="core-grid">';
+  html += `<div class="item"><span class="lbl">الصف</span><span class="val">${esc(s.grade || '-')}</span></div>`;
+  html += `<div class="item"><span class="lbl">حالة القيد</span><span class="val">${esc(s.enrollment_status || '-')}</span></div>`;
+  html += `<div class="item"><span class="lbl">النوع</span><span class="val">${esc(s.gender || '-')}</span></div>`;
+  html += `<div class="item"><span class="lbl">تاريخ الميلاد</span><span class="val">${s.date_of_birth ? new Date(s.date_of_birth).toLocaleDateString('ar-EG') : '-'}</span></div>`;
+  html += `<div class="item"><span class="lbl">المحافظة</span><span class="val">${esc(s.governorate || '-')}</span></div>`;
+  html += `<div class="item"><span class="lbl">التشعيب</span><span class="val">${esc(s.stream || '-')}</span></div>`;
+  html += '</div>';
+
+  // Academic info
+  html += '<div class="info-grid">';
+  if (s.stream === 'ثانوي') {
+    html += `<div class="info-item"><span class="label">التخصص</span><span class="value">${esc(s.specialization || '-')}</span></div>`;
+  } else if (s.stream === 'بكالوريا') {
+    html += `<div class="info-item"><span class="label">المسار</span><span class="value">${esc(s.track || '-')}</span></div>`;
+    html += `<div class="info-item"><span class="label">المادة الاختيارية</span><span class="value">${esc(s.optional_subject || '-')}</span></div>`;
+  }
+
+  // Dynamic fields
+  loadedFields.forEach(field => {
+    html += `<div class="info-item"><span class="label">${esc(field.name)}</span><span class="value">${esc(responses[field.id] || '—')}</span></div>`;
+  });
+  html += '</div>';
+
+  // Submitted at
+  if (s.submitted_at) {
+    html += `<div style="text-align:center;margin-top:15px;padding:10px;background:#d4edda;border-radius:8px;color:#155724;">✅ تم التقديم في: ${new Date(s.submitted_at).toLocaleString('ar-EG')}</div>`;
+  }
+
+  // Declaration
+  html += `
+    <div class="pdf-declaration">
+      <h4>📋 إقرار وتعهد</h4>
+      <p>أنا الطالب/ة <strong>${esc(s.full_name)}</strong>، أقر بأن جميع البيانات المدخلة صحيحة ودقيقة، وأتحمل المسؤولية الكاملة عن أي معلومات غير صحيحة.</p>
+      <div class="signatures">
+        <div class="signature-box"><div class="signature-line"></div><div class="signature-name">توقيع الطالب</div></div>
+        <div class="signature-box"><div class="signature-line"></div><div class="signature-name">توقيع ولي الأمر</div></div>
+        <div class="signature-box"><div class="signature-line"></div><div class="signature-name">وكيل شئون الطلاب<br><span class="person-name">عاطف أبوالعباس</span></div></div>
+        <div class="signature-box"><div class="signature-line"></div><div class="signature-name">مدير المدرسة<br><span class="person-name">عبدالرحمن فهمي</span></div></div>
+      </div>
+    </div>
+  `;
+
+  // Print date + copyright
+  html += `
+    <div style="text-align:center;font-size:12px;color:#999;margin:10px 0;">📅 تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</div>
+    <div class="pdf-copyright">
+      <p><span style="font-size:16px;">©</span> <span class="school">مدرسة دشنا الثانوية</span> - جميع الحقوق محفوظة ${new Date().getFullYear()}</p>
+      <p style="font-size:11px;color:#999;">Developed by: <span class="developer">محمد جاد</span> - مسئول IT وسفير مادة البرمجة محافظة قنا</p>
+    </div>
+  `;
+
+  return html;
 }
 
 async function generatePDF() {
-  const btn = document.querySelector('.btn-group-actions .btn-success');
+  const btn = document.getElementById('downloadBtn');
   const originalText = btn ? btn.textContent : '';
   if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري التجهيز...'; }
 
   try {
-    const previewEl = document.getElementById('previewCard');
-    const canvas = await html2canvas(previewEl, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      logging: false
-    });
+    const cards = document.querySelectorAll('.pdf-preview');
+    if (cards.length === 0) throw new Error('لا توجد بيانات للطباعة');
 
-    const imgData = canvas.toDataURL('image/png');
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('p', 'mm', 'a4');
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-
     const margin = 10;
     const imgWidth = pageWidth - margin * 2;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-    let heightLeft = imgHeight;
-    let position = margin;
+    for (let i = 0; i < cards.length; i++) {
+      const canvas = await html2canvas(cards[i], {
+        scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false
+      });
 
-    doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
-    heightLeft -= (pageHeight - margin * 2);
+      const imgData = canvas.toDataURL('image/png');
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight + margin;
-      doc.addPage();
+      if (i > 0) doc.addPage();
+
+      let heightLeft = imgHeight;
+      let position = margin;
+
       doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
       heightLeft -= (pageHeight - margin * 2);
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight + margin;
+        doc.addPage();
+        doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+        heightLeft -= (pageHeight - margin * 2);
+      }
     }
 
-    const safeName = (studentData.full_name || 'طالب').replace(/\s+/g, '_');
-    doc.save(`تسجيل_رغبات_${safeName}_${new Date().toISOString().split('T')[0]}.pdf`);
+    let filename;
+    if (isBulkMode) {
+      filename = `تسجيل_رغبات_${loadedStudents.length}_طالب_${new Date().toISOString().split('T')[0]}.pdf`;
+    } else {
+      const safeName = (loadedStudents[0]?.full_name || 'طالب').replace(/\s+/g, '_');
+      filename = `تسجيل_رغبات_${safeName}_${new Date().toISOString().split('T')[0]}.pdf`;
+    }
 
+    doc.save(filename);
   } catch (err) {
     console.error('Error:', err);
     alert('حدث خطأ أثناء إنشاء PDF: ' + (err.message || ''));
