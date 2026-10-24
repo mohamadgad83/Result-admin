@@ -1,359 +1,437 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>طباعة PDF - تسجيل الرغبات</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="style.css">
-    
-    <meta name="copyright" content="مدرسة دشنا الثانوية - جميع الحقوق محفوظة">
-    <meta name="author" content="محمد جاد - مسئول IT وسفير مادة البرمجة محافظة قنا">
-    
-    <style>
-        .pdf-preview {
-            background: white;
-            border-radius: 16px;
-            padding: 30px;
-            margin: 20px 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            border: 1px solid #e9ecef;
-        }
-        .pdf-preview .header {
-            text-align: center;
-            border-bottom: 3px solid #1e3c72;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-        }
-        .pdf-preview .school-name {
-            font-size: 24px;
-            font-weight: bold;
-            color: #1e3c72;
-        }
-        .pdf-preview .school-sub {
-            font-size: 14px;
-            color: #666;
-        }
-        .pdf-preview .student-name {
-            font-size: 22px;
-            font-weight: bold;
-            color: #1e3c72;
-            margin: 10px 0;
-        }
-        .pdf-preview .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin: 15px 0;
-        }
-        .pdf-preview .info-item {
-            padding: 10px 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border-right: 3px solid #1e3c72;
-        }
-        .pdf-preview .info-item .label {
-            font-size: 12px;
-            color: #666;
-            display: block;
-        }
-        .pdf-preview .info-item .value {
-            font-weight: 600;
-            color: #1e3c72;
-            font-size: 16px;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>طباعة PDF - تسجيل الرغبات</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<link rel="stylesheet" href="style.css">
 
-        .pdf-declaration {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 12px;
-            margin: 20px 0;
-            border-right: 4px solid #dc3545;
-        }
-        .pdf-declaration h4 {
-            color: #1e3c72;
-            margin-bottom: 10px;
-        }
-        .pdf-declaration p {
-            font-size: 14px;
-            line-height: 2;
-            color: #333;
-        }
+<meta name="copyright" content="مدرسة دشنا الثانوية - جميع الحقوق محفوظة">
+<meta name="author" content="محمد جاد - مسئول IT وسفير مادة البرمجة محافظة قنا">
 
-        .pdf-admin-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin: 15px 0;
-            padding: 15px;
-            background: #e8f4fd;
-            border-radius: 12px;
-            border: 1px solid #b8d4e8;
-        }
-        .pdf-admin-info .admin-item {
-            text-align: center;
-            padding: 5px;
-        }
-        .pdf-admin-info .admin-item .title {
-            font-size: 12px;
-            color: #666;
-            display: block;
-        }
-        .pdf-admin-info .admin-item .name {
-            font-size: 16px;
-            font-weight: 700;
-            color: #1e3c72;
-            display: block;
-            margin-top: 3px;
-        }
-        .pdf-admin-info .admin-item .name .highlight-name {
-            color: #dc3545;
-        }
+<style>
+.pdf-preview {
+  background: white;
+  border-radius: 16px;
+  padding: 30px;
+  margin: 20px 0;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  border: 1px solid #e9ecef;
+}
+.pdf-preview .header {
+  text-align: center;
+  border-bottom: 3px solid #1e3c72;
+  padding-bottom: 15px;
+  margin-bottom: 20px;
+}
+.pdf-preview .school-name {
+  font-size: 24px;
+  font-weight: bold;
+  color: #1e3c72;
+}
+.pdf-preview .school-sub {
+  font-size: 14px;
+  color: #666;
+}
+.pdf-preview .student-name {
+  font-size: 22px;
+  font-weight: bold;
+  color: #1e3c72;
+  margin: 10px 0;
+}
+.pdf-preview .info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 15px 0;
+}
+.pdf-preview .info-item {
+  padding: 10px 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-right: 3px solid #1e3c72;
+}
+.pdf-preview .info-item .label {
+  font-size: 12px;
+  color: #666;
+  display: block;
+}
+.pdf-preview .info-item .value {
+  font-weight: 600;
+  color: #1e3c72;
+  font-size: 16px;
+}
 
-        .pdf-declaration .signatures {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 25px;
-            padding-top: 20px;
-            border-top: 1px solid #dee2e6;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .pdf-declaration .signature-box {
-            text-align: center;
-            min-width: 100px;
-        }
-        .pdf-declaration .signature-line {
-            width: 120px;
-            border-top: 2px solid #999;
-            margin: 15px auto 5px;
-        }
-        .pdf-declaration .signature-name {
-            font-size: 12px;
-            color: #666;
-        }
-        .pdf-declaration .signature-name .person-name {
-            font-weight: 700;
-            color: #1e3c72;
-            font-size: 13px;
-        }
+/* شريط الحقول الأساسية */
+.pdf-preview .core-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin: 15px 0;
+  padding: 15px;
+  background: linear-gradient(135deg, #f0f7ff, #e8f4fd);
+  border-radius: 12px;
+  border: 1px solid #d0e4f7;
+}
+.pdf-preview .core-grid .item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: #fff;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.pdf-preview .core-grid .item .lbl { color: #666; }
+.pdf-preview .core-grid .item .val { color: #1e3c72; font-weight: 700; }
 
-        .pdf-copyright {
-            text-align: center;
-            margin-top: 30px;
-            padding-top: 15px;
-            border-top: 2px solid #1e3c72;
-            font-size: 12px;
-            color: #666;
-        }
-        .pdf-copyright .developer {
-            color: #1e3c72;
-            font-weight: 600;
-        }
-        .pdf-copyright .school {
-            color: #dc3545;
-            font-weight: 700;
-        }
+.pdf-declaration {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 12px;
+  margin: 20px 0;
+  border-right: 4px solid #dc3545;
+}
+.pdf-declaration h4 {
+  color: #1e3c72;
+  margin-bottom: 10px;
+}
+.pdf-declaration p {
+  font-size: 14px;
+  line-height: 2;
+  color: #333;
+}
+.pdf-declaration .signatures {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid #dee2e6;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.pdf-declaration .signature-box {
+  text-align: center;
+  min-width: 100px;
+}
+.pdf-declaration .signature-line {
+  width: 120px;
+  border-top: 2px solid #999;
+  margin: 15px auto 5px;
+}
+.pdf-declaration .signature-name {
+  font-size: 12px;
+  color: #666;
+}
+.pdf-declaration .signature-name .person-name {
+  font-weight: 700;
+  color: #1e3c72;
+  font-size: 13px;
+}
 
-        .btn-group-actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 15px;
-        }
-        .btn-group-actions .btn-primary,
-        .btn-group-actions .btn-success {
-            flex: 1;
-            min-width: 150px;
-            text-decoration: none;
-            text-align: center;
-        }
+.pdf-copyright {
+  text-align: center;
+  margin-top: 30px;
+  padding-top: 15px;
+  border-top: 2px solid #1e3c72;
+  font-size: 12px;
+  color: #666;
+}
+.pdf-copyright .developer {
+  color: #1e3c72;
+  font-weight: 600;
+}
+.pdf-copyright .school {
+  color: #dc3545;
+  font-weight: 700;
+}
 
-        @media print {
-            .no-print { display: none !important; }
-            .container { max-width: 100% !important; padding: 0 !important; }
-            .card { box-shadow: none !important; border: 1px solid #ddd; }
-            .pdf-preview { border: none !important; box-shadow: none !important; }
-        }
-        @media (max-width: 600px) {
-            .pdf-preview .info-grid { grid-template-columns: 1fr; }
-            .pdf-admin-info { grid-template-columns: 1fr; }
-            .pdf-declaration .signatures { flex-direction: column; gap: 15px; }
-            .btn-group-actions { flex-direction: column; }
-            .pdf-preview { padding: 15px; }
-        }
-    </style>
+.btn-group-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 15px;
+}
+.btn-group-actions .btn-primary,
+.btn-group-actions .btn-success {
+  flex: 1;
+  min-width: 150px;
+  text-decoration: none;
+  text-align: center;
+}
+
+@media print {
+  .no-print { display: none !important; }
+  .container { max-width: 100% !important; padding: 0 !important; }
+  .card { box-shadow: none !important; border: 1px solid #ddd; }
+  .pdf-preview { border: none !important; box-shadow: none !important; }
+}
+@media (max-width: 600px) {
+  .pdf-preview .info-grid { grid-template-columns: 1fr; }
+  .pdf-preview .core-grid { grid-template-columns: 1fr; }
+  .pdf-declaration .signatures { flex-direction: column; gap: 15px; }
+  .btn-group-actions { flex-direction: column; }
+  .pdf-preview { padding: 15px; }
+}
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="card">
-            <div style="text-align:center;border-bottom:3px solid #1e3c72;padding-bottom:15px;margin-bottom:20px;">
-                <h1 style="color:#1e3c72;font-size:24px;margin:0;">🏫 مدرسة دشنا الثانوية</h1>
-                <p style="color:#666;font-size:14px;">نظام تسجيل رغبات الصف الثاني الثانوي - 📄 طباعة</p>
-            </div>
-
-            <div id="loadingMsg" class="text-center" style="padding:40px;">
-                <div style="font-size:40px;">⏳</div>
-                <p>جاري تحميل البيانات...</p>
-            </div>
-
-            <div id="pdfContent" style="display:none;">
-                <div class="pdf-preview" id="previewCard">
-                    <div class="header">
-                        <div class="school-name">🎓 مدرسة دشنا الثانوية</div>
-                        <div class="school-sub">وزارة التربية والتعليم - مديرية التربية والتعليم بقنا</div>
-                        <div class="student-name" id="studentNameDisplay"></div>
-                        <div style="font-size:14px;color:#666;" id="studentInfoDisplay"></div>
-                    </div>
-
-                    <div id="dataDisplay"></div>
-
-                    <div class="pdf-declaration">
-                        <h4>📋 إقرار وتعهد</h4>
-                        <p>
-                            أنا الطالب/ة <strong id="declNameInPDF"></strong>، أقر بأن جميع البيانات المدخلة 
-                            صحيحة ودقيقة، وأتحمل المسؤولية الكاملة عن أي معلومات غير صحيحة.
-                        </p>
-
-                        
-                        
-                        <div class="signatures">
-                            <div class="signature-box">
-                                <div class="signature-line"></div>
-                                <div class="signature-name">توقيع الطالب</div>
-                            </div>
-                            <div class="signature-box">
-                                <div class="signature-line"></div>
-                                <div class="signature-name">توقيع ولي الأمر</div>
-                            </div>
-                            <div class="signature-box">
-                                <div class="signature-line"></div>
-                                <div class="signature-name">
-                                    وكيل شئون الطلاب<br>
-                                    <span class="person-name">عاطف أبوالعباس</span>
-                                </div>
-                            </div>
-                            <div class="signature-box">
-                                <div class="signature-line"></div>
-                                <div class="signature-name">
-                                    مدير المدرسة<br>
-                                    <span class="person-name">عبدالرحمن فهمي</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style="text-align:center;font-size:12px;color:#999;margin:10px 0;">
-                        📅 تاريخ الطباعة: <span id="printDate"></span>
-                    </div>
-
-                    <div class="pdf-copyright">
-                        <p>
-                            <span style="font-size:16px;">©</span> 
-                            <span class="school">مدرسة دشنا الثانوية</span> - جميع الحقوق محفوظة 
-                            <span id="yearDisplay"></span>
-                        </p>
-                        <p style="font-size:18px;color:#999;">
-                            Developed by: <span class="developer">محمد جاد</span> - 
-                            مسئول IT وسفير مادة البرمجة محافظة قنا
-                        </p>
-                    </div>
-                </div>
-
-                <div class="btn-group-actions no-print">
-                    <button onclick="generatePDF()" class="btn-success">📄 تحميل PDF</button>
-                    <button onclick="window.print()" class="btn-primary">🖨️ طباعة</button>
-                    <a href="student-form.html" class="btn-primary" style="text-decoration:none;text-align:center;">🔙 العودة</a>
-                </div>
-            </div>
-        </div>
+<div class="container">
+  <div class="card">
+    <div style="text-align:center;border-bottom:3px solid #1e3c72;padding-bottom:15px;margin-bottom:20px;">
+      <h1 style="color:#1e3c72;font-size:24px;margin:0;">🏫 مدرسة دشنا الثانوية</h1>
+      <p style="color:#666;font-size:14px;">نظام تسجيل رغبات الصف الثاني الثانوي - 📄 طباعة</p>
     </div>
 
-    <script src="lib/supabase.js"></script>
+    <div id="loadingMsg" class="text-center" style="padding:40px;">
+      <div style="font-size:40px;">⏳</div>
+      <p>جاري تحميل البيانات...</p>
+    </div>
+
+    <div id="pdfContent" style="display:none;">
+      <div class="pdf-preview" id="previewCard">
+        <div class="header">
+          <div class="school-name">🎓 مدرسة دشنا الثانوية</div>
+          <div class="school-sub">وزارة التربية والتعليم - مديرية التربية والتعليم بقنا</div>
+          <div class="student-name" id="studentNameDisplay"></div>
+          <div style="font-size:14px;color:#666;" id="studentInfoDisplay"></div>
+        </div>
+
+        <div id="dataDisplay"></div>
+
+        <div class="pdf-declaration">
+          <h4>📋 إقرار وتعهد</h4>
+          <p>
+            أنا الطالب/ة <strong id="declNameInPDF"></strong>، أقر بأن جميع البيانات المدخلة
+            صحيحة ودقيقة، وأتحمل المسؤولية الكاملة عن أي معلومات غير صحيحة.
+          </p>
+
+          <div class="signatures">
+            <div class="signature-box">
+              <div class="signature-line"></div>
+              <div class="signature-name">توقيع الطالب</div>
+            </div>
+            <div class="signature-box">
+              <div class="signature-line"></div>
+              <div class="signature-name">توقيع ولي الأمر</div>
+            </div>
+            <div class="signature-box">
+              <div class="signature-line"></div>
+              <div class="signature-name">
+                وكيل شئون الطلاب<br>
+                <span class="person-name">عاطف أبوالعباس</span>
+              </div>
+            </div>
+            <div class="signature-box">
+              <div class="signature-line"></div>
+              <div class="signature-name">
+                مدير المدرسة<br>
+                <span class="person-name">عبدالرحمن فهمي</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align:center;font-size:12px;color:#999;margin:10px 0;">
+          📅 تاريخ الطباعة: <span id="printDate"></span>
+        </div>
+
+        <div class="pdf-copyright">
+          <p>
+            <span style="font-size:16px;">©</span>
+            <span class="school">مدرسة دشنا الثانوية</span> - جميع الحقوق محفوظة
+            <span id="yearDisplay"></span>
+          </p>
+          <p style="font-size:11px;color:#999;">
+            Developed by: <span class="developer">محمد جاد</span> -
+            مسئول IT وسفير مادة البرمجة محافظة قنا
+          </p>
+        </div>
+      </div>
+
+      <div class="btn-group-actions no-print">
+        <button onclick="generatePDF()" class="btn-success">📄 تحميل PDF</button>
+        <button onclick="window.print()" class="btn-primary">🖨️ طباعة</button>
+        <a href="student-form.html" class="btn-primary" style="text-decoration:none;text-align:center;">🔙 العودة</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="lib/supabase.js"></script>
 <script src="lib/auth.js"></script>
 <script src="lib/escape.js"></script>
 <script>
+let studentData = null;
+let fieldsData = [];
+let dynamicResponses = {};
+
 async function loadData() {
-  const params = new URLSearchParams(location.search);
-  const printId = params.get('print');
+  const urlParams = new URLSearchParams(window.location.search);
+  const printId = urlParams.get('print');
   const studentToken = Auth.getStudentToken();
+
   let student, fields, responses;
 
-  if (printId && !studentToken) {
-    const auth = await Auth.requireAdmin();
-    if (!auth) return;
-    ({data:student} = await SB.from('students').select('*').eq('id', printId).single());
-    ({data:fields} = await SB.from('dynamic_fields').select('*').eq('visible_for_student', true).order('display_order'));
-    ({data:responses} = await SB.from('student_dynamic_responses').select('field_id,value').eq('student_id', printId));
-    if (student) student.national_id = '****' + String(student.national_id||'').slice(-4);
-  } else {
-    if (!studentToken) { location.href = 'index.html'; return; }
-    const [{data:s},{data:f},{data:r}] = await Promise.all([
-      SB.rpc('student_get_data', { p_token: studentToken }),
-      SB.rpc('student_get_fields', { p_token: studentToken }),
-      SB.rpc('student_get_responses', { p_token: studentToken })
-    ]);
-    student = s;
-    if (student) student.national_id = student.national_id_masked;
-    fields = f; responses = r;
+  try {
+    if (printId && !studentToken) {
+      // مسار الأدمن: يتطلب جلسة أدمن
+      const auth = await Auth.requireAdmin();
+      if (!auth) return;
+
+      const { data: s } = await SB.from('students').select('*').eq('id', printId).single();
+      student = s;
+
+      const { data: f } = await SB.from('dynamic_fields')
+        .select('*')
+        .eq('visible_for_student', true)
+        .order('display_order');
+      fields = f || [];
+
+      const { data: r } = await SB.from('student_dynamic_responses')
+        .select('field_id,value').eq('student_id', printId);
+      responses = r || [];
+
+      if (student) {
+        student.national_id = '****' + String(student.national_id || '').slice(-4);
+      }
+    } else {
+      // مسار الطالب
+      if (!studentToken) { window.location.href = 'index.html'; return; }
+
+      const [{ data: s }, { data: f }, { data: r }] = await Promise.all([
+        SB.rpc('student_get_data', { p_token: studentToken }),
+        SB.rpc('student_get_fields', { p_token: studentToken }),
+        SB.rpc('student_get_responses', { p_token: studentToken })
+      ]);
+
+      student = s;
+      if (student) student.national_id = student.national_id_masked;
+      fields = f || [];
+      responses = r || [];
+    }
+
+    if (!student) {
+      alert('لم يتم العثور على البيانات');
+      window.location.href = 'index.html';
+      return;
+    }
+
+    studentData = student;
+    fieldsData = fields;
+    dynamicResponses = {};
+    (responses || []).forEach(x => { dynamicResponses[x.field_id] = x.value; });
+
+    displayData();
+
+    document.getElementById('loadingMsg').style.display = 'none';
+    document.getElementById('pdfContent').style.display = 'block';
+
+  } catch (err) {
+    console.error('Error:', err);
+    alert('حدث خطأ في تحميل البيانات: ' + (err.message || ''));
   }
+}
 
-  if (!student) { alert('لم يتم العثور على البيانات'); return; }
-  const map = {};
-  (responses || []).forEach(x => map[x.field_id] = x.value);
-
-  document.getElementById('studentNameDisplay').textContent = '👨‍🎓 ' + student.full_name;
+function displayData() {
+  document.getElementById('studentNameDisplay').textContent = '👨‍🎓 ' + studentData.full_name;
   document.getElementById('studentInfoDisplay').textContent =
-    'كود: ' + student.student_code + ' | الرقم القومي: ' + (student.national_id || '—');
-  document.getElementById('declNameInPDF').textContent = student.full_name;
+    'كود: ' + studentData.student_code + ' | الرقم القومي: ' + (studentData.national_id || '—');
+  document.getElementById('declNameInPDF').textContent = studentData.full_name;
 
-  let html = '<div class="info-grid">';
-  html += `<div class="info-item"><span class="label">التشعيب</span><span class="value">${esc(student.stream||'-')}</span></div>`;
-  if (student.stream === 'ثانوي')
-    html += `<div class="info-item"><span class="label">التخصص</span><span class="value">${esc(student.specialization||'-')}</span></div>`;
-  if (student.stream === 'بكالوريا') {
-    html += `<div class="info-item"><span class="label">المسار</span><span class="value">${esc(student.track||'-')}</span></div>`;
-    html += `<div class="info-item"><span class="label">المادة الاختيارية</span><span class="value">${esc(student.optional_subject||'-')}</span></div>`;
-  }
-  (fields||[]).forEach(f => {
-    html += `<div class="info-item"><span class="label">${esc(f.name)}</span><span class="value">${esc(map[f.id]||'—')}</span></div>`;
-  });
+  // ============ الحقول الأساسية (الجديدة) ============
+  let html = '';
+
+  // شريط الحقول الأساسية
+  html += '<div class="core-grid">';
+  html += `<div class="item"><span class="lbl">الصف</span><span class="val">${esc(studentData.grade || '-')}</span></div>`;
+  html += `<div class="item"><span class="lbl">حالة القيد</span><span class="val">${esc(studentData.enrollment_status || '-')}</span></div>`;
+  html += `<div class="item"><span class="lbl">النوع</span><span class="val">${esc(studentData.gender || '-')}</span></div>`;
+  html += `<div class="item"><span class="lbl">تاريخ الميلاد</span><span class="val">${studentData.date_of_birth ? new Date(studentData.date_of_birth).toLocaleDateString('ar-EG') : '-'}</span></div>`;
+  html += `<div class="item"><span class="lbl">المحافظة</span><span class="val">${esc(studentData.governorate || '-')}</span></div>`;
+  html += `<div class="item"><span class="lbl">التشعيب</span><span class="val">${esc(studentData.stream || '-')}</span></div>`;
   html += '</div>';
-  if (student.submitted_at)
-    html += `<div style="text-align:center;margin-top:15px;padding:10px;background:#d4edda;border-radius:8px;color:#155724;">✅ تم التقديم في: ${new Date(student.submitted_at).toLocaleString('ar-EG')}</div>`;
+
+  // ============ الحقول الأكاديمية والحقول الديناميكية ============
+  html += '<div class="info-grid">';
+  html += `<div class="info-item"><span class="label">التشعيب</span><span class="value">${esc(studentData.stream || '-')}</span></div>`;
+
+  if (studentData.stream === 'ثانوي') {
+    html += `<div class="info-item"><span class="label">التخصص</span><span class="value">${esc(studentData.specialization || '-')}</span></div>`;
+  } else if (studentData.stream === 'بكالوريا') {
+    html += `<div class="info-item"><span class="label">المسار</span><span class="value">${esc(studentData.track || '-')}</span></div>`;
+    html += `<div class="info-item"><span class="label">المادة الاختيارية</span><span class="value">${esc(studentData.optional_subject || '-')}</span></div>`;
+  }
+
+  fieldsData.forEach(field => {
+    const value = dynamicResponses[field.id] || '';
+    html += `<div class="info-item"><span class="label">${esc(field.name)}</span><span class="value">${esc(value || '—')}</span></div>`;
+  });
+
+  html += '</div>';
+
+  // ============ تاريخ التقديم ============
+  if (studentData.submitted_at) {
+    html += `
+      <div style="text-align:center;margin-top:15px;padding:10px;background:#d4edda;border-radius:8px;color:#155724;">
+        ✅ تم التقديم في: ${new Date(studentData.submitted_at).toLocaleString('ar-EG')}
+      </div>
+    `;
+  }
 
   document.getElementById('dataDisplay').innerHTML = html;
   document.getElementById('printDate').textContent = new Date().toLocaleDateString('ar-EG');
   document.getElementById('yearDisplay').textContent = new Date().getFullYear();
-  document.getElementById('loadingMsg').style.display = 'none';
-  document.getElementById('pdfContent').style.display = 'block';
 }
 
 async function generatePDF() {
   const btn = document.querySelector('.btn-group-actions .btn-success');
+  const originalText = btn ? btn.textContent : '';
   if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري التجهيز...'; }
+
   try {
-    const canvas = await html2canvas(document.getElementById('previewCard'), { scale: 2, useCORS: true, backgroundColor: '#fff', logging: false });
+    const previewEl = document.getElementById('previewCard');
+    const canvas = await html2canvas(previewEl, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false
+    });
+
+    const imgData = canvas.toDataURL('image/png');
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('p', 'mm', 'a4');
-    const pw = doc.internal.pageSize.getWidth();
-    const ph = doc.internal.pageSize.getHeight();
-    const imgData = canvas.toDataURL('image/png');
-    const margin = 10, iw = pw - margin*2, ih = (canvas.height*iw)/canvas.width;
-    let left = ih, pos = margin;
-    doc.addImage(imgData, 'PNG', margin, pos, iw, ih);
-    left -= (ph - margin*2);
-    while (left > 0) {
-      pos = left - ih + margin;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    const margin = 10;
+    const imgWidth = pageWidth - margin * 2;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    let heightLeft = imgHeight;
+    let position = margin;
+
+    doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+    heightLeft -= (pageHeight - margin * 2);
+
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight + margin;
       doc.addPage();
-      doc.addImage(imgData, 'PNG', margin, pos, iw, ih);
-      left -= (ph - margin*2);
+      doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+      heightLeft -= (pageHeight - margin * 2);
     }
-    doc.save(`رغبات_${Date.now()}.pdf`);
-  } catch (err) { alert('فشل إنشاء PDF'); }
-  finally { if (btn) { btn.disabled = false; btn.textContent = '📄 تحميل PDF'; } }
+
+    const safeName = (studentData.full_name || 'طالب').replace(/\s+/g, '_');
+    doc.save(`تسجيل_رغبات_${safeName}_${new Date().toISOString().split('T')[0]}.pdf`);
+
+  } catch (err) {
+    console.error('Error:', err);
+    alert('حدث خطأ أثناء إنشاء PDF: ' + (err.message || ''));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = originalText; }
+  }
 }
 
 loadData();
