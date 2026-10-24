@@ -8,157 +8,804 @@
 <link rel="stylesheet" href="style.css">
 <meta name="copyright" content="مدرسة دشنا الثانوية - جميع الحقوق محفوظة">
 <meta name="author" content="محمد جاد - مسئول IT وسفير مادة البرمجة محافظة قنا">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 <style>
-.form-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;padding-bottom:15px;border-bottom:2px solid #eee;margin-bottom:20px}
-.form-header .title h1{color:#1e3c72;font-size:24px;margin:0}
-.form-header .title p{color:#666;font-size:14px;margin:5px 0 0}
-.form-header .actions{display:flex;gap:10px;flex-wrap:wrap}
-.btn-logout-student,.btn-home{padding:10px 20px;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;text-decoration:none;transition:all .3s;display:inline-block}
-.btn-logout-student{background:#dc3545}.btn-logout-student:hover{background:#a71d2a}
-.btn-home{background:#6c757d}.btn-home:hover{background:#5a6268}
+:root {
+  --navy: #1e3c72;
+  --navy-2: #2a5298;
+  --navy-dark: #0f2b4f;
+  --gold: #ffc107;
+  --green: #28a745;
+  --red: #dc3545;
+  --cyan: #17a2b8;
+  --muted: #64748b;
+  --line: #e2e8f0;
+  --bg: #f4f7fb;
+  --radius: 16px;
+  --radius-sm: 12px;
+  --shadow-sm: 0 2px 8px rgba(30,60,114,.06);
+  --shadow: 0 6px 20px rgba(30,60,114,.08);
+  --shadow-lg: 0 16px 40px rgba(30,60,114,.12);
+}
 
-.core-info{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;background:#f0f7ff;padding:18px;border-radius:14px;margin-bottom:18px;border:1px solid #d0e4f7}
-.core-info .item{display:flex;flex-direction:column;gap:3px}
-.core-info .item .lbl{font-size:11px;color:#666;font-weight:600}
-.core-info .item .val{font-size:14px;color:#1e3c72;font-weight:700}
-.core-actions{display:flex;gap:10px;justify-content:center;margin-bottom:20px}
-.btn-request-edit{padding:10px 22px;background:#17a2b8;color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:14px;transition:all .2s}
-.btn-request-edit:hover{background:#138496;transform:translateY(-1px)}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Cairo', system-ui, sans-serif;
+  background: var(--bg);
+  color: #0f172a;
+  line-height: 1.7;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: 40px;
+}
 
-.progress-bar-wrap{background:#f0f2f5;padding:16px 20px;border-radius:14px;margin:20px 0;border:1px solid #e0e4e8}
-.progress-bar-wrap .head{display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:#1e3c72;margin-bottom:10px}
-.progress-bar-wrap .track{height:10px;background:#e9ecef;border-radius:20px;overflow:hidden}
-.progress-bar-wrap .fill{height:100%;background:linear-gradient(90deg,#1e3c72,#2a5298);transition:width .4s ease;border-radius:20px}
-.progress-bar-wrap .sections-mini{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
-.progress-bar-wrap .sec-chip{padding:3px 12px;font-size:11px;border-radius:12px;background:#fff;border:1px solid #d0d7de;color:#666;font-weight:600}
-.progress-bar-wrap .sec-chip.done{background:#d4edda;border-color:#28a745;color:#155724}
+.container { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
 
-.section-block{margin:24px 0;border-radius:16px;overflow:hidden;border:1px solid #e0e4e8;background:#fff;box-shadow:0 2px 8px rgba(30,60,114,.06)}
-.section-block .head{background:linear-gradient(135deg,#1e3c72,#2a5298);color:#fff;padding:16px 22px;display:flex;align-items:center;gap:12px}
-.section-block .head .ico{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.15);display:grid;place-items:center;font-size:20px;flex-shrink:0}
-.section-block .head h3{margin:0;font-size:17px;font-weight:800}
-.section-block .head .counter{margin-right:auto;font-size:12px;background:rgba(255,255,255,.2);padding:3px 12px;border-radius:20px;font-weight:600}
-.section-block .body{padding:22px 24px}
-.section-block.no-section{border:none;box-shadow:none;background:transparent;margin:0}
-.section-block.no-section .body{padding:0;background:transparent}
+/* ============ Header ============ */
+.page-header {
+  background: linear-gradient(135deg, var(--navy-dark), var(--navy), var(--navy-2));
+  color: #fff;
+  padding: 22px 0;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.page-header::before {
+  content: ""; position: absolute; inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px);
+  background-size: 22px 22px;
+  pointer-events: none;
+}
+.page-header::after {
+  content: ""; position: absolute;
+  width: 400px; height: 400px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,193,7,.25), transparent 70%);
+  top: -180px; left: -100px; filter: blur(50px);
+  pointer-events: none;
+}
+.page-header .container { position: relative; z-index: 1; }
+.header-content {
+  display: flex; justify-content: space-between;
+  align-items: center; flex-wrap: wrap; gap: 14px;
+}
+.header-title h1 {
+  font-size: 22px; font-weight: 900;
+  margin: 0 0 4px; letter-spacing: -.01em;
+}
+.header-title p {
+  font-size: 13px; color: rgba(255,255,255,.8); margin: 0;
+}
+.header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-header {
+  padding: 10px 18px; border-radius: 10px; border: none;
+  font-family: inherit; font-size: 13px; font-weight: 700;
+  cursor: pointer; text-decoration: none; display: inline-flex;
+  align-items: center; gap: 6px; transition: all .2s;
+}
+.btn-header.btn-home { background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.25); }
+.btn-header.btn-home:hover { background: rgba(255,255,255,.25); }
+.btn-header.btn-logout { background: var(--red); color: #fff; }
+.btn-header.btn-logout:hover { background: #a71d2a; }
 
-.form-group{margin-bottom:18px}
-.form-group label{display:block;font-weight:700;color:#333;font-size:14px;margin-bottom:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.form-group label .admin-badge{font-size:10px;background:#17a2b8;color:#fff;padding:2px 9px;border-radius:10px;font-weight:600}
-.form-control{width:100%;padding:12px 16px;border:2px solid #e0e0e0;border-radius:10px;font-size:15px;font-family:inherit;transition:all .2s;background:#fff}
-.form-control:focus{outline:none;border-color:#1e3c72;box-shadow:0 0 0 4px rgba(30,60,114,.1)}
-.form-control:disabled{background:#f0f0f0;cursor:not-allowed;color:#555;border-color:#d0d0d0}
-.btn-option:disabled{opacity:.75;cursor:not-allowed}
+/* ============ Sticky Progress Bar ============ */
+.progress-sticky {
+  position: sticky; top: 0; z-index: 40;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0,0,0,.06);
+  padding: 12px 16px;
+  border-radius: 0 0 14px 14px;
+  margin-bottom: 24px;
+  display: none;
+}
+.progress-sticky.visible { display: block; }
+.progress-info {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 8px; gap: 8px; flex-wrap: wrap;
+}
+.progress-info .label {
+  font-size: 12px; font-weight: 800; color: var(--navy);
+  display: flex; align-items: center; gap: 6px;
+}
+.progress-info .pct {
+  font-size: 15px; font-weight: 900; color: var(--navy);
+}
+.progress-track {
+  height: 8px; background: #e9ecef;
+  border-radius: 20px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--navy), var(--navy-2), var(--gold));
+  transition: width .5s ease;
+  border-radius: 20px;
+}
+.sections-mini {
+  display: flex; gap: 6px; margin-top: 10px;
+  flex-wrap: wrap;
+}
+.sec-chip {
+  padding: 3px 12px; font-size: 11px;
+  border-radius: 12px; background: #f1f5f9;
+  border: 1px solid var(--line);
+  color: var(--muted); font-weight: 700;
+  transition: all .2s;
+}
+.sec-chip.done {
+  background: #d4edda; border-color: var(--green); color: #155724;
+}
 
-.locked-fields-header{display:none;margin:24px 0 12px;padding:16px 20px;background:linear-gradient(135deg,#1e3c72,#2a5298);color:#fff;border-radius:12px;text-align:center;font-weight:700;font-size:16px;box-shadow:0 4px 12px rgba(30,60,114,.2)}
-.locked-fields-header.show{display:block}
-.selected-stream-display{background:linear-gradient(135deg,#d4edda,#c3e6cb);padding:14px 20px;border-radius:12px;border:2px solid #28a745;margin:15px 0;text-align:center;font-size:16px;font-weight:700;color:#155724;display:none}
-.selected-stream-display.show{display:block}
+/* ============ Cards ============ */
+.card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(226,232,240,.6);
+}
+.card-header {
+  padding: 18px 22px;
+  background: linear-gradient(135deg, #f8fafc, #eef2f7);
+  border-bottom: 2px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.card-header h2 {
+  font-size: 17px; font-weight: 900;
+  color: var(--navy); margin: 0;
+  display: flex; align-items: center; gap: 10px;
+}
+.card-header .icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--navy), var(--navy-2));
+  color: #fff; display: grid; place-items: center;
+  font-size: 18px; flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(30,60,114,.2);
+}
+.card-header .badge {
+  padding: 4px 12px; border-radius: 20px;
+  font-size: 11px; font-weight: 800;
+}
+.badge-readonly {
+  background: #cce5ff; color: #004085;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.badge-count {
+  background: var(--navy); color: #fff;
+}
+.card-body { padding: 22px; }
 
-.declaration-section{background:linear-gradient(135deg,#f8f9fa,#e9ecef);padding:25px;border-radius:16px;margin:25px 0;border-right:6px solid #1e3c72;position:relative}
-.declaration-section h3{color:#1e3c72;font-size:20px;margin-bottom:15px}
-.declaration-text{background:#fff;padding:20px;border-radius:12px;font-size:15px;line-height:2.2;color:#333}
-.declaration-approval{margin-top:15px;padding:18px;text-align:center;background:#fff3cd;border-radius:12px;border:2px solid #ffc107}
-.btn-approve{padding:15px 40px;background:#28a745;color:#fff;border:none;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;transition:all .3s}
-.btn-approve.approved{background:#1e3c72}
-.approval-confirm{display:none;margin-top:12px;padding:12px;background:#d4edda;border-radius:10px;color:#155724;font-weight:700;border:2px solid #28a745}
-.approval-confirm.show{display:block}
+/* ============ Core Info Card ============ */
+.info-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+}
+.info-group {
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+}
+.info-group-title {
+  font-size: 12px; font-weight: 800;
+  color: var(--navy); margin: 0 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1.5px solid var(--line);
+  display: flex; align-items: center; gap: 6px;
+}
+.info-row {
+  display: flex; justify-content: space-between;
+  align-items: center; gap: 10px;
+  padding: 7px 0; border-bottom: 1px dashed #f0f0f0;
+}
+.info-row:last-child { border-bottom: none; }
+.info-row .lbl {
+  font-size: 12px; color: var(--muted); font-weight: 600;
+  flex-shrink: 0;
+}
+.info-row .val {
+  font-size: 13px; font-weight: 800; color: var(--navy);
+  text-align: left; word-break: break-word;
+}
+.info-row .val[dir="ltr"] { font-family: 'Courier New', monospace; }
 
-.warning-confirm-box{display:none;background:#fff3cd;border:3px solid #ffc107;border-radius:16px;padding:25px;margin:20px 0;text-align:center}
-.warning-confirm-box.show{display:block}
-.warning-actions{display:flex;gap:15px;justify-content:center;flex-wrap:wrap;margin-top:15px}
-.btn-confirm{padding:14px 35px;background:#dc3545;color:#fff;border:none;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer}
-.btn-cancel-warning{padding:14px 35px;background:#6c757d;color:#fff;border:none;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer}
+/* ============ Info Actions Bar ============ */
+.info-actions {
+  display: flex; justify-content: center;
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.btn-request-edit {
+  padding: 10px 22px;
+  background: linear-gradient(135deg, var(--cyan), #138496);
+  color: #fff; border: none; border-radius: 10px;
+  cursor: pointer; font-weight: 700; font-size: 13px;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: all .2s;
+  box-shadow: 0 4px 12px rgba(23,162,184,.25);
+}
+.btn-request-edit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(23,162,184,.35);
+}
 
-.locked-message{background:linear-gradient(135deg,#d4edda,#c3e6cb);border:2px solid #28a745;border-radius:16px;padding:30px;margin:20px 0;text-align:center}
-.locked-message .icon{font-size:60px;display:block;margin-bottom:10px}
-.locked-message h3{color:#155724;font-size:24px;margin:10px 0}
-.btn-print-only,.btn-request{display:inline-block;padding:13px 30px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;margin:8px 4px;transition:all .3s;border:none}
-.btn-print-only{background:#1e3c72;color:#fff}
-.btn-request{background:#ffc107;color:#333}
+/* ============ Stream Selection (Big Cards) ============ */
+.stream-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.stream-choice {
+  padding: 24px 20px;
+  border: 2.5px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  cursor: pointer;
+  transition: all .25s;
+  font-family: inherit;
+  text-align: center;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 8px;
+}
+.stream-choice:hover:not(:disabled) {
+  border-color: var(--navy-2);
+  background: #f0f7ff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(30,60,114,.1);
+}
+.stream-choice.active {
+  border-color: var(--navy);
+  background: linear-gradient(135deg, #e8f0fb, #d0e4f7);
+  box-shadow: 0 8px 24px rgba(30,60,114,.15);
+}
+.stream-choice:disabled {
+  opacity: .5; cursor: not-allowed;
+  background: #f5f5f5;
+}
+.stream-choice .icon {
+  font-size: 40px; line-height: 1;
+}
+.stream-choice .title {
+  font-size: 16px; font-weight: 900;
+  color: var(--navy);
+}
+.stream-choice .desc {
+  font-size: 11px; color: var(--muted); font-weight: 500;
+}
+.stream-choice.active .title { color: var(--navy-dark); }
 
-.request-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;padding:20px}
-.request-modal.show{display:flex}
-.request-modal .modal-content{background:#fff;max-width:550px;width:100%;padding:30px;border-radius:20px;position:relative;box-shadow:0 10px 40px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto}
-.request-modal h3{color:#1e3c72;margin:0 0 15px}
-.request-modal textarea,.request-modal input,.request-modal select{width:100%;padding:12px;border:2px solid #e0e0e0;border-radius:10px;font-family:inherit;font-size:15px;margin-top:6px}
-.request-modal textarea:focus,.request-modal input:focus,.request-modal select:focus{outline:none;border-color:#1e3c72}
-.request-modal textarea{min-height:80px;resize:vertical}
-.request-modal .mg{margin-bottom:14px}
-.request-modal .mg label{display:block;font-weight:700;font-size:13px;color:#333;margin-bottom:4px}
-.request-modal .actions{display:flex;gap:10px;margin-top:15px;flex-wrap:wrap}
-.request-modal .actions button{flex:1;min-width:100px;padding:12px;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:15px}
-.btn-submit{background:#28a745;color:#fff}
-.btn-cancel-modal{background:#6c757d;color:#fff}
-.request-error{color:#dc3545;font-size:13px;display:none;margin:10px 0;padding:10px;background:#fee;border-radius:8px}
+/* Smaller option buttons (for specialization) */
+.btn-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.btn-option {
+  padding: 14px 18px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--navy);
+  transition: all .2s;
+}
+.btn-option:hover:not(:disabled) {
+  border-color: var(--navy-2);
+  background: #f0f7ff;
+}
+.btn-option.active {
+  border-color: var(--navy);
+  background: linear-gradient(135deg, var(--navy), var(--navy-2));
+  color: #fff;
+}
+.btn-option:disabled {
+  opacity: .6; cursor: not-allowed;
+}
 
-#formActions{display:flex;flex-direction:column;gap:10px;margin-top:25px}
-.btn-success,.btn-primary{width:100%;padding:16px;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;border:none;transition:all .3s;text-align:center;text-decoration:none;display:block}
-.btn-success{background:#28a745;color:#fff}.btn-success:hover{background:#1e7e34}
-.btn-primary{background:#1e3c72;color:#fff}.btn-primary:hover{background:#0f2b4f}
+/* ============ Form Groups ============ */
+.form-group { margin-bottom: 16px; }
+.form-group:last-child { margin-bottom: 0; }
+.form-group > label {
+  display: flex; align-items: center; gap: 6px;
+  font-weight: 800; color: #334155;
+  font-size: 13px; margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.form-group > label .admin-badge {
+  font-size: 10px; background: var(--cyan);
+  color: #fff; padding: 2px 9px; border-radius: 10px;
+  font-weight: 700;
+}
+.form-group > label .req-star {
+  color: var(--red); font-weight: 900;
+}
+.form-control {
+  width: 100%; padding: 12px 14px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: 14px; font-family: inherit;
+  background: #fff; color: #0f172a;
+  transition: all .2s;
+}
+.form-control:focus {
+  outline: none; border-color: var(--navy);
+  box-shadow: 0 0 0 4px rgba(30,60,114,.1);
+}
+.form-control:disabled {
+  background: #f8fafc; cursor: not-allowed;
+  color: var(--muted); border-color: #e5e7eb;
+}
 
-@media(max-width:600px){
-  .form-header{flex-direction:column;align-items:stretch}
-  .form-header .actions{justify-content:stretch}
-  .form-header .actions>*{flex:1;text-align:center}
-  .core-info{grid-template-columns:1fr 1fr}
-  .section-block .body{padding:18px}
-  .section-block .head{padding:14px 18px}
-  .btn-approve{width:100%;padding:14px 20px;font-size:15px}
+/* ============ Locked Message ============ */
+.locked-message {
+  background: linear-gradient(135deg, #d4edda, #b8e0c0);
+  border: 2px solid var(--green);
+  border-radius: var(--radius);
+  padding: 32px 24px; margin-bottom: 20px;
+  text-align: center;
+}
+.locked-message .icon {
+  font-size: 60px; display: block; margin-bottom: 8px;
+}
+.locked-message h3 {
+  color: #155724; font-size: 22px; margin: 8px 0;
+  font-weight: 900;
+}
+.locked-message p { color: #155724; font-size: 14px; }
+.locked-actions {
+  display: flex; gap: 10px; justify-content: center;
+  flex-wrap: wrap; margin-top: 16px;
+}
+.btn-print-only, .btn-request {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 12px 26px; border-radius: 10px;
+  font-size: 14px; font-weight: 700;
+  cursor: pointer; text-decoration: none;
+  transition: all .2s; border: none;
+}
+.btn-print-only {
+  background: var(--navy); color: #fff;
+  box-shadow: 0 4px 12px rgba(30,60,114,.25);
+}
+.btn-print-only:hover { transform: translateY(-1px); }
+.btn-request {
+  background: var(--gold); color: #333;
+  box-shadow: 0 4px 12px rgba(255,193,7,.3);
+}
+.btn-request:hover { transform: translateY(-1px); }
+
+/* ============ Selected Stream Badge ============ */
+.selected-stream-display {
+  display: none;
+  background: linear-gradient(135deg, #e8f0fb, #d0e4f7);
+  border: 2px solid var(--navy-2);
+  padding: 14px 20px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+  text-align: center;
+  font-size: 14px; font-weight: 800;
+  color: var(--navy);
+}
+.selected-stream-display.show { display: block; }
+
+/* ============ Dynamic Section Block ============ */
+.section-block {
+  margin-bottom: 20px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .3s;
+}
+.section-block:hover { box-shadow: var(--shadow); }
+.section-block .head {
+  background: linear-gradient(135deg, var(--navy), var(--navy-2));
+  color: #fff; padding: 14px 20px;
+  display: flex; align-items: center; gap: 12px;
+}
+.section-block .head .ico {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: rgba(255,255,255,.15);
+  display: grid; place-items: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.section-block .head h3 {
+  margin: 0; font-size: 15px; font-weight: 800;
+  flex: 1;
+}
+.section-block .head .counter {
+  font-size: 11px;
+  background: rgba(255,255,255,.2);
+  padding: 3px 12px; border-radius: 20px;
+  font-weight: 700;
+}
+.section-block .body { padding: 20px; }
+
+.section-block.no-section {
+  border: none; box-shadow: none;
+  background: transparent; margin-bottom: 0;
+}
+.section-block.no-section .body {
+  padding: 0; background: transparent;
+}
+
+/* ============ Locked Fields Header ============ */
+.locked-fields-header {
+  display: none;
+  margin: 0 0 16px;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, var(--navy), var(--navy-2));
+  color: #fff; border-radius: var(--radius-sm);
+  text-align: center; font-weight: 800;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(30,60,114,.15);
+}
+.locked-fields-header.show { display: block; }
+
+/* ============ Declaration ============ */
+.declaration-section {
+  background: linear-gradient(135deg, #f8fafc, #eef2f7);
+  padding: 24px;
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+  border-right: 5px solid var(--navy);
+  transition: border-color .3s;
+}
+.declaration-section h3 {
+  color: var(--navy); font-size: 18px;
+  margin: 0 0 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+.declaration-text {
+  background: #fff; padding: 18px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 14px; line-height: 2;
+  color: #334155;
+  border: 1px solid var(--line);
+}
+.declaration-text p { margin: 6px 0; }
+.declaration-text strong { color: var(--navy); }
+.declaration-approval {
+  margin-top: 16px;
+  padding: 18px;
+  text-align: center;
+  background: #fff8e1;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--gold);
+}
+.declaration-approval p { color: #856404; margin: 0 0 12px; font-size: 13px; font-weight: 700; }
+.btn-approve {
+  padding: 14px 36px;
+  background: var(--green); color: #fff;
+  border: none; border-radius: 12px;
+  font-size: 16px; font-weight: 800;
+  cursor: pointer; transition: all .3s;
+  box-shadow: 0 6px 18px rgba(40,167,69,.3);
+}
+.btn-approve:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(40,167,69,.4); }
+.btn-approve.approved { background: var(--navy); box-shadow: 0 6px 18px rgba(30,60,114,.3); }
+.approval-confirm {
+  display: none; margin-top: 12px;
+  padding: 12px; background: #d4edda;
+  border-radius: 10px; color: #155724;
+  font-weight: 800; border: 2px solid var(--green);
+}
+.approval-confirm.show { display: block; }
+
+/* ============ Warning Confirm Box ============ */
+.warning-confirm-box {
+  display: none;
+  background: #fff8e1;
+  border: 3px solid var(--gold);
+  border-radius: var(--radius);
+  padding: 24px; margin-bottom: 20px;
+  text-align: center;
+}
+.warning-confirm-box.show { display: block; }
+.warning-confirm-box .warn-icon { font-size: 46px; }
+.warning-confirm-box h3 { color: #856404; margin: 10px 0; font-size: 20px; }
+.warning-confirm-box p { color: #856404; font-size: 14px; }
+.warning-actions {
+  display: flex; gap: 12px; justify-content: center;
+  flex-wrap: wrap; margin-top: 16px;
+}
+.btn-confirm {
+  padding: 13px 32px; background: var(--red); color: #fff;
+  border: none; border-radius: 12px;
+  font-size: 16px; font-weight: 800; cursor: pointer;
+  transition: all .2s;
+  box-shadow: 0 4px 14px rgba(220,53,69,.3);
+}
+.btn-confirm:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(220,53,69,.4); }
+.btn-cancel-warning {
+  padding: 13px 32px; background: #6c757d; color: #fff;
+  border: none; border-radius: 12px;
+  font-size: 16px; font-weight: 800; cursor: pointer;
+  transition: all .2s;
+}
+.btn-cancel-warning:hover { background: #5a6268; }
+
+/* ============ Form Actions ============ */
+#formActions {
+  display: flex; flex-direction: column; gap: 10px;
+  margin-top: 20px;
+}
+.btn-success, .btn-primary {
+  width: 100%; padding: 16px;
+  border-radius: 12px;
+  font-size: 16px; font-weight: 800;
+  cursor: pointer; border: none;
+  transition: all .3s;
+  text-align: center;
+  text-decoration: none;
+  display: block;
+}
+.btn-success {
+  background: linear-gradient(135deg, var(--green), #1e7e34);
+  color: #fff;
+  box-shadow: 0 8px 22px rgba(40,167,69,.3);
+}
+.btn-success:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(40,167,69,.4);
+}
+.btn-success:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+.btn-primary {
+  background: linear-gradient(135deg, var(--navy), var(--navy-2));
+  color: #fff;
+  box-shadow: 0 8px 22px rgba(30,60,114,.3);
+}
+.btn-primary:hover { transform: translateY(-2px); }
+
+/* ============ Request Modals ============ */
+.request-modal {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 9999;
+  align-items: center; justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(4px);
+}
+.request-modal.show { display: flex; animation: _fadeIn .2s; }
+@keyframes _fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.request-modal .modal-content {
+  background: #fff;
+  max-width: 540px; width: 100%;
+  padding: 28px;
+  border-radius: var(--radius);
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,.3);
+  max-height: 90vh; overflow-y: auto;
+  animation: _slideUp .3s;
+}
+@keyframes _slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.request-modal h3 { color: var(--navy); margin: 0 0 10px; font-size: 18px; }
+.request-modal > .modal-content > p { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+.request-modal textarea,
+.request-modal input,
+.request-modal select {
+  width: 100%; padding: 12px;
+  border: 2px solid var(--line);
+  border-radius: 10px; font-family: inherit;
+  font-size: 14px; margin-top: 6px;
+  transition: border-color .2s;
+}
+.request-modal textarea:focus,
+.request-modal input:focus,
+.request-modal select:focus {
+  outline: none; border-color: var(--navy);
+  box-shadow: 0 0 0 4px rgba(30,60,114,.1);
+}
+.request-modal textarea { min-height: 90px; resize: vertical; }
+.request-modal .mg { margin-bottom: 14px; }
+.request-modal .mg label {
+  display: block; font-weight: 800;
+  font-size: 12px; color: #334155;
+  margin-bottom: 4px;
+}
+.request-modal .actions {
+  display: flex; gap: 10px;
+  margin-top: 16px; flex-wrap: wrap;
+}
+.request-modal .actions button {
+  flex: 1; min-width: 100px;
+  padding: 12px; border: none;
+  border-radius: 10px; font-weight: 800;
+  cursor: pointer; font-size: 14px;
+  transition: all .2s;
+}
+.btn-submit { background: var(--green); color: #fff; }
+.btn-submit:hover { background: #1e7e34; }
+.btn-cancel-modal { background: #6c757d; color: #fff; }
+.btn-cancel-modal:hover { background: #5a6268; }
+.request-error {
+  color: var(--red); font-size: 13px; display: none;
+  margin: 10px 0; padding: 10px;
+  background: #fee; border-radius: 8px;
+  border-right: 3px solid var(--red);
+}
+
+/* ============ Loading Skeleton ============ */
+.loading-container {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 80px 20px;
+}
+.loading-spinner {
+  width: 50px; height: 50px;
+  border: 4px solid var(--line);
+  border-top-color: var(--navy);
+  border-radius: 50%;
+  animation: _spin .8s linear infinite;
+  margin-bottom: 16px;
+}
+@keyframes _spin { to { transform: rotate(360deg); } }
+.loading-container p {
+  color: var(--muted); font-weight: 700; font-size: 14px;
+}
+
+/* ============ Responsive ============ */
+@media (max-width: 640px) {
+  .page-header { padding: 16px 0; }
+  .header-title h1 { font-size: 18px; }
+  .header-title p { font-size: 12px; }
+  .header-actions .btn-header { padding: 8px 14px; font-size: 12px; }
+
+  .container { padding: 0 12px; }
+  .card-header { padding: 14px 16px; }
+  .card-header h2 { font-size: 15px; }
+  .card-header .icon { width: 30px; height: 30px; font-size: 15px; }
+  .card-body { padding: 16px; }
+
+  .info-groups { grid-template-columns: 1fr; gap: 12px; }
+  .info-row { padding: 6px 0; }
+  .info-row .val { font-size: 12px; }
+
+  .stream-choices { grid-template-columns: 1fr; gap: 10px; }
+  .stream-choice { padding: 20px 16px; }
+  .stream-choice .icon { font-size: 32px; }
+  .stream-choice .title { font-size: 14px; }
+
+  .section-block .head { padding: 12px 16px; }
+  .section-block .head h3 { font-size: 14px; }
+  .section-block .body { padding: 16px; }
+
+  .btn-approve { width: 100%; padding: 13px 20px; font-size: 15px; }
+  .btn-confirm, .btn-cancel-warning { flex: 1; min-width: 120px; font-size: 14px; padding: 12px 16px; }
+
+  .progress-sticky { padding: 10px 12px; }
+  .progress-info .label { font-size: 11px; }
+  .progress-info .pct { font-size: 14px; }
+}
+
+/* ============ Print ============ */
+@media print {
+  .page-header,
+  .progress-sticky,
+  .header-actions,
+  .declaration-approval,
+  #formActions,
+  .info-actions { display: none !important; }
+  body { background: #fff; padding: 0; }
+  .card { box-shadow: none; border: 1px solid #ddd; }
 }
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="card">
-    <div class="form-header">
-      <div class="title">
+
+<!-- ============ Header ============ -->
+<header class="page-header">
+  <div class="container">
+    <div class="header-content">
+      <div class="header-title">
         <h1>🏫 مدرسة دشنا الثانوية</h1>
         <p>استمارة تسجيل الرغبات - العام الدراسي 2025/2026</p>
       </div>
-      <div class="actions">
-        <a href="index.html" class="btn-home">🏠 الرئيسية</a>
-        <button onclick="logoutStudent()" class="btn-logout-student">🚪 خروج</button>
+      <div class="header-actions">
+        <a href="index.html" class="btn-header btn-home">🏠 الرئيسية</a>
+        <button onclick="logoutStudent()" class="btn-header btn-logout">🚪 خروج</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ============ Loading ============ -->
+  <div id="loadingContainer" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>⏳ جاري تحميل بياناتك...</p>
+  </div>
+
+  <!-- ============ Content ============ -->
+  <div id="mainContent" style="display:none;">
+
+    <!-- ============ Sticky Progress Bar ============ -->
+    <div class="progress-sticky" id="progressWrap">
+      <div class="progress-info">
+        <span class="label">📋 اكتمال الاستمارة</span>
+        <span class="pct" id="progressPct">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      </div>
+      <div class="sections-mini" id="sectionsMini"></div>
+    </div>
+
+    <!-- ============ Status Message (for locked) ============ -->
+    <div id="statusMsg"></div>
+
+    <!-- ============ Core Info Card ============ -->
+    <div class="card" id="coreInfoCard">
+      <div class="card-header">
+        <h2>
+          <span class="icon">👤</span>
+          بياناتك المسجلة
+        </h2>
+        <span class="badge badge-readonly">🔒 للقراءة</span>
+      </div>
+      <div class="card-body">
+        <div class="info-groups" id="coreInfo"></div>
+        <div class="info-actions" id="coreActions" style="display:none;">
+          <button class="btn-request-edit" onclick="openEditRequestModal()">
+            📩 طلب تعديل على بياناتي
+          </button>
+        </div>
       </div>
     </div>
 
-    <div class="core-info" id="coreInfo"></div>
-    <div class="core-actions" id="coreActions" style="display:none;">
-      <button class="btn-request-edit" onclick="openEditRequestModal()">
-        📩 طلب تعديل على بياناتي
-      </button>
-    </div>
+    <!-- ============ Academic Choices Card ============ -->
+    <div class="card" id="academicCard">
+      <div class="card-header">
+        <h2>
+          <span class="icon">🎓</span>
+          اختيار التشعيب
+        </h2>
+      </div>
+      <div class="card-body">
 
-    <div class="selected-stream-display" id="selectedStreamDisplay">
-      🎯 التشعيب: <span id="selectedStreamText">—</span>
-    </div>
-    <div id="statusMsg"></div>
-
-    <form id="studentForm" class="form">
-      <div id="formContent">
-        <div class="progress-bar-wrap" id="progressWrap" style="display:none;">
-          <div class="head">
-            <span>📋 اكتمال الاستمارة</span>
-            <span id="progressPct">0%</span>
-          </div>
-          <div class="track"><div class="fill" id="progressFill" style="width:0%"></div></div>
-          <div class="sections-mini" id="sectionsMini"></div>
+        <div class="selected-stream-display" id="selectedStreamDisplay">
+          🎯 التشعيب: <span id="selectedStreamText">—</span>
         </div>
 
-        <!-- ✅ أُضيف ID للتحكم في الرؤية من config -->
+        <!-- Stream Selection -->
         <div class="form-group" id="streamGroup">
-          <label>التشعيب *</label>
-          <div class="btn-group">
-            <button type="button" class="btn-option" data-value="ثانوي" onclick="selectStream('ثانوي')">🎓 ثانوي</button>
-            <button type="button" class="btn-option" data-value="بكالوريا" onclick="selectStream('بكالوريا')">📚 بكالوريا</button>
+          <label>التشعيب <span class="req-star">*</span></label>
+          <div class="stream-choices">
+            <button type="button" class="stream-choice btn-option" data-value="ثانوي" onclick="selectStream('ثانوي')">
+              <span class="icon">🎓</span>
+              <span class="title">ثانوي</span>
+              <span class="desc">علمي / أدبي</span>
+            </button>
+            <button type="button" class="stream-choice btn-option" data-value="بكالوريا" onclick="selectStream('بكالوريا')">
+              <span class="icon">📚</span>
+              <span class="title">بكالوريا</span>
+              <span class="desc">مسارات متعددة</span>
+            </button>
           </div>
           <input type="hidden" id="stream" name="stream" required>
         </div>
 
+        <!-- Specialization (for ثانوي) -->
         <div id="specializationGroup" style="display:none;">
           <div class="form-group">
-            <label>التخصص *</label>
+            <label>التخصص <span class="req-star">*</span></label>
             <div class="btn-group">
               <button type="button" class="btn-option" data-value="علمي" onclick="selectSpecialization('علمي')">🔬 علمي</button>
               <button type="button" class="btn-option" data-value="أدبي" onclick="selectSpecialization('أدبي')">📝 أدبي</button>
@@ -167,11 +814,12 @@
           </div>
         </div>
 
+        <!-- Track & Optional (for بكالوريا) -->
         <div id="trackGroup" style="display:none;">
           <div class="form-group">
-            <label>المسار *</label>
+            <label>المسار <span class="req-star">*</span></label>
             <select id="track" name="track" class="form-control" onchange="updateSubjects()">
-              <option value="">اختر المسار</option>
+              <option value="">— اختر المسار —</option>
               <option value="مسار الطب وعلوم الحياة">مسار الطب وعلوم الحياة</option>
               <option value="مسار الهندسة وعلوم الحاسب">مسار الهندسة وعلوم الحاسب</option>
               <option value="مسار الأعمال">مسار الأعمال</option>
@@ -179,56 +827,67 @@
             </select>
           </div>
           <div class="form-group">
-            <label>المادة الاختيارية *</label>
+            <label>المادة الاختيارية <span class="req-star">*</span></label>
             <select id="optionalSubject" name="optionalSubject" class="form-control">
-              <option value="">اختر المادة</option>
+              <option value="">— اختر المادة —</option>
             </select>
           </div>
         </div>
 
-        <div class="locked-fields-header" id="lockedFieldsHeader">📋 بياناتك المسجلة (للقراءة فقط)</div>
-        <div id="dynamicFields"></div>
-
-        <div class="declaration-section" id="declarationSection">
-          <h3>📋 إقرار وتعهد</h3>
-          <div class="declaration-text">
-            <p>أنا الطالب/ة: <strong id="declarationStudentName">—</strong></p>
-            <p>أقر بأن جميع البيانات المدخلة <strong>صحيحة ودقيقة</strong>، وأتحمل المسؤولية الكاملة عن أي معلومات غير صحيحة.</p>
-            <p>وأوافق على تخزين ومعالجة بياناتي في نظام المدرسة.</p>
-          </div>
-          <div class="declaration-approval">
-            <p style="color:#856404;margin:0 0 12px;font-size:14px;">👆 اضغط للموافقة على الإقرار</p>
-            <button type="button" class="btn-approve" id="approveBtn" onclick="approveDeclaration()">
-              <span id="approveText">✅ أوافق على الإقرار</span>
-            </button>
-            <div class="approval-confirm" id="approvalConfirm">✅ تمت الموافقة</div>
-          </div>
-        </div>
-
-        <div class="warning-confirm-box" id="warningConfirmBox">
-          <span style="font-size:50px;">⚠️</span>
-          <h3 style="color:#856404;">تنبيه هام!</h3>
-          <p style="color:#856404;">بعد الضغط على "تأكيد الحفظ" لن تتمكن من تعديل أو تغيير أي بيانات.</p>
-          <div class="warning-actions">
-            <button type="button" class="btn-cancel-warning" onclick="cancelWarning()">🔙 العودة للمراجعة</button>
-            <button type="button" class="btn-confirm" onclick="confirmSave()">✅ تأكيد الحفظ النهائي</button>
-          </div>
-        </div>
-
-        <div id="formActions">
-          <button type="button" class="btn-success" id="saveBtn" onclick="showWarning()">💾 حفظ وتقديم الطلب</button>
-          <a href="student-pdf.html" class="btn-primary" id="pdfBtn" style="display:none;">📄 طباعة PDF</a>
-        </div>
       </div>
-    </form>
+    </div>
+
+    <!-- ============ Dynamic Fields Header ============ -->
+    <div class="locked-fields-header" id="lockedFieldsHeader">
+      📋 البيانات الإضافية (للقراءة فقط)
+    </div>
+
+    <!-- ============ Dynamic Fields ============ -->
+    <div id="dynamicFields"></div>
+
+    <!-- ============ Declaration ============ -->
+    <div class="declaration-section" id="declarationSection">
+      <h3>📋 إقرار وتعهد</h3>
+      <div class="declaration-text">
+        <p>أنا الطالب/ة: <strong id="declarationStudentName">—</strong></p>
+        <p>أقر بأن جميع البيانات المدخلة <strong>صحيحة ودقيقة</strong>، وأتحمل المسؤولية الكاملة عن أي معلومات غير صحيحة.</p>
+        <p>وأوافق على تخزين ومعالجة بياناتي في نظام المدرسة.</p>
+      </div>
+      <div class="declaration-approval">
+        <p>👆 اضغط للموافقة على الإقرار</p>
+        <button type="button" class="btn-approve" id="approveBtn" onclick="approveDeclaration()">
+          <span id="approveText">✅ أوافق على الإقرار</span>
+        </button>
+        <div class="approval-confirm" id="approvalConfirm">✅ تمت الموافقة</div>
+      </div>
+    </div>
+
+    <!-- ============ Warning Confirm ============ -->
+    <div class="warning-confirm-box" id="warningConfirmBox">
+      <div class="warn-icon">⚠️</div>
+      <h3>تنبيه هام!</h3>
+      <p>بعد الضغط على "تأكيد الحفظ" لن تتمكن من تعديل أو تغيير أي بيانات.</p>
+      <div class="warning-actions">
+        <button type="button" class="btn-cancel-warning" onclick="cancelWarning()">🔙 العودة للمراجعة</button>
+        <button type="button" class="btn-confirm" onclick="confirmSave()">✅ تأكيد الحفظ النهائي</button>
+      </div>
+    </div>
+
+    <!-- ============ Actions ============ -->
+    <div id="formActions">
+      <button type="button" class="btn-success" id="saveBtn" onclick="showWarning()">💾 حفظ وتقديم الطلب</button>
+      <a href="student-pdf.html" class="btn-primary" id="pdfBtn" style="display:none;">📄 طباعة PDF</a>
+    </div>
+
   </div>
 </div>
 
+<!-- ============ Request Reopen Modal ============ -->
 <div class="request-modal" id="requestModal">
   <div class="modal-content">
     <h3>📩 طلب فتح التعديل</h3>
-    <p style="color:#666;font-size:14px;margin:0 0 12px;">يرجى كتابة سبب واضح للطلب (10 أحرف على الأقل)</p>
-    <textarea id="requestReason" placeholder="مثال: أخطأت في اختيار التخصص..." required minlength="10"></textarea>
+    <p>يرجى كتابة سبب واضح للطلب (10 أحرف على الأقل)</p>
+    <textarea id="requestReason" placeholder="مثال: أخطأت في اختيار التخصص، أرجو السماح لي بالتعديل..." required minlength="10"></textarea>
     <div class="request-error" id="requestError"></div>
     <div class="actions">
       <button class="btn-submit" onclick="submitRequest()">📤 إرسال</button>
@@ -237,10 +896,11 @@
   </div>
 </div>
 
+<!-- ============ Request Edit Modal ============ -->
 <div class="request-modal" id="editRequestModal">
   <div class="modal-content">
     <h3>📩 طلب تعديل بيانات</h3>
-    <p style="color:#666;font-size:14px;margin:0 0 12px;">اختر الحقل الذي تريد تعديله. سيُراجع الأدمن طلبك قبل التطبيق.</p>
+    <p>اختر الحقل الذي تريد تعديله. سيُراجع الأدمن طلبك قبل التطبيق.</p>
 
     <div class="mg">
       <label>الحقل المطلوب تعديله *</label>
@@ -284,7 +944,7 @@ let studentData = null, fieldsData = [], dynamicValues = {}, isLocked = false;
 let isDeclarationApproved = false, isSaving = false, requestStatus = null;
 let isFirstGrade = false;
 let isStreamLocked = false;
-let coreConfig = {};   // ← جديد: إعدادات الحقول الأساسية
+let coreConfig = {};
 
 const tracks = {
   'مسار الطب وعلوم الحياة': ['فيزياء', 'رياضيات'],
@@ -297,18 +957,30 @@ function logoutStudent() {
   if (confirm('هل أنت متأكد من الخروج؟')) Auth.studentLogout();
 }
 
-// ✅ دالة مساعدة لقراءة الإعداد
-function cfgOf(key, def = {}) {
-  return coreConfig[key] || { field_key: key, is_readonly: false, is_visible: true, is_required: false, ...def };
+// ✅ دالة دفاعية: لا تُخفي إلا عند FALSE صريح
+function cfgOf(key) {
+  const raw = coreConfig[key];
+  if (!raw) {
+    return { field_key: key, is_readonly: false, is_visible: true, is_required: false };
+  }
+  return {
+    field_key: raw.field_key || key,
+    is_readonly: raw.is_readonly === true,
+    is_visible: raw.is_visible !== false,   // ← المفتاح: يعرض إلا عند FALSE صريح
+    is_required: raw.is_required === true,
+  };
 }
 
 async function loadData() {
   try {
-    const [{ data: s, error: e1 }, { data: f }, { data: r }, { data: cfg }] = await Promise.all([
+    const [{ data: s, error: e1 }, { data: f }, { data: r }, cfgRes] = await Promise.all([
       SB.rpc('student_get_data', { p_token: token }),
       SB.rpc('student_get_fields', { p_token: token }),
       SB.rpc('student_get_responses', { p_token: token }),
-      SB.rpc('student_get_core_config').catch(() => ({ data: [] }))
+      SB.rpc('student_get_core_config').catch(err => {
+        console.warn('core_config RPC failed:', err);
+        return { data: [] };
+      })
     ]);
     if (e1 || !s) { Auth.studentLogout(); return; }
 
@@ -317,9 +989,13 @@ async function loadData() {
     (r || []).forEach(x => { dynamicValues[x.field_id] = x.value; });
     isLocked = s.is_locked && s.submitted_at;
 
-    // ✅ بناء خريطة الإعداد
+    // بناء خريطة الإعداد
     coreConfig = {};
-    (cfg || []).forEach(c => { coreConfig[c.field_key] = c; });
+    (cfgRes?.data || []).forEach(c => { coreConfig[c.field_key] = c; });
+
+    // Debug (يمكن إزالته لاحقاً)
+    console.log('[CFG] coreConfig:', coreConfig);
+    console.log('[CFG] hidden fields:', Object.keys(coreConfig).filter(k => coreConfig[k].is_visible === false));
 
     isFirstGrade   = (s.grade === 'الأول الثانوي');
     isStreamLocked = (s.stream_locked === true);
@@ -328,19 +1004,27 @@ async function loadData() {
     document.getElementById('declarationStudentName').textContent = s.full_name;
 
     // ==========================================================
-    // ✅ منطق التشعيب مع الإعدادات الجديدة
+    // منطق التشعيب
     // ==========================================================
     const streamCfg = cfgOf('stream');
     const specCfg   = cfgOf('specialization');
     const trackCfg  = cfgOf('track');
     const optCfg    = cfgOf('optional_subject');
 
-    // 1) إخفاء الحقول التي إعدادها is_visible = false
-    if (!streamCfg.is_visible) {
+    // إخفاء بطاقة التشعيب بالكامل لو التشعيب مخفي
+    const academicCard = document.getElementById('academicCard');
+    const allAcademicHidden =
+      streamCfg.is_visible === false &&
+      specCfg.is_visible === false &&
+      trackCfg.is_visible === false &&
+      optCfg.is_visible === false;
+
+    if (allAcademicHidden) {
+      academicCard.style.display = 'none';
+    } else if (streamCfg.is_visible === false) {
       document.getElementById('streamGroup').style.display = 'none';
     }
 
-    // 2) تحديد حالة قفل حقل التشعيب
     const streamReadonly = streamCfg.is_readonly === true || isStreamLocked;
     const showStreamBadgeOnly = isFirstGrade || streamReadonly;
 
@@ -349,7 +1033,6 @@ async function loadData() {
       hideStreamControls();
       showStreamBadge('🎓 عام (الصف الأول الثانوي)');
     } else if (showStreamBadgeOnly) {
-      // مقفل من الإدارة أو من الأدمن (لكل طالب)
       document.getElementById('stream').value = s.stream || '';
       if (s.stream === 'ثانوي' && s.specialization) {
         document.getElementById('specialization').value = s.specialization;
@@ -368,9 +1051,8 @@ async function loadData() {
       if (s.specialization) parts.push(s.specialization);
       if (s.track) parts.push(s.track);
       const reason = isStreamLocked ? '🔒 مقفل (خاص بالطالب)' : '🔒 مقفل (من الإدارة)';
-      showStreamBadge(reason + ' ' + parts.filter(Boolean).join(' / '));
+      showStreamBadge(reason + ' — ' + parts.filter(Boolean).join(' / '));
     } else if (s.stream) {
-      // غير مقفل → اختيار طبيعي
       selectStream(s.stream, true);
       if (s.stream === 'ثانوي' && s.specialization) selectSpecialization(s.specialization, true);
       if (s.stream === 'بكالوريا' && s.track) {
@@ -380,25 +1062,29 @@ async function loadData() {
       }
     }
 
-    // 3) إخفاء التخصص/المسار/المادة الاختيارية لو إعداداتها مخفية
-    if (!specCfg.is_visible) {
+    // إخفاء التخصص/المسار/المادة لو إعداداتها FALSE صريح
+    if (specCfg.is_visible === false) {
       document.getElementById('specializationGroup').style.display = 'none';
     }
-    if (!trackCfg.is_visible) {
+    if (trackCfg.is_visible === false) {
       const trackFG = document.getElementById('track')?.closest('.form-group');
       if (trackFG) trackFG.style.display = 'none';
     }
-    if (!optCfg.is_visible) {
+    if (optCfg.is_visible === false) {
       const optFG = document.getElementById('optionalSubject')?.closest('.form-group');
       if (optFG) optFG.style.display = 'none';
     }
 
     renderFields();
 
+    // إظهار المحتوى الرئيسي وإخفاء اللودر
+    document.getElementById('loadingContainer').style.display = 'none';
+    document.getElementById('mainContent').style.display = 'block';
+
     if (isLocked) {
       document.getElementById('saveBtn').style.display = 'none';
       document.getElementById('pdfBtn').style.display = 'block';
-      document.getElementById('progressWrap').style.display = 'none';
+      document.getElementById('progressWrap').classList.remove('visible');
       document.getElementById('declarationSection').style.display = 'none';
       document.getElementById('lockedFieldsHeader').classList.add('show');
       disableAllInputs();
@@ -410,30 +1096,57 @@ async function loadData() {
     setupProgress();
   } catch (err) {
     console.error(err);
-    Toast.show('خطأ في تحميل البيانات', 'error');
+    document.getElementById('loadingContainer').innerHTML =
+      '<p style="color:#dc3545;">❌ حدث خطأ في تحميل البيانات<br><small>' + esc(err.message || '') + '</small></p>';
   }
 }
 
 function renderCoreInfo(s) {
-  const parts = [];
-  const add = (key, label, val) => {
+  // تقسيم للبيانات في مجموعات
+  const groups = { identity: [], academic: [], personal: [] };
+
+  const add = (group, key, label, val) => {
     const c = cfgOf(key);
-    if (!c.is_visible) return;
-    parts.push(`<div class="item"><span class="lbl">${label}</span><span class="val">${val}</span></div>`);
+    if (c.is_visible === false) return;
+    groups[group].push({ label, val });
   };
-  add('full_name', 'الاسم', esc(s.full_name));
-  parts.push(`<div class="item"><span class="lbl">كود الطالب</span><span class="val" dir="ltr">${esc(s.student_code)}</span></div>`);
-  parts.push(`<div class="item"><span class="lbl">الرقم القومي</span><span class="val" dir="ltr">${esc(s.national_id_masked)}</span></div>`);
-  add('grade', 'الصف', esc(s.grade || '—'));
-  add('enrollment_status', 'حالة القيد', esc(s.enrollment_status || '—'));
-  add('gender', 'النوع', esc(s.gender || '—'));
-  add('date_of_birth', 'تاريخ الميلاد', s.date_of_birth ? new Date(s.date_of_birth).toLocaleDateString('ar-EG') : '—');
-  add('governorate', 'المحافظة', esc(s.governorate || '—'));
-  document.getElementById('coreInfo').innerHTML = parts.join('');
+
+  add('identity', 'full_name', 'الاسم', esc(s.full_name));
+  // الكود والرقم القومي دائماً ظاهران (لا يوجد لهما إعداد)
+  groups.identity.push({ label: 'كود الطالب', val: esc(s.student_code), ltr: true });
+  groups.identity.push({ label: 'الرقم القومي', val: esc(s.national_id_masked), ltr: true });
+
+  add('academic', 'grade', 'الصف', esc(s.grade || '—'));
+  add('academic', 'enrollment_status', 'حالة القيد', esc(s.enrollment_status || '—'));
+
+  add('personal', 'gender', 'النوع', esc(s.gender || '—'));
+  add('personal', 'date_of_birth', 'تاريخ الميلاد', s.date_of_birth ? new Date(s.date_of_birth).toLocaleDateString('ar-EG') : '—');
+  add('personal', 'governorate', 'المحافظة', esc(s.governorate || '—'));
+
+  const groupDefs = [
+    { key: 'identity', title: '🆔 الهوية', items: groups.identity },
+    { key: 'academic', title: '📚 الدراسة', items: groups.academic },
+    { key: 'personal', title: '👤 شخصية', items: groups.personal }
+  ].filter(g => g.items.length > 0);
+
+  document.getElementById('coreInfo').innerHTML = groupDefs.map(g => `
+    <div class="info-group">
+      <h4 class="info-group-title">${g.title}</h4>
+      ${g.items.map(it => `
+        <div class="info-row">
+          <span class="lbl">${it.label}</span>
+          <span class="val" ${it.ltr ? 'dir="ltr"' : ''}>${it.val}</span>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
 }
 
 function disableAllInputs() {
-  document.querySelectorAll('.btn-option').forEach(b => { b.disabled = true; b.style.cursor = 'not-allowed'; });
+  document.querySelectorAll('.btn-option').forEach(b => {
+    b.disabled = true;
+    b.style.cursor = 'not-allowed';
+  });
   ['track', 'optionalSubject'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.disabled = true;
@@ -456,16 +1169,24 @@ function selectStream(v, silent = false) {
   if (isFirstGrade && !silent) return;
   if (isStreamLocked && !silent) return;
   if (cfgOf('stream').is_readonly && !silent) return;
+
   document.getElementById('stream').value = v;
   document.querySelectorAll('.btn-option[data-value="ثانوي"], .btn-option[data-value="بكالوريا"]')
     .forEach(el => el.classList.toggle('active', el.dataset.value === v));
+
   document.getElementById('selectedStreamDisplay').classList.add('show');
   document.getElementById('selectedStreamText').textContent = v === 'ثانوي' ? '🎓 ثانوي' : '📚 بكالوريا';
-  document.getElementById('specializationGroup').style.display = v === 'ثانوي' ? 'block' : 'none';
-  document.getElementById('trackGroup').style.display = v === 'بكالوريا' ? 'block' : 'none';
+
+  // إظهار/إخفاء حسب الاختيار
+  const showSpec = v === 'ثانوي' && cfgOf('specialization').is_visible !== false;
+  const showTrack = v === 'بكالوريا' && cfgOf('track').is_visible !== false;
+
+  document.getElementById('specializationGroup').style.display = showSpec ? 'block' : 'none';
+  document.getElementById('trackGroup').style.display = showTrack ? 'block' : 'none';
+
   if (v === 'بكالوريا' && !silent) {
     document.getElementById('track').value = '';
-    document.getElementById('optionalSubject').innerHTML = '<option value="">اختر المادة</option>';
+    document.getElementById('optionalSubject').innerHTML = '<option value="">— اختر المادة —</option>';
   }
 }
 
@@ -474,6 +1195,7 @@ function selectSpecialization(v, silent = false) {
   if (isFirstGrade && !silent) return;
   if (isStreamLocked && !silent) return;
   if (cfgOf('stream').is_readonly && !silent) return;
+
   document.getElementById('specialization').value = v;
   document.querySelectorAll('.btn-option[data-value="علمي"], .btn-option[data-value="أدبي"]')
     .forEach(el => el.classList.toggle('active', el.dataset.value === v));
@@ -482,7 +1204,7 @@ function selectSpecialization(v, silent = false) {
 function updateSubjects() {
   const track = document.getElementById('track').value;
   const sel = document.getElementById('optionalSubject');
-  sel.innerHTML = '<option value="">اختر المادة</option>';
+  sel.innerHTML = '<option value="">— اختر المادة —</option>';
   (tracks[track] || []).forEach(s => {
     sel.innerHTML += `<option value="${esc(s)}">${esc(s)}</option>`;
   });
@@ -557,14 +1279,14 @@ function renderField(f) {
   const disabledAttr = ro ? 'disabled' : '';
   const onChange = ro ? '' : `onchange="onFieldChange('${f.id}', this.value)"`;
   const badge = isFieldReadonly ? ' <span class="admin-badge">🔒 من الإدارة</span>' : '';
-  const star = f.is_required && !ro ? ' <span style="color:#dc3545;">*</span>' : '';
+  const star = f.is_required && !ro ? ' <span class="req-star">*</span>' : '';
   const label = `<label>${esc(f.name)}${star}${badge}</label>`;
 
   if (f.type === 'select') {
     const opts = (f.options || []).map(o => `<option value="${esc(o)}" ${val === o ? 'selected' : ''}>${esc(o)}</option>`).join('');
     return `<div class="form-group">${label}
       <select class="form-control" ${disabledAttr} ${onChange}>
-        <option value="">${ro ? '—' : 'اختر...'}</option>${opts}
+        <option value="">${ro ? '—' : '— اختر —'}</option>${opts}
       </select></div>`;
   }
 
@@ -580,16 +1302,21 @@ function onFieldChange(id, value) {
 
 function setupProgress() {
   const editable = fieldsData.filter(f => !f.is_readonly);
-  if (editable.length === 0) return;
-  document.getElementById('progressWrap').style.display = 'block';
+  if (editable.length === 0) {
+    document.getElementById('progressWrap').classList.remove('visible');
+    return;
+  }
+  document.getElementById('progressWrap').classList.add('visible');
   updateProgress();
 }
 
 function updateProgress() {
   const editable = fieldsData.filter(f => !f.is_readonly);
   if (editable.length === 0) return;
+
   const filled = editable.filter(f => (dynamicValues[f.id] || '').trim() !== '').length;
   const pct = Math.round((filled / editable.length) * 100);
+
   document.getElementById('progressPct').textContent = pct + '%';
   document.getElementById('progressFill').style.width = pct + '%';
 
@@ -620,12 +1347,12 @@ function showWarning() {
   if (isFirstGrade) {
     if (stream !== 'عام') return Toast.show('خطأ: تشعيب الصف الأول يجب أن يكون "عام"', 'error');
   } else if (!streamCfg.is_readonly && !isStreamLocked) {
-    if (streamCfg.is_visible && !stream) return Toast.show('اختر التشعيب', 'error');
-    if (stream === 'ثانوي' && cfgOf('specialization').is_visible && !document.getElementById('specialization').value)
+    if (streamCfg.is_visible !== false && !stream) return Toast.show('اختر التشعيب', 'error');
+    if (stream === 'ثانوي' && cfgOf('specialization').is_visible !== false && !document.getElementById('specialization').value)
       return Toast.show('اختر التخصص', 'error');
     if (stream === 'بكالوريا') {
-      if (cfgOf('track').is_visible && !document.getElementById('track').value) return Toast.show('اختر المسار', 'error');
-      if (cfgOf('optional_subject').is_visible && !document.getElementById('optionalSubject').value) return Toast.show('اختر المادة', 'error');
+      if (cfgOf('track').is_visible !== false && !document.getElementById('track').value) return Toast.show('اختر المسار', 'error');
+      if (cfgOf('optional_subject').is_visible !== false && !document.getElementById('optionalSubject').value) return Toast.show('اختر المادة', 'error');
     }
   }
 
@@ -640,7 +1367,10 @@ function showWarning() {
   document.getElementById('warningConfirmBox').classList.add('show');
   document.getElementById('warningConfirmBox').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
-function cancelWarning() { document.getElementById('warningConfirmBox').classList.remove('show'); }
+
+function cancelWarning() {
+  document.getElementById('warningConfirmBox').classList.remove('show');
+}
 
 async function confirmSave() {
   if (isSaving || isLocked) return;
@@ -691,13 +1421,15 @@ async function showLocked(s) {
       <span class="icon">🔒</span>
       <h3>تم تسجيل الرغبات مسبقاً</h3>
       <p>${s.submitted_at ? '📅 ' + new Date(s.submitted_at).toLocaleString('ar-EG') : ''}</p>
-      ${req ? `<div style="margin:15px auto;max-width:500px;padding:15px;border-radius:12px;background:${
+      ${req ? `<div style="margin:16px auto;max-width:500px;padding:14px;border-radius:12px;background:${
         req.status === 'pending' ? '#fff3cd' : req.status === 'approved' ? '#d4edda' : '#f8d7da'
+      };color:${req.status === 'pending' ? '#856404' : req.status === 'approved' ? '#155724' : '#721c24'};border:1px solid ${
+        req.status === 'pending' ? '#ffc107' : req.status === 'approved' ? '#28a745' : '#dc3545'
       };">
         <strong>${req.status === 'pending' ? '⏳ قيد الانتظار' : req.status === 'approved' ? '✅ تمت الموافقة' : '❌ مرفوض'}</strong>
-        ${req.admin_response ? `<div style="margin-top:8px;font-size:13px;">${esc(req.admin_response)}</div>` : ''}
+        ${req.admin_response ? `<div style="margin-top:8px;font-size:13px;font-weight:500;">${esc(req.admin_response)}</div>` : ''}
       </div>` : ''}
-      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:15px;">
+      <div class="locked-actions">
         ${canRequest ? '<button class="btn-request" onclick="showRequestModal()">📩 طلب فتح التعديل</button>' : ''}
         <a href="student-pdf.html" class="btn-print-only">📄 طباعة PDF</a>
       </div>
@@ -709,7 +1441,9 @@ function showRequestModal() {
   document.getElementById('requestReason').value = '';
   document.getElementById('requestError').style.display = 'none';
 }
-function closeRequestModal() { document.getElementById('requestModal').classList.remove('show'); }
+function closeRequestModal() {
+  document.getElementById('requestModal').classList.remove('show');
+}
 
 async function submitRequest() {
   const reason = document.getElementById('requestReason').value.trim();
