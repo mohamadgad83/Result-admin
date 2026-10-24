@@ -8,11 +8,13 @@
 <link rel="stylesheet" href="style.css">
 <style>
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:20px 0}
-.stat-card{background:linear-gradient(135deg,#1e3c72,#2a5298);color:#fff;padding:18px;border-radius:14px;text-align:center;position:relative;overflow:hidden}
+.stat-card{background:linear-gradient(135deg,#1e3c72,#2a5298);color:#fff;padding:18px;border-radius:14px;text-align:center;position:relative;overflow:hidden;transition:transform .2s}
+.stat-card:hover{transform:translateY(-2px)}
 .stat-card.green{background:linear-gradient(135deg,#28a745,#20c997)}
 .stat-card.orange{background:linear-gradient(135deg,#fd7e14,#ffc107)}
 .stat-card.purple{background:linear-gradient(135deg,#6f42c1,#a855f7)}
 .stat-card.teal{background:linear-gradient(135deg,#20c997,#0dcaf0)}
+.stat-card.red{background:linear-gradient(135deg,#dc3545,#e83e8c)}
 .stat-card .num{font-size:28px;font-weight:800;position:relative;z-index:1}
 .stat-card .lbl{font-size:13px;opacity:.9;position:relative;z-index:1}
 .quick-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:20px 0}
@@ -57,19 +59,23 @@ tr:hover{background:#f8f9fa}
       <div class="stat-card orange"><div class="num" id="unlockedStudents">-</div><div class="lbl">مفتوح للتعديل</div></div>
       <div class="stat-card purple"><div class="num" id="todayStudents">-</div><div class="lbl">سجلوا اليوم</div></div>
       <div class="stat-card teal"><div class="num" id="totalFields">-</div><div class="lbl">حقول ديناميكية</div></div>
-      <div class="stat-card teal" style="cursor:pointer;" onclick="location.href='admin-edit-requests.html'">
-  <div class="num" id="pendingEditRequests">-</div>
-  <div class="lbl">طلبات تعديل معلقة</div>
-</div>
-      <div class="stat-card orange" style="cursor:pointer;" onclick="location.href='admin-requests.html'"><div class="num" id="pendingRequests">-</div><div class="lbl">طلبات فتح</div></div>
+      <div class="stat-card red" style="cursor:pointer;" onclick="location.href='admin-edit-requests.html'">
+        <div class="num" id="pendingEditRequests">-</div>
+        <div class="lbl">طلبات تعديل حقول</div>
+      </div>
+      <div class="stat-card orange" style="cursor:pointer;" onclick="location.href='admin-requests.html'">
+        <div class="num" id="pendingRequests">-</div>
+        <div class="lbl">طلبات فتح استمارة</div>
+      </div>
     </div>
 
     <h3>⚡ إجراءات سريعة</h3>
     <div class="quick-actions">
       <a href="admin-students.html" class="quick-action"><span class="icon">👨‍🎓</span><span class="title">الطلاب</span></a>
-      <a href="admin-fields.html" class="quick-action"><span class="icon">📝</span><span class="title">الحقول</span></a>
+      <a href="admin-fields.html" class="quick-action"><span class="icon">📝</span><span class="title">الحقول والأقسام</span></a>
       <a href="admin-import-export.html" class="quick-action"><span class="icon">📤</span><span class="title">استيراد/تصدير</span></a>
-      <a href="admin-requests.html" class="quick-action"><span class="icon">📩</span><span class="title">طلبات الفتح</span></a>
+      <a href="admin-edit-requests.html" class="quick-action"><span class="icon">✏️</span><span class="title">طلبات التعديل</span></a>
+      <a href="admin-requests.html" class="quick-action"><span class="icon">🔓</span><span class="title">طلبات الفتح</span></a>
       <a href="admin-logs.html" class="quick-action"><span class="icon">📋</span><span class="title">سجل النشاط</span></a>
     </div>
 
@@ -106,28 +112,45 @@ let charts = {};
 
 async function loadAll() {
   try {
-    const [{count:total},{count:locked},{count:fields},{count:today},{count:pending},{data:recent}] = await Promise.all([
-      SB.from('students').select('*',{count:'exact',head:true}),
-      SB.from('students').select('*',{count:'exact',head:true}).eq('is_locked',true),
-      SB.from('dynamic_fields').select('*',{count:'exact',head:true}),
-      SB.from('students').select('*',{count:'exact',head:true}).gte('created_at', new Date(new Date().setHours(0,0,0,0)).toISOString()),
-      SB.from('reopen_requests').select('*',{count:'exact',head:true}).eq('status','pending'),
-      SB.from('students').select('full_name,student_code,stream,created_at,is_locked').order('created_at',{ascending:false}).limit(5)
+    // ✅ كل الاستعلامات داخل Promise.all (بما فيها edit_requests)
+    const [
+      { count: total },
+      { count: locked },
+      { count: fields },
+      { count: today },
+      { count: pendingReopen },
+      { count: pendingEdit },
+      { data: recent }
+    ] = await Promise.all([
+      SB.from('students').select('*', { count: 'exact', head: true }),
+      SB.from('students').select('*', { count: 'exact', head: true }).eq('is_locked', true),
+      SB.from('dynamic_fields').select('*', { count: 'exact', head: true }),
+      SB.from('students').select('*', { count: 'exact', head: true }).gte('created_at', new Date(new Date().setHours(0,0,0,0)).toISOString()),
+      SB.from('reopen_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+      SB.from('edit_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+      SB.from('students').select('full_name,student_code,stream,created_at,is_locked').order('created_at', { ascending: false }).limit(5)
     ]);
+
     document.getElementById('totalStudents').textContent = total || 0;
     document.getElementById('lockedStudents').textContent = locked || 0;
-    document.getElementById('unlockedStudents').textContent = (total||0)-(locked||0);
+    document.getElementById('unlockedStudents').textContent = (total || 0) - (locked || 0);
     document.getElementById('totalFields').textContent = fields || 0;
     document.getElementById('todayStudents').textContent = today || 0;
-    document.getElementById('pendingRequests').textContent = pending || 0;
+    document.getElementById('pendingRequests').textContent = pendingReopen || 0;
+    document.getElementById('pendingEditRequests').textContent = pendingEdit || 0;
 
     const recEl = document.getElementById('recent');
     if (!recent || recent.length === 0) {
       recEl.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">📭 لا يوجد طلاب</div>';
     } else {
       recEl.innerHTML = `<table><thead><tr><th>#</th><th>الاسم</th><th>الكود</th><th>التشعيب</th><th>الحالة</th></tr></thead><tbody>
-        ${recent.map((s,i)=>`<tr><td>${i+1}</td><td>${esc(s.full_name)}</td><td dir="ltr">${esc(s.student_code)}</td>
-          <td>${esc(s.stream||'-')}</td><td>${s.is_locked?'🔒':'🔓'}</td></tr>`).join('')}
+        ${recent.map((s, i) => `<tr>
+          <td>${i + 1}</td>
+          <td>${esc(s.full_name)}</td>
+          <td dir="ltr">${esc(s.student_code)}</td>
+          <td>${esc(s.stream || '-')}</td>
+          <td>${s.is_locked ? '🔒' : '🔓'}</td>
+        </tr>`).join('')}
       </tbody></table>`;
     }
     loadCharts();
@@ -137,35 +160,32 @@ async function loadAll() {
     Toast.show('خطأ في تحميل الإحصائيات', 'error');
   }
 }
-const { count: editPending } = await SB.from('edit_requests')
-  .select('*', { count: 'exact', head: true })
-  .eq('status', 'pending');
-document.getElementById('pendingEditRequests').textContent = editPending || 0;
+
 async function loadCharts() {
   const { data: students } = await SB.from('students').select('stream,specialization');
   if (!students || students.length === 0) return;
   const streams = {
-    'ثانوي': students.filter(s=>s.stream==='ثانوي').length,
-    'بكالوريا': students.filter(s=>s.stream==='بكالوريا').length
+    'ثانوي': students.filter(s => s.stream === 'ثانوي').length,
+    'بكالوريا': students.filter(s => s.stream === 'بكالوريا').length
   };
   if (charts.stream) charts.stream.destroy();
   charts.stream = new Chart(document.getElementById('streamChart'), {
     type: 'doughnut',
-    data: { labels:['ثانوي','بكالوريا'], datasets:[{data:[streams['ثانوي'],streams['بكالوريا']], backgroundColor:['#1e3c72','#28a745'], borderWidth:2, borderColor:'#fff'}]},
-    options: { responsive:true, plugins:{ legend:{position:'bottom'} } }
+    data: { labels: ['ثانوي', 'بكالوريا'], datasets: [{ data: [streams['ثانوي'], streams['بكالوريا']], backgroundColor: ['#1e3c72', '#28a745'], borderWidth: 2, borderColor: '#fff' }] },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
   });
-  const sec = students.filter(s=>s.stream==='ثانوي');
-  const specs = { 'علمي': sec.filter(s=>s.specialization==='علمي').length, 'أدبي': sec.filter(s=>s.specialization==='أدبي').length };
+  const sec = students.filter(s => s.stream === 'ثانوي');
+  const specs = { 'علمي': sec.filter(s => s.specialization === 'علمي').length, 'أدبي': sec.filter(s => s.specialization === 'أدبي').length };
   if (charts.spec) charts.spec.destroy();
   charts.spec = new Chart(document.getElementById('specChart'), {
     type: 'pie',
-    data: { labels:['علمي','أدبي'], datasets:[{data:[specs['علمي'],specs['أدبي']], backgroundColor:['#6f42c1','#fd7e14'], borderWidth:2, borderColor:'#fff'}]},
-    options: { responsive:true, plugins:{ legend:{position:'bottom'} } }
+    data: { labels: ['علمي', 'أدبي'], datasets: [{ data: [specs['علمي'], specs['أدبي']], backgroundColor: ['#6f42c1', '#fd7e14'], borderWidth: 2, borderColor: '#fff' }] },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
   });
 }
 
 async function loadActivities() {
-  const { data } = await SB.from('admin_logs').select('*').order('created_at',{ascending:false}).limit(10);
+  const { data } = await SB.from('admin_logs').select('*').order('created_at', { ascending: false }).limit(10);
   const el = document.getElementById('activities');
   if (!data || data.length === 0) {
     el.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">📭 لا توجد نشاطات</div>';
@@ -174,7 +194,7 @@ async function loadActivities() {
   el.innerHTML = data.map(log => `
     <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #eee;flex-wrap:wrap;gap:8px;">
       <strong style="color:#1e3c72;font-size:13px;">${esc(log.action)}</strong>
-      <span style="flex:1;color:#555;font-size:13px;margin:0 10px;">${esc(log.details||'')}</span>
+      <span style="flex:1;color:#555;font-size:13px;margin:0 10px;">${esc(log.details || '')}</span>
       <span style="color:#999;font-size:11px;">${new Date(log.created_at).toLocaleString('ar-EG')}</span>
     </div>`).join('');
 }
