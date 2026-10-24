@@ -95,6 +95,7 @@ tr.selected{background:#e7f5ea}
 <script src="lib/auth.js"></script>
 <script src="lib/toast.js"></script>
 <script src="lib/escape.js"></script>
+<script src="lib/excel.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <script>
 const PAGE_SIZE = 50;
@@ -140,9 +141,9 @@ async function loadStudents() {
 }
 
 async function updateStats(total) {
-  const [{count:locked},{count:unlocked}] = await Promise.all([
-    SB.from('students').select('*',{count:'exact',head:true}).eq('is_locked',true),
-    SB.from('students').select('*',{count:'exact',head:true}).or('is_locked.is.null,is_locked.eq.false')
+  const [{ count: locked }, { count: unlocked }] = await Promise.all([
+    SB.from('students').select('*', { count: 'exact', head: true }).eq('is_locked', true),
+    SB.from('students').select('*', { count: 'exact', head: true }).or('is_locked.is.null,is_locked.eq.false')
   ]);
   document.getElementById('lockedCount').textContent = locked || 0;
   document.getElementById('unlockedCount').textContent = unlocked || 0;
@@ -151,7 +152,8 @@ async function updateStats(total) {
 function render() {
   const tb = document.getElementById('tbody');
   if (allStudents.length === 0) {
-    tb.innerHTML = '<tr><td colspan="8" style="padding:30px;text-align:center;color:#999;">📭 لا يوجد طلاب</td></tr>';
+    // ✅ colspan صحيح = 10 أعمدة
+    tb.innerHTML = '<tr><td colspan="10" style="padding:30px;text-align:center;color:#999;">📭 لا يوجد طلاب</td></tr>';
     return;
   }
   tb.innerHTML = allStudents.map((s, i) => {
@@ -159,19 +161,19 @@ function render() {
     const isSel = selected.has(s.id);
     const idx = (currentPage - 1) * PAGE_SIZE + i + 1;
     const masked = s.national_id ? ('****' + String(s.national_id).slice(-4)) : '-';
-    return `<tr class="${isSel?'selected':''}">
-      <td><input type="checkbox" class="row-cb" data-id="${s.id}" ${isSel?'checked':''} onchange="toggleOne('${s.id}')"></td>
+    return `<tr class="${isSel ? 'selected' : ''}">
+      <td><input type="checkbox" class="row-cb" data-id="${s.id}" ${isSel ? 'checked' : ''} onchange="toggleOne('${s.id}')"></td>
       <td>${idx}</td>
       <td><strong>${esc(s.full_name)}</strong></td>
       <td dir="ltr">${esc(s.student_code)}</td>
       <td dir="ltr">${esc(masked)}</td>
       <td>${esc(s.grade || '-')}</td>
       <td>${esc(s.enrollment_status || '-')}</td>
-      <td>${esc(s.stream||'-')}</td>
-      <td><span class="badge ${locked?'locked':'unlocked'}">${locked?'🔒 مقفل':'🔓 مفتوح'}</span></td>
+      <td>${esc(s.stream || '-')}</td>
+      <td><span class="badge ${locked ? 'locked' : 'unlocked'}">${locked ? '🔒 مقفل' : '🔓 مفتوح'}</span></td>
       <td>
         <a href="admin-student-detail.html?id=${s.id}" class="act" title="عرض">👁️</a>
-        <a href="#" class="act" onclick="toggleLock('${s.id}');return false;" title="${locked?'فتح':'قفل'}">${locked?'🔓':'🔒'}</a>
+        <a href="#" class="act" onclick="toggleLock('${s.id}');return false;" title="${locked ? 'فتح' : 'قفل'}">${locked ? '🔓' : '🔒'}</a>
         <a href="student-pdf.html?print=${s.id}" target="_blank" class="act" title="PDF">📄</a>
       </td>
     </tr>`;
@@ -181,19 +183,19 @@ function render() {
 function renderPagination() {
   const el = document.getElementById('pagination');
   if (totalPages <= 1) { el.innerHTML = ''; return; }
-  let html = `<button ${currentPage===1?'disabled':''} onclick="goPage(${currentPage-1})">‹ السابق</button>`;
+  let html = `<button ${currentPage === 1 ? 'disabled' : ''} onclick="goPage(${currentPage - 1})">‹ السابق</button>`;
   const start = Math.max(1, currentPage - 2);
   const end = Math.min(totalPages, currentPage + 2);
-  if (start > 1) html += `<button onclick="goPage(1)">1</button>${start>2?'...':''}`;
+  if (start > 1) html += `<button onclick="goPage(1)">1</button>${start > 2 ? '...' : ''}`;
   for (let p = start; p <= end; p++) {
-    html += `<button class="${p===currentPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
+    html += `<button class="${p === currentPage ? 'active' : ''}" onclick="goPage(${p})">${p}</button>`;
   }
-  if (end < totalPages) html += `${end<totalPages-1?'...':''}<button onclick="goPage(${totalPages})">${totalPages}</button>`;
-  html += `<button ${currentPage===totalPages?'disabled':''} onclick="goPage(${currentPage+1})">التالي ›</button>`;
+  if (end < totalPages) html += `${end < totalPages - 1 ? '...' : ''}<button onclick="goPage(${totalPages})">${totalPages}</button>`;
+  html += `<button ${currentPage === totalPages ? 'disabled' : ''} onclick="goPage(${currentPage + 1})">التالي ›</button>`;
   el.innerHTML = html;
 }
 
-function goPage(p) { if (p<1||p>totalPages) return; currentPage = p; loadStudents(); }
+function goPage(p) { if (p < 1 || p > totalPages) return; currentPage = p; loadStudents(); }
 function toggleOne(id) { selected.has(id) ? selected.delete(id) : selected.add(id); updateSel(); render(); }
 function toggleAll() { const c = document.getElementById('selectAllCb').checked; if (c) allStudents.forEach(s => selected.add(s.id)); else allStudents.forEach(s => selected.delete(s.id)); updateSel(); render(); }
 function selectAll() { allStudents.forEach(s => selected.add(s.id)); document.getElementById('selectAllCb').checked = true; updateSel(); render(); }
@@ -209,7 +211,7 @@ async function toggleLock(id) {
     is_locked: newLock, submitted_at: newLock ? s.submitted_at : null
   }).eq('id', id);
   if (error) { Toast.show('خطأ: ' + error.message, 'error'); return; }
-  await logAction(newLock ? 'قفل طالب' : 'فتح طالب', `${newLock?'قفل':'فتح'} الطالب ${s.full_name}`, id, s.full_name);
+  await logAction(newLock ? 'قفل طالب' : 'فتح طالب', `${newLock ? 'قفل' : 'فتح'} الطالب ${s.full_name}`, id, s.full_name);
   Toast.show(newLock ? '✅ تم القفل' : '✅ تم الفتح');
   loadStudents();
 }
@@ -238,12 +240,15 @@ async function exportSelected() {
   const ids = list.map(s => s.id);
   const { data: resp } = await SB.from('student_dynamic_responses').select('student_id,field_id,value').in('student_id', ids);
   const rmap = {};
-  (resp||[]).forEach(r => { (rmap[r.student_id] ??= {})[r.field_id] = r.value; });
-  const headers = ['#','الاسم','الكود','الرقم القومي','التشعيب','التخصص','المسار','المادة الاختيارية','الحالة','تاريخ التقديم',...(fields||[]).map(f=>f.name)];
-  const rows = list.map((s,i) => [
-    i+1, s.full_name, s.student_code, s.national_id, s.stream||'', s.specialization||'', s.track||'', s.optional_subject||'',
-    s.is_locked?'مقفل':'مفتوح', s.submitted_at?new Date(s.submitted_at).toLocaleString('ar-EG'):'',
-    ...(fields||[]).map(f => rmap[s.id]?.[f.id] || '')
+  (resp || []).forEach(r => { (rmap[r.student_id] ??= {})[r.field_id] = r.value; });
+  const headers = ['#','الاسم','الكود','الرقم القومي','الصف','حالة القيد','النوع','المحافظة','التشعيب','التخصص','المسار','المادة الاختيارية','الحالة','تاريخ التقديم',...(fields || []).map(f => f.name)];
+  const rows = list.map((s, i) => [
+    i + 1, s.full_name, s.student_code, s.national_id,
+    s.grade || '', s.enrollment_status || '', s.gender || '', s.governorate || '',
+    s.stream || '', s.specialization || '', s.track || '', s.optional_subject || '',
+    s.is_locked ? 'مقفل' : 'مفتوح',
+    s.submitted_at ? new Date(s.submitted_at).toLocaleString('ar-EG') : '',
+    ...(fields || []).map(f => rmap[s.id]?.[f.id] || '')
   ]);
   Excel.download([headers, ...rows], `طلاب_${new Date().toISOString().slice(0,10)}.xlsx`, 'طلاب');
   await logAction('تصدير', `${list.length} طالب`);
