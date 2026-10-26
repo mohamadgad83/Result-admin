@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>تشخيص البيانات</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body{font-family:Arial;padding:20px;background:#f0f0f0;direction:rtl}
+.box{background:#fff;padding:15px;margin:10px 0;border-radius:8px;border-right:4px solid #17a2b8}
+.ok{border-right-color:#28a745;background:#e8f5e9}
+.err{border-right-color:#dc3545;background:#f8d7da}
+.warn{border-right-color:#ffc107;background:#fff8e1}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{border:1px solid #ddd;padding:8px;text-align:right;font-size:13px}
+th{background:#1e3c72;color:#fff}
+input,button{padding:10px;font-size:14px;margin:5px}
+button{background:#28a745;color:#fff;border:none;border-radius:5px;cursor:pointer}
+code{background:#f5f5f5;padding:2px 6px;border-radius:3px;direction:ltr;display:inline-block}
+</style>
+</head>
+<body>
+
+<h1>🔬 تشخيص البيانات الحقيقية</h1>
+
+<div class="box warn">
+<h3>1️⃣ اختار طالب للتشخيص</h3>
+<input type="text" id="testCode" placeholder="أدخل كود الطالب" value="468815804" style="width:200px">
+<button onclick="runDiagnosis()">▶️ تشخيص</button>
+</div>
+
+<div id="results"></div>
+
+<script src="lib/supabase.js"></script>
+<script>
+async function runDiagnosis() {
+  const testCode = document.getElementById('testCode').value.trim();
+  const results = document.getElementById('results');
+  results.innerHTML = '<div class="box warn">⏳ جاري التشخيص...</div>';
+  
+  try {
+    // 1) جلب الحقول
+    const { data: fields, error: fErr } = await SB.from('dynamic_fields')
+      .select('id, name, field_key, display_order, type')
+      .order('display_order');
+    if (fErr) throw fErr;
+    
+    let html = `<div class="box ok">
+      <h3>📋 ${fields.length} حقل في DB</h3>
+      <table>
+        <tr><th>#</th><th>ترتيب</th><th>الاسم (Label)</th><th>المفتاح (key)</th><th>النوع</th></tr>
+        ${fields.map((f, i) => `
+          <tr>
+            <td>${i+1}</td>
+            <td>${f.display_order}</td>
+            <td><b>${f.name}</b></td>
+            <td><code>${f.field_key}</code></td>
+            <td>${f.type}</td>
+          </tr>
+        `).join('')}
+      </table>
+    </div>`;
+    
+    // 2) جلب الطالب
+    const { data: student, error: sErr } = await SB.from('students')
+      .select('id, student_code, full_name')
+      .eq('student_code', testCode)
+      .single();
+    
+    if (sErr || !student) {
+      html += `<div class="box err">❌ الطالب ${testCode} مش موجود</div>`;
+      results.innerHTML = html;
+      return;
+    }
+    
+    html += `<div class="box ok">
+      <h3>👤 الطالب: ${student.full_name} (${student.student_code})</h3>
+      <p>ID: <code>${student.id}</code></p>
+    </div>`;
+    
+    // 3) جلب استجاباته
+    const { data: responses, error: rErr } = await SB.from('student_dynamic_responses')
+      .select('*')
+      .eq('student_id', student.id);
+    
+    if (rErr) throw rErr;
+    
+    // 4) نربط كل استجابة بالحقل
+    const fieldMap = {};
+    fields.forEach(f => fieldMap[f.id] = f);
+    
+    html += `<div class="box ${responses.length > 0 ? 'ok' : 'warn'}">
+      <h3>📊 ${responses.length} استجابة في DB</h3>
+      <table>
+        <tr><th>الحقل (Label)</th><th>المفتاح</th><th>القيمة المخزنة</th></tr>
+        ${responses.map(r => {
+          const f = fieldMap[r.field_id];
+          return `
+            <tr>
+              <td><b>${f ? f.name : '❓ حقل غير موجود'}</b></td>
+              <td><code>${f ? f.field_key : '?'}</code></td>
+              <td style="direction:ltr;text-align:left;font-family:monospace;background:#fff8e1">${r.value || '<i style="color:#999">فاضي</i>'}</td>
+            </tr>
+          `;
+        }).join('')}
+      </table>
+    </div>`;
+    
+    // 5) تحليل - هل فيه قيم شكلها غلط؟
+    const suspicious = [];
+    responses.forEach(r => {
+      const f = fieldMap[r.field_id];
+      if (!f || !r.value) return;
+      
+      const val = String(r.value).trim();
+      const name = f.name;
+      
+      // فحص الأنماط
+      const isPhone = /^01\d{9}$/.test(val);
+      const isIMEI = /^\d{14,16}$/.test(val) && !isPhone;
+      const isPass = /^[A-Za-z0-9!@#$%^&*?_\-\.]{6,15}$/.test(val) && !isPhone;
+      
+      if (name.includes('موبايل') && !isPhone) {
+        suspicious.push(`"${name}" المفروض موبايل 11 رقم، لكن القيمة "${val}"`);
+      }
+      if (name.includes('IMEI') || name.includes('المصنع')) {
+        if (!isIMEI && !/^[A-Z0-9]{10,20}$/i.test(val)) {
+          suspicious.push(`"${name}" المفروض IMEI، لكن القيمة "${val}"`);
+        }
+      }
+      if (name.includes('كلمة السر') || name.includes('باس')) {
+        if (!isPass || isPhone) {
+          suspicious.push(`"${name}" المفروض باسورد، لكن القيمة "${val}"`);
+        }
+      }
+      if (name.includes('ديانة')) {
+        if (!['مسلم','مسيحى','مسيحي','مسلمه','مسيحيه'].some(d => val.includes(d))) {
+          suspicious.push(`"${name}" المفروض ديانة، لكن القيمة "${val}"`);
+        }
+      }
+      if (name.includes('لغة')) {
+        if (!['عربي','انجليزي','فرنسي','فرنسى','الماني','المانى','إنجليزي'].some(l => val.includes(l))) {
+          suspicious.push(`"${name}" المفروض لغة، لكن القيمة "${val}"`);
+        }
+      }
+      if (name.includes('فصل')) {
+        if (!/^\d+\/\d+$/.test(val) && val.length > 10) {
+          suspicious.push(`"${name}" المفروض "1/1" أو مشابه، لكن القيمة "${val}"`);
+        }
+      }
+    });
+    
+    if (suspicious.length > 0) {
+      html += `<div class="box err">
+        <h3>⚠️ قيم مشبوهة في أماكن غلط (${suspicious.length})</h3>
+        <ul>
+          ${suspicious.map(s => `<li>${s}</li>`).join('')}
+        </ul>
+      </div>`;
+    } else {
+      html += `<div class="box ok">✅ مفيش قيم مشبوهة</div>`;
+    }
+    
+    results.innerHTML = html;
+    
+  } catch (err) {
+    results.innerHTML = `<div class="box err">❌ خطأ: ${err.message}</div>`;
+  }
+}
+</script>
+</body>
+</html>
