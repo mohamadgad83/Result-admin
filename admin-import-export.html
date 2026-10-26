@@ -52,7 +52,6 @@
 .mode-row{display:flex;gap:14px;flex-wrap:wrap;margin:12px 0;padding:12px;background:#fff;border-radius:10px;font-size:14px;border:1px solid #e9ecef}
 .mode-row label{display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;color:#333}
 .mode-row input[type=radio]{width:16px;height:16px;cursor:pointer}
-
 .column-picker{margin:15px 0;padding:18px;background:#fff;border:2px solid #1e3c72;border-radius:12px}
 .column-picker .head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px}
 .column-picker .head h4{margin:0;color:#1e3c72;font-size:16px}
@@ -70,7 +69,6 @@
 .column-pick .sample{font-size:11px;color:#999;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;direction:ltr;unicode-bidi:isolate;text-align:left;font-family:'Courier New',monospace}
 .column-pick .required-badge{font-size:9px;background:#1e3c72;color:#fff;padding:1px 6px;border-radius:8px;margin-right:4px}
 .column-pick .type-badge{font-size:9px;background:#17a2b8;color:#fff;padding:1px 6px;border-radius:8px;margin-right:4px}
-
 @keyframes fadeIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
 </style>
 </head>
@@ -118,7 +116,6 @@
         <label><input type="radio" name="mode" value="replace"> 🔄 استبدال كامل ⚠️</label>
       </div>
       <div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
-
       <div class="column-picker" id="columnPicker" style="display:none;">
         <div class="head">
           <h4 id="pickerTitle">🔧 اختر الحقول</h4>
@@ -130,7 +127,6 @@
         <div class="hint" id="pickerHint"></div>
         <div class="grid" id="columnPickerGrid"></div>
       </div>
-
       <div class="preview" id="preview" style="display:none;"></div>
       <div class="result" id="result"></div>
     </div>
@@ -145,7 +141,6 @@
         <button class="btn btn-blue" style="padding:12px 25px;" onclick="exportResponses()">📥 تصدير الاستجابات الكاملة</button>
         <button class="btn btn-blue" style="padding:12px 25px;" onclick="exportData('fields')">📥 تصدير الحقول</button>
         <button class="btn btn-blue" style="padding:12px 25px;" onclick="exportData('sections')">📥 تصدير الأقسام</button>
-        <button class="btn btn-purple" style="padding:12px 25px;" onclick="diagnoseResponses()">🔬 تشخيص الاستجابات</button>
       </div>
     </div>
   </div>
@@ -158,40 +153,37 @@
 <script src="lib/escape.js"></script>
 <script src="lib/excel.js"></script>
 <script>
-// ==========================================================
-// 🔥 إصلاحات جوهرية (داخل الصفحة فقط)
-// ==========================================================
+// ============================================================
+// 🛡️ Fallbacks
+// ============================================================
+if (typeof window.esc === 'undefined') {
+  window.esc = function(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  };
+}
+if (typeof window.Toast === 'undefined') {
+  window.Toast = { show: (msg, type) => { console.log(`[${type || 'info'}] ${msg}`); try { alert(msg); } catch(e) {} } };
+}
 
-// 🧼 تنظيف النص من أحرف Bidi/Zero-Width/BOM - بدون تغيير ترتيب الحروف
+// 🧼 تنظيف النص - إزالة أحرف Bidi/Zero-Width/BOM
 function sanitizeText(v) {
   if (v === null || v === undefined) return '';
   if (typeof v !== 'string') return String(v);
-  return v
-    .replace(/[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g, '')
-    .trim();
+  return v.replace(/[\u200B-\u200F\u202A-\u202E\u2066-\u2069\uFEFF]/g, '').trim();
 }
 
-// 🚀 قراءة Excel مع الحفاظ على القيم كما هي (نص)
+// 🚀 قراءة Excel آمنة (تحافظ على القيم كما هي)
 function readExcelFile(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target.result);
-        const wb = XLSX.read(data, {
-          type: 'array',
-          cellText: false,
-          cellDates: false,
-          raw: true
-        });
+        const wb = XLSX.read(data, { type: 'array', cellText: false, cellDates: false, raw: true });
         const ws = wb.Sheets[wb.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(ws, {
-          defval: '',
-          raw: false,
-          cellText: true,
-          dateNF: 'yyyy-mm-dd'
-        });
-        resolve(json);
+        resolve(XLSX.utils.sheet_to_json(ws, { defval: '', raw: false, cellText: true, dateNF: 'yyyy-mm-dd' }));
       } catch (err) { reject(err); }
     };
     reader.onerror = reject;
@@ -199,47 +191,46 @@ function readExcelFile(file) {
   });
 }
 
-// 💾 تصدير Excel بإجبار كل الخلايا على نوع "text"
-function exportExcelFile(headers, rows, filename) {
-  const aoa = [headers, ...rows];
-  const ws = XLSX.utils.aoa_to_sheet(aoa);
-
-  Object.keys(ws).forEach(key => {
-    if (key[0] === '!') return;
-    const cell = ws[key];
-    if (cell && cell.v !== null && cell.v !== undefined) {
-      cell.t = 's';
-      cell.v = String(cell.v);
-      delete cell.f;
-      delete cell.z;
-    }
-  });
-
-  ws['!cols'] = headers.map((h, i) => {
-    let maxLen = String(h || '').length;
-    rows.forEach(r => {
-      const v = r[i];
-      if (v !== null && v !== undefined) {
-        const len = String(v).length;
-        if (len > maxLen) maxLen = len;
+// 💾 تصدير Excel آمن (يجبر كل الخلايا تكون نص)
+function exportExcelFileSafe(headers, rows, filename) {
+  try {
+    const aoa = [headers, ...rows];
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    Object.keys(ws).forEach(key => {
+      if (key[0] === '!') return;
+      const cell = ws[key];
+      if (cell && cell.v !== null && cell.v !== undefined) {
+        cell.t = 's'; cell.v = String(cell.v); delete cell.f; delete cell.z;
       }
     });
-    return { wch: Math.min(Math.max(maxLen + 2, 10), 45) };
-  });
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Data');
-  XLSX.writeFile(wb, filename, { bookType: 'xlsx', compression: true });
+    ws['!cols'] = headers.map((h, i) => {
+      let maxLen = String(h || '').length;
+      rows.forEach(r => {
+        const v = r[i];
+        if (v !== null && v !== undefined) {
+          const len = String(v).length;
+          if (len > maxLen) maxLen = len;
+        }
+      });
+      return { wch: Math.min(Math.max(maxLen + 2, 10), 45) };
+    });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Data');
+    XLSX.writeFile(wb, filename, { bookType: 'xlsx', compression: true });
+    return true;
+  } catch (e) {
+    console.error('فشل التصدير:', e);
+    Toast.show('❌ فشل التصدير: ' + e.message, 'error');
+    return false;
+  }
 }
 
-// ==========================================================
-// تعريف المخططات
-// ==========================================================
+// ============================================================
+// المخططات (زي القديم بالظبط)
+// ============================================================
 const SCHEMAS = {
   students: {
-    label: 'الطلاب',
-    table: 'students',
-    match: 'student_code',
+    label: 'الطلاب', table: 'students', match: 'student_code',
     columns: [
       { key: 'student_code', label: 'الكود', aliases: ['كود الطالب','كود','code'], required: true, type: 'text' },
       { key: 'national_id', label: 'الرقم القومي', aliases: ['رقم قومي','nationalid'], required: true, type: 'text' },
@@ -255,16 +246,9 @@ const SCHEMAS = {
       { key: 'optional_subject', label: 'المادة الاختيارية', aliases: ['المادة','optional'], type: 'text' }
     ]
   },
-  responses: {
-    label: 'استجابات الطلاب',
-    table: 'student_dynamic_responses',
-    match: null,
-    columns: []
-  },
+  responses: { label: 'استجابات الطلاب', table: 'student_dynamic_responses', match: null, columns: [] },
   fields: {
-    label: 'الحقول الديناميكية',
-    table: 'dynamic_fields',
-    match: 'field_key',
+    label: 'الحقول الديناميكية', table: 'dynamic_fields', match: 'field_key',
     columns: [
       { key: 'name', label: 'الاسم', aliases: ['اسم الحقل','name'], required: true, type: 'text' },
       { key: 'field_key', label: 'المفتاح', aliases: ['key','field_key'], required: true, type: 'text' },
@@ -278,9 +262,7 @@ const SCHEMAS = {
     ]
   },
   sections: {
-    label: 'الأقسام',
-    table: 'form_sections',
-    match: 'name',
+    label: 'الأقسام', table: 'form_sections', match: 'name',
     columns: [
       { key: 'name', label: 'اسم القسم', aliases: ['القسم','name'], required: true, type: 'text' },
       { key: 'display_order', label: 'الترتيب', aliases: ['order'], type: 'number', default: 0 },
@@ -295,9 +277,6 @@ let selectedColumns = new Set();
 let auth0 = null;
 let availableFields = [];
 
-// ==========================================================
-// التهيئة
-// ==========================================================
 (async () => {
   auth0 = await Auth.requireAdmin();
   if (!auth0) return;
@@ -315,46 +294,26 @@ async function selectSchema(s) {
   currentSchema = s;
   parsedRows = [];
   selectedColumns.clear();
-
-  document.getElementById('schema-students').classList.toggle('active', s === 'students');
-  document.getElementById('schema-responses').classList.toggle('active', s === 'responses');
-  document.getElementById('schema-fields').classList.toggle('active', s === 'fields');
-  document.getElementById('schema-sections').classList.toggle('active', s === 'sections');
-
+  ['students','responses','fields','sections'].forEach(k => {
+    document.getElementById('schema-' + k)?.classList.toggle('active', k === s);
+  });
   const infoBox = document.getElementById('infoBox');
-
   if (s === 'responses') {
     await loadDynamicFields();
     SCHEMAS.responses.columns = [
       { key: 'student_code', label: 'الكود', aliases: ['كود','code'], required: true, type: 'text' },
       ...availableFields.map(f => ({
-        key: f.id,
-        field_key: f.field_key,
-        label: f.name,
-        aliases: [f.name, f.field_key],
-        required: false,
-        type: 'text',
-        is_readonly: f.is_readonly,
-        _field: f
+        key: f.id, field_key: f.field_key, label: f.name, aliases: [f.name, f.field_key],
+        required: false, type: 'text', is_readonly: f.is_readonly, _field: f
       }))
     ];
     infoBox.className = 'info-box green';
-    infoBox.innerHTML = `
-      <strong>📊 استجابات الطلاب</strong><br>
-      هذا التبويب لتعبئة بيانات الحقول الديناميكية لكل طالب.<br>
-      <strong>الكود</strong> إجباري. الحقول الأخرى اختيارية — اختر أي حقول تريد تعبئتها فقط.<br>
-      💡 <strong>مثال</strong>: تريد إضافة "الصف" لكل الطلاب — اختر حقل "الصف" فقط + الكود.
-    `;
+    infoBox.innerHTML = `<strong>📊 استجابات الطلاب</strong><br>الكود إجباري. اختر الحقول التي تريد تعبئتها.`;
   } else {
     const sc = SCHEMAS[s];
     infoBox.className = 'info-box';
-    infoBox.innerHTML = `
-      <strong>📋 ${sc.label}</strong><br>
-      الأعمدة المطلوبة: <strong>${sc.columns.filter(c=>c.required).map(c=>c.label).join('، ')}</strong><br>
-      الأعمدة الاختيارية: ${sc.columns.filter(c=>!c.required).map(c=>c.label).join('، ') || '—'}
-    `;
+    infoBox.innerHTML = `<strong>📋 ${sc.label}</strong><br>المطلوبة: ${sc.columns.filter(c=>c.required).map(c=>c.label).join('، ')}<br>الاختيارية: ${sc.columns.filter(c=>!c.required).map(c=>c.label).join('، ') || '—'}`;
   }
-
   document.getElementById('preview').style.display = 'none';
   document.getElementById('columnPicker').style.display = 'none';
   document.getElementById('result').className = 'result';
@@ -362,38 +321,28 @@ async function selectSchema(s) {
 }
 
 async function loadDynamicFields() {
-  const { data, error } = await SB.from('dynamic_fields')
-    .select('*')
-    .order('display_order');
+  const { data, error } = await SB.from('dynamic_fields').select('*').order('display_order');
   if (error) { Toast.show('خطأ في تحميل الحقول: ' + error.message, 'error'); return; }
   availableFields = data || [];
 }
 
-// ==========================================================
-// تحميل النموذج
-// ==========================================================
 function downloadTemplate() {
   const sc = SCHEMAS[currentSchema];
-
   if (currentSchema === 'responses') {
     const headers = ['الكود', ...availableFields.map(f => f.name)];
     const sample = ['مثال الكود', ...availableFields.map(f => f.type === 'select' ? (f.options?.[0] || '') : `مثال ${f.name}`)];
     const empty = headers.map(() => '');
-    exportExcelFile(headers, [sample, empty, empty], `نموذج_${sc.label}.xlsx`);
-    Toast.show('✅ تم تحميل النموذج — املأ الحقول التي تحتاجها فقط', 'info');
+    exportExcelFileSafe(headers, [sample, empty, empty], `نموذج_${sc.label}.xlsx`);
+    Toast.show('✅ تم تحميل النموذج', 'info');
     return;
   }
-
   const headers = sc.columns.map(c => c.label);
   const sample = sc.columns.map(c => c.default !== undefined ? String(c.default) : (c.required ? `مثال ${c.label}` : ''));
   const empty = sc.columns.map(() => '');
-  exportExcelFile(headers, [sample, empty, empty], `نموذج_${sc.label}.xlsx`);
+  exportExcelFileSafe(headers, [sample, empty, empty], `نموذج_${sc.label}.xlsx`);
   Toast.show('✅ تم تحميل النموذج', 'info');
 }
 
-// ==========================================================
-// قراءة الملف
-// ==========================================================
 document.getElementById('fileInput').addEventListener('change', async (e) => {
   const f = e.target.files[0]; if (!f) return;
   try {
@@ -401,29 +350,20 @@ document.getElementById('fileInput').addEventListener('change', async (e) => {
     if (parsedRows.length === 0) { Toast.show('الملف فارغ', 'error'); return; }
     renderPreview();
     renderColumnPicker();
-    Toast.show(`✅ ${parsedRows.length} صف — تم قراءة القيم كما هي`, 'info');
+    Toast.show(`✅ ${parsedRows.length} صف`, 'info');
   } catch (err) { Toast.show('فشل القراءة: ' + err.message, 'error'); }
 });
 
-// ==========================================================
-// منتقي الحقول
-// ==========================================================
 function renderColumnPicker() {
   const sc = SCHEMAS[currentSchema];
   const picker = document.getElementById('columnPicker');
   const grid = document.getElementById('columnPickerGrid');
-
   selectedColumns.clear();
 
   if (currentSchema === 'responses') {
-    document.getElementById('pickerTitle').textContent = '🔧 اختر الحقول التي تريد تعبئتها';
-    document.getElementById('pickerHint').innerHTML = `
-      💡 <strong>الحقول التي تحددها فقط سيتم تحديث قيمتها</strong> لكل الطلاب في الملف.
-      الحقل "الكود" إجباري لتحديد الطالب.
-    `;
-
+    document.getElementById('pickerTitle').textContent = '🔧 اختر الحقول';
+    document.getElementById('pickerHint').innerHTML = '💡 الحقول التي تحددها فقط سيتم تحديثها. الكود إجباري.';
     selectedColumns.add('student_code');
-
     availableFields.forEach(f => {
       const hasData = parsedRows.some(r => {
         const v = findVal(r, { key: f.id, label: f.name, aliases: [f.field_key] });
@@ -431,38 +371,19 @@ function renderColumnPicker() {
       });
       if (hasData) selectedColumns.add(f.id);
     });
-
     grid.innerHTML = sc.columns.map(col => {
-      const isSelected = selectedColumns.has(col.key);
+      const isSel = selectedColumns.has(col.key);
       const isLocked = col.key === 'student_code';
-      const field = col._field;
-      const samples = parsedRows.map(r => findVal(r, col)).filter(v => v !== '' && v != null);
-      const sample = samples[0] || '—';
-
-      return `
-        <label class="column-pick ${isSelected ? 'selected' : ''}" data-key="${col.key}">
-          <input type="checkbox" ${isSelected ? 'checked' : ''}
-                 ${isLocked ? 'disabled' : ''}
-                 onchange="toggleColumn('${col.key}', this.checked)">
-          <div class="info">
-            <div class="name">
-              ${isLocked ? '<span class="required-badge">🔑</span>' : ''}
-              ${field?.is_readonly ? '<span class="type-badge">🔒</span>' : ''}
-              ${esc(col.label)}
-            </div>
-            <div class="sample" title="${esc(String(sample))}">مثال: ${esc(String(sample).substring(0, 18))}</div>
-          </div>
-        </label>
-      `;
+      const sample = parsedRows.map(r => findVal(r, col)).filter(v => v !== '' && v != null)[0] || '—';
+      return `<label class="column-pick ${isSel ? 'selected' : ''}" data-key="${col.key}">
+        <input type="checkbox" ${isSel ? 'checked' : ''} ${isLocked ? 'disabled' : ''} onchange="toggleColumn('${col.key}', this.checked)">
+        <div class="info"><div class="name">${isLocked ? '<span class="required-badge">🔑</span>' : ''}${esc(col.label)}</div>
+        <div class="sample">مثال: ${esc(String(sample).substring(0, 18))}</div></div>
+      </label>`;
     }).join('');
-
   } else {
-    document.getElementById('pickerTitle').textContent = '🔧 اختر الحقول التي تريد استيرادها';
-    document.getElementById('pickerHint').innerHTML = `
-      💡 <strong>الحقول التي لن تحددها لن يتم تعديلها</strong> حتى لو كانت في الملف.
-      ${currentSchema === 'students' ? '🔑 <strong>الكود</strong> إجباري.' : ''}
-    `;
-
+    document.getElementById('pickerTitle').textContent = '🔧 اختر الحقول';
+    document.getElementById('pickerHint').innerHTML = `💡 الحقول التي لن تحددها لن يتم تعديلها. ${currentSchema === 'students' ? '🔑 الكود إجباري.' : ''}`;
     sc.columns.forEach(col => {
       const hasData = parsedRows.some(r => {
         const v = findVal(r, col);
@@ -470,47 +391,25 @@ function renderColumnPicker() {
       });
       if (hasData) selectedColumns.add(col.key);
     });
-
-    if (currentSchema === 'students' && selectedColumns.size > 0) {
-      selectedColumns.add('student_code');
-    }
-
+    if (currentSchema === 'students' && selectedColumns.size > 0) selectedColumns.add('student_code');
     grid.innerHTML = sc.columns.map(col => {
-      const isSelected = selectedColumns.has(col.key);
+      const isSel = selectedColumns.has(col.key);
       const isLocked = (currentSchema === 'students' && col.key === 'student_code');
-      const samples = parsedRows.map(r => findVal(r, col)).filter(v => v !== '' && v != null);
-      const sample = samples[0] || '—';
-
-      return `
-        <label class="column-pick ${isSelected ? 'selected' : ''}" data-key="${col.key}">
-          <input type="checkbox" ${isSelected ? 'checked' : ''}
-                 ${isLocked ? 'disabled' : ''}
-                 onchange="toggleColumn('${col.key}', this.checked)">
-          <div class="info">
-            <div class="name">
-              ${isLocked ? '<span class="required-badge">🔑</span>' : ''}
-              ${col.required && !isLocked ? '<span class="req-star">*</span>' : ''}
-              ${esc(col.label)}
-            </div>
-            <div class="sample" title="${esc(String(sample))}">مثال: ${esc(String(sample).substring(0, 18))}</div>
-          </div>
-        </label>
-      `;
+      const sample = parsedRows.map(r => findVal(r, col)).filter(v => v !== '' && v != null)[0] || '—';
+      return `<label class="column-pick ${isSel ? 'selected' : ''}" data-key="${col.key}">
+        <input type="checkbox" ${isSel ? 'checked' : ''} ${isLocked ? 'disabled' : ''} onchange="toggleColumn('${col.key}', this.checked)">
+        <div class="info"><div class="name">${isLocked ? '<span class="required-badge">🔑</span>' : ''}${col.required && !isLocked ? '<span class="req-star">*</span>' : ''}${esc(col.label)}</div>
+        <div class="sample">مثال: ${esc(String(sample).substring(0, 18))}</div></div>
+      </label>`;
     }).join('');
   }
-
   picker.style.display = 'block';
 }
 
 function toggleColumn(key, checked) {
   const el = document.querySelector(`.column-pick[data-key="${key}"]`);
-  if (checked) {
-    selectedColumns.add(key);
-    if (el) el.classList.add('selected');
-  } else {
-    selectedColumns.delete(key);
-    if (el) el.classList.remove('selected');
-  }
+  if (checked) { selectedColumns.add(key); if (el) el.classList.add('selected'); }
+  else { selectedColumns.delete(key); if (el) el.classList.remove('selected'); }
 }
 
 function toggleAllColumns(selectAll) {
@@ -518,48 +417,24 @@ function toggleAllColumns(selectAll) {
     const key = el.dataset.key;
     const cb = el.querySelector('input');
     if (cb.disabled) return;
-
-    if (selectAll) {
-      selectedColumns.add(key);
-      cb.checked = true;
-      el.classList.add('selected');
-    } else {
-      selectedColumns.delete(key);
-      cb.checked = false;
-      el.classList.remove('selected');
-    }
+    if (selectAll) { selectedColumns.add(key); cb.checked = true; el.classList.add('selected'); }
+    else { selectedColumns.delete(key); cb.checked = false; el.classList.remove('selected'); }
   });
 }
 
-// ==========================================================
-// المعاينة
-// ==========================================================
 function renderPreview() {
   const sc = SCHEMAS[currentSchema];
   const preview = parsedRows.slice(0, 5);
   const el = document.getElementById('preview');
   el.style.display = 'block';
-  el.innerHTML = `
-    <div style="font-size:13px;color:#666;margin-bottom:8px;">
-      👁️ معاينة أول ${preview.length} من ${parsedRows.length} — القيم كما ستُحفظ في قاعدة البيانات
-    </div>
-    <table>
-      <thead><tr>${sc.columns.map(c=>`<th>${esc(c.label)}</th>`).join('')}</tr></thead>
-      <tbody>${preview.map(r=>`<tr>${sc.columns.map(c=>{
-        const val = sanitizeText(String(findVal(r,c) || ''));
-        return `<td class="ltr-cell" dir="ltr">${esc(val)}</td>`;
-      }).join('')}</tr>`).join('')}</tbody>
-    </table>`;
+  el.innerHTML = `<div style="font-size:13px;color:#666;margin-bottom:8px;">👁️ معاينة أول ${preview.length} من ${parsedRows.length}</div>
+    <table><thead><tr>${sc.columns.map(c=>`<th>${esc(c.label)}</th>`).join('')}</tr></thead>
+    <tbody>${preview.map(r=>`<tr>${sc.columns.map(c=>`<td class="ltr-cell" dir="ltr">${esc(sanitizeText(String(findVal(r,c) || '')))}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
 }
 
-// ==========================================================
-// دوال مساعدة
-// ==========================================================
 function findVal(row, col) {
   const keys = [col.label, col.key, ...(col.aliases||[])];
-  for (const k of keys) {
-    if (row[k] !== undefined && row[k] !== '') return row[k];
-  }
+  for (const k of keys) if (row[k] !== undefined && row[k] !== '') return row[k];
   const rowKeys = Object.keys(row);
   for (const k of keys) {
     const found = rowKeys.find(rk => rk.trim().toLowerCase() === k.trim().toLowerCase());
@@ -567,11 +442,9 @@ function findVal(row, col) {
   }
   return '';
 }
-
 function toBool(v) {
   if (v === true || v === false) return v;
-  const s = String(v).trim().toLowerCase();
-  return ['true','1','yes','نعم','صح','✔','✓'].includes(s);
+  return ['true','1','yes','نعم','صح','✔','✓'].includes(String(v).trim().toLowerCase());
 }
 function toNum(v) {
   if (v === '' || v == null) return null;
@@ -582,54 +455,39 @@ function toArr(v) {
   if (v === '' || v == null) return null;
   return String(v).split(',').map(s=>s.trim()).filter(Boolean);
 }
-
 function convertRow(row, sc) {
   const out = {};
   for (const col of sc.columns) {
     if (!selectedColumns.has(col.key)) continue;
-
     let raw = findVal(row, col);
-    if (raw === '' || raw == null) {
-      if (col.default !== undefined) out[col.key] = col.default;
-      continue;
-    }
+    if (raw === '' || raw == null) { if (col.default !== undefined) out[col.key] = col.default; continue; }
     switch (col.type) {
       case 'boolean': out[col.key] = toBool(raw); break;
       case 'number': out[col.key] = toNum(raw); break;
       case 'array': out[col.key] = toArr(raw); break;
-      default:
-        out[col.key] = sanitizeText(String(raw));
+      default: out[col.key] = sanitizeText(String(raw));
     }
   }
   return out;
 }
 
-// ==========================================================
-// النسخة الاحتياطية
-// ==========================================================
 async function backupStudents() {
   try {
     const { data, error } = await SB.from('students').select('*');
     if (error) throw error;
     if (!data || data.length === 0) return Toast.show('لا توجد بيانات', 'warn');
-
     const headers = ['student_code','national_id','full_name','grade','enrollment_status','gender','date_of_birth','governorate','stream','specialization','track','optional_subject','is_locked','submitted_at','is_active','created_at'];
     const rows = data.map(s => headers.map(h => sanitizeText(String(s[h] ?? ''))));
-    exportExcelFile(headers, rows, `نسخة_احتياطية_${new Date().toISOString().slice(0,10)}_${Date.now()}.xlsx`);
-    Toast.show(`✅ تم تنزيل ${data.length} صف كنسخة احتياطية`, 'success');
+    exportExcelFileSafe(headers, rows, `نسخة_احتياطية_${new Date().toISOString().slice(0,10)}_${Date.now()}.xlsx`);
+    Toast.show(`✅ تم تنزيل ${data.length} صف`, 'success');
   } catch (err) { Toast.show('خطأ: ' + err.message, 'error'); }
 }
 
-// ==========================================================
-// الاستيراد
-// ==========================================================
 async function doImport() {
   if (parsedRows.length === 0) return Toast.show('ارفع ملفاً أولاً', 'warn');
-  if (selectedColumns.size === 0) return Toast.show('❌ اختر حقلاً واحداً على الأقل', 'error');
-  if (currentSchema === 'students' && !selectedColumns.has('student_code'))
-    return Toast.show('❌ يجب تحديد حقل "الكود"', 'error');
-  if (currentSchema === 'responses' && !selectedColumns.has('student_code'))
-    return Toast.show('❌ يجب تحديد حقل "الكود"', 'error');
+  if (selectedColumns.size === 0) return Toast.show('❌ اختر حقلاً', 'error');
+  if ((currentSchema === 'students' || currentSchema === 'responses') && !selectedColumns.has('student_code'))
+    return Toast.show('❌ حدد "الكود"', 'error');
 
   const sc = SCHEMAS[currentSchema];
   const mode = document.querySelector('input[name=mode]:checked').value;
@@ -639,7 +497,7 @@ async function doImport() {
   const res = document.getElementById('result');
 
   if (mode === 'replace' && currentSchema === 'students') {
-    if (!confirm('⚠️ تحذير: سيتم استبدال بيانات الطلاب. هل أخذت نسخة احتياطية؟')) return;
+    if (!confirm('⚠️ سيتم استبدال البيانات. متأكد؟')) return;
   }
 
   btn.disabled = true;
@@ -656,8 +514,9 @@ async function doImport() {
         const c = findVal(row, { label: 'الكود', key: 'student_code', aliases: ['كود','code'] });
         if (c) codes.add(String(c).trim());
       }
-      if (codes.size === 0) throw new Error('لا يوجد عمود كود في الملف');
+      if (codes.size === 0) throw new Error('لا يوجد عمود كود');
 
+      // ⚠️ زي القديم بالظبط - بنجيب الطلاب المطابقين بس
       const { data: studentList, error: sErr } = await SB.from('students')
         .select('id, student_code').in('student_code', [...codes]);
       if (sErr) throw sErr;
@@ -665,7 +524,7 @@ async function doImport() {
       (studentList || []).forEach(s => studentMap[s.student_code] = s.id);
 
       const selectedFieldIds = [...selectedColumns].filter(k => k !== 'student_code');
-      if (selectedFieldIds.length === 0) throw new Error('اختر حقلاً واحداً على الأقل');
+      if (selectedFieldIds.length === 0) throw new Error('اختر حقلاً');
 
       const allRecords = [];
       parsedRows.forEach((row) => {
@@ -674,7 +533,6 @@ async function doImport() {
         const code = String(codeVal).trim();
         const sid = studentMap[code];
         if (!sid) return;
-
         for (const fieldId of selectedFieldIds) {
           const field = availableFields.find(f => f.id === fieldId);
           if (!field) continue;
@@ -685,34 +543,26 @@ async function doImport() {
       });
 
       const payloads = [];
-      for (let i = 0; i < allRecords.length; i += CHUNK_SIZE) {
-        payloads.push(allRecords.slice(i, i + CHUNK_SIZE));
-      }
+      for (let i = 0; i < allRecords.length; i += CHUNK_SIZE) payloads.push(allRecords.slice(i, i + CHUNK_SIZE));
 
       let totalSuccess = 0, totalFailed = 0, totalSkipped = 0;
       const allErrors = [];
-
       for (let pi = 0; pi < payloads.length; pi++) {
-        const { data, error } = await SB.rpc('bulk_import_responses', {
-          p_payload: payloads[pi],
-          p_mode: mode
-        });
+        const { data, error } = await SB.rpc('bulk_import_responses', { p_payload: payloads[pi], p_mode: mode });
         if (error) { allErrors.push('دفعة ' + (pi+1) + ': ' + error.message); continue; }
         totalSuccess += data.success || 0;
-        totalFailed  += data.failed  || 0;
+        totalFailed += data.failed || 0;
         totalSkipped += data.skipped || 0;
         (data.errors || []).forEach(e => allErrors.push(e));
         bar.style.width = Math.round(((pi + 1) / payloads.length) * 100) + '%';
       }
-
       await finishImport(sc, mode, totalSuccess, totalFailed, totalSkipped, allErrors);
       return;
     }
 
     const converted = [];
     for (let i = 0; i < parsedRows.length; i++) {
-      try { converted.push(convertRow(parsedRows[i], sc)); }
-      catch (e) { }
+      try { converted.push(convertRow(parsedRows[i], sc)); } catch (e) {}
     }
 
     let normalized = converted;
@@ -720,7 +570,6 @@ async function doImport() {
       const { data: existingSecs } = await SB.from('form_sections').select('id, name');
       const secMap = {};
       (existingSecs || []).forEach(s => secMap[s.name.trim()] = s.id);
-
       const newOnes = new Set();
       normalized.forEach(c => {
         const n = (c.section_name || '').trim();
@@ -728,9 +577,7 @@ async function doImport() {
       });
       if (newOnes.size > 0) {
         const startOrder = (existingSecs || []).length;
-        const toInsert = [...newOnes].map((name, i) => ({
-          name, display_order: startOrder + i, is_active: true
-        }));
+        const toInsert = [...newOnes].map((name, i) => ({ name, display_order: startOrder + i, is_active: true }));
         const { data: created } = await SB.from('form_sections').insert(toInsert).select();
         (created || []).forEach(s => secMap[s.name.trim()] = s.id);
       }
@@ -744,26 +591,18 @@ async function doImport() {
 
     if (currentSchema === 'students') {
       const payloadChunks = [];
-      for (let i = 0; i < normalized.length; i += CHUNK_SIZE) {
-        payloadChunks.push(normalized.slice(i, i + CHUNK_SIZE));
-      }
-
+      for (let i = 0; i < normalized.length; i += CHUNK_SIZE) payloadChunks.push(normalized.slice(i, i + CHUNK_SIZE));
       let totalSuccess = 0, totalFailed = 0, totalSkipped = 0;
       const allErrors = [];
-
       for (let pi = 0; pi < payloadChunks.length; pi++) {
-        const { data, error } = await SB.rpc('bulk_import_students', {
-          p_payload: payloadChunks[pi],
-          p_mode: mode
-        });
+        const { data, error } = await SB.rpc('bulk_import_students', { p_payload: payloadChunks[pi], p_mode: mode });
         if (error) { allErrors.push('دفعة ' + (pi+1) + ': ' + error.message); continue; }
         totalSuccess += data.success || 0;
-        totalFailed  += data.failed  || 0;
+        totalFailed += data.failed || 0;
         totalSkipped += data.skipped || 0;
         (data.errors || []).forEach(e => allErrors.push(e));
         bar.style.width = Math.round(((pi + 1) / payloadChunks.length) * 100) + '%';
       }
-
       await finishImport(sc, mode, totalSuccess, totalFailed, totalSkipped, allErrors);
       return;
     }
@@ -788,7 +627,6 @@ async function doImport() {
       bar.style.width = Math.round(((success + failed + skipped) / normalized.length) * 100) + '%';
     }
     await finishImport(sc, mode, success, failed, skipped, errors);
-
   } catch (err) {
     btn.disabled = false;
     progress.classList.remove('show');
@@ -804,30 +642,23 @@ async function finishImport(sc, mode, success, failed, skipped, errors) {
       details: `نجح: ${success}، فشل: ${failed}، تخطي: ${skipped}`
     });
   } catch(e) { console.warn(e); }
-
   const res = document.getElementById('result');
   res.className = `result show ${failed === 0 ? 'success' : success > 0 ? 'partial' : 'error'}`;
-  res.innerHTML = `
-    <div class="stats-grid">
-      <div class="stat-box"><div class="num" style="color:#28a745;">${success}</div><div class="lbl">✅ نجح</div></div>
-      <div class="stat-box"><div class="num" style="color:#dc3545;">${failed}</div><div class="lbl">❌ فشل</div></div>
-      <div class="stat-box"><div class="num" style="color:#ffc107;">${skipped}</div><div class="lbl">⏭️ تخطي</div></div>
-    </div>
-    ${errors.length > 0 ? `<details style="margin-top:10px;">
-      <summary style="cursor:pointer;font-weight:600;">الأخطاء (${errors.length})</summary>
-      <ul style="max-height:200px;overflow:auto;margin-top:8px;font-size:13px;">
-        ${errors.slice(0, 50).map(e => `<li>${esc(typeof e === 'string' ? e : JSON.stringify(e))}</li>`).join('')}
-      </ul></details>` : ''}
-  `;
-
+  res.innerHTML = `<div class="stats-grid">
+    <div class="stat-box"><div class="num" style="color:#28a745;">${success}</div><div class="lbl">✅ نجح</div></div>
+    <div class="stat-box"><div class="num" style="color:#dc3545;">${failed}</div><div class="lbl">❌ فشل</div></div>
+    <div class="stat-box"><div class="num" style="color:#ffc107;">${skipped}</div><div class="lbl">⏭️ تخطي</div></div>
+  </div>
+  ${errors.length > 0 ? `<details style="margin-top:10px;"><summary style="cursor:pointer;font-weight:600;">الأخطاء (${errors.length})</summary>
+    <ul style="max-height:200px;overflow:auto;margin-top:8px;font-size:13px;">${errors.slice(0, 50).map(e => `<li>${esc(typeof e === 'string' ? e : JSON.stringify(e))}</li>`).join('')}</ul></details>` : ''}`;
   document.getElementById('importBtn').disabled = false;
   document.getElementById('progress').classList.remove('show');
   if (success > 0) Toast.show(`✅ ${success} صف معالج`, 'success');
 }
 
-// ==========================================================
-// التصدير - بيانات أساسية
-// ==========================================================
+// ============================================================
+// 📤 التصدير - زي القديم بالظبط (بدون pagination)
+// ============================================================
 async function exportData(schemaKey) {
   const sc = SCHEMAS[schemaKey];
   let data, error;
@@ -854,218 +685,55 @@ async function exportData(schemaKey) {
     return sanitizeText(String(v));
   }));
 
-  exportExcelFile(headers, rows, `${sc.label}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  exportExcelFileSafe(headers, rows, `${sc.label}_${new Date().toISOString().slice(0,10)}.xlsx`);
   try {
     await SB.from('admin_logs').insert({
       admin_id: auth0.user.id, admin_email: auth0.user.email,
       action: `تصدير ${sc.label}`, details: `${data.length} صف`
     });
-  } catch(e) { console.warn(e); }
+  } catch(e) {}
   Toast.show(`✅ ${data.length} صف تم تصديره`, 'success');
 }
 
-// ==========================================================
-// 📤 تصدير الاستجابات الكاملة — نسخة قوية
-// ==========================================================
+// 📤 تصدير الاستجابات الكاملة - زي القديم بالظبط
 async function exportResponses() {
-  const toastMsg = (m, t='info') => Toast.show(m, t);
-
   try {
-    // 1) جلب الطلاب
-    const { data: students, error: sErr } = await SB.from('students').select('*');
-    if (sErr) return toastMsg('❌ خطأ في جلب الطلاب: ' + sErr.message, 'error');
-    if (!students || students.length === 0) return toastMsg('لا يوجد طلاب', 'warn');
-    console.log(`✅ تم جلب ${students.length} طالب`);
+    const { data: students, error: sErr } = await SB.from('students').select('id,student_code,full_name,grade,enrollment_status,gender,date_of_birth,governorate,stream,specialization,track,optional_subject,is_locked,submitted_at');
+    if (sErr) return Toast.show('خطأ: ' + sErr.message, 'error');
+    if (!students || students.length === 0) return Toast.show('لا بيانات', 'warn');
 
-    // 2) جلب كل الحقول (بدون شرط visible)
-    const { data: fields, error: fErr } = await SB.from('dynamic_fields')
-      .select('id, name, field_key, type, display_order, visible_for_student, is_readonly')
-      .order('display_order');
-    if (fErr) return toastMsg('❌ خطأ في جلب الحقول: ' + fErr.message, 'error');
-    console.log(`✅ تم جلب ${fields?.length || 0} حقل ديناميكي`);
-
-    // 3) جلب كل الاستجابات
-    const { data: responses, error: rErr } = await SB.from('student_dynamic_responses').select('*');
-    if (rErr) {
-      console.error('❌ فشل جلب الاستجابات:', rErr);
-      return toastMsg('❌ خطأ في جلب الاستجابات: ' + rErr.message, 'error');
-    }
-    console.log(`✅ تم جلب ${responses?.length || 0} استجابة`);
-
-    if (!responses || responses.length === 0) {
-      return toastMsg('⚠️ لا توجد استجابات في قاعدة البيانات — الجدول فارغ', 'warn');
-    }
-
-    // 4) تشخيص الأعمدة
-    const sampleResponse = responses[0];
-    console.log('📋 أعمدة جدول الاستجابات:', Object.keys(sampleResponse));
-    console.log('📋 عينة من أول استجابة:', sampleResponse);
-
-    // 5) بناء lookup ذكي
-    const studentKeyInResponses = 
-      ('student_id' in sampleResponse) ? 'student_id' :
-      ('student_code' in sampleResponse) ? 'student_code' :
-      ('code' in sampleResponse) ? 'code' :
-      Object.keys(sampleResponse).find(k => k.toLowerCase().includes('student'));
-
-    const fieldKeyInResponses = 
-      ('field_id' in sampleResponse) ? 'field_id' :
-      ('field_key' in sampleResponse) ? 'field_key' :
-      Object.keys(sampleResponse).find(k => k.toLowerCase().includes('field'));
-
-    const valueKeyInResponses = 
-      ('value' in sampleResponse) ? 'value' :
-      ('response' in sampleResponse) ? 'response' :
-      ('answer' in sampleResponse) ? 'answer' :
-      Object.keys(sampleResponse).find(k => ['value','answer','response','data'].includes(k.toLowerCase()));
-
-    console.log('🔑 مفتاح الطالب:', studentKeyInResponses, '| مفتاح الحقل:', fieldKeyInResponses, '| مفتاح القيمة:', valueKeyInResponses);
-
-    if (!studentKeyInResponses || !fieldKeyInResponses || !valueKeyInResponses) {
-      return toastMsg('❌ مش قادر أتعرف على أعمدة جدول الاستجابات — شوف Console', 'error', 8000);
-    }
-
-    // Map الطلاب
-    const studentsById = {};
-    const studentsByCode = {};
-    students.forEach(s => {
-      if (s.id) studentsById[s.id] = s;
-      if (s.student_code) studentsByCode[String(s.student_code).trim()] = s;
-    });
-
-    // ملء الاستجابات
-    const responsesByStudentId = {};
-    responses.forEach(r => {
-      const studVal = r[studentKeyInResponses];
-      const fieldVal = r[fieldKeyInResponses];
-      const valueVal = r[valueKeyInResponses];
-      if (!studVal || !fieldVal) return;
-
-      // لو المفتاح UUID
-      if (studentsById[studVal]) {
-        (responsesByStudentId[studVal] ??= {})[fieldVal] = valueVal;
-      }
-      // لو المفتاح student_code
-      const studStr = String(studVal).trim();
-      if (studentsByCode[studStr]) {
-        const sid = studentsByCode[studStr].id;
-        (responsesByStudentId[sid] ??= {})[fieldVal] = valueVal;
-      }
-    });
-
-    const studentsWithResponses = Object.keys(responsesByStudentId).length;
-    console.log(`📊 طلاب عندهم استجابات: ${studentsWithResponses} من ${students.length}`);
-    toastMsg(`✅ تم تجميع استجابات ${studentsWithResponses} طالب`, 'info');
-
-    // 6) بناء الأعمدة
-    const baseHeaders = [
-      '#', 'الاسم', 'الكود', 'الصف', 'حالة القيد', 'النوع',
-      'تاريخ الميلاد', 'المحافظة', 'التشعيب', 'التخصص', 'المسار',
-      'المادة الاختيارية', 'الحالة', 'تاريخ التقديم'
-    ];
-    const dynamicHeaders = (fields || []).map(f => f.name);
-    const headers = [...baseHeaders, ...dynamicHeaders];
-
-    // 7) بناء الصفوف
-    const rows = students.map((s, i) => {
-      const studResponses = responsesByStudentId[s.id] || {};
-      const baseRow = [
-        String(i + 1),
-        sanitizeText(s.full_name || ''),
-        sanitizeText(s.student_code || ''),
-        sanitizeText(s.grade || ''),
-        sanitizeText(s.enrollment_status || ''),
-        sanitizeText(s.gender || ''),
-        s.date_of_birth ? new Date(s.date_of_birth).toLocaleDateString('ar-EG') : '',
-        sanitizeText(s.governorate || ''),
-        sanitizeText(s.stream || ''),
-        sanitizeText(s.specialization || ''),
-        sanitizeText(s.track || ''),
-        sanitizeText(s.optional_subject || ''),
-        s.is_locked ? 'مقفل' : 'مفتوح',
-        s.submitted_at ? new Date(s.submitted_at).toLocaleString('ar-EG') : ''
-      ];
-      const dynamicRow = (fields || []).map(f => {
-        const v = studResponses[f.id];
-        return sanitizeText(v !== undefined && v !== null ? String(v) : '');
-      });
-      return [...baseRow, ...dynamicRow];
-    });
-
-    // 8) التصدير
-    const filename = `استجابات_كاملة_${new Date().toISOString().slice(0,10)}.xlsx`;
-    exportExcelFile(headers, rows, filename);
-
-    // 9) تقرير
-    const emptyCount = students.filter(s => !responsesByStudentId[s.id]).length;
-    toastMsg(`✅ تم تصدير ${students.length} طالب × ${fields?.length || 0} حقل`, 'success', 5000);
+    const { data: fields } = await SB.from('dynamic_fields').select('id,name').eq('visible_for_student', true).order('display_order');
     
-    console.log('═══════════════════════════════════════');
-    console.log(`📄 إجمالي الطلاب: ${students.length}`);
-    console.log(`📄 إجمالي الحقول: ${fields?.length || 0}`);
-    console.log(`📄 إجمالي الاستجابات: ${responses.length}`);
-    console.log(`📄 طلاب عندهم استجابات: ${studentsWithResponses}`);
-    console.log(`📄 طلاب بدون استجابات: ${emptyCount}`);
-    console.log('═══════════════════════════════════════');
-
+    const ids = students.map(s => s.id);
+    const { data: responses } = await SB.from('student_dynamic_responses').select('student_id,field_id,value').in('student_id', ids);
+    
+    const map = {};
+    (responses||[]).forEach(r => { (map[r.student_id] ??= {})[r.field_id] = r.value; });
+    
+    const headers = ['#','الاسم','الكود','الصف','حالة القيد','النوع','تاريخ الميلاد','المحافظة','التشعيب','التخصص','المسار','المادة الاختيارية','الحالة','تاريخ التقديم',...(fields||[]).map(f=>f.name)];
+    const rows = students.map((s,i) => [
+      String(i+1),
+      sanitizeText(s.full_name || ''),
+      sanitizeText(s.student_code || ''),
+      sanitizeText(s.grade || ''),
+      sanitizeText(s.enrollment_status || ''),
+      sanitizeText(s.gender || ''),
+      s.date_of_birth ? new Date(s.date_of_birth).toLocaleDateString('ar-EG') : '',
+      sanitizeText(s.governorate || ''),
+      sanitizeText(s.stream || ''),
+      sanitizeText(s.specialization || ''),
+      sanitizeText(s.track || ''),
+      sanitizeText(s.optional_subject || ''),
+      s.is_locked?'مقفل':'مفتوح',
+      s.submitted_at?new Date(s.submitted_at).toLocaleString('ar-EG'):'',
+      ...(fields||[]).map(f => sanitizeText(map[s.id]?.[f.id] || ''))
+    ]);
+    
+    exportExcelFileSafe(headers, rows, `استجابات_كاملة_${new Date().toISOString().slice(0,10)}.xlsx`);
+    Toast.show(`✅ ${students.length} صف | استجابات: ${responses?.length || 0}`, 'success');
   } catch (err) {
-    console.error('❌ استثناء:', err);
-    toastMsg('❌ ' + err.message, 'error', 8000);
+    Toast.show('❌ ' + err.message, 'error', 6000);
   }
-}
-
-// ==========================================================
-// 🔬 دالة تشخيص — استدعيها من Console
-// ==========================================================
-async function diagnoseResponses() {
-  console.log('🔬 بدء التشخيص...');
-  console.log('═══════════════════════════════════════');
-  
-  // 1) عينة استجابات
-  const { data: r, error: re } = await SB.from('student_dynamic_responses').select('*').limit(5);
-  console.log('1️⃣ عينة من student_dynamic_responses:');
-  console.log('   - error:', re);
-  console.log('   - data:', r);
-  
-  // 2) عدد الاستجابات الكلي
-  const { count, error: ce } = await SB.from('student_dynamic_responses')
-    .select('*', { count: 'exact', head: true });
-  console.log('2️⃣ عدد الاستجابات الكلي:', { count, error: ce });
-  
-  // 3) عدد الطلاب
-  const { count: scount } = await SB.from('students').select('*', { count: 'exact', head: true });
-  console.log('3️⃣ عدد الطلاب:', scount);
-  
-  // 4) عدد الحقول
-  const { count: fcount } = await SB.from('dynamic_fields').select('*', { count: 'exact', head: true });
-  console.log('4️⃣ عدد الحقول:', fcount);
-  
-  // 5) عينة طلاب
-  const { data: s } = await SB.from('students').select('id, student_code, full_name').limit(3);
-  console.log('5️⃣ عينة طلاب:', s);
-  
-  // 6) عينة حقول
-  const { data: f } = await SB.from('dynamic_fields').select('id, name, field_key').limit(3);
-  console.log('6️⃣ عينة حقول:', f);
-  
-  // 7) عينة استجابات مع ربط
-  if (r && r.length > 0 && s && s.length > 0) {
-    console.log('7️⃣ تحليل الربط:');
-    console.log('   - أعمدة جدول الاستجابات:', Object.keys(r[0]));
-    console.log('   - أول استجابة:', r[0]);
-    console.log('   - أول طالب:', s[0]);
-    console.log('   - هل student_id في الاستجابة يطابق id الطالب؟');
-    const match = s.find(st => st.id === r[0].student_id);
-    console.log('     →', match ? '✅ نعم' : '❌ لا');
-    if (!match) {
-      const byCode = s.find(st => String(st.student_code).trim() === String(r[0].student_id).trim());
-      console.log('     → هل يطابق student_code؟', byCode ? '✅ نعم' : '❌ لا');
-    }
-  }
-  
-  console.log('═══════════════════════════════════════');
-  console.log('🔬 انتهى التشخيص — ابعتلي اللي ظهر في Console');
-  Toast.show('✅ التشخيص انتهى — افتح Console (F12) للتفاصيل', 'info', 5000);
 }
 </script>
 </body>
